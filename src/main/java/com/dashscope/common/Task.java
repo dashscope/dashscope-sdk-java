@@ -1,0 +1,18 @@
+package com.dashscope.common;
+
+public enum Task {
+  TEXT_GENERATION("text-generation"),
+
+  CHAT("chat"),
+  ;
+
+  private final String value;
+
+  private Task(String value) {
+    this.value = value;
+  }
+
+  public String getValue() {
+    return value;
+  }
+}
