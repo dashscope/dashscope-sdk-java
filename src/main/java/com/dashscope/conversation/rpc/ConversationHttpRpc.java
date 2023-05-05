@@ -33,13 +33,16 @@ public final class ConversationHttpRpc implements ConversationRpc {
   @Override
   public void call(ConversationParamBase param, ResultCallback<ConversationResultBase> callback) {
     String url = Constants.baseHttpApiUrl;
+    assert (param.getApiKey() != null || Constants.apiKey != null);
     if (url.endsWith("/")) {
       url = url.substring(0, url.length() - 1);
     }
     url = url + param.url();
     HttpPost request = new HttpPost(url);
     request.addHeader("Accept", "application/json");
-    request.addHeader("Authorization", "Bearer " + Constants.apiKey);
+    request.addHeader(
+        "Authorization",
+        "Bearer " + (param.getApiKey() == null ? Constants.apiKey : param.getApiKey()));
     request.addHeader("Content-Type", "application/json");
     if (param.isStream()) {
       request.addHeader("Accept", "text/event-stream");

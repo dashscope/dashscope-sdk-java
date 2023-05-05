@@ -4,7 +4,9 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public final class Constants {
 
   public static final String DASHSCOPE_API_REGION_ENV = "DASHSCOPE_API_REGION";
@@ -60,7 +62,8 @@ public final class Constants {
       try (BufferedReader reader = new BufferedReader(new FileReader(apiFile))) {
         apiKey = reader.readLine().trim();
       } catch (Exception e) {
-        throw new RuntimeException(e);
+        log.warn("Error happens when reading api file: " + e.getMessage());
+        log.debug("Stack trace", e);
       }
     }
   }

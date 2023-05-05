@@ -72,7 +72,6 @@ public final class ConversationWebsocketRpc implements ConversationRpc {
               super.close(code);
             }
           };
-      client.addHeader("Authorization", Constants.apiKey);
     } catch (Exception e) {
       throw new ApiException(e);
     }
@@ -92,8 +91,14 @@ public final class ConversationWebsocketRpc implements ConversationRpc {
 
       boolean connected = true;
       if (client.getReadyState() == ReadyState.NOT_YET_CONNECTED) {
+        assert (param.getApiKey() != null || Constants.apiKey != null);
+        client.addHeader(
+            "Authorization", param.getApiKey() == null ? Constants.apiKey : param.getApiKey());
         connected = client.connectBlocking();
       } else if (client.getReadyState() == ReadyState.CLOSED) {
+        assert (param.getApiKey() != null || Constants.apiKey != null);
+        client.addHeader(
+            "Authorization", param.getApiKey() == null ? Constants.apiKey : param.getApiKey());
         connected = client.reconnectBlocking();
       }
       if (!connected) {;
