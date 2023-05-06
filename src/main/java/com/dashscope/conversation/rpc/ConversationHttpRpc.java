@@ -50,6 +50,10 @@ public final class ConversationHttpRpc implements ConversationRpc {
       request.addHeader("X-DashScope-SSE", "enable");
     }
 
+    if (param.isSecurityCheck()) {
+      request.addHeader("X-DashScope-DataInspection", "enable");
+    }
+
     try {
       StringEntity entity =
           new StringEntity(param.buildMessageBody(Protocol.HTTP.getValue()), "UTF-8");

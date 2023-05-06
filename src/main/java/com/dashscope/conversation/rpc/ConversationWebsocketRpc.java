@@ -94,18 +94,23 @@ public final class ConversationWebsocketRpc implements ConversationRpc {
         assert (param.getApiKey() != null || Constants.apiKey != null);
         client.addHeader(
             "Authorization", param.getApiKey() == null ? Constants.apiKey : param.getApiKey());
+        if (param.isSecurityCheck()) {
+          client.addHeader("X-DashScope-DataInspection", "enable");
+        }
         connected = client.connectBlocking();
       } else if (client.getReadyState() == ReadyState.CLOSED) {
         assert (param.getApiKey() != null || Constants.apiKey != null);
         client.addHeader(
             "Authorization", param.getApiKey() == null ? Constants.apiKey : param.getApiKey());
+        if (param.isSecurityCheck()) {
+          client.addHeader("X-DashScope-DataInspection", "enable");
+        }
         connected = client.reconnectBlocking();
       }
       if (!connected) {;
         callback.onError(new ApiException(new WebsocketNotConnectedException()));
         return;
       }
-
       client.send(param.buildMessageBody(Protocol.WEBSOCKET.getValue()));
     } catch (Exception e) {
       this.resultCallback.onError(e instanceof ApiException ? e : new ApiException(e));

@@ -29,6 +29,9 @@ public abstract class ConversationParamBase {
   /** Get real-time response with streaming mode */
   private boolean stream = false;
 
+  /** Open security check */
+  private boolean securityCheck = false;
+
   public String getMsgId() {
     if (StringUtils.isBlank(msgId)) {
       msgId = UUID.randomUUID().toString();
