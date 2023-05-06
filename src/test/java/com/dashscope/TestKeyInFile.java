@@ -30,6 +30,8 @@ public class TestKeyInFile {
 
   private String oldBaseWebsocketApiUrl = null;
 
+  private String filePath = null;
+
   @BeforeEach
   public void setUp() throws IOException {
     oldBaseHttpApiUrl = Constants.baseHttpApiUrl;
@@ -38,7 +40,7 @@ public class TestKeyInFile {
     Constants.baseWebsocketApiUrl = "ws://localhost:8080/api-ws/v1/inference";
     mockServer.start(0, "testKey");
 
-    String filePath = System.getenv().get("DASHSCOPE_API_KEY_FILE_PATH");
+    filePath = System.getenv().get("DASHSCOPE_API_KEY_FILE_PATH");
     Files.write(Paths.get(filePath), "testKey".getBytes());
     Constants.apiKeyFilePath = filePath;
     Constants.init();
@@ -49,7 +51,7 @@ public class TestKeyInFile {
     Constants.baseHttpApiUrl = oldBaseHttpApiUrl;
     Constants.baseWebsocketApiUrl = oldBaseWebsocketApiUrl;
     mockServer.tearDown();
-    Files.delete(Paths.get("./apiKey.txt"));
+    Files.delete(Paths.get(filePath));
   }
 
   @Test
