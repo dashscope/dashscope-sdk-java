@@ -1,0 +1,10 @@
+.idea/
+package/
+target/
+log/
+build/
+build.log
+build.err
+.settings/
+.DS_Store
+buildinfo

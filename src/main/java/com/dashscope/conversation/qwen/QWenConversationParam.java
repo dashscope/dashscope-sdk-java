@@ -2,14 +2,15 @@ package com.dashscope.conversation.qwen;
 
 import static com.dashscope.utils.ApiKeywords.*;
 
-import com.alibaba.fastjson.JSONObject;
 import com.dashscope.common.ErrorType;
 import com.dashscope.common.Protocol;
 import com.dashscope.conversation.ConversationMessage;
 import com.dashscope.conversation.ConversationMessageStatus;
-import com.dashscope.conversation.ConversationParamBase;
-import com.dashscope.conversation.ConversationResultBase;
+import com.dashscope.conversation.ConversationParam;
+import com.dashscope.conversation.ConversationResult;
 import com.dashscope.exception.ApiException;
+import com.dashscope.utils.JsonUtils;
+import com.google.gson.JsonObject;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
@@ -17,7 +18,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
-public class QWenConversationParam extends ConversationParamBase {
+public class QWenConversationParam extends ConversationParam {
 
   public static final String QWEN_V1 = "qwen-v1";
 
@@ -42,22 +43,22 @@ public class QWenConversationParam extends ConversationParamBase {
    */
   private Integer nHistory;
 
-  public JSONObject getParameters() {
-    JSONObject json = new JSONObject();
+  public JsonObject getParameters() {
+    JsonObject json = new JsonObject();
     if (topP != null) {
-      json.put(TOP_P, topP);
+      json.addProperty(TOP_P, topP);
     }
     if (maxLength != null) {
-      json.put(MAX_LENGTH, maxLength);
+      json.addProperty(MAX_LENGTH, maxLength);
     }
-    json.put(M6_SEARCH_IN_FIRST_QUERY, 0);
-    json.put(M6_NUM_WEB_SEARCH, enableSearch ? 5 : 0);
+    json.addProperty(M6_SEARCH_IN_FIRST_QUERY, 0);
+    json.addProperty(M6_NUM_WEB_SEARCH, enableSearch ? 5 : 0);
     return json;
   }
 
   @Override
   public String url() {
-    return "/services/aigc/text-generation/generation";
+    return "/services/aigc/text-generation/generation?request_id=" + this.getMsgId();
   }
 
   @Override
@@ -85,13 +86,13 @@ public class QWenConversationParam extends ConversationParamBase {
               this.isEnableDebug());
     }
     if (Protocol.HTTP.getValue().equals(protocol)) {
-      JSONObject json = new JSONObject();
-      json.put(MODEL, inputMessage.getPayload().getModel());
-      json.put(PARAMETERS, inputMessage.getPayload().getParameters());
-      json.put(INPUT, inputMessage.getPayload().getInput());
-      return json.toJSONString();
+      JsonObject json = new JsonObject();
+      json.addProperty(MODEL, inputMessage.getPayload().getModel());
+      json.add(PARAMETERS, inputMessage.getPayload().getParameters());
+      json.add(INPUT, inputMessage.getPayload().getInput());
+      return json.toString();
     } else if (Protocol.WEBSOCKET.getValue().equals(protocol)) {
-      return JSONObject.toJSONString(inputMessage);
+      return JsonUtils.toJson(inputMessage);
     } else {
       throw new ApiException(
           ConversationMessageStatus.builder()
@@ -102,7 +103,7 @@ public class QWenConversationParam extends ConversationParamBase {
   }
 
   @Override
-  public Class<? extends ConversationResultBase> resultType() {
+  public Class<? extends ConversationResult> resultType() {
     return QWenConversationResult.class;
   }
 }

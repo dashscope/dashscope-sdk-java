@@ -1,5 +1,6 @@
 package com.dashscope.conversation.rpc;
 
+import com.dashscope.common.ErrorType;
 import com.dashscope.common.Protocol;
 import com.dashscope.common.ResultCallback;
 import com.dashscope.conversation.*;
@@ -7,6 +8,7 @@ import com.dashscope.exception.ApiException;
 import com.dashscope.utils.Constants;
 import java.net.URI;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpStatus;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.enums.ReadyState;
 import org.java_websocket.exceptions.WebsocketNotConnectedException;
@@ -17,9 +19,9 @@ public final class ConversationWebsocketRpc implements ConversationRpc {
 
   private final WebSocketClient client;
 
-  private Class<? extends ConversationResultBase> resultType;
+  private Class<? extends ConversationResult> resultType;
 
-  private ResultCallback<ConversationResultBase> resultCallback = null;
+  private ResultCallback<ConversationResult> resultCallback = null;
 
   public ConversationWebsocketRpc() {
     try {
@@ -39,7 +41,7 @@ public final class ConversationWebsocketRpc implements ConversationRpc {
             public void onMessage(String message) {
               try {
                 assert (resultCallback != null && resultType != null);
-                ConversationResultBase result = resultType.newInstance();
+                ConversationResult result = resultType.newInstance();
                 result.loadFromMessage(Protocol.WEBSOCKET.getValue(), message);
                 String eventType = result.getEventType();
                 resultCallback.onEvent(eventType, result);
@@ -84,14 +86,22 @@ public final class ConversationWebsocketRpc implements ConversationRpc {
   }
 
   @Override
-  public void call(ConversationParamBase param, ResultCallback<ConversationResultBase> callback) {
+  public void call(ConversationParam param, ResultCallback<ConversationResult> callback) {
     try {
       this.resultCallback = callback;
       this.resultType = param.resultType();
 
       boolean connected = true;
       if (client.getReadyState() == ReadyState.NOT_YET_CONNECTED) {
-        assert (param.getApiKey() != null || Constants.apiKey != null);
+        if (param.getApiKey() == null && Constants.apiKey == null) {
+          callback.onError(
+              new ApiException(
+                  ConversationMessageStatus.builder()
+                      .statusCode(HttpStatus.SC_UNAUTHORIZED)
+                      .code(ErrorType.API_KEY_ERROR.getValue())
+                      .build()));
+          return;
+        }
         client.addHeader(
             "Authorization", param.getApiKey() == null ? Constants.apiKey : param.getApiKey());
         if (param.isSecurityCheck()) {
@@ -99,7 +109,15 @@ public final class ConversationWebsocketRpc implements ConversationRpc {
         }
         connected = client.connectBlocking();
       } else if (client.getReadyState() == ReadyState.CLOSED) {
-        assert (param.getApiKey() != null || Constants.apiKey != null);
+        if (param.getApiKey() == null && Constants.apiKey == null) {
+          callback.onError(
+              new ApiException(
+                  ConversationMessageStatus.builder()
+                      .statusCode(HttpStatus.SC_UNAUTHORIZED)
+                      .code(ErrorType.API_KEY_ERROR.getValue())
+                      .build()));
+          return;
+        }
         client.addHeader(
             "Authorization", param.getApiKey() == null ? Constants.apiKey : param.getApiKey());
         if (param.isSecurityCheck()) {

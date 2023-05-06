@@ -1,13 +1,17 @@
 package com.dashscope.conversation;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import static com.dashscope.utils.ApiKeywords.ERROR_MESSAGE;
+import static com.dashscope.utils.ApiKeywords.ERROR_NAME;
+
+import com.dashscope.common.StreamingMode;
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 @Data
 public class ConversationMessageHeader {
 
   /** The task id */
-  @JSONField(name = "task_id")
+  @SerializedName("task_id")
   private String taskId;
 
   /**
@@ -35,17 +39,17 @@ public class ConversationMessageHeader {
   private String event;
 
   /** The error name. */
-  @JSONField(name = "error_name")
+  @SerializedName(ERROR_NAME)
   private String errorName;
 
   /** The error message. */
-  @JSONField(name = "error_message")
+  @SerializedName(ERROR_MESSAGE)
   private String errorMessage;
 
   public static ConversationMessageHeader buildInputHeader(String taskId, boolean streaming) {
     ConversationMessageHeader header = new ConversationMessageHeader();
     header.setTaskId(taskId);
-    header.setStreaming(streaming ? "out" : "none");
+    header.setStreaming(streaming ? StreamingMode.OUT.getValue() : StreamingMode.NONE.getValue());
     header.setAction(EventType.RUN_TASK.getValue());
     return header;
   }

@@ -1,12 +1,14 @@
 package com.dashscope.conversation;
 
 import static com.dashscope.utils.ApiKeywords.PROMPT;
+import static com.dashscope.utils.ApiKeywords.REQUEST_ID;
+import static com.dashscope.utils.ApiKeywords.TASK_GROUP;
 
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.annotation.JSONField;
 import com.dashscope.common.Function;
 import com.dashscope.common.Task;
 import com.dashscope.common.TaskGroup;
+import com.google.gson.JsonObject;
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 @Data
@@ -18,10 +20,10 @@ public class ConversationMessagePayload {
   private String task;
 
   /** The taskGroup */
-  @JSONField(name = "task_group")
+  @SerializedName(TASK_GROUP)
   private String taskGroup;
 
-  @JSONField(name = "request_id")
+  @SerializedName(REQUEST_ID)
   private String requestId;
 
   /** The task function */
@@ -31,16 +33,16 @@ public class ConversationMessagePayload {
    * The model input, which may contain several keys: prompt: The input prompt. history: The history
    * information.
    */
-  private JSONObject input;
+  private JsonObject input;
 
   /** The extra parameters to use. */
-  private JSONObject parameters;
+  private JsonObject parameters;
 
   /** The model outputs. */
-  private JSONObject output;
+  private JsonObject output;
 
   /** The data usage. */
-  private JSONObject usage;
+  private JsonObject usage;
 
   public static ConversationMessagePayload buildInputPayload(String model, String utterance) {
     ConversationMessagePayload payLoad = new ConversationMessagePayload();
@@ -48,8 +50,8 @@ public class ConversationMessagePayload {
     payLoad.setTask(Task.TEXT_GENERATION.getValue());
     payLoad.setTaskGroup(TaskGroup.AIGC.getValue());
     payLoad.setFunction(Function.GENERATION.getValue());
-    JSONObject userInput = new JSONObject();
-    userInput.put(PROMPT, utterance);
+    JsonObject userInput = new JsonObject();
+    userInput.addProperty(PROMPT, utterance);
     payLoad.setInput(userInput);
     return payLoad;
   }
@@ -61,8 +63,8 @@ public class ConversationMessagePayload {
     payLoad.setTask(Task.CHAT.getValue());
     payLoad.setTaskGroup(TaskGroup.AIGC.getValue());
     payLoad.setFunction(Function.MULTIMODAL_CHAT.getValue());
-    JSONObject userInput = new JSONObject();
-    userInput.put(PROMPT, utterance);
+    JsonObject userInput = new JsonObject();
+    userInput.addProperty(PROMPT, utterance);
     payLoad.setInput(userInput);
     return payLoad;
   }

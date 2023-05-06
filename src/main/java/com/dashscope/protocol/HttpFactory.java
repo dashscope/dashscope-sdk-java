@@ -22,21 +22,15 @@ public class HttpFactory {
 
   private final ScheduledExecutorService executorService;
 
-  private static final int CONNECT_TIMEOUT = 3000;
-
-  private static final int CONNECTION_REQUEST_TIMEOUT = 3000;
-
-  private static final int SOCKET_TIMEOUT = 3000;
-
   private HttpFactory() throws IOReactorException {
     connectionManager = new PoolingNHttpClientConnectionManager(new DefaultConnectingIOReactor());
     connectionManager.setMaxTotal(Constants.max_connections_http);
     connectionManager.setDefaultMaxPerRoute(Constants.max_connections_per_route_http);
     RequestConfig requestConfig =
         RequestConfig.custom()
-            .setConnectTimeout(CONNECT_TIMEOUT)
-            .setConnectionRequestTimeout(CONNECTION_REQUEST_TIMEOUT)
-            .setSocketTimeout(SOCKET_TIMEOUT)
+            .setConnectTimeout(Constants.CONNECT_TIMEOUT)
+            .setConnectionRequestTimeout(Constants.CONNECTION_REQUEST_TIMEOUT)
+            .setSocketTimeout(Constants.SOCKET_TIMEOUT)
             .build();
     httpClient =
         HttpAsyncClients.custom()

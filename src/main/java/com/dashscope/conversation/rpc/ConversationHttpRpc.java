@@ -2,18 +2,18 @@ package com.dashscope.conversation.rpc;
 
 import static com.dashscope.utils.ApiKeywords.*;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.dashscope.common.ErrorType;
 import com.dashscope.common.Protocol;
 import com.dashscope.common.ResultCallback;
 import com.dashscope.conversation.ConversationMessageStatus;
-import com.dashscope.conversation.ConversationParamBase;
-import com.dashscope.conversation.ConversationResultBase;
+import com.dashscope.conversation.ConversationParam;
+import com.dashscope.conversation.ConversationResult;
 import com.dashscope.conversation.EventType;
 import com.dashscope.exception.ApiException;
 import com.dashscope.protocol.HttpFactory;
 import com.dashscope.utils.Constants;
+import com.dashscope.utils.JsonUtils;
+import com.google.gson.JsonObject;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -31,15 +31,22 @@ import org.apache.http.entity.StringEntity;
 public final class ConversationHttpRpc implements ConversationRpc {
 
   @Override
-  public void call(ConversationParamBase param, ResultCallback<ConversationResultBase> callback) {
+  public void call(ConversationParam param, ResultCallback<ConversationResult> callback) {
     String url = Constants.baseHttpApiUrl;
-    assert (param.getApiKey() != null || Constants.apiKey != null);
+    if (param.getApiKey() == null && Constants.apiKey == null) {
+      callback.onError(
+          new ApiException(
+              ConversationMessageStatus.builder()
+                  .statusCode(HttpStatus.SC_UNAUTHORIZED)
+                  .code(ErrorType.API_KEY_ERROR.getValue())
+                  .build()));
+      return;
+    }
     if (url.endsWith("/")) {
       url = url.substring(0, url.length() - 1);
     }
     url = url + param.url();
     HttpPost request = new HttpPost(url);
-    request.addHeader("Accept", "application/json");
     request.addHeader(
         "Authorization",
         "Bearer " + (param.getApiKey() == null ? Constants.apiKey : param.getApiKey()));
@@ -48,6 +55,8 @@ public final class ConversationHttpRpc implements ConversationRpc {
       request.addHeader("Accept", "text/event-stream");
       request.addHeader("X-Accel-Buffering", "no");
       request.addHeader("X-DashScope-SSE", "enable");
+    } else {
+      request.addHeader("Accept", "application/json");
     }
 
     if (param.isSecurityCheck()) {
@@ -67,9 +76,9 @@ public final class ConversationHttpRpc implements ConversationRpc {
 
   private void send(
       HttpRequestBase queryMethod,
-      ResultCallback<ConversationResultBase> callback,
+      ResultCallback<ConversationResult> callback,
       boolean stream,
-      Class<? extends ConversationResultBase> resultType,
+      Class<? extends ConversationResult> resultType,
       String msgId) {
     try {
       HttpFactory.getInstance()
@@ -86,7 +95,7 @@ public final class ConversationHttpRpc implements ConversationRpc {
                     if (statusCode == HttpStatus.SC_OK) {
                       if (entity != null) {
                         String line;
-                        ConversationResultBase result = null;
+                        ConversationResult result = null;
                         try (InputStream inputStream = entity.getContent();
                             BufferedReader reader =
                                 new BufferedReader(
@@ -94,7 +103,8 @@ public final class ConversationHttpRpc implements ConversationRpc {
                           if (stream) {
                             boolean lastIsError = false;
                             while ((line = reader.readLine()) != null) {
-                              if (line.startsWith("event:error")) {
+                              if (line.startsWith("event:error")
+                                  || line.startsWith("event: error")) {
                                 lastIsError = true;
                               } else if (line.startsWith("data:")) {
                                 line = line.substring(5).trim();
@@ -102,7 +112,6 @@ public final class ConversationHttpRpc implements ConversationRpc {
                                   ConversationMessageStatus status =
                                       parseMessageStatus(line, HttpStatus.SC_OK, response);
                                   callback.onError(new ApiException(status));
-                                  lastIsError = false;
                                 } else {
                                   result = resultType.newInstance();
                                   result.loadFromMessage(Protocol.HTTP.getValue(), line);
@@ -111,13 +120,15 @@ public final class ConversationHttpRpc implements ConversationRpc {
                                 }
                               }
                             }
-                            if (result != null) {
-                              // TODO a low efficient way.
-                              String tmp = JSON.toJSONString(result);
-                              result = JSON.parseObject(tmp, resultType);
-                              result.setEventType(EventType.TASK_FINISHED.getValue());
+                            if (!lastIsError) {
+                              if (result != null) {
+                                // TODO a low efficient way.
+                                String tmp = JsonUtils.toJson(result);
+                                result = JsonUtils.fromJson(tmp, resultType);
+                                result.setEventType(EventType.TASK_FINISHED.getValue());
+                              }
+                              callback.onEvent(EventType.TASK_FINISHED.getValue(), result);
                             }
-                            callback.onEvent(EventType.TASK_FINISHED.getValue(), result);
                           } else {
                             StringBuilder content = new StringBuilder();
                             while ((line = reader.readLine()) != null) {
@@ -195,13 +206,13 @@ public final class ConversationHttpRpc implements ConversationRpc {
       isJson = true;
     }
     if (isJson) {
-      JSONObject json = JSONObject.parseObject(payload);
+      JsonObject json = JsonUtils.parse(payload);
       return ConversationMessageStatus.builder()
-          .code(json.getString(CODE))
+          .code(json.get(CODE) == null ? null : json.get(CODE).getAsString())
           .statusCode(statusCode)
-          .message(json.getString(MESSAGE))
-          .usage(json.getJSONObject(USAGE))
-          .msgId(json.getString(REQUEST_ID))
+          .message(json.get(MESSAGE) == null ? null : json.get(MESSAGE).getAsString())
+          .usage(json.getAsJsonObject(USAGE))
+          .msgId(json.get(REQUEST_ID) == null ? null : json.get(REQUEST_ID).getAsString())
           .build();
     } else {
       return ConversationMessageStatus.builder()

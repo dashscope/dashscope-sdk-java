@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 
 @Data
 @SuperBuilder
-public abstract class ConversationParamBase {
+public abstract class ConversationParam {
 
   /** The message id */
   private String msgId;
@@ -56,10 +56,9 @@ public abstract class ConversationParamBase {
   public abstract String buildMessageBody(String protocol) throws ApiException;
 
   /**
-   * Get the related server output structure, which should be a subclass of
-   * `ConversationResultBase`.
+   * Get the related server output structure, which should be a subclass of `ConversationResult`.
    *
    * @return The server output Class.
    */
-  public abstract Class<? extends ConversationResultBase> resultType();
+  public abstract Class<? extends ConversationResult> resultType();
 }

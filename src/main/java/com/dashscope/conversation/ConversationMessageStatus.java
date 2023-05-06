@@ -1,7 +1,7 @@
 package com.dashscope.conversation;
 
-import com.alibaba.fastjson.JSONObject;
 import com.dashscope.common.Status;
+import com.google.gson.JsonObject;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
@@ -18,5 +18,5 @@ public class ConversationMessageStatus extends Status {
   private String msgId;
 
   /** The usage information. */
-  private JSONObject usage;
+  private JsonObject usage;
 }

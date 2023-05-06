@@ -4,7 +4,7 @@ import com.dashscope.exception.ApiException;
 import lombok.Data;
 
 @Data
-public abstract class ConversationResultBase {
+public abstract class ConversationResult {
 
   /** The msg id. */
   private String msgId;

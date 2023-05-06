@@ -1,23 +1,52 @@
 package com.dashscope;
 
-import com.alibaba.fastjson.JSON;
 import com.dashscope.common.Protocol;
 import com.dashscope.common.ResultCallback;
 import com.dashscope.conversation.Conversation;
-import com.dashscope.conversation.ConversationResultBase;
+import com.dashscope.conversation.ConversationResult;
 import com.dashscope.conversation.EventType;
 import com.dashscope.conversation.qwen.QWenConversationParam;
+import com.dashscope.mock.MockServer;
+import com.dashscope.utils.Constants;
+import com.dashscope.utils.JsonUtils;
 import com.google.common.collect.Lists;
 import io.reactivex.Flowable;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
+@Execution(ExecutionMode.SAME_THREAD)
 @Slf4j
 public class TestConversation {
 
   String[] protocols = {Protocol.HTTP.getValue(), Protocol.WEBSOCKET.getValue()};
+
+  private final MockServer mockServer = new MockServer();
+
+  private String oldBaseHttpApiUrl = null;
+
+  private String oldBaseWebsocketApiUrl = null;
+
+  @BeforeEach
+  public void setUp() {
+    oldBaseHttpApiUrl = Constants.baseHttpApiUrl;
+    oldBaseWebsocketApiUrl = Constants.baseWebsocketApiUrl;
+    Constants.baseHttpApiUrl = "http://localhost:8080/api/v1";
+    Constants.baseWebsocketApiUrl = "ws://localhost:8080/api-ws/v1/inference";
+    mockServer.start(0, "testKey");
+  }
+
+  @AfterEach
+  public void tearDown() {
+    Constants.baseHttpApiUrl = oldBaseHttpApiUrl;
+    Constants.baseWebsocketApiUrl = oldBaseWebsocketApiUrl;
+    mockServer.tearDown();
+  }
 
   @Test
   public void testBasicConversation() {
@@ -28,11 +57,16 @@ public class TestConversation {
           QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1).prompt("hello")
               .stream(true)
               .maxLength(10)
+              .apiKey("testKey")
+              .msgId("test-id")
               .topP(0.8)
               .build();
 
-      Flowable<ConversationResultBase> flowable = conversation.streamCall(param);
-      flowable.blockingForEach(msg -> log.info(JSON.toJSONString(msg)));
+      Flowable<ConversationResult> flowable = conversation.streamCall(param);
+      flowable.blockingForEach(
+          msg -> {
+            assert ("test-id".equals(msg.getMsgId()));
+          });
       assert (conversation.getHistory().size() == 2);
     }
   }
@@ -46,10 +80,11 @@ public class TestConversation {
           QWenConversationParam.builder()
               .model(QWenConversationParam.QWEN_V1)
               .prompt("hello")
+              .apiKey("testKey")
               .build();
 
-      ConversationResultBase result = conversation.call(param);
-      log.info(JSON.toJSONString(result));
+      ConversationResult result = conversation.call(param);
+      log.info(JsonUtils.toJson(result));
       assert (conversation.getHistory().size() == 2);
     }
   }
@@ -63,15 +98,16 @@ public class TestConversation {
           QWenConversationParam.builder()
               .model(QWenConversationParam.QWEN_V1)
               .prompt("hello")
+              .apiKey("testKey")
               .build();
 
       final List<Object> ret = Lists.newArrayList();
       Semaphore semaphore = new Semaphore(0);
 
-      class ReactCallback extends ResultCallback<ConversationResultBase> {
+      class ReactCallback extends ResultCallback<ConversationResult> {
 
         @Override
-        public void onEvent(String eventType, ConversationResultBase message) {
+        public void onEvent(String eventType, ConversationResult message) {
           if (eventType.equals("task-finished")) {
             ret.add(message);
             semaphore.release();
@@ -85,7 +121,7 @@ public class TestConversation {
       conversation.call(param, new ReactCallback());
       semaphore.acquire();
       assert (conversation.getHistory().size() == 2);
-      log.info(JSON.toJSONString(ret));
+      log.info(JsonUtils.toJson(ret));
     }
   }
 
@@ -97,14 +133,15 @@ public class TestConversation {
       QWenConversationParam param =
           QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1).prompt("hello")
               .stream(true)
+              .apiKey("testKey")
               .build();
 
       final List<Object> ret = Lists.newArrayList();
       Semaphore semaphore = new Semaphore(0);
-      class ReactCallback extends ResultCallback<ConversationResultBase> {
+      class ReactCallback extends ResultCallback<ConversationResult> {
 
         @Override
-        public void onEvent(String eventType, ConversationResultBase message) {
+        public void onEvent(String eventType, ConversationResult message) {
           if (EventType.RESULT_GENERATED.getValue().equals(eventType)) {
             ret.add(message);
           }
@@ -121,7 +158,7 @@ public class TestConversation {
       conversation.call(param, new ReactCallback());
       semaphore.acquire();
       assert (conversation.getHistory().size() == 2);
-      log.info(JSON.toJSONString(ret));
+      log.info(JsonUtils.toJson(ret));
     }
   }
 
@@ -133,40 +170,44 @@ public class TestConversation {
       QWenConversationParam param =
           QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1).prompt("hello")
               .stream(true)
+              .apiKey("testKey")
               .build();
 
-      Flowable<ConversationResultBase> flowable = conversation.streamCall(param);
-      flowable.blockingForEach(msg -> log.info(JSON.toJSONString(msg)));
+      Flowable<ConversationResult> flowable = conversation.streamCall(param);
+      flowable.blockingForEach(msg -> log.info(JsonUtils.toJson(msg)));
       assert (conversation.getHistory().size() == 2);
 
       param =
           QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1)
               .prompt("May I ask you some questions?").stream(true)
+              .apiKey("testKey")
               .build();
 
       flowable = conversation.streamCall(param);
-      flowable.blockingForEach(msg -> log.info(JSON.toJSONString(msg)));
+      flowable.blockingForEach(msg -> log.info(JsonUtils.toJson(msg)));
       assert (conversation.getHistory().size() == 4);
 
       param =
           QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1)
               .prompt("My name is Siri").stream(true)
+              .apiKey("testKey")
               .build();
 
       flowable = conversation.streamCall(param);
-      flowable.blockingForEach(msg -> log.info(JSON.toJSONString(msg)));
+      flowable.blockingForEach(msg -> log.info(JsonUtils.toJson(msg)));
       assert (conversation.getHistory().size() == 6);
 
       param =
           QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1)
               .prompt("What is my name?").stream(true)
+              .apiKey("testKey")
               .build();
 
       flowable = conversation.streamCall(param);
-      List<ConversationResultBase> ret = Lists.newArrayList();
+      List<ConversationResult> ret = Lists.newArrayList();
       flowable.blockingForEach(ret::add);
       assert (conversation.getHistory().size() == 8);
-      log.info(JSON.toJSONString(ret));
+      log.info(JsonUtils.toJson(ret));
       assert (ret.get(ret.size() - 1).getMessage().getPayload().contains("Siri"));
     }
   }

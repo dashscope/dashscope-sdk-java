@@ -1,7 +1,7 @@
 package com.dashscope.exception;
 
-import com.alibaba.fastjson.JSON;
 import com.dashscope.common.Status;
+import com.dashscope.utils.JsonUtils;
 import lombok.Getter;
 
 public class ApiException extends RuntimeException {
@@ -20,7 +20,7 @@ public class ApiException extends RuntimeException {
   @Override
   public String toString() {
     String s = super.toString();
-    s = s + "; status body:" + JSON.toJSONString(status);
+    s = s + "; status body:" + JsonUtils.toJson(status);
     return s;
   }
 }

@@ -14,6 +14,8 @@ public class ApiKeywords {
 
   public static final String REQUEST_ID = "request_id";
 
+  public static final String TASK_GROUP = "task_group";
+
   public static final String TEXT = "text";
 
   public static final String MODEL = "model";
@@ -31,4 +33,26 @@ public class ApiKeywords {
   public static final String M6_SEARCH_IN_FIRST_QUERY = "M6_SEARCH_IN_FIRST_QUERY";
 
   public static final String M6_NUM_WEB_SEARCH = "M6_NUM_WEB_SEARCH";
+
+  public static final String HEADER = "header";
+
+  public static final String ACTION = "action";
+
+  public static final String TASKID = "task_id";
+
+  public static final String STREAMING = "streaming";
+
+  public static final String PAYLOAD = "payload";
+
+  public static final String OUTPUT_TOKENS = "output_tokens";
+
+  public static final String INPUT_TOKENS = "input_tokens";
+
+  public static final String ERROR = "error";
+
+  public static final String EVENT = "event";
+
+  public static final String ERROR_NAME = "error_name";
+
+  public static final String ERROR_MESSAGE = "error_message";
 }

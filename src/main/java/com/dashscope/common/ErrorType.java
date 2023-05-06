@@ -10,6 +10,9 @@ public enum ErrorType {
 
   /** The error happens because the network protocol is not supported. */
   PROTOCOL_UNSUPPORTED("protocol_unsupported"),
+
+  /** The api key is not correct. */
+  API_KEY_ERROR("api_key_error"),
   ;
 
   private final String value;

@@ -1,8 +1,8 @@
 package com.dashscope;
 
 import com.dashscope.common.ResultCallback;
-import com.dashscope.conversation.ConversationParamBase;
-import com.dashscope.conversation.ConversationResultBase;
+import com.dashscope.conversation.ConversationParam;
+import com.dashscope.conversation.ConversationResult;
 import io.reactivex.Flowable;
 
 public interface BaseConversation {
@@ -10,26 +10,25 @@ public interface BaseConversation {
   /**
    * Call the server to get the result in the callback function.
    *
-   * @param param The input param, should be the subclass of `ConversationParamBase`.
+   * @param param The input param, should be the subclass of `ConversationParam`.
    * @param callback The callback to receive response, should be the subclass of
-   *     `ConversationResultBase`.
+   *     `ConversationResult`.
    */
-  void call(ConversationParamBase param, ResultCallback<ConversationResultBase> callback);
+  void call(ConversationParam param, ResultCallback<ConversationResult> callback);
 
   /**
    * Call the server to get the result by stream.
    *
-   * @param param The input param, should be the subclass of `ConversationParamBase`.
-   * @return A `Flowable` of the output structure, which is the subclass of
-   *     `ConversationResultBase`.
+   * @param param The input param, should be the subclass of `ConversationParam`.
+   * @return A `Flowable` of the output structure, which is the subclass of `ConversationResult`.
    */
-  Flowable<ConversationResultBase> streamCall(ConversationParamBase param);
+  Flowable<ConversationResult> streamCall(ConversationParam param);
 
   /**
    * Call the server to get the whole result.
    *
-   * @param param The input param, should be the subclass of `ConversationParamBase`.
-   * @return The output structure, should be the subclass of `ConversationResultBase`.
+   * @param param The input param, should be the subclass of `ConversationParam`.
+   * @return The output structure, should be the subclass of `ConversationResult`.
    */
-  ConversationResultBase call(ConversationParamBase param);
+  ConversationResult call(ConversationParam param);
 }

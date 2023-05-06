@@ -3,9 +3,10 @@ package com.dashscope.conversation;
 import static com.dashscope.utils.ApiKeywords.DEBUG;
 import static com.dashscope.utils.ApiKeywords.HISTORY;
 
-import com.alibaba.fastjson.JSONObject;
 import com.dashscope.common.Role;
 import com.google.common.collect.Lists;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import java.util.List;
 import lombok.Data;
 
@@ -28,14 +29,14 @@ public class ConversationMessage {
     return input;
   }
 
-  private static List<JSONObject> prepareHistory(List<ChatMessage> history, Integer nHistory) {
+  private static JsonArray prepareHistory(List<ChatMessage> history, Integer nHistory) {
     if (history == null) {
       history = Lists.newArrayList();
     }
     if (nHistory != null && nHistory != -1 && history.size() >= 2 * nHistory) {
       history = history.subList(history.size() - 2 * nHistory, history.size());
     }
-    List<JSONObject> list = Lists.newArrayList();
+    JsonArray list = new JsonArray();
     String user = null;
     String bot = null;
     for (ChatMessage message : history) {
@@ -45,9 +46,9 @@ public class ConversationMessage {
         bot = message.getPayload();
       }
       if (user != null && bot != null) {
-        JSONObject json = new JSONObject();
-        json.put(Role.BOT.getValue(), bot);
-        json.put(Role.USER.getValue(), user);
+        JsonObject json = new JsonObject();
+        json.addProperty(Role.BOT.getValue(), bot);
+        json.addProperty(Role.USER.getValue(), user);
         list.add(json);
         user = null;
         bot = null;
@@ -62,7 +63,7 @@ public class ConversationMessage {
       String utterance,
       List<ChatMessage> history,
       Integer nHistory,
-      JSONObject parameters,
+      JsonObject parameters,
       boolean streaming,
       boolean enableDebug) {
     ConversationMessage input = new ConversationMessage();
@@ -72,9 +73,9 @@ public class ConversationMessage {
     ConversationMessagePayload payload =
         ConversationMessagePayload.buildInputPayload(model, utterance);
     if (history != null && !history.isEmpty()) {
-      payload.getInput().put(HISTORY, prepareHistory(history, nHistory));
+      payload.getInput().add(HISTORY, prepareHistory(history, nHistory));
     }
-    payload.getInput().put(DEBUG, enableDebug);
+    payload.getInput().addProperty(DEBUG, enableDebug);
     payload.setParameters(parameters);
     input.setPayload(payload);
     return input;
@@ -86,7 +87,7 @@ public class ConversationMessage {
       String utterance,
       List<ChatMessage> history,
       int nHistory,
-      JSONObject parameters,
+      JsonObject parameters,
       boolean streaming,
       boolean enableDebug) {
     ConversationMessage input = new ConversationMessage();
@@ -96,9 +97,9 @@ public class ConversationMessage {
     ConversationMessagePayload payload =
         ConversationMessagePayload.buildMultiModalInputPayload(model, utterance);
     if (history != null && !history.isEmpty()) {
-      payload.getInput().put(HISTORY, prepareHistory(history, nHistory));
+      payload.getInput().add(HISTORY, prepareHistory(history, nHistory));
     }
-    payload.getInput().put(DEBUG, enableDebug);
+    payload.getInput().addProperty(DEBUG, enableDebug);
     payload.setParameters(parameters);
     input.setPayload(payload);
     return input;

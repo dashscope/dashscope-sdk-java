@@ -39,19 +39,18 @@ public final class Conversation implements BaseConversation {
    * Call the server to get the result in the callback function.
    *
    * @param param The input param of class `ConversationParam`.
-   * @param callback The callback to receive response, the template class is
-   *     `ConversationResultBase`.
+   * @param callback The callback to receive response, the template class is `ConversationResult`.
    */
   @Override
-  public void call(ConversationParamBase param, ResultCallback<ConversationResultBase> callback) {
-    class ReactCallback extends ResultCallback<ConversationResultBase> {
+  public void call(ConversationParam param, ResultCallback<ConversationResult> callback) {
+    class ReactCallback extends ResultCallback<ConversationResult> {
 
       public void onOpen(Status status) {
         callback.onOpen(status);
       }
 
       @Override
-      public void onEvent(String type, ConversationResultBase message) {
+      public void onEvent(String type, ConversationResult message) {
         if (EventType.TASK_FINISHED.getValue().equals(type) && (message != null)) {
           history.add(
               ChatMessage.builder().role(Role.USER.getValue()).payload(param.getPrompt()).build());
@@ -90,17 +89,17 @@ public final class Conversation implements BaseConversation {
    * @return A `Flowable` of the output structure.
    */
   @Override
-  public Flowable<ConversationResultBase> streamCall(ConversationParamBase param) {
-    class ReactCallback extends ResultCallback<ConversationResultBase> {
+  public Flowable<ConversationResult> streamCall(ConversationParam param) {
+    class ReactCallback extends ResultCallback<ConversationResult> {
 
-      private final FlowableEmitter<ConversationResultBase> emitter;
+      private final FlowableEmitter<ConversationResult> emitter;
 
-      public ReactCallback(FlowableEmitter<ConversationResultBase> emitter) {
+      public ReactCallback(FlowableEmitter<ConversationResult> emitter) {
         this.emitter = emitter;
       }
 
       @Override
-      public void onEvent(String type, ConversationResultBase message) {
+      public void onEvent(String type, ConversationResult message) {
         if (EventType.RESULT_GENERATED.getValue().equals(type) && param.isStream()) {
           this.emitter.onNext(message);
         } else if (EventType.TASK_FINISHED.getValue().equals(type) && (message != null)) {
@@ -109,7 +108,7 @@ public final class Conversation implements BaseConversation {
           history.add(
               ChatMessage.builder()
                   .role(Role.BOT.getValue())
-                  .payload(message.getMessage().getPayload())
+                  .payload(message.getMessage() == null ? null : message.getMessage().getPayload())
                   .build());
           this.emitter.onNext(message);
           this.emitter.onComplete();
@@ -137,18 +136,18 @@ public final class Conversation implements BaseConversation {
    * @return The output structure of `QWenConversationResult`.
    */
   @Override
-  public ConversationResultBase call(ConversationParamBase param) {
+  public ConversationResult call(ConversationParam param) {
 
-    class ReactCallback extends ResultCallback<ConversationResultBase> {
+    class ReactCallback extends ResultCallback<ConversationResult> {
 
-      private final FlowableEmitter<ConversationResultBase> emitter;
+      private final FlowableEmitter<ConversationResult> emitter;
 
-      public ReactCallback(FlowableEmitter<ConversationResultBase> emitter) {
+      public ReactCallback(FlowableEmitter<ConversationResult> emitter) {
         this.emitter = emitter;
       }
 
       @Override
-      public void onEvent(String type, ConversationResultBase message) {
+      public void onEvent(String type, ConversationResult message) {
         if (EventType.TASK_FINISHED.getValue().equals(type)) {
           this.emitter.onNext(message);
           this.emitter.onComplete();
@@ -164,11 +163,11 @@ public final class Conversation implements BaseConversation {
     if (param.getHistory() == null && !history.isEmpty()) {
       param.setHistory(history);
     }
-    Flowable<ConversationResultBase> flowable =
+    Flowable<ConversationResult> flowable =
         Flowable.create(
             emitter -> conversationRpc.call(param, new ReactCallback(emitter)),
             BackpressureStrategy.BUFFER);
-    ConversationResultBase result = flowable.blockingFirst();
+    ConversationResult result = flowable.blockingFirst();
     if (result != null) {
       history.add(
           ChatMessage.builder().role(Role.USER.getValue()).payload(param.getPrompt()).build());

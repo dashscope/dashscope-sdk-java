@@ -21,7 +21,7 @@ You can call Conversation model with this sample code:
 ```java
 import com.alibaba.fastjson.JSON;
 import com.dashscope.conversation.Conversation;
-import com.dashscope.conversation.ConversationResultBase;
+import com.dashscope.conversation.ConversationResult;
 import com.dashscope.conversation.qwen.QWenConversationParam;
 import io.reactivex.Flowable;
 
@@ -37,7 +37,7 @@ public class Main {
                         .topP(0.8)
                         .build();
 
-        Flowable<ConversationResultBase> flowable = api.streamCall(param);
+        Flowable<ConversationResult> flowable = api.streamCall(param);
         flowable.blockingForEach(msg -> System.out.println(JSON.toJSONString(msg)));
     }
 }
