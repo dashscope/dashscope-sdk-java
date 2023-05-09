@@ -11,10 +11,12 @@ import com.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.apache.http.HttpStatus;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
+@ToString(callSuper = true)
 public class QWenConversationResult extends ConversationResult {
 
   /** The data usage information. */
@@ -46,7 +48,11 @@ public class QWenConversationResult extends ConversationResult {
         throw new ApiException(
             ConversationMessageStatus.builder()
                 .message(header.getErrorMessage())
-                .statusCode(HttpStatus.SC_OK)
+                .statusCode(
+                    (header.getErrorMessage() == null ? "" : header.getErrorMessage())
+                            .contains("sensitive content")
+                        ? HttpStatus.SC_BAD_REQUEST
+                        : HttpStatus.SC_OK)
                 .code(header.getErrorName())
                 .msgId(header.getTaskId())
                 .usage(usage)

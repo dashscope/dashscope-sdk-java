@@ -33,13 +33,13 @@ public final class Constants {
 
   public static final String DASHSCOPE_WEBSOCKET_BASE_URL_ENV = "DASHSCOPE_WEBSOCKET_BASE_URL";
 
-  public static final int CONNECT_TIMEOUT =
+  public static int CONNECT_TIMEOUT =
       Integer.parseInt(System.getenv().getOrDefault(HTTP_CONNECT_TIMEOUT_ENV, "10000"));
 
-  public static final int CONNECTION_REQUEST_TIMEOUT =
+  public static int CONNECTION_REQUEST_TIMEOUT =
       Integer.parseInt(System.getenv().getOrDefault(HTTP_CONNECTION_REQUEST_TIMEOUT_ENV, "30000"));
 
-  public static final int SOCKET_TIMEOUT =
+  public static int SOCKET_TIMEOUT =
       Integer.parseInt(System.getenv().getOrDefault(HTTP_SOCKET_TIMEOUT_ENV, "30000"));
 
   public static String apiVersion = System.getenv().getOrDefault(DASHSCOPE_API_VERSION_ENV, "v1");

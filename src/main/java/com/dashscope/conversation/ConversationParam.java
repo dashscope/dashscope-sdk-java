@@ -30,7 +30,7 @@ public abstract class ConversationParam {
   private boolean stream = false;
 
   /** Open security check */
-  private boolean securityCheck = false;
+  private boolean securityCheck = true;
 
   public String getMsgId() {
     if (StringUtils.isBlank(msgId)) {

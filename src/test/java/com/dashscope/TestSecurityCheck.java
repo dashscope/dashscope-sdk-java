@@ -50,4 +50,29 @@ public class TestSecurityCheck {
       }
     }
   }
+
+  @Test
+  public void testSecurityCheckNoStream() {
+    for (String protocol : protocols) {
+      try {
+        Conversation conversation = new Conversation(protocol);
+
+        QWenConversationParam param =
+            QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1).prompt(DIRTY_WORDS)
+                .stream(false)
+                .securityCheck(true)
+                .apiKey(System.getenv().get("TEST_API_KEY"))
+                .maxLength(10)
+                .topP(0.8)
+                .build();
+
+        Flowable<ConversationResult> flowable = conversation.streamCall(param);
+        flowable.blockingForEach(msg -> log.info(JsonUtils.toJson(msg)));
+        assert (false);
+      } catch (ApiException e) {
+        System.out.println(e.getStatus().getMessage());
+        assert (e.getStatus().getMessage().contains("sensitive content"));
+      }
+    }
+  }
 }

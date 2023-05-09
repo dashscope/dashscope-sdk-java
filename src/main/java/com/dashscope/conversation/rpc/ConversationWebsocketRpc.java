@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.enums.ReadyState;
-import org.java_websocket.exceptions.WebsocketNotConnectedException;
 import org.java_websocket.handshake.ServerHandshake;
 
 @Slf4j
@@ -27,6 +26,7 @@ public final class ConversationWebsocketRpc implements ConversationRpc {
     try {
       client =
           new WebSocketClient(new URI(Constants.baseWebsocketApiUrl)) {
+
             @Override
             public void onOpen(ServerHandshake handShakeData) {
               assert (resultCallback != null);
@@ -53,12 +53,22 @@ public final class ConversationWebsocketRpc implements ConversationRpc {
             @Override
             public void onClose(int code, String reason, boolean remote) {
               assert (resultCallback != null);
-              resultCallback.onClose(
-                  WebsocketConnectionStatus.builder()
-                      .statusCode(code)
-                      .message(reason)
-                      .remote(remote)
-                      .build());
+              if ((reason == null ? "" : reason).contains("Unauthorized")) {
+                resultCallback.onError(
+                    new ApiException(
+                        ConversationMessageStatus.builder()
+                            .statusCode(HttpStatus.SC_UNAUTHORIZED)
+                            .code(String.valueOf(code))
+                            .message(reason)
+                            .build()));
+              } else {
+                resultCallback.onClose(
+                    WebsocketConnectionStatus.builder()
+                        .statusCode(code)
+                        .message(reason)
+                        .remote(remote)
+                        .build());
+              }
             }
 
             @Override
@@ -126,7 +136,6 @@ public final class ConversationWebsocketRpc implements ConversationRpc {
         connected = client.reconnectBlocking();
       }
       if (!connected) {;
-        callback.onError(new ApiException(new WebsocketNotConnectedException()));
         return;
       }
       client.send(param.buildMessageBody(Protocol.WEBSOCKET.getValue()));
