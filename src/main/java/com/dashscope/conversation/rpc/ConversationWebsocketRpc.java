@@ -109,6 +109,7 @@ public final class ConversationWebsocketRpc implements ConversationRpc {
                   ConversationMessageStatus.builder()
                       .statusCode(HttpStatus.SC_UNAUTHORIZED)
                       .code(ErrorType.API_KEY_ERROR.getValue())
+                      .message(ErrorType.API_KEY_ERROR.getValue())
                       .build()));
           return;
         }
@@ -125,6 +126,7 @@ public final class ConversationWebsocketRpc implements ConversationRpc {
                   ConversationMessageStatus.builder()
                       .statusCode(HttpStatus.SC_UNAUTHORIZED)
                       .code(ErrorType.API_KEY_ERROR.getValue())
+                      .message(ErrorType.API_KEY_ERROR.getValue())
                       .build()));
           return;
         }

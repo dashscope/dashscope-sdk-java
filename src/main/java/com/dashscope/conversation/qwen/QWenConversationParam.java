@@ -15,6 +15,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.apache.http.HttpStatus;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -100,6 +101,7 @@ public class QWenConversationParam extends ConversationParam {
           ConversationMessageStatus.builder()
               .code(ErrorType.PROTOCOL_UNSUPPORTED.getValue())
               .message(protocol)
+              .statusCode(HttpStatus.SC_BAD_REQUEST)
               .build());
     }
   }

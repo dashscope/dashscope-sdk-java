@@ -48,11 +48,7 @@ public class QWenConversationResult extends ConversationResult {
         throw new ApiException(
             ConversationMessageStatus.builder()
                 .message(header.getErrorMessage())
-                .statusCode(
-                    (header.getErrorMessage() == null ? "" : header.getErrorMessage())
-                            .contains("sensitive content")
-                        ? HttpStatus.SC_BAD_REQUEST
-                        : HttpStatus.SC_OK)
+                .statusCode(44)
                 .code(header.getErrorName())
                 .msgId(header.getTaskId())
                 .usage(usage)
@@ -76,6 +72,7 @@ public class QWenConversationResult extends ConversationResult {
           ConversationMessageStatus.builder()
               .code(ErrorType.PROTOCOL_UNSUPPORTED.getValue())
               .message(protocol)
+              .statusCode(HttpStatus.SC_BAD_REQUEST)
               .build());
     }
   }

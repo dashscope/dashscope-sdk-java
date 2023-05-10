@@ -39,6 +39,7 @@ public final class ConversationHttpRpc implements ConversationRpc {
               ConversationMessageStatus.builder()
                   .statusCode(HttpStatus.SC_UNAUTHORIZED)
                   .code(ErrorType.API_KEY_ERROR.getValue())
+                  .message(ErrorType.API_KEY_ERROR.getValue())
                   .build()));
       return;
     }
@@ -110,7 +111,8 @@ public final class ConversationHttpRpc implements ConversationRpc {
                                 line = line.substring(5).trim();
                                 if (lastIsError) {
                                   ConversationMessageStatus status =
-                                      parseMessageStatus(line, HttpStatus.SC_OK, response);
+                                      parseMessageStatus(
+                                          line, HttpStatus.SC_INTERNAL_SERVER_ERROR, response);
                                   callback.onError(new ApiException(status));
                                 } else {
                                   result = resultType.newInstance();
@@ -181,6 +183,7 @@ public final class ConversationHttpRpc implements ConversationRpc {
                       ConversationMessageStatus.builder()
                           .code(ErrorType.REQUEST_CANCELLED.getValue())
                           .msgId(msgId)
+                          .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
                           .build();
                   callback.onError(new ApiException(status));
                 }
@@ -196,6 +199,7 @@ public final class ConversationHttpRpc implements ConversationRpc {
       return ConversationMessageStatus.builder()
           .statusCode(statusCode)
           .code(ErrorType.RESPONSE_ERROR.getValue())
+          .message(ErrorType.RESPONSE_ERROR.getValue())
           .build();
     }
     boolean isJson = false;
