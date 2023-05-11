@@ -44,7 +44,10 @@ public final class ConversationWebsocketRpc implements ConversationRpc {
                 ConversationResult result = resultType.newInstance();
                 result.loadFromMessage(Protocol.WEBSOCKET.getValue(), message);
                 String eventType = result.getEventType();
-                resultCallback.onEvent(eventType, result);
+                if (EventType.RESULT_GENERATED.getValue().equals(eventType)
+                    || EventType.TASK_FINISHED.getValue().equals(eventType)) {
+                  resultCallback.onEvent(eventType, result);
+                }
               } catch (Exception e) {
                 resultCallback.onError(e instanceof ApiException ? e : new ApiException(e));
               }
