@@ -8,7 +8,7 @@ To use the sdk in your java systems, please add the maven dependency in your pom
 
 ```xml
 <dependency>
-    <groupId>org.dashscope</groupId>
+    <groupId>com.alibaba</groupId>
     <artifactId>dashscope-sdk-java</artifactId>
     <version>{dashscope-sdk-java-version}</version>
 </dependency>
@@ -21,14 +21,14 @@ To use the sdk in your java systems, please add the maven dependency in your pom
 You can create a conversation client simply by:
 
 ```java
-# Use http as the network protocol.
+// Use http as the network protocol.
 Conversation conversation = new Conversation();
 ```
 
 This interface also accept a protocol argument:
 
 ```java
-import com.dashscope.common.Protocol;
+import com.alibaba.dashscope.common.Protocol;
 Conversation conversation = new Conversation(Protocol.HTTP.getValue());
 Conversation conversation = new Conversation(Protocol.WEBSOCKET.getValue());
 ```
@@ -40,13 +40,13 @@ Here shows the usages of each method, with the examples of `qwen-v1` model.
 #### Support stream and non-stream mode, accept output from callback
 
 ```java
-import com.dashscope.common.ResultCallback;
-import com.dashscope.conversation.Conversation;
-import com.dashscope.conversation.ConversationResult;
-import com.dashscope.conversation.EventType;
-import com.dashscope.conversation.qwen.QWenConversationParam;
-import com.dashscope.conversation.qwen.QWenConversationResult;
-import com.dashscope.exception.ApiException;
+import com.alibaba.dashscope.common.ResultCallback;
+import com.alibaba.dashscope.conversation.Conversation;
+import com.alibaba.dashscope.conversation.ConversationResult;
+import com.alibaba.dashscope.conversation.EventType;
+import com.alibaba.dashscope.conversation.qwen.QWenConversationParam;
+import com.alibaba.dashscope.conversation.qwen.QWenConversationResult;
+import com.alibaba.dashscope.exception.ApiException;
 
 public class Main {
 
@@ -100,10 +100,10 @@ The Exception instance in the conversation scenario is a `ApiException` instance
 #### Stream only, accept by react io
 
 ```java
-import com.dashscope.conversation.Conversation;
-import com.dashscope.conversation.ConversationResult;
-import com.dashscope.conversation.qwen.QWenConversationParam;
-import com.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.conversation.Conversation;
+import com.alibaba.dashscope.conversation.ConversationResult;
+import com.alibaba.dashscope.conversation.qwen.QWenConversationParam;
+import com.alibaba.dashscope.utils.JsonUtils;
 import io.reactivex.Flowable;
 
 public class Main {
@@ -133,11 +133,10 @@ The `streamCall` method accepts a `ConversationParam` , and returns a `Flowable`
 #### Non-stream only
 
 ```java
-package com.dashscope;
 
-import com.dashscope.conversation.Conversation;
-import com.dashscope.conversation.ConversationResult;
-import com.dashscope.conversation.qwen.QWenConversationParam;
+import com.alibaba.dashscope.conversation.Conversation;
+import com.alibaba.dashscope.conversation.ConversationResult;
+import com.alibaba.dashscope.conversation.qwen.QWenConversationParam;
 
 public class Main {
 
