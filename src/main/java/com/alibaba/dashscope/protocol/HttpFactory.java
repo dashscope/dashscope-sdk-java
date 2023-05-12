@@ -1,3 +1,4 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.protocol;
 
 import com.alibaba.dashscope.utils.Constants;

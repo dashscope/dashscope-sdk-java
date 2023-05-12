@@ -1,3 +1,4 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.conversation;
 
 import com.alibaba.dashscope.exception.ApiException;

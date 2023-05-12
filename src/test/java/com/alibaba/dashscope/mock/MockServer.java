@@ -1,3 +1,4 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.mock;
 
 import com.alibaba.dashscope.conversation.ConversationMessagePayload;

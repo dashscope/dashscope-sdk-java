@@ -1,3 +1,4 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope;
 
 import com.alibaba.dashscope.common.ResultCallback;

@@ -1,3 +1,4 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.conversation;
 
 import static com.alibaba.dashscope.utils.ApiKeywords.DEBUG;
