@@ -26,7 +26,7 @@ public final class Conversation implements BaseConversation {
 
   @Setter private long observerTimeout = 30;
 
-  @Getter private final List<ChatMessage> history = Lists.newArrayList();
+  @Getter private final List<ChatMessage> history = Lists.newCopyOnWriteArrayList();
 
   public Conversation() {
     conversationRpc = new ConversationHttpRpc();
@@ -129,6 +129,7 @@ public final class Conversation implements BaseConversation {
     if (param.getHistory() == null) {
       param.setHistory(history);
     }
+    param.setStream(true);
     return Flowable.<ConversationResult>create(
             emitter -> conversationRpc.call(param, new ReactCallback(emitter)),
             BackpressureStrategy.BUFFER)
@@ -169,6 +170,7 @@ public final class Conversation implements BaseConversation {
     if (param.getHistory() == null && !history.isEmpty()) {
       param.setHistory(history);
     }
+    param.setStream(false);
     Flowable<ConversationResult> flowable =
         Flowable.<ConversationResult>create(
                 emitter -> conversationRpc.call(param, new ReactCallback(emitter)),

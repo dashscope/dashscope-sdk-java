@@ -205,7 +205,8 @@ public final class ConversationHttpRpc implements ConversationRpc {
     }
     boolean isJson = false;
     Header header = response.getFirstHeader("Content-Type");
-    if (header.getValue() != null
+    if (header != null
+        && header.getValue() != null
         && (header.getValue().toLowerCase().contains("application/json")
             || header.getValue().toLowerCase().contains("text/event-stream"))) {
       isJson = true;
