@@ -4,6 +4,7 @@ package com.alibaba.dashscope.conversation;
 import com.alibaba.dashscope.exception.ApiException;
 import java.util.List;
 import java.util.UUID;
+import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
 import org.apache.commons.lang3.StringUtils;
@@ -28,10 +29,10 @@ public abstract class ConversationParam {
   private String apiKey;
 
   /** Get real-time response with streaming mode */
-  private boolean stream = false;
+  @Builder.Default private boolean stream = false;
 
   /** Open security check */
-  private boolean securityCheck = true;
+  @Builder.Default private boolean securityCheck = true;
 
   public String getMsgId() {
     if (StringUtils.isBlank(msgId)) {

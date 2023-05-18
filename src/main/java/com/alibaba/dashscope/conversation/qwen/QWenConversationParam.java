@@ -12,6 +12,7 @@ import com.alibaba.dashscope.conversation.ConversationResult;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -36,10 +37,10 @@ public class QWenConversationParam extends ConversationParam {
   private boolean enableSearch = false;
 
   /** Multi-modal conversation. */
-  private boolean multiModal = false;
+  @Builder.Default private boolean multiModal = false;
 
   /** Enable debug or not. */
-  private boolean enableDebug = false;
+  @Builder.Default private boolean enableDebug = false;
 
   /**
    * The n-round history to use, if > 0, the conversation api will choose 2 * nHistory ChatMessage
