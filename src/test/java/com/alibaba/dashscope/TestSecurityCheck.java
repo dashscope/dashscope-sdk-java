@@ -53,6 +53,24 @@ public class TestSecurityCheck {
   }
 
   @Test
+  public void testSecurityCheckDefault() {
+    for (String protocol : protocols) {
+      Conversation conversation = new Conversation(protocol);
+
+      QWenConversationParam param =
+          QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1).prompt(DIRTY_WORDS)
+              .stream(true)
+              .apiKey(System.getenv().get("TEST_API_KEY"))
+              .maxLength(10)
+              .topP(0.8)
+              .build();
+
+      Flowable<ConversationResult> flowable = conversation.streamCall(param);
+      flowable.blockingForEach(msg -> log.info(JsonUtils.toJson(msg)));
+    }
+  }
+
+  @Test
   public void testSecurityCheckNoStream() {
     for (String protocol : protocols) {
       try {

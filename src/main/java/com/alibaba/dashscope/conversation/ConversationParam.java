@@ -31,8 +31,8 @@ public abstract class ConversationParam {
   /** Get real-time response with streaming mode */
   @Builder.Default private boolean stream = false;
 
-  /** Open security check */
-  @Builder.Default private boolean securityCheck = true;
+  /** Open security check or not */
+  @Builder.Default private boolean securityCheck = false;
 
   public String getMsgId() {
     if (StringUtils.isBlank(msgId)) {
