@@ -1,7 +1,6 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
-package com.alibaba.dashscope.conversation;
+package com.alibaba.dashscope.aigc.conversation;
 
-import static com.alibaba.dashscope.utils.ApiKeywords.PROMPT;
 import static com.alibaba.dashscope.utils.ApiKeywords.REQUEST_ID;
 import static com.alibaba.dashscope.utils.ApiKeywords.TASK_GROUP;
 
@@ -45,28 +44,13 @@ public class ConversationMessagePayload {
   /** The data usage. */
   private JsonObject usage;
 
-  public static ConversationMessagePayload buildInputPayload(String model, String utterance) {
+  public static ConversationMessagePayload buildInputPayload(String model, JsonObject input) {
     ConversationMessagePayload payLoad = new ConversationMessagePayload();
     payLoad.setModel(model);
     payLoad.setTask(Task.TEXT_GENERATION.getValue());
     payLoad.setTaskGroup(TaskGroup.AIGC.getValue());
     payLoad.setFunction(Function.GENERATION.getValue());
-    JsonObject userInput = new JsonObject();
-    userInput.addProperty(PROMPT, utterance);
-    payLoad.setInput(userInput);
-    return payLoad;
-  }
-
-  public static ConversationMessagePayload buildMultiModalInputPayload(
-      String model, String utterance) {
-    ConversationMessagePayload payLoad = new ConversationMessagePayload();
-    payLoad.setModel(model);
-    payLoad.setTask(Task.CHAT.getValue());
-    payLoad.setTaskGroup(TaskGroup.AIGC.getValue());
-    payLoad.setFunction(Function.MULTIMODAL_CHAT.getValue());
-    JsonObject userInput = new JsonObject();
-    userInput.addProperty(PROMPT, utterance);
-    payLoad.setInput(userInput);
+    payLoad.setInput(input);
     return payLoad;
   }
 }

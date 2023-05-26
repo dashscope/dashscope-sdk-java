@@ -56,4 +56,8 @@ public class ApiKeywords {
   public static final String ERROR_NAME = "error_name";
 
   public static final String ERROR_MESSAGE = "error_message";
+
+  public static final String OUTPUT = "output";
+
+  public static final String TASK_STATUS = "task_status";
 }

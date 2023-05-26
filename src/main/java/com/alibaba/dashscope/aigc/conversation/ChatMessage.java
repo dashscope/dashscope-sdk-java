@@ -1,5 +1,5 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
-package com.alibaba.dashscope.conversation;
+package com.alibaba.dashscope.aigc.conversation;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

@@ -1,12 +1,13 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope;
 
+import com.alibaba.dashscope.aigc.conversation.Conversation;
+import com.alibaba.dashscope.aigc.conversation.ConversationParam;
+import com.alibaba.dashscope.aigc.conversation.ConversationResult;
+import com.alibaba.dashscope.aigc.conversation.qwen.QWenConversationParam;
 import com.alibaba.dashscope.common.Protocol;
 import com.alibaba.dashscope.common.ResultCallback;
-import com.alibaba.dashscope.conversation.Conversation;
-import com.alibaba.dashscope.conversation.ConversationResult;
-import com.alibaba.dashscope.conversation.EventType;
-import com.alibaba.dashscope.conversation.qwen.QWenConversationParam;
+import com.alibaba.dashscope.common.StreamingMode;
 import com.alibaba.dashscope.mock.MockServer;
 import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
@@ -55,18 +56,45 @@ public class TestConversation {
       Conversation conversation = new Conversation(protocol);
 
       QWenConversationParam param =
-          QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1).prompt("hello")
-              .stream(true)
+          QWenConversationParam.builder()
+              .model(QWenConversationParam.QWEN_V1)
+              .prompt("hello")
+              .mode(StreamingMode.OUT)
               .maxLength(10)
               .apiKey("testKey")
-              .msgId("test-id")
+              .requestId("test-id")
               .topP(0.8)
               .build();
 
       Flowable<ConversationResult> flowable = conversation.streamCall(param);
       flowable.blockingForEach(
           msg -> {
-            assert ("test-id".equals(msg.getMsgId()));
+            assert ("test-id".equals(msg.getRequestId()));
+            log.info(JsonUtils.toJson(msg));
+          });
+      assert (conversation.getHistory().size() == 2);
+    }
+  }
+
+  @Test
+  public void testBaseClassConversation() {
+    for (String protocol : protocols) {
+      Conversation conversation = new Conversation(protocol);
+
+      ConversationParam param =
+          ConversationParam.builder()
+              .model(QWenConversationParam.QWEN_V1)
+              .prompt("hello")
+              .mode(StreamingMode.OUT)
+              .apiKey("testKey")
+              .requestId("test-id")
+              .build();
+
+      Flowable<ConversationResult> flowable = conversation.streamCall(param);
+      flowable.blockingForEach(
+          msg -> {
+            assert ("test-id".equals(msg.getRequestId()));
+            log.info(JsonUtils.toJson(msg));
           });
       assert (conversation.getHistory().size() == 2);
     }
@@ -108,11 +136,13 @@ public class TestConversation {
       class ReactCallback extends ResultCallback<ConversationResult> {
 
         @Override
-        public void onEvent(String eventType, ConversationResult message) {
-          if (eventType.equals("task-finished")) {
-            ret.add(message);
-            semaphore.release();
-          }
+        public void onEvent(ConversationResult message) {
+          ret.add(message);
+        }
+
+        @Override
+        public void onComplete() {
+          semaphore.release();
         }
 
         public void onError(Exception e) {
@@ -132,8 +162,10 @@ public class TestConversation {
       Conversation conversation = new Conversation(protocol);
 
       QWenConversationParam param =
-          QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1).prompt("hello")
-              .stream(true)
+          QWenConversationParam.builder()
+              .model(QWenConversationParam.QWEN_V1)
+              .prompt("hello")
+              .mode(StreamingMode.OUT)
               .apiKey("testKey")
               .build();
 
@@ -142,14 +174,13 @@ public class TestConversation {
       class ReactCallback extends ResultCallback<ConversationResult> {
 
         @Override
-        public void onEvent(String eventType, ConversationResult message) {
-          if (EventType.RESULT_GENERATED.getValue().equals(eventType)) {
-            ret.add(message);
-          }
-          if (EventType.TASK_FINISHED.getValue().equals(eventType)) {
-            ret.add(message);
-            semaphore.release();
-          }
+        public void onEvent(ConversationResult message) {
+          ret.add(message);
+        }
+
+        @Override
+        public void onComplete() {
+          semaphore.release();
         }
 
         public void onError(Exception e) {
@@ -169,8 +200,10 @@ public class TestConversation {
       Conversation conversation = new Conversation(protocol);
 
       QWenConversationParam param =
-          QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1).prompt("hello")
-              .stream(true)
+          QWenConversationParam.builder()
+              .model(QWenConversationParam.QWEN_V1)
+              .prompt("hello")
+              .mode(StreamingMode.OUT)
               .apiKey("testKey")
               .build();
 
@@ -179,8 +212,10 @@ public class TestConversation {
       assert (conversation.getHistory().size() == 2);
 
       param =
-          QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1)
-              .prompt("May I ask you some questions?").stream(true)
+          QWenConversationParam.builder()
+              .model(QWenConversationParam.QWEN_V1)
+              .prompt("May I ask you some questions?")
+              .mode(StreamingMode.OUT)
               .apiKey("testKey")
               .build();
 
@@ -189,8 +224,10 @@ public class TestConversation {
       assert (conversation.getHistory().size() == 4);
 
       param =
-          QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1)
-              .prompt("My name is Siri").stream(true)
+          QWenConversationParam.builder()
+              .model(QWenConversationParam.QWEN_V1)
+              .prompt("My name is Siri")
+              .mode(StreamingMode.OUT)
               .apiKey("testKey")
               .build();
 
@@ -199,8 +236,10 @@ public class TestConversation {
       assert (conversation.getHistory().size() == 6);
 
       param =
-          QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1)
-              .prompt("What is my name?").stream(true)
+          QWenConversationParam.builder()
+              .model(QWenConversationParam.QWEN_V1)
+              .prompt("What is my name?")
+              .mode(StreamingMode.OUT)
               .apiKey("testKey")
               .build();
 

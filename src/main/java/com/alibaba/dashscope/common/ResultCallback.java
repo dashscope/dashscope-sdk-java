@@ -6,17 +6,19 @@ public abstract class ResultCallback<T> {
   /**
    * Will be called as soon as the connection is established, only support the websocket protocol.
    *
-   * @param status The connection status.
+   * @param status The status.
    */
   public void onOpen(Status status) {}
 
   /**
-   * Will be called as soon as the server replies
+   * Will be called as soon as the server replies.
    *
-   * @param eventType The message type. Please check `EventType` for details.
    * @param message The message body in a structured class.
    */
-  public abstract void onEvent(String eventType, T message);
+  public abstract void onEvent(T message);
+
+  /** Will be called when all messages are received. */
+  public void onComplete() {}
 
   /**
    * Will be called as soon as the server closed, only support the websocket protocol.

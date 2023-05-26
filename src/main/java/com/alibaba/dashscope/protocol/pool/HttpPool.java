@@ -1,5 +1,5 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
-package com.alibaba.dashscope.protocol;
+package com.alibaba.dashscope.protocol.pool;
 
 import com.alibaba.dashscope.utils.Constants;
 import java.util.concurrent.ScheduledExecutorService;
@@ -13,9 +13,9 @@ import org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.nio.reactor.IOReactorException;
 
-public class HttpFactory {
+public class HttpPool {
 
-  private static volatile HttpFactory instance;
+  private static volatile HttpPool instance;
 
   private final PoolingNHttpClientConnectionManager connectionManager;
 
@@ -23,7 +23,7 @@ public class HttpFactory {
 
   private final ScheduledExecutorService executorService;
 
-  private HttpFactory() throws IOReactorException {
+  private HttpPool() throws IOReactorException {
     connectionManager = new PoolingNHttpClientConnectionManager(new DefaultConnectingIOReactor());
     connectionManager.setMaxTotal(Constants.max_connections_http);
     connectionManager.setDefaultMaxPerRoute(Constants.max_connections_per_route_http);
@@ -61,11 +61,11 @@ public class HttpFactory {
         TimeUnit.SECONDS);
   }
 
-  public static HttpFactory getInstance() throws IOReactorException {
+  public static HttpPool getInstance() throws IOReactorException {
     if (instance == null) {
-      synchronized (HttpFactory.class) {
+      synchronized (HttpPool.class) {
         if (instance == null) {
-          instance = new HttpFactory();
+          instance = new HttpPool();
         }
       }
     }

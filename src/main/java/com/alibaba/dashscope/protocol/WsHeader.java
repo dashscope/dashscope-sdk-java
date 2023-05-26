@@ -1,15 +1,16 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
-package com.alibaba.dashscope.conversation;
+package com.alibaba.dashscope.protocol;
 
 import static com.alibaba.dashscope.utils.ApiKeywords.ERROR_MESSAGE;
 import static com.alibaba.dashscope.utils.ApiKeywords.ERROR_NAME;
 
 import com.alibaba.dashscope.common.StreamingMode;
+import com.alibaba.dashscope.common.WebSocketEventType;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 @Data
-public class ConversationMessageHeader {
+public class WsHeader {
 
   /** The task id */
   @SerializedName("task_id")
@@ -47,11 +48,12 @@ public class ConversationMessageHeader {
   @SerializedName(ERROR_MESSAGE)
   private String errorMessage;
 
-  public static ConversationMessageHeader buildInputHeader(String taskId, boolean streaming) {
-    ConversationMessageHeader header = new ConversationMessageHeader();
+  public static WsHeader buildInputHeader(
+      String taskId, StreamingMode mode, WebSocketEventType eventType) {
+    WsHeader header = new WsHeader();
     header.setTaskId(taskId);
-    header.setStreaming(streaming ? StreamingMode.OUT.getValue() : StreamingMode.NONE.getValue());
-    header.setAction(EventType.RUN_TASK.getValue());
+    header.setStreaming(mode.getValue());
+    header.setAction(eventType.getValue());
     return header;
   }
 }

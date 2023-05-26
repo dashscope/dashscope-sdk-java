@@ -14,6 +14,9 @@ public enum ErrorType {
 
   /** The api key is not correct. */
   API_KEY_ERROR("api_key_error"),
+
+  /** An unknown error. */
+  UNKNOWN_ERROR("unknown_error"),
   ;
 
   private final String value;

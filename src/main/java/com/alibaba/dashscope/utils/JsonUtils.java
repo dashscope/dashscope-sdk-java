@@ -16,6 +16,10 @@ public class JsonUtils {
     return gson.fromJson(obj, clazz);
   }
 
+  public static <T> T fromJsonObject(JsonObject jsonObject, Class<T> clazz) {
+    return gson.fromJson(jsonObject, clazz);
+  }
+
   public static JsonObject toJsonObject(Object obj) {
     return gson.toJsonTree(obj).getAsJsonObject();
   }

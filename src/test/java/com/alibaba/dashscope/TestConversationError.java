@@ -1,11 +1,11 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope;
 
+import com.alibaba.dashscope.aigc.conversation.Conversation;
+import com.alibaba.dashscope.aigc.conversation.ConversationResult;
+import com.alibaba.dashscope.aigc.conversation.qwen.QWenConversationParam;
 import com.alibaba.dashscope.common.Protocol;
-import com.alibaba.dashscope.conversation.Conversation;
-import com.alibaba.dashscope.conversation.ConversationMessageStatus;
-import com.alibaba.dashscope.conversation.ConversationResult;
-import com.alibaba.dashscope.conversation.qwen.QWenConversationParam;
+import com.alibaba.dashscope.common.StreamingMode;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.mock.MockServer;
 import com.alibaba.dashscope.utils.Constants;
@@ -52,8 +52,10 @@ public class TestConversationError {
       Conversation conversation = new Conversation(protocol);
 
       QWenConversationParam param =
-          QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1).prompt("hello")
-              .stream(true)
+          QWenConversationParam.builder()
+              .model(QWenConversationParam.QWEN_V1)
+              .prompt("hello")
+              .mode(StreamingMode.OUT)
               .maxLength(10)
               .topP(0.8)
               .apiKey("testKey")
@@ -66,9 +68,7 @@ public class TestConversationError {
       } catch (Throwable e) {
         log.error("Error happens", e);
         assert (e instanceof ApiException);
-        assert (((ConversationMessageStatus) ((ApiException) e).getStatus())
-            .getCode()
-            .equals("1000"));
+        assert (((ApiException) e).getStatus().getCode().equals("1000"));
       }
     }
   }

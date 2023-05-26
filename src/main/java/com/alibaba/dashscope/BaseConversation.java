@@ -1,9 +1,9 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope;
 
+import com.alibaba.dashscope.aigc.conversation.ConversationParam;
+import com.alibaba.dashscope.aigc.conversation.ConversationResult;
 import com.alibaba.dashscope.common.ResultCallback;
-import com.alibaba.dashscope.conversation.ConversationParam;
-import com.alibaba.dashscope.conversation.ConversationResult;
 import io.reactivex.Flowable;
 
 public interface BaseConversation {

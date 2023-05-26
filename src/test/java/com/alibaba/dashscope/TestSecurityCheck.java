@@ -1,10 +1,11 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope;
 
+import com.alibaba.dashscope.aigc.conversation.Conversation;
+import com.alibaba.dashscope.aigc.conversation.ConversationResult;
+import com.alibaba.dashscope.aigc.conversation.qwen.QWenConversationParam;
 import com.alibaba.dashscope.common.Protocol;
-import com.alibaba.dashscope.conversation.Conversation;
-import com.alibaba.dashscope.conversation.ConversationResult;
-import com.alibaba.dashscope.conversation.qwen.QWenConversationParam;
+import com.alibaba.dashscope.common.StreamingMode;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
@@ -35,8 +36,10 @@ public class TestSecurityCheck {
         Conversation conversation = new Conversation(protocol);
 
         QWenConversationParam param =
-            QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1).prompt(DIRTY_WORDS)
-                .stream(true)
+            QWenConversationParam.builder()
+                .model(QWenConversationParam.QWEN_V1)
+                .prompt(DIRTY_WORDS)
+                .mode(StreamingMode.OUT)
                 .securityCheck(true)
                 .apiKey(System.getenv().get("TEST_API_KEY"))
                 .maxLength(10)
@@ -58,8 +61,10 @@ public class TestSecurityCheck {
       Conversation conversation = new Conversation(protocol);
 
       QWenConversationParam param =
-          QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1).prompt(DIRTY_WORDS)
-              .stream(true)
+          QWenConversationParam.builder()
+              .model(QWenConversationParam.QWEN_V1)
+              .prompt(DIRTY_WORDS)
+              .mode(StreamingMode.OUT)
               .apiKey(System.getenv().get("TEST_API_KEY"))
               .maxLength(10)
               .topP(0.8)
@@ -77,16 +82,17 @@ public class TestSecurityCheck {
         Conversation conversation = new Conversation(protocol);
 
         QWenConversationParam param =
-            QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1).prompt(DIRTY_WORDS)
-                .stream(false)
+            QWenConversationParam.builder()
+                .model(QWenConversationParam.QWEN_V1)
+                .prompt(DIRTY_WORDS)
                 .securityCheck(true)
                 .apiKey(System.getenv().get("TEST_API_KEY"))
                 .maxLength(10)
                 .topP(0.8)
                 .build();
 
-        Flowable<ConversationResult> flowable = conversation.streamCall(param);
-        flowable.blockingForEach(msg -> log.info(JsonUtils.toJson(msg)));
+        ConversationResult conversationResult = conversation.call(param);
+        log.info(JsonUtils.toJson(conversationResult));
         assert (false);
       } catch (ApiException e) {
         System.out.println(e.getStatus().getMessage());

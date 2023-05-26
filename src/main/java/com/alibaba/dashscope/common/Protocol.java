@@ -16,4 +16,13 @@ public enum Protocol {
   public String getValue() {
     return value;
   }
+
+  public static Protocol of(String value) {
+    for (Protocol protocol : Protocol.values()) {
+      if (protocol.getValue().equals(value)) {
+        return protocol;
+      }
+    }
+    return null;
+  }
 }
