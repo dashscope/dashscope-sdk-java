@@ -37,6 +37,7 @@
         </developer>
     </developers>
 
+    <name>DashScope Java SDK</name>
     <groupId>com.alibaba</groupId>
     <artifactId>dashscope-sdk-java</artifactId>
     <version>1.0.0</version>
