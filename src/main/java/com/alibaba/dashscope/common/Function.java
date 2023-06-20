@@ -5,6 +5,8 @@ public enum Function {
   GENERATION("generation"),
 
   MULTIMODAL_CHAT("multimodal-chat"),
+
+  SPEECH_SYNTHESIZER("SpeechSynthesizer"),
   ;
 
   private final String value;

@@ -10,11 +10,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.xml.bind.DatatypeConverter;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.var;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 public class WebsocketPool {
 
@@ -46,6 +49,10 @@ public class WebsocketPool {
       Maps.newConcurrentMap();
 
   private final Set<WebsocketRpc> borrowed = Sets.newConcurrentHashSet();
+
+  @Getter @Setter private int maxIdle = 8;
+
+  @Getter @Setter private int maxTotal = 8;
 
   public static WebsocketPool getInstance() {
     if (instance == null) {
@@ -104,7 +111,11 @@ public class WebsocketPool {
     if (!wsPoolFactoryMap.containsKey(key)) {
       synchronized (wsPoolFactoryMap) {
         if (!wsPoolFactoryMap.containsKey(key)) {
-          wsPoolFactoryMap.put(key, new GenericObjectPool<>(new WsPoolFactory(url, headers)));
+          GenericObjectPoolConfig<WebsocketRpc> config = new GenericObjectPoolConfig<>();
+          config.setMaxTotal(maxTotal);
+          config.setMaxIdle(maxIdle);
+          wsPoolFactoryMap.put(
+              key, new GenericObjectPool<>(new WsPoolFactory(url, headers), config));
         }
       }
     }

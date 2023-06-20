@@ -3,8 +3,8 @@ package com.alibaba.dashscope.common;
 
 public enum Task {
   TEXT_GENERATION("text-generation"),
-
   CHAT("chat"),
+  TEXT_TO_SPEECH("tts"),
   ;
 
   private final String value;
