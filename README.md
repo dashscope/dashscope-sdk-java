@@ -41,90 +41,83 @@ Here shows the usages of each method, with the examples of `qwen-v1` model.
 
 ```java
 import com.alibaba.dashscope.common.ResultCallback;
-import com.alibaba.dashscope.conversation.Conversation;
-import com.alibaba.dashscope.conversation.ConversationResult;
-import com.alibaba.dashscope.conversation.EventType;
-import com.alibaba.dashscope.conversation.qwen.QWenConversationParam;
-import com.alibaba.dashscope.conversation.qwen.QWenConversationResult;
+import com.alibaba.dashscope.aigc.conversation.Conversation;
+import com.alibaba.dashscope.aigc.conversation.ConversationResult;
+import com.alibaba.dashscope.aigc.conversation.qwen.QWenConversationParam;
+import com.alibaba.dashscope.aigc.conversation.qwen.QWenConversationResult;
 import com.alibaba.dashscope.exception.ApiException;
 
 public class Main {
 
-    public static void main(String[] args) {
-        Conversation conversation = new Conversation();
+  public static void main(String[] args) {
+    Conversation conversation = new Conversation();
 
-        //QWEN model, if using other model, you can replace the QWenConversationParam here.
-        QWenConversationParam param =
-                QWenConversationParam.builder()
-                        .model(QWenConversationParam.QWEN_V1)
-                        //there are other arguments supported.
-                        .prompt("hello")
-                        .apiKey("testKey")
-                        .build();
+    //QWEN model, if using other model, you can replace the QWenConversationParam here.
+    QWenConversationParam param =
+            QWenConversationParam.builder()
+                    .model(QWenConversationParam.QWEN_V1)
+                    //there are other arguments supported.
+                    .prompt("hello")
+                    .apiKey("testKey")
+                    .build();
 
-        class ReactCallback extends ResultCallback<ConversationResult> {
+    class ReactCallback extends ResultCallback<ConversationResult> {
 
-            @Override
-            public void onEvent(String eventType, ConversationResult message) {
-                QWenConversationResult result = (QWenConversationResult) message;
-                // only need to take care of RESULT_GENERATED/TASK_FINISHED event
-                if (EventType.RESULT_GENERATED.getValue().equals(eventType)) {
-                    // the bot content in stream mode
-                }
-                if (EventType.TASK_FINISHED.getValue().equals(eventType)) {
-                    // the last bot content in stream mode
-                    // or the unique bot content in non-stream mode
-                }
-            }
+      @Override
+      public void onEvent(ConversationResult message) {
+        QWenConversationResult result = (QWenConversationResult) message;
+        // TODO deal with result
+      }
 
-            public void onError(Exception e) {
-                ApiException apiException = (ApiException) e;
-                // deal with exception
-            }
-        }
-        conversation.call(param, new ReactCallback());
+      public void onComplete() {
+        // TODO all messages received
+      }
+
+      public void onError(Exception e) {
+        ApiException apiException = (ApiException) e;
+        // TODO deal with exception
+      }
     }
+    conversation.call(param, new ReactCallback());
+  }
 }
-```
 
-- RESULT_GENERATED
-  - This event only appares in the stream mode when a message from server arrives.
-- TASK_FINISHED
-  - This event appares both stream/non-stream mode, in stream mode it means it's the last message in the stream, in non-stream mode it represents the unique message from server.
+```
 
 The Exception instance in the conversation scenario is a `ApiException` instance. This Exception may contain two parts:
 
-- A `ConversationMessageStatus` instance. This instance carries a status_code(The http error code), a code(server error code), a message(server error message), the input message id, and the usage information.
-- If an exception occurs, the `ApiException` instance may only carries an `Exception` stack trace, you can deal with it as you usually do.
+- A `Status` instance. This instance carries a status_code(The http error code), a code(server error code), a message(server error message), the input message id, and the usage information.
+- If an exception occurs, the `ApiException` instance may only carry an `Exception` stack trace, you can deal with it as you usually do.
 
 #### Stream only, accept by react io
 
 ```java
-import com.alibaba.dashscope.conversation.Conversation;
-import com.alibaba.dashscope.conversation.ConversationResult;
-import com.alibaba.dashscope.conversation.qwen.QWenConversationParam;
+import com.alibaba.dashscope.aigc.conversation.Conversation;
+import com.alibaba.dashscope.aigc.conversation.ConversationResult;
+import com.alibaba.dashscope.aigc.conversation.qwen.QWenConversationParam;
+import com.alibaba.dashscope.common.StreamingMode;
 import com.alibaba.dashscope.utils.JsonUtils;
 import io.reactivex.Flowable;
 
 public class Main {
 
-    public static void main(String[] args) {
-        Conversation conversation = new Conversation();
+  public static void main(String[] args) {
+    Conversation conversation = new Conversation();
 
-        //QWEN model, if using other model, you can replace the QWenConversationParam here.
-        QWenConversationParam param =
-                QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1).prompt("hello")
-                        .stream(true)
-                        .apiKey("testKey")
-                        .build();
+    //QWEN model, if using other model, you can replace the QWenConversationParam here.
+    QWenConversationParam param =
+            QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1).prompt("hello")
+                    .mode(StreamingMode.OUT)
+                    .apiKey("testKey")
+                    .build();
 
-        Flowable<ConversationResult> flowable = conversation.streamCall(param);
-        try {
-            flowable.blockingForEach(msg -> System.out.println(JsonUtils.toJson(msg)));
-        } catch (Throwable e) {
-            // deal with error here
-        }
+    Flowable<ConversationResult> flowable = conversation.streamCall(param);
+    try {
+      flowable.blockingForEach(msg -> System.out.println(JsonUtils.toJson(msg)));
+    } catch (Throwable e) {
+      // TODO deal with error here
     }
+  }
 }
 ```
 
@@ -133,26 +126,25 @@ The `streamCall` method accepts a `ConversationParam` , and returns a `Flowable`
 #### Non-stream only
 
 ```java
-
-import com.alibaba.dashscope.conversation.Conversation;
-import com.alibaba.dashscope.conversation.ConversationResult;
-import com.alibaba.dashscope.conversation.qwen.QWenConversationParam;
+import com.alibaba.dashscope.aigc.conversation.Conversation;
+import com.alibaba.dashscope.aigc.conversation.ConversationResult;
+import com.alibaba.dashscope.aigc.conversation.qwen.QWenConversationParam;
 
 public class Main {
 
-    public static void main(String[] args) {
-        Conversation conversation = new Conversation();
+  public static void main(String[] args) {
+    Conversation conversation = new Conversation();
 
-        //QWEN model, if using other model, you can replace the QWenConversationParam here.
-        QWenConversationParam param =
-                QWenConversationParam.builder()
-                        .model(QWenConversationParam.QWEN_V1)
-                        .prompt("hello")
-                        .apiKey("testKey")
-                        .build();
+    //QWEN model, if using other model, you can replace the QWenConversationParam here.
+    QWenConversationParam param =
+            QWenConversationParam.builder()
+                    .model(QWenConversationParam.QWEN_V1)
+                    .prompt("hello")
+                    .apiKey("testKey")
+                    .build();
 
-        ConversationResult result = conversation.call(param);
-    }
+    ConversationResult result = conversation.call(param);
+  }
 }
 ```
 
