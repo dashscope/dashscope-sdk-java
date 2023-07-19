@@ -20,6 +20,7 @@ public class ApiException extends RuntimeException {
             .code(ErrorType.UNKNOWN_ERROR.getValue())
             .message(e.getMessage())
             .build();
+    this.setStackTrace(e.getStackTrace());
   }
 
   public ApiException(Status status) {

@@ -11,14 +11,12 @@ import java.util.Map;
 import java.util.function.Function;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.enums.ReadyState;
 import org.java_websocket.handshake.ServerHandshake;
 
 /** The websocket rpc, biz logic free. */
-@Slf4j
 public final class WebsocketRpc {
 
   private final WebSocketClient client;
@@ -135,7 +133,7 @@ public final class WebsocketRpc {
         return;
       }
 
-      requests.blockingForEach(
+      requests.subscribe(
           request -> {
             if (request.getBinary() != null) {
               client.send(request.getBinary());
@@ -143,7 +141,6 @@ public final class WebsocketRpc {
               client.send(request.getMessage());
             }
           });
-
     } catch (Exception e) {
       this.responseCallback.onError(e instanceof ApiException ? e : new ApiException(e));
     }

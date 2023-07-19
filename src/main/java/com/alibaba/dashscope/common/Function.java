@@ -7,6 +7,10 @@ public enum Function {
   MULTIMODAL_CHAT("multimodal-chat"),
 
   SPEECH_SYNTHESIZER("SpeechSynthesizer"),
+
+  TRANSCRIPTION("transcription"),
+
+  RECOGNITION("recognition"),
   ;
 
   private final String value;

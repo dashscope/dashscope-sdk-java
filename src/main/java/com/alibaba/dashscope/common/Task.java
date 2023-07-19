@@ -5,6 +5,7 @@ public enum Task {
   TEXT_GENERATION("text-generation"),
   CHAT("chat"),
   TEXT_TO_SPEECH("tts"),
+  ASR("asr"),
   ;
 
   private final String value;
