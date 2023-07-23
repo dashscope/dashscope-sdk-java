@@ -95,7 +95,6 @@ public class TestSecurityCheck {
         log.info(JsonUtils.toJson(conversationResult));
         assert (false);
       } catch (ApiException e) {
-        System.out.println(e.getStatus().getMessage());
         assert (e.getStatus().getMessage().contains("sensitive content"));
       }
     }
