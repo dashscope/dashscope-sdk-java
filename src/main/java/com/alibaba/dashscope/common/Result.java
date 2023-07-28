@@ -1,8 +1,11 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
+
 package com.alibaba.dashscope.common;
 
 import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.protocol.Response;
-import com.google.gson.JsonObject;
+import com.alibaba.dashscope.protocol.NetworkResponse;
+import com.alibaba.dashscope.protocol.Protocol;
+import com.google.gson.JsonElement;
 import java.util.Map;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,7 +20,7 @@ public abstract class Result {
   private String requestId;
 
   /** The usage information */
-  private JsonObject usage;
+  private JsonElement usage;
 
   /** The headers of response */
   private Map<String, String> headers;
@@ -27,7 +30,10 @@ public abstract class Result {
    *
    * @param protocol The protocol, please check the `Protocol` enum.
    * @param response The response.
-   * @throws ApiException if the input is invalid.
+   * @param <T> Object extends `Result`
+   * @return The result.
+   * @throws ApiException Failed, possibly due to a data error.
    */
-  public abstract void fromResponse(Protocol protocol, Response response) throws ApiException;
+  public abstract <T extends Result> T fromResponse(Protocol protocol, NetworkResponse response)
+      throws ApiException;
 }

@@ -1,3 +1,5 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
+
 package com.alibaba.dashscope.audio.tts;
 
 public enum SpeechSynthesisAudioFormat {

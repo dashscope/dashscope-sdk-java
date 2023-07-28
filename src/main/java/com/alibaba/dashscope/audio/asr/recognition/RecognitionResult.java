@@ -1,20 +1,26 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
+
 package com.alibaba.dashscope.audio.asr.recognition;
 
 import com.alibaba.dashscope.audio.asr.recognition.timestamp.Sentence;
-import com.alibaba.dashscope.common.Protocol;
-import com.alibaba.dashscope.common.Result;
+import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.protocol.Response;
+import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.JsonUtils;
-import com.google.common.collect.Maps;
 import com.google.gson.JsonObject;
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class RecognitionResult extends Result {
-  private Sentence sentence = new Sentence();
+@EqualsAndHashCode()
+public class RecognitionResult {
+  @SerializedName(ApiKeywords.REQUEST_ID)
+  private String requestId;
+
+  private Sentence sentence;
+
+  private RecognitionUsage usage;
 
   private boolean isCompleteResult = false;
 
@@ -26,23 +32,28 @@ public class RecognitionResult extends Result {
     return sentence != null && sentence.getEndTime() != null;
   }
 
-  @Override
-  public void fromResponse(Protocol protocol, Response response) throws ApiException {
-    String message = response.getMessage();
-    if (message != null) {
-      RecognitionMessagePayload payload =
-          JsonUtils.fromJson(message, RecognitionMessagePayload.class);
-      this.setUsage(payload.getUsage());
-      JsonObject output = payload.getOutput();
-      if (output != null) {
-        JsonObject timestampObject = output.getAsJsonObject(RecognitionApiKeywords.SENTENCE);
-        if (timestampObject != null) {
-          this.setSentence(Sentence.from(timestampObject));
-        } else {
-          isCompleteResult = true;
-        }
-      }
+  public static RecognitionResult fromDashScopeResult(DashScopeResult dashScopeResult)
+      throws ApiException {
+    RecognitionResult result = new RecognitionResult();
+    result.setRequestId(dashScopeResult.getRequestId());
+    if (dashScopeResult.getUsage() != null) {
+      result.setUsage(
+          JsonUtils.fromJsonObject(
+              dashScopeResult.getUsage().getAsJsonObject(), RecognitionUsage.class));
     }
-    this.setHeaders(response.getHeaders() == null ? Maps.newHashMap() : response.getHeaders());
+    JsonObject jsonDashScopeResult = (JsonObject) dashScopeResult.getOutput();
+    if (jsonDashScopeResult.has(RecognitionApiKeywords.SENTENCE)) {
+      JsonObject timestampObject =
+          jsonDashScopeResult.getAsJsonObject(RecognitionApiKeywords.SENTENCE);
+      if (timestampObject != null) {
+        result.sentence = Sentence.from(timestampObject);
+      } else {
+        result.isCompleteResult = true;
+      }
+    } else {
+      result.isCompleteResult = true;
+      result.sentence = new Sentence();
+    }
+    return result;
   }
 }

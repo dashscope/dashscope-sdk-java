@@ -3,13 +3,11 @@ package com.alibaba.dashscope.common;
 
 public enum Function {
   GENERATION("generation"),
-
-  MULTIMODAL_CHAT("multimodal-chat"),
-
+  IMAGE_SYNTHESIS("image-synthesis"),
+  TEXT_EMBEDDING("text-embedding"),
+  MULTIMODAL_EMBEDDING("multimodal-embedding"),
   SPEECH_SYNTHESIZER("SpeechSynthesizer"),
-
   TRANSCRIPTION("transcription"),
-
   RECOGNITION("recognition"),
   ;
 

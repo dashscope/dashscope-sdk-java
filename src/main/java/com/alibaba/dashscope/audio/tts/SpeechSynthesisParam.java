@@ -1,23 +1,28 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
+
 package com.alibaba.dashscope.audio.tts;
 
 import static com.alibaba.dashscope.utils.ApiKeywords.TEXT;
 
-import com.alibaba.dashscope.common.*;
-import com.alibaba.dashscope.protocol.Request;
-import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.base.HalfDuplexServiceParam;
+import com.alibaba.dashscope.exception.InputRequiredException;
 import com.google.gson.JsonObject;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
-public class SpeechSynthesisParam extends Param {
+public class SpeechSynthesisParam extends HalfDuplexServiceParam {
 
   /** The input text. */
-  private String text;
+  @NonNull private String text;
 
   /** Input text type. */
   @Builder.Default private SpeechSynthesisTextType textType = SpeechSynthesisTextType.PLAIN_TEXT;
@@ -43,42 +48,39 @@ public class SpeechSynthesisParam extends Param {
   /** enable phoneme level timestamp. */
   @Builder.Default private boolean enablePhonemeTimestamp = false;
 
-  private JsonObject toParameters() {
-    JsonObject parameters = new JsonObject();
-    parameters.addProperty(SpeechSynthesisApiKeywords.TEXT_TYPE, getTextType().getValue());
-    parameters.addProperty(SpeechSynthesisApiKeywords.FORMAT, getFormat().getValue());
-    parameters.addProperty(SpeechSynthesisApiKeywords.SAMPLE_RATE, getSampleRate());
-    parameters.addProperty(SpeechSynthesisApiKeywords.VOLUME, getVolume());
-    parameters.addProperty(SpeechSynthesisApiKeywords.SPEECH_RATE, getRate());
-    parameters.addProperty(SpeechSynthesisApiKeywords.PITCH_RATE, getPitch());
-    parameters.addProperty(SpeechSynthesisApiKeywords.WORD_TIMESTAMP, isEnableWordTimestamp());
-    parameters.addProperty(
-        SpeechSynthesisApiKeywords.PHONEME_TIMESTAMP, isEnablePhonemeTimestamp());
-    return parameters;
+  @Override
+  public JsonObject getHttpBody() {
+    /* not support http */
+    throw new UnsupportedOperationException("Not support http");
   }
 
   @Override
-  public String url() {
-    return String.format(
-        "/services/%s/%s/%s?request_id=%s",
-        TaskGroup.AUDIO.getValue(),
-        Task.TEXT_TO_SPEECH.getValue(),
-        Function.SPEECH_SYNTHESIZER.getValue(),
-        this.getRequestId());
+  public Map<String, Object> getParameters() {
+    Map<String, Object> params = new HashMap<>();
+    params.put(SpeechSynthesisApiKeywords.TEXT_TYPE, getTextType().getValue());
+    params.put(SpeechSynthesisApiKeywords.FORMAT, getFormat().getValue());
+    params.put(SpeechSynthesisApiKeywords.SAMPLE_RATE, getSampleRate());
+    params.put(SpeechSynthesisApiKeywords.VOLUME, getVolume());
+    params.put(SpeechSynthesisApiKeywords.SPEECH_RATE, getRate());
+    params.put(SpeechSynthesisApiKeywords.PITCH_RATE, getPitch());
+    params.put(SpeechSynthesisApiKeywords.WORD_TIMESTAMP, isEnableWordTimestamp());
+    params.put(SpeechSynthesisApiKeywords.PHONEME_TIMESTAMP, isEnablePhonemeTimestamp());
+    params.putAll(parameters);
+    return params;
   }
 
   @Override
-  public Request toRequest(Protocol protocol) {
+  public Object getInput() {
     JsonObject jsonObject = new JsonObject();
     jsonObject.addProperty(TEXT, getText());
-    SpeechSynthesisMessagePayload payload =
-        SpeechSynthesisMessagePayload.buildInputPayload(getModel(), jsonObject);
-    payload.setParameters(toParameters());
-    return Request.builder().message(JsonUtils.toJson(payload)).build();
+    return jsonObject;
   }
 
   @Override
-  public Class<? extends Result> resultType() {
-    return SpeechSynthesisResult.class;
+  public ByteBuffer getBinaryData() {
+    return null;
   }
+
+  @Override
+  public void validate() throws InputRequiredException {}
 }

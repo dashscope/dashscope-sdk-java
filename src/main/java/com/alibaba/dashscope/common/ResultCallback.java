@@ -4,7 +4,7 @@ package com.alibaba.dashscope.common;
 public abstract class ResultCallback<T> {
 
   /**
-   * Will be called as soon as the connection is established, only support the websocket protocol.
+   * Will be called as soon as the connection is established, only for http stream request.
    *
    * @param status The status.
    */
@@ -18,26 +18,12 @@ public abstract class ResultCallback<T> {
   public abstract void onEvent(T message);
 
   /** Will be called when all messages are received. */
-  public void onComplete() {}
-
-  /**
-   * Will be called as soon as the server closed, only support the websocket protocol.
-   *
-   * @param status The connection status.
-   */
-  public void onClose(Status status) {}
+  public abstract void onComplete();
 
   /**
    * Will be called when an Exception occurs.
    *
    * @param e The exception instance.
    */
-  public void onError(Exception e) {}
-
-  /**
-   * Will be called when the server is on closing, only support the websocket protocol.
-   *
-   * @param status The connection status.
-   */
-  public void doClose(Status status) {}
+  public abstract void onError(Exception e);
 }

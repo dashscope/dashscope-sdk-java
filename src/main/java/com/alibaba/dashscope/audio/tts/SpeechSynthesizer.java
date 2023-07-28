@@ -1,11 +1,16 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
+
 package com.alibaba.dashscope.audio.tts;
 
+import com.alibaba.dashscope.api.SynchronizeHalfDuplexApi;
 import com.alibaba.dashscope.audio.tts.timestamp.Sentence;
 import com.alibaba.dashscope.common.*;
-import com.alibaba.dashscope.protocol.HttpMethod;
-import com.alibaba.dashscope.protocol.Request;
-import com.alibaba.dashscope.protocol.Response;
-import com.alibaba.dashscope.protocol.ServiceFacility;
+import com.alibaba.dashscope.exception.ApiException;
+import com.alibaba.dashscope.exception.NoApiKeyException;
+import com.alibaba.dashscope.protocol.ApiServiceOption;
+import com.alibaba.dashscope.protocol.ClientOptions;
+import com.alibaba.dashscope.protocol.Protocol;
+import com.alibaba.dashscope.protocol.StreamingMode;
 import com.google.common.collect.Lists;
 import io.reactivex.Flowable;
 import java.io.ByteArrayOutputStream;
@@ -14,32 +19,40 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public final class SpeechSynthesizer implements BaseSpeechSynthesizer {
-
-  @Setter private long responseTimeout = 30;
+public final class SpeechSynthesizer {
 
   @Getter private final List<Sentence> timestamps = Lists.newCopyOnWriteArrayList();
 
   @Getter private ByteBuffer audioData;
+  private ApiServiceOption serviceOption =
+      ApiServiceOption.builder()
+          .protocol(Protocol.WEBSOCKET)
+          .streamingMode(StreamingMode.OUT)
+          .outputMode(OutputMode.ACCUMULATE)
+          .taskGroup(TaskGroup.AUDIO.getValue())
+          .task(Task.TEXT_TO_SPEECH.getValue())
+          .function(Function.SPEECH_SYNTHESIZER.getValue())
+          .build();
+  private final SynchronizeHalfDuplexApi<SpeechSynthesisParam> syncApi;
 
-  private final Protocol protocol = Protocol.WEBSOCKET;
+  public SpeechSynthesizer() {
+    syncApi =
+        new SynchronizeHalfDuplexApi<>(
+            ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(), serviceOption);
+  }
 
-  public SpeechSynthesizer() {}
-
-  @Override
   public void call(SpeechSynthesisParam param, ResultCallback<SpeechSynthesisResult> callback) {
     timestamps.clear();
     audioData = null;
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     WritableByteChannel channel = Channels.newChannel(outputStream);
-    class SynthesisCallback extends ResultCallback<Response> {
+
+    class SynthesisCallback extends ResultCallback<DashScopeResult> {
       private Sentence lastSentence = null;
 
       public void onOpen(Status status) {
@@ -47,10 +60,9 @@ public final class SpeechSynthesizer implements BaseSpeechSynthesizer {
       }
 
       @Override
-      public void onEvent(Response message) {
-        SpeechSynthesisResult result = null;
+      public void onEvent(DashScopeResult message) {
+        SpeechSynthesisResult result = SpeechSynthesisResult.fromDashScopeResult(message);
         try {
-          result = (SpeechSynthesisResult) ServiceFacility.prepareResult(protocol, param, message);
           if (result.getTimestamp() != null) {
             Sentence sentence = result.getTimestamp();
             if (lastSentence == null) {
@@ -89,89 +101,131 @@ public final class SpeechSynthesizer implements BaseSpeechSynthesizer {
         callback.onComplete();
       }
 
-      public void onClose(Status status) {
-        callback.onClose(status);
-      }
-
       @Override
       public void onError(Exception e) {
         callback.onError(e);
       }
-
-      public void doClose(Status status) {
-        callback.doClose(status);
-      }
     }
-
-    param.setMode(StreamingMode.OUT);
-    String url = ServiceFacility.prepareUrl(protocol, param);
-    Map<String, String> header = ServiceFacility.prepareHeaders(protocol, param);
-    Request request = ServiceFacility.prepareRequest(protocol, param, WebSocketEventType.RUN_TASK);
-    ServiceFacility.streamingOutWithCallback(
-        protocol, url, header, request, HttpMethod.POST, param.getMode(), new SynthesisCallback());
+    try {
+      syncApi.streamCall(param, new SynthesisCallback());
+    } catch (NoApiKeyException e) {
+      throw new ApiException(e);
+    }
   }
 
-  @Override
   public Flowable<SpeechSynthesisResult> streamCall(SpeechSynthesisParam param) {
-    param.setMode(StreamingMode.OUT);
     audioData = null;
     timestamps.clear();
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     WritableByteChannel channel = Channels.newChannel(outputStream);
     AtomicReference<Sentence> lastSentenceRef = new AtomicReference<>();
-    return ServiceFacility.streamCall(protocol, null, param, responseTimeout)
-        .map(
-            message -> {
-              SpeechSynthesisResult result = (SpeechSynthesisResult) message;
-              if (result.getTimestamp() != null) {
-                Sentence sentence = result.getTimestamp();
-                if (lastSentenceRef.get() == null) {
-                  lastSentenceRef.set(sentence);
-                  timestamps.add(sentence);
-                } else {
-                  if (!lastSentenceRef.get().equals(sentence)) {
+    try {
+      return syncApi
+          .streamCall(param)
+          .map(
+              message -> {
+                SpeechSynthesisResult result = SpeechSynthesisResult.fromDashScopeResult(message);
+                if (result.getTimestamp() != null) {
+                  Sentence sentence = result.getTimestamp();
+                  if (lastSentenceRef.get() == null) {
                     lastSentenceRef.set(sentence);
                     timestamps.add(sentence);
+                  } else {
+                    if (!lastSentenceRef.get().equals(sentence)) {
+                      log.info("New sentence: {}", sentence);
+                      lastSentenceRef.set(sentence);
+                      timestamps.add(sentence);
+                    } else {
+                      log.info("Same sentence: {}", sentence);
+                    }
+                  }
+                  timestamps.add(result.getTimestamp());
+                }
+                if (result.getAudioFrame() != null) {
+                  try {
+                    channel.write(result.getAudioFrame());
+                  } catch (IOException e) {
+                    log.error("Failed to write audio: {}", result.getAudioFrame(), e);
                   }
                 }
-                timestamps.add(result.getTimestamp());
-              }
-              if (result.getAudioFrame() != null) {
+                return result;
+              })
+          .doOnComplete(
+              () -> {
                 try {
-                  channel.write(result.getAudioFrame());
+                  audioData = ByteBuffer.wrap(outputStream.toByteArray());
+                  channel.close();
+                  outputStream.close();
                 } catch (IOException e) {
-                  log.error("Failed to write audio: {}", result.getAudioFrame(), e);
+                  log.error("Failed to close channel: {}", channel, e);
                 }
-              }
-              return result;
-            })
-        .doOnComplete(
-            () -> {
-              try {
                 audioData = ByteBuffer.wrap(outputStream.toByteArray());
-                channel.close();
-                outputStream.close();
-              } catch (IOException e) {
-                log.error("Failed to close channel: {}", channel, e);
-              }
-              audioData = ByteBuffer.wrap(outputStream.toByteArray());
-            })
-        .doOnError(
-            e -> {
-              try {
-                channel.close();
-                outputStream.close();
-                timestamps.clear();
-                audioData = null;
-              } catch (IOException ex) {
-                log.error("Failed to close channel: {}", channel, ex);
-              }
-            });
+              })
+          .doOnError(
+              e -> {
+                try {
+                  channel.close();
+                  outputStream.close();
+                  timestamps.clear();
+                  audioData = null;
+                } catch (IOException ex) {
+                  log.error("Failed to close channel: {}", channel, ex);
+                }
+              });
+    } catch (NoApiKeyException e) {
+      throw new ApiException(e);
+    }
   }
 
-  @Override
   public ByteBuffer call(SpeechSynthesisParam param) {
-    streamCall(param).blockingSubscribe();
+    audioData = null;
+    timestamps.clear();
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    WritableByteChannel channel = Channels.newChannel(outputStream);
+    AtomicReference<Sentence> lastSentenceRef = new AtomicReference<>();
+    Flowable<SpeechSynthesisResult> flowable = streamCall(param);
+    flowable.blockingSubscribe(
+        result -> {
+          if (result.getTimestamp() != null) {
+            Sentence sentence = result.getTimestamp();
+            if (lastSentenceRef.get() == null) {
+              lastSentenceRef.set(sentence);
+              timestamps.add(sentence);
+            } else {
+              if (!lastSentenceRef.get().equals(sentence)) {
+                lastSentenceRef.set(sentence);
+                timestamps.add(sentence);
+              }
+            }
+            timestamps.add(result.getTimestamp());
+          }
+          if (result.getAudioFrame() != null) {
+            try {
+              channel.write(result.getAudioFrame());
+            } catch (IOException e) {
+              log.error("Failed to write audio: {}", result.getAudioFrame(), e);
+            }
+          }
+        },
+        error -> {
+          try {
+            channel.close();
+            outputStream.close();
+            timestamps.clear();
+            audioData = null;
+          } catch (IOException ex) {
+            log.error("Failed to close channel: {}", channel, ex);
+          }
+        },
+        () -> {
+          try {
+            audioData = ByteBuffer.wrap(outputStream.toByteArray());
+            channel.close();
+            outputStream.close();
+          } catch (IOException e) {
+            log.error("Failed to close channel: {}", channel, e);
+          }
+        });
     return audioData;
   }
 }

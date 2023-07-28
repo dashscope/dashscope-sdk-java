@@ -1,45 +1,62 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
+
 package com.alibaba.dashscope.audio.tts;
 
 import com.alibaba.dashscope.audio.tts.timestamp.Sentence;
-import com.alibaba.dashscope.common.Protocol;
-import com.alibaba.dashscope.common.Result;
-import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.protocol.Response;
+import com.alibaba.dashscope.common.DashScopeResult;
+import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.JsonUtils;
-import com.google.common.collect.Maps;
+import com.google.gson.JsonObject;
+import com.google.gson.annotations.SerializedName;
 import java.nio.ByteBuffer;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode()
 @Slf4j
-public class SpeechSynthesisResult extends Result {
+public class SpeechSynthesisResult {
+  @SerializedName(ApiKeywords.REQUEST_ID)
+  private String requestId;
+  /** The model outputs. */
+  private JsonObject output;
+
+  /** The data usage. */
+  private SpeechSynthesisUsage usage;
 
   private Sentence timestamp;
 
   private ByteBuffer audioFrame;
 
-  @Override
-  public void fromResponse(Protocol protocol, Response response) throws ApiException {
-    String message = response.getMessage();
-    ByteBuffer binary = response.getBinary();
-    if (binary != null) {
-      this.setAudioFrame(binary);
+  private static ByteBuffer cloneBuffer(ByteBuffer original) {
+    ByteBuffer clone = ByteBuffer.allocate(original.capacity());
+    original.rewind(); // copy from the beginning
+    clone.put(original);
+    original.rewind();
+    clone.flip();
+    return clone;
+  }
+
+  public static SpeechSynthesisResult fromDashScopeResult(DashScopeResult dashScopeResult) {
+    SpeechSynthesisResult result = new SpeechSynthesisResult();
+    if (dashScopeResult.getOutput() instanceof ByteBuffer) {
+      result.audioFrame = cloneBuffer((ByteBuffer) dashScopeResult.getOutput());
     }
-    if (StringUtils.isNotBlank(message)) {
-      try {
-        SpeechSynthesisMessagePayload payload =
-            JsonUtils.fromJson(message, SpeechSynthesisMessagePayload.class);
-        this.setUsage(payload.getUsage());
-        this.setTimestamp(
-            Sentence.from(
-                payload.getOutput().getAsJsonObject(SpeechSynthesisApiKeywords.SENTENCE)));
-      } catch (Exception ignored) {
+    try {
+      if (dashScopeResult.getUsage() != null) {
+        result.setUsage(
+            JsonUtils.fromJsonObject(
+                dashScopeResult.getUsage().getAsJsonObject(), SpeechSynthesisUsage.class));
       }
+      if (dashScopeResult.getOutput() != null) {
+        result.timestamp =
+            Sentence.from(
+                ((JsonObject) dashScopeResult.getOutput())
+                    .getAsJsonObject(SpeechSynthesisApiKeywords.SENTENCE));
+      }
+    } catch (Exception ignored) {
     }
-    this.setHeaders(response.getHeaders() == null ? Maps.newHashMap() : response.getHeaders());
+    return result;
   }
 }

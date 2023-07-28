@@ -3,6 +3,9 @@ package com.alibaba.dashscope.common;
 
 public enum Task {
   TEXT_GENERATION("text-generation"),
+  IMAGE_SYNTHESIS("text2image"),
+  TEXT_EMBEDDING("text-embedding"),
+  MULTIMODAL_EMBEDDING("multimodal-embedding"),
   CHAT("chat"),
   TEXT_TO_SPEECH("tts"),
   ASR("asr"),

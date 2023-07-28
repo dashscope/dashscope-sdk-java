@@ -1,6 +1,8 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.utils;
 
+import com.alibaba.dashscope.aigc.generation.GenerationUsage;
+import com.alibaba.dashscope.common.Message;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import lombok.*;
@@ -52,5 +54,22 @@ public class TestJson {
     TestClass testIns2 = JsonUtils.fromJson(serialized, TestClass.class);
 
     assert (testIns2.equals(testIns));
+  }
+
+  @Test
+  public void testMessageSerializeDeserialize() {
+    Message msg =
+        Message.builder()
+            .role("user")
+            .content("hello world")
+            .extra("int", 1)
+            .extra("str", "string")
+            .extra("float", 1.0)
+            .extra("usage", GenerationUsage.builder().inputTokens(1).outputTokens(1).build())
+            .build();
+    String msgJson = JsonUtils.toJson(msg);
+    System.out.println(msgJson);
+    Message deserializeMsg = JsonUtils.fromJson(msgJson, Message.class);
+    System.out.println(deserializeMsg);
   }
 }

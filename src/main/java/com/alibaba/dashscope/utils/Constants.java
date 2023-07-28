@@ -1,15 +1,12 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.utils;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public final class Constants {
+
+  public static final String NO_API_KEY_ERROR = "Can not find api-key.";
 
   public static final String DASHSCOPE_API_REGION_ENV = "DASHSCOPE_API_REGION";
 
@@ -33,6 +30,18 @@ public final class Constants {
   public static final String DASHSCOPE_HTTP_BASE_URL_ENV = "DASHSCOPE_HTTP_BASE_URL";
 
   public static final String DASHSCOPE_WEBSOCKET_BASE_URL_ENV = "DASHSCOPE_WEBSOCKET_BASE_URL";
+  // Setting network layer logging, support: [NONE, BASIC, HEADERS, BODY]
+  public static final String DASHSCOPE_NETWORK_LOGGING_LEVEL_ENV =
+      "DASHSCOPE_NETWORK_LOGGING_LEVEL";
+  public static final String DASHSCOPE_SDK_LOGGING_LEVEL_ENV = "DASHSCOPE_SDK_LOGGING_LEVEL";
+  public static final String DASHSCOPE_CONNECTION_POOL_SIZE_ENV = "DASHSCOPE_CONNECTION_POOL_SIZE";
+  public static final String DASHSCOPE_CONNECTION_IDLE_TIMEOUT_ENV =
+      "DASHSCOPE_CONNECTION_IDLE_TIME";
+  public static final String DASHSCOPE_WRITE_TIMEOUT_ENV = "DASHSCOPE_WRITE_TIMEOUT";
+  public static final String DASHSCOPE_READ_TIMEOUT_ENV = "DASHSCOPE_READ_TIMEOUT";
+  public static final String DASHSCOPE_CONNECTION_TIMEOUT_ENV = "DASHSCOPE_CONNECTION_TIMEOUT";
+
+  public static final int DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE = 44;
 
   public static int CONNECT_TIMEOUT =
       Integer.parseInt(System.getenv().getOrDefault(HTTP_CONNECT_TIMEOUT_ENV, "10000"));
@@ -69,24 +78,7 @@ public final class Constants {
               DASHSCOPE_WEBSOCKET_BASE_URL_ENV,
               String.format("wss://dashscope.aliyuncs.com/api-ws/%s/inference/", apiVersion));
 
-  public static void init() {
-    apiKey = System.getenv(DASHSCOPE_API_KEY_ENV);
-    apiKeyFilePath = System.getenv(DASHSCOPE_API_KEY_FILE_PATH_ENV);
-    if (apiKey == null) {
-      String apiFile = apiKeyFilePath;
-      if (apiFile == null || Files.notExists(Paths.get(apiFile))) {
-        Path homePath = Paths.get(System.getProperty("user.home"));
-        Path dashscopePath = homePath.resolve(".dashscope").resolve("api_key");
-        apiFile = dashscopePath.toString();
-      }
-      try (BufferedReader reader = new BufferedReader(new FileReader(apiFile))) {
-        apiKey = reader.readLine().trim();
-      } catch (Exception e) {
-        log.warn("Error happens when reading api file: " + e.getMessage());
-        log.debug("Stack trace", e);
-      }
-    }
-  }
+  public static void init() {}
 
   static {
     init();

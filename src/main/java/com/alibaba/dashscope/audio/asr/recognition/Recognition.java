@@ -1,17 +1,27 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
+
 package com.alibaba.dashscope.audio.asr.recognition;
 
+import com.alibaba.dashscope.api.SynchronizeFullDuplexApi;
 import com.alibaba.dashscope.audio.asr.recognition.timestamp.Sentence;
-import com.alibaba.dashscope.common.Param;
+import com.alibaba.dashscope.common.DashScopeResult;
+import com.alibaba.dashscope.common.Function;
+import com.alibaba.dashscope.common.OutputMode;
 import com.alibaba.dashscope.common.ResultCallback;
-import com.alibaba.dashscope.common.StreamingMode;
+import com.alibaba.dashscope.common.Task;
+import com.alibaba.dashscope.common.TaskGroup;
 import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.protocol.ServiceFacility;
+import com.alibaba.dashscope.exception.InputRequiredException;
+import com.alibaba.dashscope.exception.NoApiKeyException;
+import com.alibaba.dashscope.protocol.ApiServiceOption;
+import com.alibaba.dashscope.protocol.ClientOptions;
+import com.alibaba.dashscope.protocol.Protocol;
+import com.alibaba.dashscope.protocol.StreamingMode;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
-import io.reactivex.schedulers.Schedulers;
 import java.io.File;
 import java.io.FileInputStream;
 import java.nio.ByteBuffer;
@@ -19,23 +29,21 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import lombok.Builder;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 
 @Slf4j
-public class Recognition implements BaseRecognition {
+public final class Recognition {
+  SynchronizeFullDuplexApi<RecognitionParamWithStream> duplexApi;
 
-  @Setter private long responseTimeout = 30;
+  private ApiServiceOption serviceOption;
 
   private Emitter<ByteBuffer> audioEmitter;
 
   @SuperBuilder
   private static class AsyncCmdBuffer {
     @Builder.Default private boolean isStop = false;
-
     private ByteBuffer audioFrame;
   }
 
@@ -45,57 +53,63 @@ public class Recognition implements BaseRecognition {
 
   private AtomicReference<CountDownLatch> stopLatch = new AtomicReference<>(null);
 
-  private Flowable<Param> toParam(RecognitionParam param, Flowable<ByteBuffer> audioFrames) {
-    RecognitionRequestParam requestParam =
-        RecognitionRequestParam.builder()
-            .mode(StreamingMode.DUPLEX)
-            .model(param.getModel())
-            .format(param.getFormat())
-            .sampleRate(param.getSampleRate())
-            .disfluencyRemovalEnabled(param.isDisfluencyRemovalEnabled())
+  @SuperBuilder
+  private static class RecognitionParamWithStream extends RecognitionParam {
+
+    @NonNull private Flowable<ByteBuffer> audioStream;
+
+    @Override
+    public Flowable<Object> getStreamingData() {
+      return audioStream.cast(Object.class);
+    }
+  }
+
+  public Recognition() {
+    serviceOption =
+        ApiServiceOption.builder()
+            .protocol(Protocol.WEBSOCKET)
+            .streamingMode(StreamingMode.DUPLEX)
+            .outputMode(OutputMode.ACCUMULATE)
+            .taskGroup(TaskGroup.AUDIO.getValue())
+            .task(Task.ASR.getValue())
+            .function(Function.RECOGNITION.getValue())
             .build();
-    if (param.getApiKey() != null) {
-      requestParam.setApiKey(param.getApiKey());
-    }
-
-    Flowable<Param> params = Flowable.just(requestParam);
-    if (audioFrames != null) {
-      Flowable<RecognitionBaseParam> streamParams =
-          audioFrames.map(
-              buffer ->
-                  RecognitionStreamParam.builder()
-                      .mode(StreamingMode.DUPLEX)
-                      .audioFrame(buffer)
-                      .build());
-      return params.concatWith(streamParams);
-    } else {
-      return params;
-    }
+    duplexApi =
+        new SynchronizeFullDuplexApi<>(
+            ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(), serviceOption);
   }
 
-  @Override
   public Flowable<RecognitionResult> streamCall(
-      RecognitionParam param, Flowable<ByteBuffer> audioFrames) {
-    if (param == null) {
-      throw new ApiException(new RuntimeException("Parameter invalid: RecognitionParam is null"));
-    }
-    if (audioFrames == null) {
-      throw new ApiException(
-          new RuntimeException("Parameter invalid: audioFrames in RecognitionParam is null"));
-    }
-    return ServiceFacility.streamCall(null, toParam(param, audioFrames), responseTimeout)
-        .map(message -> (RecognitionResult) message)
-        .filter(
-            result -> result != null && result.getSentence() != null && !result.isCompleteResult());
+      RecognitionParam param, Flowable<ByteBuffer> audioFrame)
+      throws ApiException, NoApiKeyException {
+    RecognitionParamWithStream paramWithStream =
+        RecognitionParamWithStream.builder()
+            .format(param.getFormat())
+            .audioStream(audioFrame)
+            .disfluencyRemovalEnabled(param.isDisfluencyRemovalEnabled())
+            .model(param.getModel())
+            .sampleRate(param.getSampleRate())
+            .apiKey(param.getApiKey())
+            .build();
+
+    return duplexApi
+        .duplexCall(paramWithStream)
+        .map(
+            item -> {
+              return RecognitionResult.fromDashScopeResult(item);
+            })
+        .filter(item -> item != null && item.getSentence() != null && !item.isCompleteResult());
   }
 
-  @Override
   public void call(RecognitionParam param, ResultCallback<RecognitionResult> callback) {
     if (param == null) {
-      throw new ApiException(new RuntimeException("Parameter invalid: RecognitionParam is null"));
+      throw new ApiException(
+          new InputRequiredException("Parameter invalid: RecognitionParam is null"));
     }
+
     if (callback == null) {
-      throw new ApiException(new RuntimeException("Parameter invalid: ResultCallback is null"));
+      throw new ApiException(
+          new InputRequiredException("Parameter invalid: ResultCallback is null"));
     }
 
     Flowable<ByteBuffer> audioFrames =
@@ -117,60 +131,76 @@ public class Recognition implements BaseRecognition {
               }
             },
             BackpressureStrategy.BUFFER);
-
     synchronized (this) {
       state = RecognitionState.RECOGNITION_STARTED;
       cmdBuffer.clear();
     }
     stopLatch = new AtomicReference<>(new CountDownLatch(1));
-    new Thread(
-            () -> {
-              Flowable<Param> params = toParam(param, audioFrames);
-              try {
-                ServiceFacility.streamCall(null, params, responseTimeout)
-                    .blockingSubscribe(
-                        res -> {
-                          RecognitionResult recognitionResult = (RecognitionResult) res;
-                          if (!recognitionResult.isCompleteResult()) {
-                            callback.onEvent(recognitionResult);
-                          }
-                        },
-                        e -> {
-                          synchronized (Recognition.this) {
-                            state = RecognitionState.IDLE;
-                          }
-                          callback.onError(new ApiException(e));
-                          if (stopLatch.get() != null) {
-                            stopLatch.get().countDown();
-                          }
-                        },
-                        () -> {
-                          synchronized (Recognition.this) {
-                            state = RecognitionState.IDLE;
-                          }
-                          callback.onComplete();
-                          if (stopLatch.get() != null) {
-                            stopLatch.get().countDown();
-                          }
-                        });
-              } catch (Exception e) {
-                callback.onError(e);
-                if (stopLatch.get() != null) {
-                  stopLatch.get().countDown();
-                }
+    RecognitionParamWithStream paramWithStream =
+        RecognitionParamWithStream.builder()
+            .format(param.getFormat())
+            .audioStream(audioFrames)
+            .disfluencyRemovalEnabled(param.isDisfluencyRemovalEnabled())
+            .model(param.getModel())
+            .sampleRate(param.getSampleRate())
+            .apiKey(param.getApiKey())
+            .build();
+
+    try {
+      duplexApi.duplexCall(
+          paramWithStream,
+          new ResultCallback<DashScopeResult>() {
+            @Override
+            public void onEvent(DashScopeResult message) {
+              RecognitionResult recognitionResult = RecognitionResult.fromDashScopeResult(message);
+              if (!recognitionResult.isCompleteResult()) {
+                callback.onEvent(recognitionResult);
               }
-            })
-        .start();
+            }
+
+            @Override
+            public void onComplete() {
+              synchronized (Recognition.this) {
+                state = RecognitionState.IDLE;
+              }
+              callback.onComplete();
+              if (stopLatch.get() != null) {
+                stopLatch.get().countDown();
+              }
+            }
+
+            @Override
+            public void onError(Exception e) {
+              synchronized (Recognition.this) {
+                state = RecognitionState.IDLE;
+              }
+              ApiException apiException = new ApiException(e);
+              apiException.setStackTrace(e.getStackTrace());
+              callback.onError(apiException);
+              if (stopLatch.get() != null) {
+                stopLatch.get().countDown();
+              }
+            }
+          });
+    } catch (NoApiKeyException e) {
+      ApiException apiException = new ApiException(e);
+      apiException.setStackTrace(e.getStackTrace());
+      callback.onError(apiException);
+      if (stopLatch.get() != null) {
+        stopLatch.get().countDown();
+      }
+    }
+    log.info("Recognition started");
   }
 
-  @Override
   public String call(RecognitionParam param, File file) {
     if (param == null) {
-      throw new ApiException(new RuntimeException("Parameter invalid: RecognitionParam is null"));
+      throw new ApiException(
+          new InputRequiredException("Parameter invalid: RecognitionParam is null"));
     }
     if (file == null || !file.canRead()) {
       throw new ApiException(
-          new RuntimeException("Parameter invalid: Input file is null or not exists"));
+          new InputRequiredException("Parameter invalid: Input file is null or not exists"));
     }
 
     AtomicBoolean cancel = new AtomicBoolean(false);
@@ -180,57 +210,74 @@ public class Recognition implements BaseRecognition {
     Flowable<ByteBuffer> audioFrames =
         Flowable.create(
             emitter -> {
-              try {
-                try (val channel = new FileInputStream(file).getChannel()) {
-                  ByteBuffer buffer = ByteBuffer.allocate(4096 * 4);
-                  while (channel.read(buffer) != -1 && !cancel.get()) {
-                    buffer.flip();
-                    emitter.onNext(buffer);
-                    buffer = ByteBuffer.allocate(4096 * 4);
-                    Thread.sleep(10);
-                  }
-                }
-                emitter.onComplete();
-              } catch (Exception e) {
-                emitter.onError(e);
-              }
+              new Thread(
+                      () -> {
+                        try {
+                          try (val channel = new FileInputStream(file).getChannel()) {
+                            ByteBuffer buffer = ByteBuffer.allocate(4096 * 4);
+                            while (channel.read(buffer) != -1 && !cancel.get()) {
+                              buffer.flip();
+                              emitter.onNext(buffer);
+                              buffer = ByteBuffer.allocate(4096 * 4);
+                              Thread.sleep(100);
+                            }
+                          }
+                          emitter.onComplete();
+                        } catch (Exception e) {
+                          emitter.onError(e);
+                        }
+                      })
+                  .start();
             },
             BackpressureStrategy.BUFFER);
-    audioFrames = audioFrames.subscribeOn(Schedulers.io());
-    ServiceFacility.streamCall(null, toParam(param, audioFrames), responseTimeout)
-        .blockingSubscribe(
-            res -> {
-              RecognitionResult result = (RecognitionResult) res;
-              if (!result.isCompleteResult() && result.isSentenceEnd()) {
-                sentenceList.add(result.getSentence());
-              }
-            },
-            e -> {
-              finalError.set(e);
-              cancel.set(true);
-            },
-            () -> {
-              JsonObject jsonObject = new JsonObject();
-              jsonObject.add("sentences", new Gson().toJsonTree(sentenceList).getAsJsonArray());
-              finalResult.set(jsonObject.toString());
-            });
-
+    RecognitionParamWithStream paramWithStream =
+        RecognitionParamWithStream.builder()
+            .format(param.getFormat())
+            .audioStream(audioFrames)
+            .disfluencyRemovalEnabled(param.isDisfluencyRemovalEnabled())
+            .model(param.getModel())
+            .sampleRate(param.getSampleRate())
+            .apiKey(param.getApiKey())
+            .build();
+    try {
+      duplexApi
+          .duplexCall(paramWithStream)
+          .blockingSubscribe(
+              res -> {
+                RecognitionResult recognitionResult = RecognitionResult.fromDashScopeResult(res);
+                if (!recognitionResult.isCompleteResult() && recognitionResult.isSentenceEnd()) {
+                  sentenceList.add(recognitionResult.getSentence());
+                }
+              },
+              e -> {
+                finalError.set(e);
+                cancel.set(true);
+              },
+              () -> {
+                JsonObject jsonObject = new JsonObject();
+                jsonObject.add("sentences", new Gson().toJsonTree(sentenceList).getAsJsonArray());
+                finalResult.set(jsonObject.toString());
+              });
+    } catch (NoApiKeyException e) {
+      throw new ApiException(e);
+    }
     if (finalError.get() != null) {
-      throw new ApiException(finalError.get());
+      ApiException apiException = new ApiException(finalError.get());
+      apiException.setStackTrace(finalError.get().getStackTrace());
+      throw apiException;
     }
 
     return finalResult.get();
   }
 
-  @Override
   public void sendAudioFrame(ByteBuffer audioFrame) {
     if (audioFrame == null) {
-      throw new ApiException(new RuntimeException("Parameter invalid: audioFrame is null"));
+      throw new ApiException(new InputRequiredException("Parameter invalid: audioFrame is null"));
     }
     synchronized (this) {
       if (state != RecognitionState.RECOGNITION_STARTED) {
         throw new ApiException(
-            new RuntimeException(
+            new InputRequiredException(
                 "State invalid: expect recognition state is started but " + state.getValue()));
       }
       if (audioEmitter == null) {
@@ -241,7 +288,6 @@ public class Recognition implements BaseRecognition {
     }
   }
 
-  @Override
   public void stop() {
     synchronized (this) {
       if (state != RecognitionState.RECOGNITION_STARTED) {
@@ -259,8 +305,7 @@ public class Recognition implements BaseRecognition {
     if (stopLatch.get() != null) {
       try {
         stopLatch.get().await();
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
+      } catch (InterruptedException ignored) {
       }
     }
   }

@@ -4,9 +4,9 @@ package com.alibaba.dashscope.exception;
 import com.alibaba.dashscope.common.ErrorType;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.utils.JsonUtils;
+import java.net.HttpURLConnection;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.http.HttpStatus;
 
 public class ApiException extends RuntimeException {
 
@@ -14,12 +14,16 @@ public class ApiException extends RuntimeException {
 
   public ApiException(Throwable e) {
     super(e);
-    this.status =
-        Status.builder()
-            .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
-            .code(ErrorType.UNKNOWN_ERROR.getValue())
-            .message(e.getMessage())
-            .build();
+    if (e instanceof ApiException) {
+      this.status = ((ApiException) e).status;
+    } else {
+      this.status =
+          Status.builder()
+              .statusCode(HttpURLConnection.HTTP_INTERNAL_ERROR)
+              .code(ErrorType.UNKNOWN_ERROR.getValue())
+              .message(e.getMessage())
+              .build();
+    }
     this.setStackTrace(e.getStackTrace());
   }
 
@@ -33,5 +37,10 @@ public class ApiException extends RuntimeException {
     String s = super.toString();
     s = s + "; status body:" + JsonUtils.toJson(status);
     return s;
+  }
+
+  @Override
+  public String getMessage() {
+    return JsonUtils.toJson(status);
   }
 }

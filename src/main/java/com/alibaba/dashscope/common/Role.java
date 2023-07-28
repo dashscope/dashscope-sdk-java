@@ -5,9 +5,10 @@ public enum Role {
 
   /** The human side. */
   USER("user"),
-
+  ASSISTANT("assistant"),
   /** The model side. */
   BOT("bot"),
+  SYSTEM("system"),
   ;
 
   private final String value;

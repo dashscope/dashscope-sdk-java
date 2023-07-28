@@ -1,3 +1,5 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
+
 package com.alibaba.dashscope.audio.asr.transcription;
 
 import com.alibaba.dashscope.common.TaskStatus;

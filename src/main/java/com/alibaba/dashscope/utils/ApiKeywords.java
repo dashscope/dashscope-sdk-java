@@ -9,7 +9,11 @@ public class ApiKeywords {
 
   public static final String CODE = "code";
 
+  public static final String DATA = "data";
+
   public static final String MESSAGE = "message";
+
+  public static final String MESSAGES = "messages";
 
   public static final String USAGE = "usage";
 
@@ -19,6 +23,8 @@ public class ApiKeywords {
 
   public static final String TEXT = "text";
 
+  public static final String TEXTS = "texts";
+
   public static final String MODEL = "model";
 
   public static final String PARAMETERS = "parameters";
@@ -26,6 +32,7 @@ public class ApiKeywords {
   public static final String INPUT = "input";
 
   public static final String PROMPT = "prompt";
+  public static final String NEGATIVE_PROMPT = "negative_prompt";
 
   public static final String TOP_P = "top_p";
 
@@ -34,6 +41,14 @@ public class ApiKeywords {
   public static final String M6_SEARCH_IN_FIRST_QUERY = "M6_SEARCH_IN_FIRST_QUERY";
 
   public static final String M6_NUM_WEB_SEARCH = "M6_NUM_WEB_SEARCH";
+
+  public static final String CUSTOMIZED_MODEL_ID = "customized_model_id";
+
+  public static final String NUMBER = "n";
+
+  public static final String SIZE = "size";
+
+  public static final String SIMILARITY = "similarity";
 
   public static final String HEADER = "header";
 
@@ -60,4 +75,8 @@ public class ApiKeywords {
   public static final String OUTPUT = "output";
 
   public static final String TASK_STATUS = "task_status";
+
+  public static final String ROLE = "role";
+
+  public static final String CONTENT = "content";
 }

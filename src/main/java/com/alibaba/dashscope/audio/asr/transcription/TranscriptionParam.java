@@ -1,10 +1,12 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
+
 package com.alibaba.dashscope.audio.asr.transcription;
 
-import com.alibaba.dashscope.common.*;
-import com.alibaba.dashscope.protocol.Request;
-import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.base.HalfDuplexServiceParam;
+import com.alibaba.dashscope.exception.InputRequiredException;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import lombok.Builder;
@@ -16,21 +18,17 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
-public class TranscriptionParam extends Param {
+public class TranscriptionParam extends HalfDuplexServiceParam {
 
   @NonNull private List<String> fileUrls;
 
   @Builder.Default private List<Integer> channelId = Collections.singletonList(0);
 
   @Override
-  public String url() {
-    return String.format(
-        "/services/%s/%s/%s",
-        TaskGroup.AUDIO.getValue(), Task.ASR.getValue(), Function.TRANSCRIPTION.getValue());
-  }
+  public JsonObject getHttpBody() {
 
-  @Override
-  public Request toRequest(Protocol protocol) {
+    JsonObject body = new JsonObject();
+    body.addProperty("model", getModel());
     JsonArray jsonFileUrls = new JsonArray();
     for (String fileUrl : fileUrls) {
       jsonFileUrls.add(fileUrl);
@@ -46,17 +44,31 @@ public class TranscriptionParam extends Param {
 
     JsonObject jsonInput = new JsonObject();
     jsonInput.add(TranscriptionApiKeywords.FILE_URLS, jsonFileUrls);
+    body.add("input", jsonInput);
 
     JsonObject jsonParameters = new JsonObject();
     jsonParameters.add(TranscriptionApiKeywords.CHANNEL_ID, jsonChannelId);
-
-    TranscriptionMessagePayload payload =
-        TranscriptionMessagePayload.buildInputPayload(getModel(), jsonInput, jsonParameters);
-    return Request.builder().message(JsonUtils.toJson(payload)).build();
+    body.add("parameters", jsonParameters);
+    return body;
   }
 
   @Override
-  public Class<? extends Result> resultType() {
-    return TranscriptionResult.class;
+  public Object getInput() {
+    JsonArray jsonFileUrls = new JsonArray();
+    for (String fileUrl : fileUrls) {
+      jsonFileUrls.add(fileUrl);
+    }
+
+    JsonObject jsonInput = new JsonObject();
+    jsonInput.add(TranscriptionApiKeywords.FILE_URLS, jsonFileUrls);
+    return jsonInput;
   }
+
+  @Override
+  public ByteBuffer getBinaryData() {
+    throw new UnsupportedOperationException("Unimplemented method 'getBinaryData'");
+  }
+
+  @Override
+  public void validate() throws InputRequiredException {}
 }

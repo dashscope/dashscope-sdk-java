@@ -49,47 +49,11 @@
         <maven-antrun.version>1.8</maven-antrun.version>
         <commons-lang3.version>3.11</commons-lang3.version>
     </properties>
-
     <dependencies>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-collections4</artifactId>
-            <version>4.4</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.14</version>
-        </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>31.1-jre</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-            <version>1.15</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.11.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.java-websocket</groupId>
-            <artifactId>Java-WebSocket</artifactId>
-            <version>1.5.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.12.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-pool2</artifactId>
-            <version>2.11.1</version>
+            <version>32.1.1-jre</version>
         </dependency>
         <dependency>
             <groupId>io.reactivex.rxjava2</groupId>
@@ -103,11 +67,6 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpasyncclient</artifactId>
-            <version>4.1.5</version>
-        </dependency>
-        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
             <version>5.8.2</version>
@@ -118,7 +77,13 @@
             <artifactId>junit-jupiter-api</artifactId>
             <version>5.8.2</version>
             <scope>test</scope>
-        </dependency>
+        </dependency> 
+        <dependency>
+	        <groupId>org.junit-pioneer</groupId>
+	        <artifactId>junit-pioneer</artifactId>
+	        <version>1.9.1</version>
+	        <scope>test</scope>
+        </dependency>   
         <dependency>
             <groupId>io.javalin</groupId>
             <artifactId>javalin</artifactId>
@@ -139,6 +104,27 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>2.0.7</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>mockwebserver</artifactId>
+            <version>4.11.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>logging-interceptor</artifactId>
+            <version>4.11.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp-sse</artifactId>
+            <version>4.11.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>4.11.0</version>
         </dependency>
     </dependencies>
 
@@ -215,6 +201,24 @@
                         <goals>
                             <goal>sign</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.4.0</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>samples</source>
+                            </sources>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

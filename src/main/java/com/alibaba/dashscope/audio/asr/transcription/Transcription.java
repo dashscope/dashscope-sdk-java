@@ -1,71 +1,59 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
+
 package com.alibaba.dashscope.audio.asr.transcription;
 
-import com.alibaba.dashscope.common.Protocol;
-import com.alibaba.dashscope.common.StreamingMode;
-import com.alibaba.dashscope.common.WebSocketEventType;
+import com.alibaba.dashscope.api.AsynchronousApi;
+import com.alibaba.dashscope.common.Function;
+import com.alibaba.dashscope.common.Task;
+import com.alibaba.dashscope.common.TaskGroup;
 import com.alibaba.dashscope.exception.ApiException;
+import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.*;
-import com.google.common.collect.Maps;
-import java.util.Map;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public final class Transcription implements BaseTranscription {
+public final class Transcription {
+  private final AsynchronousApi<TranscriptionParam> asyncApi;
+  private final ApiServiceOption createServiceOptions;
 
-  @Setter private long responseTime = 30;
+  public Transcription() {
+    asyncApi = new AsynchronousApi<TranscriptionParam>();
+    createServiceOptions =
+        ApiServiceOption.builder()
+            .protocol(Protocol.HTTP)
+            .httpMethod(HttpMethod.POST)
+            .streamingMode(StreamingMode.NONE)
+            .taskGroup(TaskGroup.AUDIO.getValue())
+            .task(Task.ASR.getValue())
+            .function(Function.TRANSCRIPTION.getValue())
+            .isAsyncTask(true)
+            .build();
+  }
 
-  @Override
-  public TranscriptionResult asyncCall(TranscriptionParam param) throws ApiException {
+  public TranscriptionResult asyncCall(TranscriptionParam param) {
     try {
-      param.setMode(StreamingMode.NONE);
-      Map<String, String> exHeaders = Maps.newHashMap();
-      exHeaders.put("X-DashScope-Async", "enable");
-      return (TranscriptionResult)
-          ServiceFacility.call(Protocol.HTTP, exHeaders, param, HttpMethod.POST, responseTime);
-    } catch (Exception e) {
-      throw e instanceof ApiException ? (ApiException) e : new ApiException(e);
+      return TranscriptionResult.fromDashScopeResult(
+          asyncApi.asyncCall(param, createServiceOptions));
+    } catch (NoApiKeyException e) {
+      throw new ApiException(e);
     }
   }
 
-  @Override
   public TranscriptionResult wait(TranscriptionQueryParam queryParam) {
     try {
-      SubmitParam param =
-          SubmitParam.builder()
-              .taskId(queryParam.getTaskId())
-              .apiKey(queryParam.getApiKey())
-              .build();
-      return (TranscriptionResult)
-          ServiceFacility.wait(param, TranscriptionResult.class, responseTime);
-    } catch (Exception e) {
-      throw e instanceof ApiException ? (ApiException) e : new ApiException(e);
+      return TranscriptionResult.fromDashScopeResult(
+          asyncApi.wait(queryParam.getTaskId(), queryParam.getApiKey()));
+    } catch (NoApiKeyException e) {
+      throw new ApiException(e);
     }
   }
 
-  @Override
   public TranscriptionResult fetch(TranscriptionQueryParam queryParam) {
     try {
-      SubmitParam param =
-          SubmitParam.builder()
-              .mode(StreamingMode.NONE)
-              .taskId(queryParam.getTaskId())
-              .apiKey(queryParam.getApiKey())
-              .build();
-      Map<String, String> headers = ServiceFacility.prepareHeaders(Protocol.HTTP, param);
-      String url = ServiceFacility.prepareUrl(Protocol.HTTP, param);
-      Response response =
-          ServiceFacility.streamingNone(
-              Protocol.HTTP,
-              url,
-              headers,
-              ServiceFacility.prepareRequest(Protocol.HTTP, param, WebSocketEventType.RUN_TASK),
-              HttpMethod.GET,
-              responseTime);
-      return (TranscriptionResult)
-          ServiceFacility.prepareResult(Protocol.HTTP, queryParam, response);
-    } catch (Exception e) {
-      throw e instanceof ApiException ? (ApiException) e : new ApiException(e);
+      return TranscriptionResult.fromDashScopeResult(
+          asyncApi.fetch(queryParam.getTaskId(), queryParam.getApiKey()));
+    } catch (NoApiKeyException e) {
+      throw new ApiException(e);
     }
   }
 }

@@ -3,6 +3,7 @@ package com.alibaba.dashscope.common;
 
 public enum TaskGroup {
   AIGC("aigc"),
+  EMBEDDINGS("embeddings"),
   AUDIO("audio"),
   ;
 
