@@ -132,11 +132,8 @@ public final class SpeechSynthesizer {
                     timestamps.add(sentence);
                   } else {
                     if (!lastSentenceRef.get().equals(sentence)) {
-                      log.info("New sentence: {}", sentence);
                       lastSentenceRef.set(sentence);
                       timestamps.add(sentence);
-                    } else {
-                      log.info("Same sentence: {}", sentence);
                     }
                   }
                   timestamps.add(result.getTimestamp());
@@ -159,7 +156,6 @@ public final class SpeechSynthesizer {
                 } catch (IOException e) {
                   log.error("Failed to close channel: {}", channel, e);
                 }
-                audioData = ByteBuffer.wrap(outputStream.toByteArray());
               })
           .doOnError(
               e -> {
@@ -178,54 +174,12 @@ public final class SpeechSynthesizer {
   }
 
   public ByteBuffer call(SpeechSynthesisParam param) {
-    audioData = null;
-    timestamps.clear();
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    WritableByteChannel channel = Channels.newChannel(outputStream);
-    AtomicReference<Sentence> lastSentenceRef = new AtomicReference<>();
+    AtomicReference<Throwable> finalError = new AtomicReference<>(null);
     Flowable<SpeechSynthesisResult> flowable = streamCall(param);
-    flowable.blockingSubscribe(
-        result -> {
-          if (result.getTimestamp() != null) {
-            Sentence sentence = result.getTimestamp();
-            if (lastSentenceRef.get() == null) {
-              lastSentenceRef.set(sentence);
-              timestamps.add(sentence);
-            } else {
-              if (!lastSentenceRef.get().equals(sentence)) {
-                lastSentenceRef.set(sentence);
-                timestamps.add(sentence);
-              }
-            }
-            timestamps.add(result.getTimestamp());
-          }
-          if (result.getAudioFrame() != null) {
-            try {
-              channel.write(result.getAudioFrame());
-            } catch (IOException e) {
-              log.error("Failed to write audio: {}", result.getAudioFrame(), e);
-            }
-          }
-        },
-        error -> {
-          try {
-            channel.close();
-            outputStream.close();
-            timestamps.clear();
-            audioData = null;
-          } catch (IOException ex) {
-            log.error("Failed to close channel: {}", channel, ex);
-          }
-        },
-        () -> {
-          try {
-            audioData = ByteBuffer.wrap(outputStream.toByteArray());
-            channel.close();
-            outputStream.close();
-          } catch (IOException e) {
-            log.error("Failed to close channel: {}", channel, e);
-          }
-        });
+    flowable.doOnError(finalError::set).blockingLast();
+    if (finalError.get() != null) {
+      throw new ApiException(finalError.get());
+    }
     return audioData;
   }
 }
