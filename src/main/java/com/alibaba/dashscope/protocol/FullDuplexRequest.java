@@ -3,6 +3,7 @@ package com.alibaba.dashscope.protocol;
 
 import com.alibaba.dashscope.base.FullDuplexServiceParam;
 import com.alibaba.dashscope.common.OutputMode;
+import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import io.reactivex.Flowable;
@@ -36,54 +37,60 @@ public class FullDuplexRequest {
 
   public JsonObject getWebSocketPayload() {
     JsonObject request = new JsonObject();
-    request.addProperty("model", param.getModel());
-    request.addProperty("task_group", serviceOption.getTaskGroup());
-    request.addProperty("task", serviceOption.getTask());
-    request.addProperty("function", serviceOption.getFunction());
-    request.add("input", new JsonObject());
+    request.addProperty(ApiKeywords.MODEL, param.getModel());
+    request.addProperty(ApiKeywords.TASK_GROUP, serviceOption.getTaskGroup());
+    request.addProperty(ApiKeywords.TASK, serviceOption.getTask());
+    request.addProperty(ApiKeywords.FUNCTION, serviceOption.getFunction());
+    request.add(ApiKeywords.INPUT, new JsonObject());
     if (param.getParameters() != null) {
-      request.add("parameters", JsonUtils.parametersToJsonObject(param.getParameters()));
+      request.add(ApiKeywords.PARAMETERS, JsonUtils.parametersToJsonObject(param.getParameters()));
+    }
+    if (param.getResources() != null) {
+      request.add(ApiKeywords.RESOURCES, (JsonObject) param.getResources());
     }
     return request;
   }
 
   public JsonObject getWebSocketPayload(Object data) {
     JsonObject request = new JsonObject();
-    request.addProperty("model", param.getModel());
-    request.addProperty("task_group", serviceOption.getTaskGroup());
-    request.addProperty("task", serviceOption.getTask());
-    request.addProperty("function", serviceOption.getFunction());
+    request.addProperty(ApiKeywords.MODEL, param.getModel());
+    request.addProperty(ApiKeywords.TASK_GROUP, serviceOption.getTaskGroup());
+    request.addProperty(ApiKeywords.TASK, serviceOption.getTask());
+    request.addProperty(ApiKeywords.FUNCTION, serviceOption.getFunction());
     if (data instanceof ByteBuffer) {
-      request.add("input", new JsonObject()); // empty input
+      request.add(ApiKeywords.INPUT, new JsonObject()); // empty input
     } else if (data instanceof Byte[]) request.add("input", new JsonObject());
     else {
-      request.add("input", JsonUtils.toJsonElement(data));
+      request.add(ApiKeywords.INPUT, JsonUtils.toJsonElement(data));
     }
     if (param.getParameters() != null) {
-      request.add("parameters", JsonUtils.parametersToJsonObject(param.getParameters()));
+      request.add(ApiKeywords.PARAMETERS, JsonUtils.parametersToJsonObject(param.getParameters()));
+    }
+    if (param.getResources() != null) {
+      request.add(ApiKeywords.RESOURCES, (JsonObject) param.getResources());
     }
     return request;
   }
 
   public JsonObject getStartTaskMessage() {
     JsonObject header = new JsonObject();
-    header.addProperty("action", WebSocketEventType.RUN_TASK.getValue());
-    header.addProperty("task_id", UUID.randomUUID().toString());
-    header.addProperty("streaming", serviceOption.getStreamingMode().getValue());
+    header.addProperty(ApiKeywords.ACTION, WebSocketEventType.RUN_TASK.getValue());
+    header.addProperty(ApiKeywords.TASKID, UUID.randomUUID().toString());
+    header.addProperty(ApiKeywords.STREAMING, serviceOption.getStreamingMode().getValue());
     JsonObject wsMessage = new JsonObject();
-    wsMessage.add("header", header);
-    wsMessage.add("payload", getWebSocketPayload());
+    wsMessage.add(ApiKeywords.HEADER, header);
+    wsMessage.add(ApiKeywords.PAYLOAD, getWebSocketPayload());
     return wsMessage;
   }
 
   public JsonObject getStartTaskMessage(Object payloadData) {
     JsonObject header = new JsonObject();
-    header.addProperty("action", WebSocketEventType.RUN_TASK.getValue());
-    header.addProperty("task_id", UUID.randomUUID().toString());
-    header.addProperty("streaming", serviceOption.getStreamingMode().getValue());
+    header.addProperty(ApiKeywords.ACTION, WebSocketEventType.RUN_TASK.getValue());
+    header.addProperty(ApiKeywords.TASKID, UUID.randomUUID().toString());
+    header.addProperty(ApiKeywords.STREAMING, serviceOption.getStreamingMode().getValue());
     JsonObject wsMessage = new JsonObject();
-    wsMessage.add("header", header);
-    wsMessage.add("payload", getWebSocketPayload(payloadData));
+    wsMessage.add(ApiKeywords.HEADER, header);
+    wsMessage.add(ApiKeywords.PAYLOAD, getWebSocketPayload(payloadData));
     return wsMessage;
   }
 
@@ -98,51 +105,51 @@ public class FullDuplexRequest {
 
   public JsonObject getContinueMessage() {
     JsonObject header = new JsonObject();
-    header.addProperty("action", WebSocketEventType.CONTINUE_TASK.getValue());
-    header.addProperty("task_id", UUID.randomUUID().toString());
-    header.addProperty("streaming", serviceOption.getStreamingMode().getValue());
+    header.addProperty(ApiKeywords.ACTION, WebSocketEventType.CONTINUE_TASK.getValue());
+    header.addProperty(ApiKeywords.TASKID, UUID.randomUUID().toString());
+    header.addProperty(ApiKeywords.STREAMING, serviceOption.getStreamingMode().getValue());
     // websocket package.
     JsonObject wsMessage = new JsonObject();
-    wsMessage.add("header", header);
-    wsMessage.add("payload", getWebSocketPayload());
+    wsMessage.add(ApiKeywords.HEADER, header);
+    wsMessage.add(ApiKeywords.PAYLOAD, getWebSocketPayload());
     return wsMessage;
   }
 
   public JsonObject getContinueMessage(String data, String taskId) {
     JsonObject header = new JsonObject();
-    header.addProperty("action", WebSocketEventType.CONTINUE_TASK.getValue());
-    header.addProperty("task_id", taskId);
-    header.addProperty("streaming", serviceOption.getStreamingMode().getValue());
+    header.addProperty(ApiKeywords.ACTION, WebSocketEventType.CONTINUE_TASK.getValue());
+    header.addProperty(ApiKeywords.TASKID, taskId);
+    header.addProperty(ApiKeywords.STREAMING, serviceOption.getStreamingMode().getValue());
     // websocket package.
     JsonObject wsMessage = new JsonObject();
-    wsMessage.add("header", header);
-    wsMessage.add("payload", getWebSocketPayload(data));
+    wsMessage.add(ApiKeywords.HEADER, header);
+    wsMessage.add(ApiKeywords.PAYLOAD, getWebSocketPayload(data));
     return wsMessage;
   }
 
   public JsonObject getContinueMessage(Object data, String taskId) {
     JsonObject header = new JsonObject();
-    header.addProperty("action", WebSocketEventType.CONTINUE_TASK.getValue());
-    header.addProperty("task_id", taskId);
-    header.addProperty("streaming", serviceOption.getStreamingMode().getValue());
+    header.addProperty(ApiKeywords.ACTION, WebSocketEventType.CONTINUE_TASK.getValue());
+    header.addProperty(ApiKeywords.TASKID, taskId);
+    header.addProperty(ApiKeywords.STREAMING, serviceOption.getStreamingMode().getValue());
     // websocket package.
     JsonObject wsMessage = new JsonObject();
-    wsMessage.add("header", header);
-    wsMessage.add("payload", getWebSocketPayload(data));
+    wsMessage.add(ApiKeywords.HEADER, header);
+    wsMessage.add(ApiKeywords.PAYLOAD, getWebSocketPayload(data));
     return wsMessage;
   }
 
   public JsonObject getFinishedTaskMessage(String taskId) {
     JsonObject header = new JsonObject();
-    header.addProperty("action", WebSocketEventType.FINISH_TASK.getValue());
-    header.addProperty("task_id", taskId);
-    header.addProperty("streaming", serviceOption.getStreamingMode().getValue());
+    header.addProperty(ApiKeywords.ACTION, WebSocketEventType.FINISH_TASK.getValue());
+    header.addProperty(ApiKeywords.TASKID, taskId);
+    header.addProperty(ApiKeywords.STREAMING, serviceOption.getStreamingMode().getValue());
     // websocket package.
     JsonObject wsMessage = new JsonObject();
-    wsMessage.add("header", header);
+    wsMessage.add(ApiKeywords.HEADER, header);
     JsonObject payload = new JsonObject();
     payload.add("input", new JsonObject());
-    wsMessage.add("payload", payload);
+    wsMessage.add(ApiKeywords.PAYLOAD, payload);
     return wsMessage;
   }
 }

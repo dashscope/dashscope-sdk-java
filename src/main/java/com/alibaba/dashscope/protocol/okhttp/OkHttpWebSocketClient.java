@@ -376,7 +376,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
             callback.onEvent(msg);
           },
           err -> {
-            callback.onError(new Exception(err));
+            callback.onError(new ApiException(err));
           },
           new Action() {
             @Override
@@ -417,7 +417,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
           callback.onEvent(msg);
         },
         err -> {
-          callback.onError(new Exception(err));
+          callback.onError(new ApiException(err));
         },
         new Action() {
           @Override
@@ -576,7 +576,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
           callback.onEvent(msg);
         },
         err -> {
-          callback.onError(new Exception(err));
+          callback.onError(new ApiException(err));
         },
         new Action() {
           @Override

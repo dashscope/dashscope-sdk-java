@@ -17,6 +17,7 @@ import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
+import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
@@ -29,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.MediaType;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -93,6 +95,37 @@ public class TestHalfDuplexHttpApi {
     Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", port);
     DashScopeResult result = syncApi.call(param);
     assertEquals(output, result.getOutput());
+    server.close();
+  }
+
+  @Test
+  public void testHttpWithResources()
+      throws ApiException, NoApiKeyException, IOException, InterruptedException {
+    MockWebServer server = new MockWebServer();
+    JsonObject output = new JsonObject();
+    output.addProperty("text", "hello");
+    TestResponse rsp = TestResponse.builder().output(output).build();
+    server.enqueue(
+        new MockResponse()
+            .setBody(JsonUtils.toJson(rsp))
+            .setHeader("content-type", MEDIA_TYPE_APPLICATION_JSON));
+    int port = server.getPort();
+    JsonObject resources = new JsonObject();
+    resources.addProperty("str", "String");
+    resources.addProperty("num", 100);
+    HalfDuplexTestParam param =
+        HalfDuplexTestParam.builder()
+            .model("qwen-v1")
+            .parameter("k1", "v1")
+            .resources(resources)
+            .build();
+    Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", port);
+    DashScopeResult result = syncApi.call(param);
+    assertEquals(output, result.getOutput());
+    RecordedRequest request = server.takeRequest();
+    String body = request.getBody().readUtf8();
+    JsonObject req = JsonUtils.parse(body);
+    assertEquals(resources, req.get(ApiKeywords.RESOURCES));
     server.close();
   }
 

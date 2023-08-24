@@ -160,6 +160,53 @@ public class TestHalfDuplexWebSocketApi {
 
   @Test
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
+  public void testStreamingNoneText2TextWithResources()
+      throws ApiException, NoApiKeyException, IOException, InterruptedException {
+    SynchronizeHalfDuplexApi<HalfDuplexTestParam> syncApi =
+        new SynchronizeHalfDuplexApi<>(
+            ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(), serviceOption);
+    JsonObject resources = new JsonObject();
+    resources.addProperty("str", "String");
+    resources.addProperty("num", 100);
+    HalfDuplexTestParam param =
+        HalfDuplexTestParam.builder()
+            .parameter("hello", "world")
+            .model("testModel")
+            .prompt("prompt")
+            .resources(resources)
+            .build();
+
+    Semaphore semaphore = new Semaphore(0);
+    List<DashScopeResult> results = new ArrayList<>();
+    syncApi.call(
+        param,
+        new ResultCallback<DashScopeResult>() {
+          @Override
+          public void onEvent(DashScopeResult msg) {
+            results.add(msg);
+            semaphore.release();
+          }
+
+          @Override
+          public void onComplete() {}
+
+          @Override
+          public void onError(Exception e) {
+            semaphore.release();
+          }
+        });
+    WebSocket wsServer = serverListener.assertOpen();
+    sendTextWithRetry(wsServer, JsonUtils.toJson(WebSocketServerMessage.getTaskStartMessage()));
+    sendTextWithRetry(
+        wsServer,
+        JsonUtils.toJson(WebSocketServerMessage.getTaskGeneratedMessage(textOutput, usage)));
+    wsServer.close(1000, "bye");
+    semaphore.acquire();
+    serverListener.assertResources(resources);
+  }
+
+  @Test
+  @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
   public void testStreamingNoneBinary2Text()
       throws ApiException, NoApiKeyException, IOException, InterruptedException {
     SynchronizeHalfDuplexApi<HalfDuplexBinaryParam> syncApi =

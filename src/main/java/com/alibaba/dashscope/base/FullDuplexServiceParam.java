@@ -2,53 +2,23 @@
 
 package com.alibaba.dashscope.base;
 
-import io.reactivex.Flowable;
-import java.util.Map;
-import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
-import lombok.Singular;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
 
 /** The model service base class */
 @Data
 @SuperBuilder
-public abstract class FullDuplexServiceParam {
-  /** The model to use. */
-  @lombok.NonNull private String model;
-
-  /** The apiKey. */
-  private String apiKey;
-  /** Open security check */
-  @Builder.Default private boolean securityCheck = false;
-
-  public String getApiKey() {
-    return apiKey;
-  }
-
-  /** The extra parameters. */
-  @Singular protected Map<String, Object> parameters;
-
-  public String getModel() {
-    return model;
-  }
+@EqualsAndHashCode(callSuper = true)
+public abstract class FullDuplexServiceParam extends FullDuplexParamBase {
+  @Default private Object resources = null;
   /**
-   * The service parameters.
+   * Get the resources
    *
-   * @return The key/value parameters
+   * @return
    */
-  public abstract Map<String, Object> getParameters();
-
-  /**
-   * Get the stream input data, only for websocket stream in and duplex mode. For binary data
-   * support: byte[] and ByteBuffer Otherwise should be String or Json serializable Object. For
-   * websocket stream in and duplex service must implement.
-   *
-   * @return The stream input data.
-   */
-  public abstract Flowable<Object> getStreamingData();
-
-  public void setModel(String model) {
-    this.model = model;
-    parameters.put("model", model);
+  public Object getResources() {
+    return resources;
   }
 }

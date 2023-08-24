@@ -54,6 +54,9 @@ public class HalfDuplexTestParam extends HalfDuplexServiceParam {
     if (getParameters() != null) {
       requestObject.add(ApiKeywords.PARAMETERS, JsonUtils.parametersToJsonObject(getParameters()));
     }
+    if (getResources() != null) {
+      requestObject.add(ApiKeywords.RESOURCES, (JsonObject) getResources());
+    }
     return requestObject;
   }
 

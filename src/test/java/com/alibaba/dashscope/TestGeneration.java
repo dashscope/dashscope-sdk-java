@@ -53,6 +53,8 @@ public class TestGeneration {
       "{\"model\":\"qwen-v1\",\"input\":{\"messages\":[{\"role\":\"user\",\"content\":\"如何做土豆炖猪脚?\"}]},\"parameters\":{\"top_p\":0.8,\"result_format\":\"message\",\"enable_search\":false}}";
   private String expectTextBody =
       "{\"model\":\"qwen-v1\",\"input\":{\"prompt\":\"如何做土豆炖猪脚?\"},\"parameters\":{\"top_p\":0.8,\"enable_search\":false}}";
+  private String expectTextBodyOutputMessage =
+      "{\"model\":\"qwen-v1\",\"input\":{\"prompt\":\"如何做土豆炖猪脚?\"},\"parameters\":{\"top_p\":0.8,\"result_format\":\"message\",\"enable_search\":false}}";
 
   @BeforeEach
   public void before() {
@@ -147,7 +149,7 @@ public class TestGeneration {
     Generation generation = new Generation();
     GenerationResult result = generation.call(param);
     RecordedRequest request = server.takeRequest();
-    checkResult(result, request, expectMessageBody);
+    checkResult(result, request, expectTextBodyOutputMessage);
   }
 
   @Test
@@ -190,7 +192,7 @@ public class TestGeneration {
         });
     RecordedRequest request = server.takeRequest();
     semaphore.acquire();
-    checkResult(results.get(0), request, expectMessageBody);
+    checkResult(results.get(0), request, expectTextBodyOutputMessage);
   }
 
   @Test
@@ -214,7 +216,7 @@ public class TestGeneration {
     Generation generation = new Generation();
     Flowable<GenerationResult> flowable = generation.streamCall(param);
     GenerationResult result = flowable.blockingSingle();
-    checkResult(result, server.takeRequest(), expectMessageBody);
+    checkResult(result, server.takeRequest(), expectTextBodyOutputMessage);
   }
 
   @Test
@@ -257,7 +259,7 @@ public class TestGeneration {
           }
         });
     semaphore.acquire();
-    checkResult(results.get(0), server.takeRequest(), expectMessageBody);
+    checkResult(results.get(0), server.takeRequest(), expectTextBodyOutputMessage);
   }
 
   @Test

@@ -8,10 +8,12 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class RecognitionParam extends FullDuplexServiceParam {
 

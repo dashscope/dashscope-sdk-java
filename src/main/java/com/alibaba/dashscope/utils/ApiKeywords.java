@@ -21,6 +21,10 @@ public class ApiKeywords {
 
   public static final String TASK_GROUP = "task_group";
 
+  public static final String TASK = "task";
+
+  public static final String FUNCTION = "function";
+
   public static final String TEXT = "text";
 
   public static final String TEXTS = "texts";
@@ -28,6 +32,8 @@ public class ApiKeywords {
   public static final String MODEL = "model";
 
   public static final String PARAMETERS = "parameters";
+
+  public static final String RESOURCES = "resources";
 
   public static final String INPUT = "input";
 

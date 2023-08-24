@@ -80,10 +80,6 @@ public class QwenParam extends GenerationParamBase {
       if (getPrompt() != null) {
         jsonObject.addProperty(PROMPT, getPrompt());
       }
-    } else if (resultFormat.equals(ResultFormat.MESSAGE)) {
-      Message msg = Message.builder().role(Role.USER.getValue()).content(getPrompt()).build();
-      requestMessages.add(JsonUtils.toJsonElement(msg));
-      jsonObject.add(MESSAGES, requestMessages);
     } else {
       if (getPrompt() != null) {
         jsonObject.addProperty(PROMPT, getPrompt());
@@ -109,13 +105,18 @@ public class QwenParam extends GenerationParamBase {
     if (ResultFormat.MESSAGE.equals(getResultFormat())) {
       params.put("result_format", getResultFormat());
     }
+    if (seed != null) {
+      params.put("seed", seed);
+    }
     params.putAll(parameters);
     return params;
   }
 
   @Override
   public void validate() throws InputRequiredException {
-    if (getPrompt() == null && (getMessages() == null || getMessages().isEmpty())) {
+    if (getPrompt() == null
+        && (getHistory() == null || getHistory().isEmpty())
+        && (getMessages() == null || getMessages().isEmpty())) {
       throw new InputRequiredException("messages and prompt must not all null");
     }
   }

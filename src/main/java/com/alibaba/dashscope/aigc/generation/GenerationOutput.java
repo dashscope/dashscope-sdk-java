@@ -11,9 +11,6 @@ public final class GenerationOutput {
   // output message.
   @Data
   public class Choice {
-    @SerializedName("debug_info")
-    private String debugInfo;
-
     @SerializedName("finish_reason")
     private String finishReason;
 

@@ -9,6 +9,7 @@ import static org.junit.Assert.assertNull;
 
 import com.alibaba.dashscope.base.FullDuplexServiceParam;
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
+import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import io.reactivex.Flowable;
@@ -175,6 +176,13 @@ public final class WebSocketRecorder extends WebSocketListener {
         JsonUtils.parametersToJsonObject(req.getParameters()));
   }
 
+  public <RequestParam extends HalfDuplexServiceParam> void assertResources(
+      JsonObject sendResources) throws InterruptedException {
+    String textMessage = textMessages.take();
+    JsonObject obj = JsonUtils.parse(textMessage);
+    assertEquals(sendResources, obj.get("payload").getAsJsonObject().get(ApiKeywords.RESOURCES));
+  }
+
   public <RequestParam extends FullDuplexServiceParam> void assertFullDuplexRequest(
       RequestParam req, String streamMode) throws InterruptedException {
     String textMessage = textMessages.take();
@@ -184,6 +192,40 @@ public final class WebSocketRecorder extends WebSocketListener {
     assertEquals(header.get("streaming").getAsString(), streamMode);
     JsonObject payload = obj.get("payload").getAsJsonObject();
     assertEquals(payload.get("model").getAsString(), req.getModel());
+    Flowable<Object> data = req.getStreamingData();
+    if (data != null) {
+      data.blockingForEach(
+          msg -> {
+            if (msg instanceof String) {
+              String inputMessage = textMessages.take();
+              System.out.println(inputMessage);
+              System.out.println(msg);
+              JsonObject reqObject = JsonUtils.parse(inputMessage);
+              JsonObject reqHeader = reqObject.get("header").getAsJsonObject();
+              assertEquals(reqHeader.get("action").getAsString(), "continue-task");
+              JsonObject reqPayload = reqObject.get("payload").getAsJsonObject();
+              assertEquals(reqPayload.get("input").getAsString(), msg);
+            } else if (msg instanceof ByteBuffer) {
+              ByteBuffer b = binaryMessages.take();
+              assertEquals(((ByteBuffer) msg).position(0), b);
+            } else if (msg instanceof byte[]) {
+              ByteBuffer b = binaryMessages.take();
+              assertEquals(ByteBuffer.wrap((byte[]) msg), b);
+            }
+          });
+    }
+  }
+
+  public <RequestParam extends FullDuplexServiceParam> void assertFullDuplexRequestWithResources(
+      RequestParam req, String streamMode, JsonObject resources) throws InterruptedException {
+    String textMessage = textMessages.take();
+    JsonObject obj = JsonUtils.parse(textMessage);
+    JsonObject header = obj.get("header").getAsJsonObject();
+    assertEquals(header.get("action").getAsString(), "run-task");
+    assertEquals(header.get("streaming").getAsString(), streamMode);
+    JsonObject payload = obj.get("payload").getAsJsonObject();
+    assertEquals(payload.get("model").getAsString(), req.getModel());
+    assertEquals(payload.get(ApiKeywords.RESOURCES), resources);
     Flowable<Object> data = req.getStreamingData();
     if (data != null) {
       data.blockingForEach(

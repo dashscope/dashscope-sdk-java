@@ -4,7 +4,6 @@ import com.alibaba.dashscope.aigc.conversation.Conversation;
 import com.alibaba.dashscope.aigc.conversation.ConversationParam;
 import com.alibaba.dashscope.aigc.conversation.ConversationResult;
 import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import io.reactivex.Flowable;
 

@@ -43,4 +43,9 @@ public class AsyncTaskParam extends HalfDuplexParamBase {
 
   @Override
   public void validate() throws InputRequiredException {}
+
+  @Override
+  public Object getResources() {
+    return null;
+  }
 }

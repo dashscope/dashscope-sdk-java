@@ -50,6 +50,13 @@ public abstract class HalfDuplexParamBase {
   public abstract Object getInput();
 
   /**
+   * Get the request resources
+   *
+   * @return
+   */
+  public abstract Object getResources();
+
+  /**
    * Get the binary data, only websocket, if no binary data, return null.
    *
    * @return The binary data

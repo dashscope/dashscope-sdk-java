@@ -5,6 +5,7 @@ import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.OutputMode;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
+import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
@@ -83,44 +84,50 @@ public class HalfDuplexRequest {
 
   public JsonObject getWebSocketPayload() {
     JsonObject request = new JsonObject();
-    request.addProperty("model", param.getModel());
-    request.addProperty("task_group", serviceOption.getTaskGroup());
-    request.addProperty("task", serviceOption.getTask());
-    request.addProperty("function", serviceOption.getFunction());
+    request.addProperty(ApiKeywords.MODEL, param.getModel());
+    request.addProperty(ApiKeywords.TASK_GROUP, serviceOption.getTaskGroup());
+    request.addProperty(ApiKeywords.TASK, serviceOption.getTask());
+    request.addProperty(ApiKeywords.FUNCTION, serviceOption.getFunction());
     if (param.getBinaryData() == null) {
-      request.add("input", (JsonObject) param.getInput());
+      request.add(ApiKeywords.INPUT, (JsonObject) param.getInput());
     }
     if (param.getParameters() != null) {
-      request.add("parameters", JsonUtils.parametersToJsonObject(param.getParameters()));
+      request.add(ApiKeywords.PARAMETERS, JsonUtils.parametersToJsonObject(param.getParameters()));
+    }
+    if (param.getResources() != null) {
+      request.add(ApiKeywords.RESOURCES, (JsonObject) param.getResources());
     }
     return request;
   }
 
   public JsonObject getWebSocketPayload(Object data) {
     JsonObject request = new JsonObject();
-    request.addProperty("model", param.getModel());
-    request.addProperty("task_group", serviceOption.getTaskGroup());
-    request.addProperty("task", serviceOption.getTask());
-    request.addProperty("function", serviceOption.getFunction());
+    request.addProperty(ApiKeywords.MODEL, param.getModel());
+    request.addProperty(ApiKeywords.TASK_GROUP, serviceOption.getTaskGroup());
+    request.addProperty(ApiKeywords.TASK, serviceOption.getTask());
+    request.addProperty(ApiKeywords.FUNCTION, serviceOption.getFunction());
     if (data instanceof String) {
-      request.add("input", (JsonObject) param.getInput());
+      request.add(ApiKeywords.INPUT, (JsonObject) param.getInput());
     } else {
-      request.add("input", new JsonObject()); // empty input
+      request.add(ApiKeywords.INPUT, new JsonObject()); // empty input
     }
     if (param.getParameters() != null) {
-      request.add("parameters", JsonUtils.parametersToJsonObject(param.getParameters()));
+      request.add(ApiKeywords.PARAMETERS, JsonUtils.parametersToJsonObject(param.getParameters()));
+    }
+    if (param.getResources() != null) {
+      request.add(ApiKeywords.RESOURCES, (JsonObject) param.getResources());
     }
     return request;
   }
 
   public JsonObject getStartTaskMessage() {
     JsonObject header = new JsonObject();
-    header.addProperty("action", WebSocketEventType.RUN_TASK.getValue());
-    header.addProperty("task_id", UUID.randomUUID().toString());
-    header.addProperty("streaming", serviceOption.getStreamingMode().getValue());
+    header.addProperty(ApiKeywords.ACTION, WebSocketEventType.RUN_TASK.getValue());
+    header.addProperty(ApiKeywords.TASKID, UUID.randomUUID().toString());
+    header.addProperty(ApiKeywords.STREAMING, serviceOption.getStreamingMode().getValue());
     JsonObject wsMessage = new JsonObject();
-    wsMessage.add("header", header);
-    wsMessage.add("payload", getWebSocketPayload());
+    wsMessage.add(ApiKeywords.HEADER, header);
+    wsMessage.add(ApiKeywords.PAYLOAD, getWebSocketPayload());
     return wsMessage;
   }
 

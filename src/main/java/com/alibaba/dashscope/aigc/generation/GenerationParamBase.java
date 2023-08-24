@@ -26,7 +26,6 @@ public abstract class GenerationParamBase extends HalfDuplexServiceParam {
   /** The input prompt. */
   private String prompt;
 
-  /** { "user":"今天天气好吗？", "bot":"今天天气不错，要出去玩玩嘛？" }, */
   private List<History> history;
 
   @Override

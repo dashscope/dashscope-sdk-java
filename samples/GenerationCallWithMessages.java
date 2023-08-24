@@ -28,16 +28,16 @@ public class GenerationCallWithMessages {
     msgManager.add(systemMsg);
     msgManager.add(userMsg);
     List<Message> msgs = msgManager.get();
-    System.out.println(msgs);
     QwenParam param =
         QwenParam.builder().model(Generation.Models.QWEN_PLUS_V1).messages(msgManager.get())
-            .resultFormat(QwenParam.ResultFormat.TEXT).topP(0.8).enableSearch(true).build();
+            .resultFormat(QwenParam.ResultFormat.MESSAGE).topP(0.8).enableSearch(true).build();
     GenerationResult result = gen.call(param);
     msgManager.add(result);
     System.out.println(JsonUtils.toJson(result));
     param.setPrompt("找个近点的");
     param.setMessages(msgManager.get());
     result = gen.call(param);
+    System.out.println(result);
     System.out.println(JsonUtils.toJson(result));
   }
 

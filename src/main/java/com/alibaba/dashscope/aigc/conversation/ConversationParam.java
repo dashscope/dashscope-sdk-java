@@ -60,7 +60,7 @@ public class ConversationParam extends GenerationParamBase {
   /** The output format, text or message, default message. */
   @SerializedName("result_format")
   @Default
-  private String resultFormat = "text";
+  private String resultFormat = ResultFormat.TEXT;
 
   @Override
   public JsonObject getInput() {
@@ -79,10 +79,6 @@ public class ConversationParam extends GenerationParamBase {
       if (getPrompt() != null) {
         jsonObject.addProperty(PROMPT, getPrompt());
       }
-    } else if (resultFormat.equals(ResultFormat.MESSAGE)) {
-      Message msg = Message.builder().role(Role.USER.getValue()).content(getPrompt()).build();
-      requestMessages.add(JsonUtils.toJsonElement(msg));
-      jsonObject.add(MESSAGES, requestMessages);
     } else {
       if (getPrompt() != null) {
         jsonObject.addProperty(PROMPT, getPrompt());
@@ -108,13 +104,18 @@ public class ConversationParam extends GenerationParamBase {
     if (ResultFormat.MESSAGE.equals(getResultFormat())) {
       params.put("result_format", getResultFormat());
     }
+    if (seed != null) {
+      params.put("seed", seed);
+    }
     params.putAll(parameters);
     return params;
   }
 
   @Override
   public void validate() throws InputRequiredException {
-    if (getPrompt() == null && (getHistory() == null || getHistory().isEmpty())) {
+    if (getPrompt() == null
+        && (getHistory() == null || getHistory().isEmpty())
+        && (getMessages() == null || getMessages().isEmpty())) {
       throw new InputRequiredException("history and prompt must not all null");
     }
   }

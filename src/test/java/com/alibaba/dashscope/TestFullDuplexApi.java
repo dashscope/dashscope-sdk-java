@@ -18,6 +18,7 @@ import com.alibaba.dashscope.protocol.WebSocketResponse;
 import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.functions.Action;
@@ -83,6 +84,25 @@ public class TestFullDuplexApi {
         FullDuplexTestParam.builder()
             .model("duplexModel")
             .streamData(Flowable.<Object>fromArray(textData))
+            .topP(1.0)
+            .str(UUID.randomUUID().toString())
+            .build();
+    return param;
+  }
+
+  private FullDuplexTestParam getStreamTextParamWithResources() {
+    String[] textData = new String[10];
+    for (int i = 0; i < 10; ++i) {
+      textData[i] = UUID.randomUUID().toString();
+    }
+    JsonObject resources = new JsonObject();
+    resources.addProperty("str", "String");
+    resources.addProperty("num", 100);
+    FullDuplexTestParam param =
+        FullDuplexTestParam.builder()
+            .model("duplexModel")
+            .streamData(Flowable.<Object>fromArray(textData))
+            .resources(resources)
             .topP(1.0)
             .str(UUID.randomUUID().toString())
             .build();
@@ -204,6 +224,33 @@ public class TestFullDuplexApi {
 
     receiveCompleted.acquire();
     serverListener.assertFullDuplexRequest(param, StreamingMode.DUPLEX.getValue());
+    wsServer.close(1000, "bye");
+    Observable.interval(100, TimeUnit.MILLISECONDS).take(1).blockingSingle();
+  }
+
+  @Test
+  @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
+  public void testText2BinaryWithResources()
+      throws ApiException, NoApiKeyException, InterruptedException {
+
+    SynchronizeFullDuplexApi<FullDuplexTestParam> api =
+        new SynchronizeFullDuplexApi<>(
+            ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(), serviceOption);
+    FullDuplexTestParam param = getStreamTextParamWithResources();
+    Flowable<DashScopeResult> results = api.duplexCall(param);
+    Semaphore receiveCompleted = new Semaphore(0);
+    List<byte[]> outputs = generateBinaryData(3, 1024);
+    verifyBinaryOutput(results, (List<Object>) (List<?>) outputs, receiveCompleted);
+    WebSocket wsServer = serverListener.assertOpen();
+    wsServer.send(JsonUtils.toJson(WebSocketServerMessage.getTaskStartMessage()));
+    for (byte[] b : outputs) {
+      wsServer.send(ByteString.of(b));
+    }
+    wsServer.send(JsonUtils.toJson(WebSocketServerMessage.getTaskFinishedMessage(null, null)));
+
+    receiveCompleted.acquire();
+    serverListener.assertFullDuplexRequestWithResources(
+        param, StreamingMode.DUPLEX.getValue(), (JsonObject) param.getResources());
     wsServer.close(1000, "bye");
     Observable.interval(100, TimeUnit.MILLISECONDS).take(1).blockingSingle();
   }

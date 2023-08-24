@@ -10,6 +10,7 @@ import com.alibaba.dashscope.exception.NoApiKeyException;
 import io.reactivex.Flowable;
 
 public class ConversationManagerHistory {
+    @Deprecated
     public static void callWithHistoryStream() throws ApiException, NoApiKeyException {
         Conversation conversation = new Conversation();
 
