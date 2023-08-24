@@ -4,8 +4,6 @@ import java.util.List;
 import lombok.Data;
 
 @Data
-public class MultiModalEmbeddingResultItem {
-  private Integer index;
-
+public class MultiModalEmbeddingOutput {
   private List<Double> embedding;
 }

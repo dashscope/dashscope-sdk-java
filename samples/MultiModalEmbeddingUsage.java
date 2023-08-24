@@ -21,11 +21,11 @@ public class MultiModalEmbeddingUsage {
         new MultiModalEmbeddingItemImage(
             "https://modelscope.oss-cn-beijing.aliyuncs.com/resource/panda.jpeg");
 
-    MultiModalEmbeddingItemAudio audio = new MultiModalEmbeddingItemAudio("https://modelscope.oss-cn-beijing.aliyuncs.com/resource/panda.jpeg");
+    MultiModalEmbeddingItemAudio audio = new MultiModalEmbeddingItemAudio("https://data-generator-idst.oss-cn-shanghai.aliyuncs.com/dashscope/image/multi_embedding/audio/cow.flac");
     
     MultiModalEmbeddingParam param =
         MultiModalEmbeddingParam.builder()
-            .model("pre-multimodal-embedding")
+            .model(MultiModalEmbedding.Models.MULTIMODAL_EMBEDDING_ONE_PEACE_V1)
             .contents(Arrays.asList(audio, image, text))
             .build();
     MultiModalEmbeddingResult result = embedding.call(param);

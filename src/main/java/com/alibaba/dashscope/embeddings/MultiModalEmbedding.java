@@ -20,6 +20,11 @@ public class MultiModalEmbedding {
   private final SynchronizeHalfDuplexApi<MultiModalEmbeddingParam> syncApi;
   private final ApiServiceOption serviceOption;
 
+  public static class Models {
+    public static final String MULTIMODAL_EMBEDDING_ONE_PEACE_V1 =
+        "multimodal-embedding-one-peace-v1";
+  }
+
   public MultiModalEmbedding() {
     serviceOption =
         ApiServiceOption.builder()
