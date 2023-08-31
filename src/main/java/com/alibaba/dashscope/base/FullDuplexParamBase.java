@@ -41,7 +41,7 @@ public abstract class FullDuplexParamBase {
   /**
    * Get the resources
    *
-   * @return
+   * @return the resources Object.
    */
   public abstract Object getResources();
 

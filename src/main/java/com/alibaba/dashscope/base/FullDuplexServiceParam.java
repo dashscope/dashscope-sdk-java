@@ -16,7 +16,7 @@ public abstract class FullDuplexServiceParam extends FullDuplexParamBase {
   /**
    * Get the resources
    *
-   * @return
+   * @return the resource object.
    */
   public Object getResources() {
     return resources;

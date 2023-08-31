@@ -59,6 +59,7 @@ public final class Conversation {
    */
   public ConversationResult call(ConversationParam param) throws ApiException, NoApiKeyException {
     serviceOption.setIsSSE(false);
+    serviceOption.setStreamingMode(StreamingMode.NONE);
     return ConversationResult.fromDashScopeResult(syncApi.call(param));
   }
 
@@ -73,6 +74,7 @@ public final class Conversation {
   public void call(ConversationParam param, ResultCallback<ConversationResult> callback)
       throws ApiException, NoApiKeyException {
     serviceOption.setIsSSE(false);
+    serviceOption.setStreamingMode(StreamingMode.NONE);
     syncApi.call(
         param,
         new ResultCallback<DashScopeResult>() {
@@ -104,6 +106,7 @@ public final class Conversation {
   public Flowable<ConversationResult> streamCall(ConversationParam param)
       throws ApiException, NoApiKeyException {
     serviceOption.setIsSSE(true);
+    serviceOption.setStreamingMode(StreamingMode.OUT);
     return syncApi.streamCall(param).map(item -> ConversationResult.fromDashScopeResult(item));
   }
 
@@ -120,6 +123,7 @@ public final class Conversation {
       throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
     serviceOption.setIsSSE(true);
+    serviceOption.setStreamingMode(StreamingMode.OUT);
     syncApi.streamCall(
         param,
         new ResultCallback<DashScopeResult>() {

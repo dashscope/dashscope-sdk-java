@@ -52,7 +52,7 @@ public abstract class HalfDuplexParamBase {
   /**
    * Get the request resources
    *
-   * @return
+   * @return The resource object
    */
   public abstract Object getResources();
 

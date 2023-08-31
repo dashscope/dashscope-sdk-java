@@ -44,7 +44,7 @@ public class ConversationParam extends GenerationParamBase {
 
   /* A sampling strategy, the k largest elements of the
   given mass are  considered */
-  private Double topK;
+  private Integer topK;
   /* Whether to enable web search(quark).
   Currently works best only on the first round of conversation.
   Default to False */

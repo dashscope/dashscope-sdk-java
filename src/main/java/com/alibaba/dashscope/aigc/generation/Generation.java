@@ -73,6 +73,7 @@ public final class Generation {
       throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
     serviceOption.setIsSSE(false);
+    serviceOption.setStreamingMode(StreamingMode.NONE);
     return GenerationResult.fromDashScopeResult(syncApi.call(param));
   }
 
@@ -89,6 +90,7 @@ public final class Generation {
       throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
     serviceOption.setIsSSE(false);
+    serviceOption.setStreamingMode(StreamingMode.NONE);
     syncApi.call(
         param,
         new ResultCallback<DashScopeResult>() {
@@ -122,6 +124,7 @@ public final class Generation {
       throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
     serviceOption.setIsSSE(true);
+    serviceOption.setStreamingMode(StreamingMode.OUT);
     return syncApi.streamCall(param).map(item -> GenerationResult.fromDashScopeResult(item));
   }
 
@@ -129,6 +132,7 @@ public final class Generation {
       throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
     serviceOption.setIsSSE(true);
+    serviceOption.setStreamingMode(StreamingMode.OUT);
     syncApi.streamCall(
         param,
         new ResultCallback<DashScopeResult>() {
