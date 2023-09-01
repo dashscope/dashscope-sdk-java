@@ -83,17 +83,21 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
    * @throws ApiException The request failed, possibly due to a network or data error.
    */
   public DashScopeResult wait(String taskId, String apiKey) throws ApiException, NoApiKeyException {
+    AsyncTaskOption serviceOption =
+        AsyncTaskOption.builder()
+            .protocol(Protocol.HTTP)
+            .httpMethod(HttpMethod.GET)
+            .url(String.format("/tasks/%s", taskId))
+            .build();
+
+    AsyncTaskParam getParam = AsyncTaskParam.builder().taskId(taskId).apiKey(apiKey).build();
+    HalfDuplexRequest req = new HalfDuplexRequest(getParam, serviceOption);
+    int waitMilliseconds = 1000;
+    int maxWaitMilliseconds = 5 * 1000;
+    int incrementSteps = 3;
+    int step = 0;
     while (true) {
       try {
-        AsyncTaskOption serviceOption =
-            AsyncTaskOption.builder()
-                .protocol(Protocol.HTTP)
-                .httpMethod(HttpMethod.GET)
-                .url(String.format("/tasks/%s", taskId))
-                .build();
-
-        AsyncTaskParam getParam = AsyncTaskParam.builder().taskId(taskId).apiKey(apiKey).build();
-        HalfDuplexRequest req = new HalfDuplexRequest(getParam, serviceOption);
         DashScopeResult taskResult = client.send(req);
         JsonObject output = (JsonObject) taskResult.getOutput();
         String taskStatus =
@@ -105,8 +109,18 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
         } else if (TaskStatus.SUCCEEDED.getValue().equals(taskStatus)) {
           return taskResult;
         } else {
+          // we start by querying once every second, and double the query interval after
+          // every 3(increment_steps) intervals, until we hit the max waiting interval of 5(seconds）
+          // TODO: investigate if we can use long-poll (server side return immediately when ready)
+          step += 1;
+          if (waitMilliseconds < maxWaitMilliseconds && step % incrementSteps == 0) {
+            waitMilliseconds =
+                waitMilliseconds * 2 > maxWaitMilliseconds
+                    ? maxWaitMilliseconds
+                    : waitMilliseconds * 2;
+          }
           try {
-            Thread.sleep(5000);
+            Thread.sleep(waitMilliseconds);
           } catch (InterruptedException ignored) {
           }
         }
