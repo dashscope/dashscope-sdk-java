@@ -61,6 +61,7 @@ public class HalfDuplexRequest {
                   Protocol.HTTP,
                   serviceOption.getIsSSE(),
                   serviceOption.getIsAsyncTask()))
+          .parameters(param.getParameters())
           .httpMethod(getHttpMethod())
           .build();
     } else if (getHttpMethod() == HttpMethod.POST) {

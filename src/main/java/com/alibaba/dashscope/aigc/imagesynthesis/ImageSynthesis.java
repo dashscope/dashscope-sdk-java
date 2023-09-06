@@ -2,7 +2,6 @@
 package com.alibaba.dashscope.aigc.imagesynthesis;
 
 import com.alibaba.dashscope.api.AsynchronousApi;
-import com.alibaba.dashscope.base.AsyncTaskListParam;
 import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
@@ -10,6 +9,7 @@ import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
+import com.alibaba.dashscope.task.AsyncTaskListParam;
 
 public final class ImageSynthesis {
   private final AsynchronousApi<ImageSynthesisParam> asyncApi;

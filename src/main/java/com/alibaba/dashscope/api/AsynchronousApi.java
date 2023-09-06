@@ -4,8 +4,6 @@ package com.alibaba.dashscope.api;
 
 import static com.alibaba.dashscope.utils.ApiKeywords.*;
 
-import com.alibaba.dashscope.base.AsyncTaskListParam;
-import com.alibaba.dashscope.base.AsyncTaskParam;
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.common.TaskStatus;
@@ -19,6 +17,8 @@ import com.alibaba.dashscope.protocol.HalfDuplexRequest;
 import com.alibaba.dashscope.protocol.HttpMethod;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.ServiceOption;
+import com.alibaba.dashscope.task.AsyncTaskListParam;
+import com.alibaba.dashscope.task.AsyncTaskParam;
 import com.google.gson.JsonObject;
 import java.net.HttpURLConnection;
 

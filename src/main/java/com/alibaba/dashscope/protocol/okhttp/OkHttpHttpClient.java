@@ -135,7 +135,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       if (req.getParameters() != null) {
         for (Map.Entry<String, Object> entry : req.getParameters().entrySet()) {
           String key = entry.getKey();
-          String value = (String) entry.getValue();
+          String value = entry.getValue().toString();
           httpBuilder.addQueryParameter(key, value);
         }
       }
