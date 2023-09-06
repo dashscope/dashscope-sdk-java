@@ -20,4 +20,8 @@ public class TranscriptionApiKeywords {
   public static final String SUBTASK_STATUS = "subtask_status";
 
   public static final String TASK_METRICS = "task_metrics";
+
+  public static final String DIARIZATION_ENABLED = "diarization_enabled";
+
+  public static final String SPEAKER_COUNT = "speaker_count";
 }

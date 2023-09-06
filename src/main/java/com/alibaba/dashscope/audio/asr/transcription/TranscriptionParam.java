@@ -24,6 +24,10 @@ public class TranscriptionParam extends HalfDuplexServiceParam {
 
   @Builder.Default private List<Integer> channelId = Collections.singletonList(0);
 
+  private Boolean diarizationEnabled;
+
+  private Integer speakerCount;
+
   @Override
   public JsonObject getHttpBody() {
 
@@ -48,6 +52,12 @@ public class TranscriptionParam extends HalfDuplexServiceParam {
 
     JsonObject jsonParameters = new JsonObject();
     jsonParameters.add(TranscriptionApiKeywords.CHANNEL_ID, jsonChannelId);
+    if (diarizationEnabled != null) {
+      jsonParameters.addProperty(TranscriptionApiKeywords.DIARIZATION_ENABLED, diarizationEnabled);
+    }
+    if (speakerCount != null) {
+      jsonParameters.addProperty(TranscriptionApiKeywords.SPEAKER_COUNT, speakerCount);
+    }
     body.add("parameters", jsonParameters);
     return body;
   }
