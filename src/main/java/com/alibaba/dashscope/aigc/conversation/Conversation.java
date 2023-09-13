@@ -19,6 +19,8 @@ public final class Conversation {
   public static class Models {
     public static final String QWEN_V1 = "qwen-v1";
     public static final String QWEN_PLUG_V1 = "qwen-plus-v1";
+    public static final String QWEN_PLUS = "qwen-plus";
+    public static final String QWEN_TURBO = "qwen-turbo";
   }
 
   public Conversation() {
@@ -56,8 +58,11 @@ public final class Conversation {
    * @param param The input param of class `ConversationParam`.
    * @return The output structure of `QWenConversationResult`.
    * @throws NoApiKeyException Can not find api key
+   * @throws InputRequiredException
    */
-  public ConversationResult call(ConversationParam param) throws ApiException, NoApiKeyException {
+  public ConversationResult call(ConversationParam param)
+      throws ApiException, NoApiKeyException, InputRequiredException {
+    param.validate();
     serviceOption.setIsSSE(false);
     serviceOption.setStreamingMode(StreamingMode.NONE);
     return ConversationResult.fromDashScopeResult(syncApi.call(param));
@@ -70,9 +75,11 @@ public final class Conversation {
    * @param callback The callback to receive response, the template class is `ConversationResult`.
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
+   * @throws InputRequiredException
    */
   public void call(ConversationParam param, ResultCallback<ConversationResult> callback)
-      throws ApiException, NoApiKeyException {
+      throws ApiException, NoApiKeyException, InputRequiredException {
+    param.validate();
     serviceOption.setIsSSE(false);
     serviceOption.setStreamingMode(StreamingMode.NONE);
     syncApi.call(
@@ -102,9 +109,11 @@ public final class Conversation {
    * @return A `Flowable` of the output structure.
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
+   * @throws InputRequiredException
    */
   public Flowable<ConversationResult> streamCall(ConversationParam param)
-      throws ApiException, NoApiKeyException {
+      throws ApiException, NoApiKeyException, InputRequiredException {
+    param.validate();
     serviceOption.setIsSSE(true);
     serviceOption.setStreamingMode(StreamingMode.OUT);
     return syncApi.streamCall(param).map(item -> ConversationResult.fromDashScopeResult(item));

@@ -72,7 +72,7 @@ public class TestHalfDuplexHttpApi {
             .setHeader("content-type", MEDIA_TYPE_APPLICATION_JSON));
     int port = server.getPort();
     HalfDuplexTestParam param =
-        HalfDuplexTestParam.builder().model("qwen-v1").parameter("k1", "v1").build();
+        HalfDuplexTestParam.builder().model("qwen-turbo").parameter("k1", "v1").build();
     Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", port);
     DashScopeResult result = syncApi.call(param);
     assertEquals(JsonUtils.toJson(result), "{}");
@@ -91,7 +91,7 @@ public class TestHalfDuplexHttpApi {
             .setHeader("content-type", MEDIA_TYPE_APPLICATION_JSON));
     int port = server.getPort();
     HalfDuplexTestParam param =
-        HalfDuplexTestParam.builder().model("qwen-v1").parameter("k1", "v1").build();
+        HalfDuplexTestParam.builder().model("qwen-turbo").parameter("k1", "v1").build();
     Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", port);
     DashScopeResult result = syncApi.call(param);
     assertEquals(output, result.getOutput());
@@ -115,7 +115,7 @@ public class TestHalfDuplexHttpApi {
     resources.addProperty("num", 100);
     HalfDuplexTestParam param =
         HalfDuplexTestParam.builder()
-            .model("qwen-v1")
+            .model("qwen-turbo")
             .parameter("k1", "v1")
             .resources(resources)
             .build();
@@ -141,7 +141,7 @@ public class TestHalfDuplexHttpApi {
             .setHeader("content-type", MEDIA_TYPE_APPLICATION_JSON));
     int port = server.getPort();
     HalfDuplexTestParam param =
-        HalfDuplexTestParam.builder().model("qwen-v1").parameter("k1", "v1").build();
+        HalfDuplexTestParam.builder().model("qwen-turbo").parameter("k1", "v1").build();
     Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", port);
     DashScopeResult result = syncApi.call(param);
     assertNull(result.getOutput());
@@ -162,7 +162,7 @@ public class TestHalfDuplexHttpApi {
             .setHeader("content-type", MEDIA_TYPE_APPLICATION_JSON));
     int port = server.getPort();
     HalfDuplexTestParam param =
-        HalfDuplexTestParam.builder().model("qwen-v1").parameter("k1", "v1").build();
+        HalfDuplexTestParam.builder().model("qwen-turbo").parameter("k1", "v1").build();
     Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", port);
 
     ApiException exception =
@@ -199,7 +199,7 @@ public class TestHalfDuplexHttpApi {
     int port = server.getPort();
     System.out.println(port);
     HalfDuplexTestParam param =
-        HalfDuplexTestParam.builder().model("qwen-v1").parameter("k1", "v1").build();
+        HalfDuplexTestParam.builder().model("qwen-turbo").parameter("k1", "v1").build();
     Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", port);
     Flowable<DashScopeResult> result = syncApi.streamCall(param);
     List<String> outputTexts = new ArrayList<>();
@@ -235,7 +235,7 @@ public class TestHalfDuplexHttpApi {
     int port = server.getPort();
     System.out.println(port);
     HalfDuplexTestParam param =
-        HalfDuplexTestParam.builder().model("qwen-v1").parameter("k1", "v1").build();
+        HalfDuplexTestParam.builder().model("qwen-turbo").parameter("k1", "v1").build();
     Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", port);
     List<String> outputTexts = new ArrayList<>();
     Semaphore semaphore = new Semaphore(0);

@@ -35,7 +35,7 @@ Conversation conversation = new Conversation(Protocol.WEBSOCKET.getValue());
 
 The conversation interface supports both stream and non-stream queries. These queries all accept `ConversationParam`  as input, and returns `ConversationResult` as output . Each model has a unique input structure and output structure which derives from the two data classes mentioned above. Please use these sub classes when you are using the coordinating model. 
 
-Here shows the usages of each method, with the examples of `qwen-v1` model.
+Here shows the usages of each method, with the examples of `qwen-turbo` model.
 
 #### Support stream and non-stream mode, accept output from callback
 
@@ -55,7 +55,7 @@ public class Main {
     //QWEN model, if using other model, you can replace the QWenConversationParam here.
     QWenConversationParam param =
             QWenConversationParam.builder()
-                    .model(QWenConversationParam.QWEN_V1)
+                    .model(QWenConversationParam.QWEN_TURBO)
                     //there are other arguments supported.
                     .prompt("hello")
                     .apiKey("testKey")
@@ -106,7 +106,7 @@ public class Main {
 
     //QWEN model, if using other model, you can replace the QWenConversationParam here.
     QWenConversationParam param =
-            QWenConversationParam.builder().model(QWenConversationParam.QWEN_V1).prompt("hello")
+            QWenConversationParam.builder().model(QWenConversationParam.QWEN_TURBO).prompt("hello")
                     .mode(StreamingMode.OUT)
                     .apiKey("testKey")
                     .build();
@@ -138,7 +138,7 @@ public class Main {
     //QWEN model, if using other model, you can replace the QWenConversationParam here.
     QWenConversationParam param =
             QWenConversationParam.builder()
-                    .model(QWenConversationParam.QWEN_V1)
+                    .model(QWenConversationParam.QWEN_TURBO)
                     .prompt("hello")
                     .apiKey("testKey")
                     .build();

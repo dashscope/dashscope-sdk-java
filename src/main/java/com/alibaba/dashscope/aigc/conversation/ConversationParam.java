@@ -19,7 +19,9 @@ import lombok.Builder.Default;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
@@ -113,6 +115,14 @@ public class ConversationParam extends GenerationParamBase {
 
   @Override
   public void validate() throws InputRequiredException {
+    if (getModel().equals(Conversation.Models.QWEN_PLUG_V1)) {
+      log.warn(
+          "Model: {} is deprecated, use: {} instead!", getModel(), Conversation.Models.QWEN_PLUS);
+    }
+    if (getModel().equals(Conversation.Models.QWEN_V1)) {
+      log.warn(
+          "Model: {} is deprecated, use: {} instead!", getModel(), Conversation.Models.QWEN_TURBO);
+    }
     if (getPrompt() == null
         && (getHistory() == null || getHistory().isEmpty())
         && (getMessages() == null || getMessages().isEmpty())) {

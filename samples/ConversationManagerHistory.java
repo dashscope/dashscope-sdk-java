@@ -6,12 +6,13 @@ import com.alibaba.dashscope.aigc.conversation.ConversationResult;
 import com.alibaba.dashscope.common.History;
 import com.alibaba.dashscope.common.HistoryManager;
 import com.alibaba.dashscope.exception.ApiException;
+import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import io.reactivex.Flowable;
 
 public class ConversationManagerHistory {
     @Deprecated
-    public static void callWithHistoryStream() throws ApiException, NoApiKeyException {
+    public static void callWithHistoryStream() throws ApiException, NoApiKeyException, InputRequiredException {
         Conversation conversation = new Conversation();
 
         HistoryManager historyManager = new HistoryManager(10);
@@ -20,7 +21,7 @@ public class ConversationManagerHistory {
         String prompt = "那你有什么地方推荐？";
         ConversationParam param = ConversationParam
         .builder()
-        .model(Conversation.Models.QWEN_V1)
+        .model(Conversation.Models.QWEN_TURBO)
         .prompt(prompt)
         .history(historyManager.get())
         .topP(0.8)
@@ -48,7 +49,7 @@ public class ConversationManagerHistory {
     public static void main(String[] args) {
         try {
             callWithHistoryStream();
-        } catch (ApiException | NoApiKeyException e) {
+        } catch (ApiException | NoApiKeyException | InputRequiredException e) {
             System.out.println(e.getMessage());
         }
         System.exit(0);

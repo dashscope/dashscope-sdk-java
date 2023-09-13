@@ -9,11 +9,12 @@ import com.alibaba.dashscope.common.Message;
 import com.alibaba.dashscope.common.MessageManager;
 import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.ApiException;
+import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import io.reactivex.Flowable;
 
 public class ConversationManagerMessages {
-    public static void callWithMessagesStream() throws ApiException, NoApiKeyException {
+    public static void callWithMessagesStream() throws ApiException, NoApiKeyException, InputRequiredException {
         Conversation conversation = new Conversation();
         MessageManager messageManager = new MessageManager(10);
         messageManager.add(Message.builder().role(Role.USER.getValue()).content("今天天气好吗？").build());
@@ -21,7 +22,7 @@ public class ConversationManagerMessages {
         messageManager.add(Message.builder().role(Role.USER.getValue()).content("那你有什么地方推荐？").build());
         ConversationParam param = ConversationParam
         .builder()
-        .model(Conversation.Models.QWEN_PLUG_V1)
+        .model(Conversation.Models.QWEN_PLUS)
         .messages(messageManager.get())
         .topP(0.8)
         .resultFormat(ResultFormat.MESSAGE) // set the result format with messages.
@@ -47,7 +48,7 @@ public class ConversationManagerMessages {
     public static void main(String[] args) {
         try {
             callWithMessagesStream();
-        } catch (ApiException | NoApiKeyException e) {
+        } catch (ApiException | NoApiKeyException | InputRequiredException e) {
             System.out.println(e.getMessage());
         }
         System.exit(0);

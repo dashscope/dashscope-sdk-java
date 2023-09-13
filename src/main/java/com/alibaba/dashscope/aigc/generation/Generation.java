@@ -30,6 +30,8 @@ public final class Generation {
     public static final String BAILIAN_V1 = "bailian-v1";
     public static final String DOLLY_12B_V2 = "dolly-12b-v2";
     public static final String QWEN_PLUS_V1 = "qwen-plus-v1";
+    public static final String QWEN_PLUS = "qwen-plus";
+    public static final String QWEN_TURBO = "qwen-turbo";
   }
 
   public Generation() {
