@@ -4,6 +4,7 @@ package com.alibaba.dashscope.aigc.generation.models;
 
 import static com.alibaba.dashscope.utils.ApiKeywords.*;
 
+import com.alibaba.dashscope.aigc.generation.Generation;
 import com.alibaba.dashscope.aigc.generation.GenerationParamBase;
 import com.alibaba.dashscope.common.Message;
 import com.alibaba.dashscope.common.Role;
@@ -20,7 +21,9 @@ import lombok.Builder.Default;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
@@ -114,6 +117,14 @@ public class QwenParam extends GenerationParamBase {
 
   @Override
   public void validate() throws InputRequiredException {
+    if (getModel().equals(Generation.Models.QWEN_PLUS_V1)) {
+      log.warn(
+          "Model: {} is deprecated, use: {} instead!", getModel(), Generation.Models.QWEN_PLUS);
+    }
+    if (getModel().equals(Generation.Models.QWEN_V1)) {
+      log.warn(
+          "Model: %s is deprecated, use: %s instead!", getModel(), Generation.Models.QWEN_TURBO);
+    }
     if (getPrompt() == null
         && (getHistory() == null || getHistory().isEmpty())
         && (getMessages() == null || getMessages().isEmpty())) {

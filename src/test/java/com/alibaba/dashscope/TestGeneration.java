@@ -50,11 +50,11 @@ public class TestGeneration {
   private JsonObject usage;
   private String requestId;
   private String expectMessageBody =
-      "{\"model\":\"qwen-v1\",\"input\":{\"messages\":[{\"role\":\"user\",\"content\":\"如何做土豆炖猪脚?\"}]},\"parameters\":{\"top_p\":0.8,\"result_format\":\"message\",\"enable_search\":false}}";
+      "{\"model\":\"qwen-turbo\",\"input\":{\"messages\":[{\"role\":\"user\",\"content\":\"如何做土豆炖猪脚?\"}]},\"parameters\":{\"top_p\":0.8,\"result_format\":\"message\",\"enable_search\":false}}";
   private String expectTextBody =
-      "{\"model\":\"qwen-v1\",\"input\":{\"prompt\":\"如何做土豆炖猪脚?\"},\"parameters\":{\"top_p\":0.8,\"enable_search\":false}}";
+      "{\"model\":\"qwen-turbo\",\"input\":{\"prompt\":\"如何做土豆炖猪脚?\"},\"parameters\":{\"top_p\":0.8,\"enable_search\":false}}";
   private String expectTextBodyOutputMessage =
-      "{\"model\":\"qwen-v1\",\"input\":{\"prompt\":\"如何做土豆炖猪脚?\"},\"parameters\":{\"top_p\":0.8,\"result_format\":\"message\",\"enable_search\":false}}";
+      "{\"model\":\"qwen-turbo\",\"input\":{\"prompt\":\"如何做土豆炖猪脚?\"},\"parameters\":{\"top_p\":0.8,\"result_format\":\"message\",\"enable_search\":false}}";
 
   @BeforeEach
   public void before() {
@@ -117,7 +117,7 @@ public class TestGeneration {
     int port = server.getPort();
     QwenParam param =
         QwenParam.builder()
-            .model(Generation.Models.QWEN_V1)
+            .model(Generation.Models.QWEN_TURBO)
             .resultFormat(QwenParam.ResultFormat.TEXT)
             .prompt("如何做土豆炖猪脚?")
             .topP(0.8)
@@ -140,7 +140,7 @@ public class TestGeneration {
     int port = server.getPort();
     QwenParam param =
         QwenParam.builder()
-            .model(Generation.Models.QWEN_V1)
+            .model(Generation.Models.QWEN_TURBO)
             .resultFormat(QwenParam.ResultFormat.MESSAGE)
             .prompt("如何做土豆炖猪脚?")
             .topP(0.8)
@@ -163,7 +163,7 @@ public class TestGeneration {
     int port = server.getPort();
     QwenParam param =
         QwenParam.builder()
-            .model(Generation.Models.QWEN_V1)
+            .model(Generation.Models.QWEN_TURBO)
             .prompt("如何做土豆炖猪脚?")
             .resultFormat(QwenParam.ResultFormat.MESSAGE)
             .topP(0.8)
@@ -207,7 +207,7 @@ public class TestGeneration {
     int port = server.getPort();
     QwenParam param =
         QwenParam.builder()
-            .model(Generation.Models.QWEN_V1)
+            .model(Generation.Models.QWEN_TURBO)
             .prompt("如何做土豆炖猪脚?")
             .resultFormat(QwenParam.ResultFormat.MESSAGE)
             .topP(0.8)
@@ -231,7 +231,7 @@ public class TestGeneration {
     int port = server.getPort();
     QwenParam param =
         QwenParam.builder()
-            .model(Generation.Models.QWEN_V1)
+            .model(Generation.Models.QWEN_TURBO)
             .resultFormat(QwenParam.ResultFormat.MESSAGE)
             .prompt("如何做土豆炖猪脚?")
             .topP(0.8)
@@ -272,7 +272,7 @@ public class TestGeneration {
     int port = server.getPort();
     QwenParam param =
         QwenParam.builder()
-            .model(Generation.Models.QWEN_V1)
+            .model(Generation.Models.QWEN_TURBO)
             .resultFormat(QwenParam.ResultFormat.MESSAGE)
             .prompt("如何做土豆炖猪脚?")
             .topP(0.8)
@@ -320,7 +320,7 @@ public class TestGeneration {
     int port = server.getPort();
     QwenParam param =
         QwenParam.builder()
-            .model(Generation.Models.QWEN_V1)
+            .model(Generation.Models.QWEN_TURBO)
             .resultFormat(QwenParam.ResultFormat.MESSAGE)
             .prompt("如何做土豆炖猪脚?")
             .topP(0.8)

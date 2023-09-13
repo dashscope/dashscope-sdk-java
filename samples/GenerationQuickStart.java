@@ -13,22 +13,24 @@ import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
+import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.utils.JsonUtils;
 
 public class GenerationQuickStart {
   public static void qwenQuickStart()
       throws NoApiKeyException, ApiException, InputRequiredException {
-    Generation gen = new Generation();
-    QwenParam param = QwenParam.builder().model(Generation.Models.QWEN_PLUS_V1).prompt("如何做土豆炖猪脚?")
+    Generation gen = new Generation(Protocol.WEBSOCKET.getValue());
+    QwenParam param = QwenParam.builder().model(Generation.Models.QWEN_PLUS).prompt("如何做土豆炖猪脚?")
         .topP(0.8).seed(100).build();
     GenerationResult result = gen.call(param);
+    result.getUsage().getOutputTokens();
     System.out.println(JsonUtils.toJson(result));
   }
 
   public static void qwenQuickStartCallback()
       throws NoApiKeyException, ApiException, InputRequiredException, InterruptedException {
     Generation gen = new Generation();
-    QwenParam param = QwenParam.builder().model(Generation.Models.QWEN_PLUS_V1).prompt("如何做土豆炖猪脚?")
+    QwenParam param = QwenParam.builder().model(Generation.Models.QWEN_PLUS).prompt("如何做土豆炖猪脚?")
         .topP(0.8).build();
     Semaphore semaphore = new Semaphore(0);
     gen.call(param, new ResultCallback<GenerationResult>() {
@@ -61,15 +63,14 @@ public class GenerationQuickStart {
     messageManager
         .add(Message.builder().role(Role.ASSISTANT.getValue()).content("今天天气不错，要出去玩玩嘛？").build());
     messageManager.add(Message.builder().role(Role.USER.getValue()).content("那你有什么地方推荐？").build());
-    QwenParam param = QwenParam.builder().model(Conversation.Models.QWEN_PLUG_V1)
+    QwenParam param = QwenParam.builder().model(Conversation.Models.QWEN_PLUS)
         .messages(messageManager.get()).topP(0.8).resultFormat(ResultFormat.MESSAGE).enableSearch(true).build();
     GenerationResult result = gen.call(param);
     System.out.println(result);
   }
 
   public static void main(String[] args) {
-    try {
-      quickStartWithMessage();
+    try {   
       qwenQuickStart();
       qwenQuickStartCallback();
     } catch (ApiException | NoApiKeyException | InputRequiredException | InterruptedException e) {
