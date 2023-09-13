@@ -10,6 +10,7 @@ public enum Task {
   CHAT("chat"),
   TEXT_TO_SPEECH("tts"),
   ASR("asr"),
+  NLU("nlu"),
   ;
 
   private final String value;

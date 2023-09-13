@@ -5,6 +5,7 @@ public enum TaskGroup {
   AIGC("aigc"),
   EMBEDDINGS("embeddings"),
   AUDIO("audio"),
+  NLP("nlp"),
   ;
 
   private final String value;

@@ -9,6 +9,7 @@ public enum Function {
   SPEECH_SYNTHESIZER("SpeechSynthesizer"),
   TRANSCRIPTION("transcription"),
   RECOGNITION("recognition"),
+  UNDERSTANDING("understanding"),
   ;
 
   private final String value;

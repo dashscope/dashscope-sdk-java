@@ -85,4 +85,8 @@ public class ApiKeywords {
   public static final String ROLE = "role";
 
   public static final String CONTENT = "content";
+
+  public static final String SENTENCE = "sentence";
+
+  public static final String LABELS = "labels";
 }
