@@ -17,10 +17,15 @@ public final class Conversation {
   private final ApiServiceOption serviceOption;
 
   public static class Models {
-    public static final String QWEN_V1 = "qwen-v1";
-    public static final String QWEN_PLUG_V1 = "qwen-plus-v1";
-    public static final String QWEN_PLUS = "qwen-plus";
+    /** @deprecated use QWEN_TURBO instead */
+    @Deprecated public static final String QWEN_V1 = "qwen-v1";
+
     public static final String QWEN_TURBO = "qwen-turbo";
+
+    /** @deprecated use QWEN_PLUS instead */
+    @Deprecated public static final String QWEN_PLUG_V1 = "qwen-plus-v1";
+
+    public static final String QWEN_PLUS = "qwen-plus";
   }
 
   public Conversation() {
