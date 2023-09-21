@@ -25,7 +25,9 @@ import io.reactivex.functions.Action;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
@@ -86,6 +88,22 @@ public class TestFullDuplexApi {
             .streamData(Flowable.<Object>fromArray(textData))
             .topP(1.0)
             .str(UUID.randomUUID().toString())
+            .build();
+    return param;
+  }
+
+  private FullDuplexTestParam getStreamTextCustomHeadersParam(Map<String, String> headers) {
+    String[] textData = new String[10];
+    for (int i = 0; i < 10; ++i) {
+      textData[i] = UUID.randomUUID().toString();
+    }
+    FullDuplexTestParam param =
+        FullDuplexTestParam.builder()
+            .model("duplexModel")
+            .streamData(Flowable.<Object>fromArray(textData))
+            .topP(1.0)
+            .str(UUID.randomUUID().toString())
+            .headers(headers)
             .build();
     return param;
   }
@@ -201,6 +219,38 @@ public class TestFullDuplexApi {
                     (String) outputs.get(msgIndex++));
               }
             });
+  }
+
+  @Test
+  @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
+  public void testCustomHeaders() throws ApiException, NoApiKeyException, InterruptedException {
+    SynchronizeFullDuplexApi<FullDuplexTestParam> api =
+        new SynchronizeFullDuplexApi<>(
+            ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(), serviceOption);
+    Map<String, String> headers =
+        new HashMap<String, String>() {
+          {
+            put("h1", "1");
+            put("h2", "v");
+          }
+        };
+    FullDuplexTestParam param = getStreamTextCustomHeadersParam(headers);
+    Flowable<DashScopeResult> results = api.duplexCall(param);
+    Semaphore receiveCompleted = new Semaphore(0);
+    List<byte[]> outputs = generateBinaryData(3, 1024);
+    verifyBinaryOutput(results, (List<Object>) (List<?>) outputs, receiveCompleted);
+    WebSocket wsServer = serverListener.assertOpen();
+    wsServer.send(JsonUtils.toJson(WebSocketServerMessage.getTaskStartMessage()));
+    for (byte[] b : outputs) {
+      wsServer.send(ByteString.of(b));
+    }
+    wsServer.send(JsonUtils.toJson(WebSocketServerMessage.getTaskFinishedMessage(null, null)));
+
+    receiveCompleted.acquire();
+    serverListener.assertFullDuplexRequest(param, StreamingMode.DUPLEX.getValue());
+    serverListener.assertHeaders(headers);
+    wsServer.close(1000, "bye");
+    Observable.interval(100, TimeUnit.MILLISECONDS).take(1).blockingSingle();
   }
 
   @Test
