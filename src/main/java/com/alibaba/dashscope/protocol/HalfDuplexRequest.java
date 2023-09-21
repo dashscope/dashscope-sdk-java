@@ -10,6 +10,7 @@ import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
+import java.util.Map;
 import java.util.UUID;
 
 public class HalfDuplexRequest {
@@ -60,7 +61,8 @@ public class HalfDuplexRequest {
                   param.isSecurityCheck(),
                   Protocol.HTTP,
                   serviceOption.getIsSSE(),
-                  serviceOption.getIsAsyncTask()))
+                  serviceOption.getIsAsyncTask(),
+                  param.getHeaders()))
           .parameters(param.getParameters())
           .httpMethod(getHttpMethod())
           .build();
@@ -74,7 +76,8 @@ public class HalfDuplexRequest {
                   param.isSecurityCheck(),
                   Protocol.HTTP,
                   serviceOption.getIsSSE(),
-                  serviceOption.getIsAsyncTask()))
+                  serviceOption.getIsAsyncTask(),
+                  param.getHeaders()))
           .body(body == null ? null : JsonUtils.toJson(body))
           .httpMethod(getHttpMethod())
           .build();
@@ -134,5 +137,9 @@ public class HalfDuplexRequest {
 
   public ByteBuffer getWebsocketBinaryData() {
     return param.getBinaryData();
+  }
+
+  public Map<String, String> getHeaders() {
+    return param.getHeaders();
   }
 }

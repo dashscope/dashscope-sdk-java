@@ -20,7 +20,8 @@ public final class DashScopeHeaders {
     return userAgent;
   }
 
-  public static Map<String, String> buildWebSocketHeaders(String apiKey, boolean isSecurityCheck)
+  public static Map<String, String> buildWebSocketHeaders(
+      String apiKey, boolean isSecurityCheck, Map<String, String> customHeaders)
       throws NoApiKeyException {
     Map<String, String> headers = Maps.newHashMap();
     headers.put("Authorization", "bearer " + ApiKey.getApiKey(apiKey));
@@ -28,11 +29,19 @@ public final class DashScopeHeaders {
     if (isSecurityCheck) {
       headers.put("X-DashScope-DataInspection", "enable");
     }
+    if (!customHeaders.isEmpty()) {
+      headers.putAll(customHeaders);
+    }
     return headers;
   }
 
   public static Map<String, String> buildHttpHeaders(
-      String apiKey, Boolean isSecurityCheck, Protocol protocol, Boolean isSSE, Boolean isAsyncTask)
+      String apiKey,
+      Boolean isSecurityCheck,
+      Protocol protocol,
+      Boolean isSSE,
+      Boolean isAsyncTask,
+      Map<String, String> customHeaders)
       throws NoApiKeyException {
     Map<String, String> headers = Maps.newHashMap();
     headers.put("Authorization", "Bearer " + ApiKey.getApiKey(apiKey));
@@ -53,6 +62,9 @@ public final class DashScopeHeaders {
       } else { // default json response.
         headers.put("Accept", "application/json; charset=utf-8");
       }
+    }
+    if (!customHeaders.isEmpty()) {
+      headers.putAll(customHeaders);
     }
     return headers;
   }

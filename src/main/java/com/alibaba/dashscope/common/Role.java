@@ -9,6 +9,7 @@ public enum Role {
   /** The model side. */
   BOT("bot"),
   SYSTEM("system"),
+  ATTACHMENT("attachment"),
   ;
 
   private final String value;

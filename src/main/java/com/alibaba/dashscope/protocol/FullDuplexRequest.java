@@ -8,6 +8,7 @@ import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import io.reactivex.Flowable;
 import java.nio.ByteBuffer;
+import java.util.Map;
 import java.util.UUID;
 
 public class FullDuplexRequest {
@@ -151,5 +152,9 @@ public class FullDuplexRequest {
     payload.add("input", new JsonObject());
     wsMessage.add(ApiKeywords.PAYLOAD, payload);
     return wsMessage;
+  }
+
+  public Map<String, String> getHeaders() {
+    return param.getHeaders();
   }
 }

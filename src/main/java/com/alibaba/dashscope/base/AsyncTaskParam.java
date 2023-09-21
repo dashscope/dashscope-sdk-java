@@ -5,6 +5,7 @@ package com.alibaba.dashscope.base;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -13,6 +14,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class AsyncTaskParam extends HalfDuplexParamBase {
   private String taskId;
 
@@ -47,5 +49,16 @@ public class AsyncTaskParam extends HalfDuplexParamBase {
   @Override
   public Object getResources() {
     return null;
+  }
+
+  @Override
+  public Map<String, String> getHeaders() {
+    Map<String, String> res = new HashMap<>();
+    for (Map.Entry<String, Object> entry : headers.entrySet()) {
+      String key = entry.getKey();
+      String value = entry.getValue().toString();
+      res.put(key, value);
+    }
+    return res;
   }
 }

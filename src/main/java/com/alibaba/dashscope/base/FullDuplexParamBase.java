@@ -28,6 +28,15 @@ public abstract class FullDuplexParamBase {
   /** The extra parameters. */
   @Singular protected Map<String, Object> parameters;
 
+  /** The custom http header. */
+  @Singular protected Map<String, Object> headers;
+  /**
+   * The custom http header.
+   *
+   * @return The headers.
+   */
+  public abstract Map<String, String> getHeaders();
+
   public String getModel() {
     return model;
   }

@@ -34,6 +34,16 @@ public abstract class HalfDuplexParamBase {
    * @return The parameters
    */
   public abstract Map<String, Object> getParameters();
+
+  /** The custom http header. */
+  @Singular protected Map<String, Object> headers;
+  /**
+   * The custom http header.
+   *
+   * @return The headers.
+   */
+  public abstract Map<String, String> getHeaders();
+
   /**
    * Get the batch request data. Http body include {"model": "model_name", "input": "input data",
    * "parameters": "The request parameters"}

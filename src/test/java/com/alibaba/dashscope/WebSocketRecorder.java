@@ -6,6 +6,7 @@ package com.alibaba.dashscope;
 // https://github.com/square/okhttp/blob/master/okhttp/src/jvmTest/java/okhttp3/internal/ws/WebSocketRecorder.java
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.alibaba.dashscope.base.FullDuplexServiceParam;
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
@@ -15,6 +16,9 @@ import com.google.gson.JsonObject;
 import io.reactivex.Flowable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -33,6 +37,7 @@ public final class WebSocketRecorder extends WebSocketListener {
   private final BlockingQueue<String> textMessages = new LinkedBlockingQueue<>();
   private final BlockingQueue<ByteBuffer> binaryMessages = new LinkedBlockingQueue<>();
   private WebSocketListener delegate;
+  private Map<String, List<String>> headers;
 
   public WebSocketRecorder(String name) {
     this.name = name;
@@ -46,7 +51,7 @@ public final class WebSocketRecorder extends WebSocketListener {
   @Override
   public void onOpen(WebSocket webSocket, Response response) {
     Platform.get().log("[WS " + name + "] onOpen", Platform.INFO, null);
-
+    headers = response.request().headers().toMultimap();
     WebSocketListener delegate = this.delegate;
     if (delegate != null) {
       this.delegate = null;
@@ -174,6 +179,13 @@ public final class WebSocketRecorder extends WebSocketListener {
     assertEquals(
         payload.get("parameters").getAsJsonObject(),
         JsonUtils.parametersToJsonObject(req.getParameters()));
+  }
+
+  public void assertHeaders(Map<String, String> customHeaders) {
+    for (Entry<String, String> entry : customHeaders.entrySet()) {
+      assertTrue(headers.containsKey(entry.getKey()));
+      assertTrue(headers.get(entry.getKey()).get(0).equals(entry.getValue()));
+    }
   }
 
   public <RequestParam extends HalfDuplexServiceParam> void assertResources(
