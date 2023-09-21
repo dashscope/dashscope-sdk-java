@@ -89,4 +89,6 @@ public class ApiKeywords {
   public static final String SENTENCE = "sentence";
 
   public static final String LABELS = "labels";
+
+  public static final String SCENE = "scene";
 }
