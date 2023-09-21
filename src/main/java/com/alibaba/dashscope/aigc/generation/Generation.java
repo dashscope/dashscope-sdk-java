@@ -26,12 +26,18 @@ public final class Generation {
   private final ApiServiceOption serviceOption;
 
   public static class Models {
-    public static final String QWEN_V1 = "qwen-v1";
+    /** @deprecated use QWEN_TURBO instead */
+    @Deprecated public static final String QWEN_V1 = "qwen-v1";
+
+    public static final String QWEN_TURBO = "qwen-turbo";
+
     public static final String BAILIAN_V1 = "bailian-v1";
     public static final String DOLLY_12B_V2 = "dolly-12b-v2";
-    public static final String QWEN_PLUS_V1 = "qwen-plus-v1";
+
+    /** @deprecated use QWEN_PLUS instead */
+    @Deprecated public static final String QWEN_PLUS_V1 = "qwen-plus-v1";
+
     public static final String QWEN_PLUS = "qwen-plus";
-    public static final String QWEN_TURBO = "qwen-turbo";
   }
 
   public Generation() {
