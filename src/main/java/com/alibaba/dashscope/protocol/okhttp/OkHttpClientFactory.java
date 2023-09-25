@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.ConnectionPool;
+import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClient.Builder;
 import okhttp3.Protocol;
@@ -28,12 +29,19 @@ public class OkHttpClientFactory {
       ClientOptions defaultOptions = ClientOptions.builder().build();
       HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
       logging.setLevel(Level.valueOf(defaultOptions.getNetworkLoggingLevel()));
+
+      Dispatcher dispatcher = new Dispatcher();
+      if (dispatcher.getMaxRequests() < defaultOptions.getConnectionPoolSize()) {
+        dispatcher.setMaxRequests(defaultOptions.getConnectionPoolSize());
+        dispatcher.setMaxRequestsPerHost(defaultOptions.getConnectionPoolSize());
+      }
       Builder clientBuilder = new OkHttpClient.Builder();
       clientBuilder
           .connectTimeout(defaultOptions.getConnectTimeout())
           .readTimeout(defaultOptions.getReadTimeout())
           .writeTimeout(defaultOptions.getWriteTimeout())
           .addInterceptor(logging)
+          .dispatcher(dispatcher)
           .protocols(Collections.singletonList(Protocol.HTTP_1_1))
           .connectionPool(
               new ConnectionPool(
