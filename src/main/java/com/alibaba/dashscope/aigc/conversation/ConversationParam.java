@@ -75,6 +75,23 @@ public class ConversationParam extends GenerationParamBase {
    */
   private Float temperature;
 
+  /**
+   * Used to control the streaming output mode. If true, the subsequent output will include the
+   * previously input content by default. Otherwise, the subsequent output will not include the
+   * previously output content. Default: true eg(true):
+   *
+   * <pre>
+   * I
+   * I like
+   * I like apple
+   * false:
+   * I
+   * like
+   * apple
+   * </pre>
+   */
+  @Builder.Default private Boolean incrementalOutput = true;
+
   @Override
   public JsonObject getInput() {
     JsonObject jsonObject = new JsonObject();
@@ -122,6 +139,9 @@ public class ConversationParam extends GenerationParamBase {
     }
     if (temperature != null) {
       params.put("temperature", temperature);
+    }
+    if (!incrementalOutput) {
+      params.put("output_in_full", incrementalOutput);
     }
     params.putAll(parameters);
     return params;
