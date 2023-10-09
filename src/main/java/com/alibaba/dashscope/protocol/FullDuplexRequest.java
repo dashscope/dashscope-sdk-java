@@ -5,6 +5,7 @@ import com.alibaba.dashscope.base.FullDuplexServiceParam;
 import com.alibaba.dashscope.common.OutputMode;
 import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.reactivex.Flowable;
 import java.nio.ByteBuffer;
@@ -47,7 +48,7 @@ public class FullDuplexRequest {
       request.add(ApiKeywords.PARAMETERS, JsonUtils.parametersToJsonObject(param.getParameters()));
     }
     if (param.getResources() != null) {
-      request.add(ApiKeywords.RESOURCES, (JsonObject) param.getResources());
+      request.add(ApiKeywords.RESOURCES, (JsonElement) param.getResources());
     }
     return request;
   }

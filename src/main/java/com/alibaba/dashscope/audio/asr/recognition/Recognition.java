@@ -62,6 +62,24 @@ public final class Recognition {
     public Flowable<Object> getStreamingData() {
       return audioStream.cast(Object.class);
     }
+
+    public static RecognitionParamWithStream FromRecognitionParam(
+        RecognitionParam param, Flowable<ByteBuffer> audioStream) {
+      RecognitionParamWithStream recognitionParamWithStream =
+          RecognitionParamWithStream.builder()
+              .format(param.getFormat())
+              .audioStream(audioStream)
+              .disfluencyRemovalEnabled(param.isDisfluencyRemovalEnabled())
+              .model(param.getModel())
+              .sampleRate(param.getSampleRate())
+              .apiKey(param.getApiKey())
+              .build();
+      if (param.getPhraseId() != null && !param.getPhraseId().isEmpty()) {
+        recognitionParamWithStream.setPhraseId(param.getPhraseId());
+      }
+
+      return recognitionParamWithStream;
+    }
   }
 
   public Recognition() {
@@ -82,18 +100,8 @@ public final class Recognition {
   public Flowable<RecognitionResult> streamCall(
       RecognitionParam param, Flowable<ByteBuffer> audioFrame)
       throws ApiException, NoApiKeyException {
-    RecognitionParamWithStream paramWithStream =
-        RecognitionParamWithStream.builder()
-            .format(param.getFormat())
-            .audioStream(audioFrame)
-            .disfluencyRemovalEnabled(param.isDisfluencyRemovalEnabled())
-            .model(param.getModel())
-            .sampleRate(param.getSampleRate())
-            .apiKey(param.getApiKey())
-            .build();
-
     return duplexApi
-        .duplexCall(paramWithStream)
+        .duplexCall(RecognitionParamWithStream.FromRecognitionParam(param, audioFrame))
         .map(
             item -> {
               return RecognitionResult.fromDashScopeResult(item);
@@ -136,19 +144,10 @@ public final class Recognition {
       cmdBuffer.clear();
     }
     stopLatch = new AtomicReference<>(new CountDownLatch(1));
-    RecognitionParamWithStream paramWithStream =
-        RecognitionParamWithStream.builder()
-            .format(param.getFormat())
-            .audioStream(audioFrames)
-            .disfluencyRemovalEnabled(param.isDisfluencyRemovalEnabled())
-            .model(param.getModel())
-            .sampleRate(param.getSampleRate())
-            .apiKey(param.getApiKey())
-            .build();
 
     try {
       duplexApi.duplexCall(
-          paramWithStream,
+          RecognitionParamWithStream.FromRecognitionParam(param, audioFrames),
           new ResultCallback<DashScopeResult>() {
             @Override
             public void onEvent(DashScopeResult message) {
@@ -230,18 +229,9 @@ public final class Recognition {
                   .start();
             },
             BackpressureStrategy.BUFFER);
-    RecognitionParamWithStream paramWithStream =
-        RecognitionParamWithStream.builder()
-            .format(param.getFormat())
-            .audioStream(audioFrames)
-            .disfluencyRemovalEnabled(param.isDisfluencyRemovalEnabled())
-            .model(param.getModel())
-            .sampleRate(param.getSampleRate())
-            .apiKey(param.getApiKey())
-            .build();
     try {
       duplexApi
-          .duplexCall(paramWithStream)
+          .duplexCall(RecognitionParamWithStream.FromRecognitionParam(param, audioFrames))
           .blockingSubscribe(
               res -> {
                 RecognitionResult recognitionResult = RecognitionResult.fromDashScopeResult(res);

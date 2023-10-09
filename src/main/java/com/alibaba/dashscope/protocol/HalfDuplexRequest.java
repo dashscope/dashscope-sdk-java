@@ -8,11 +8,14 @@ import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class HalfDuplexRequest {
   HalfDuplexParamBase param;
   ServiceOption serviceOption;
@@ -66,7 +69,7 @@ public class HalfDuplexRequest {
           .parameters(param.getParameters())
           .httpMethod(getHttpMethod())
           .build();
-    } else if (getHttpMethod() == HttpMethod.POST) {
+    } else if (getHttpMethod() == HttpMethod.POST || getHttpMethod() == HttpMethod.DELETE) {
       JsonObject body = param.getHttpBody();
       return HttpRequest.builder()
           .url(getHttpUrl())
@@ -99,7 +102,7 @@ public class HalfDuplexRequest {
       request.add(ApiKeywords.PARAMETERS, JsonUtils.parametersToJsonObject(param.getParameters()));
     }
     if (param.getResources() != null) {
-      request.add(ApiKeywords.RESOURCES, (JsonObject) param.getResources());
+      request.add(ApiKeywords.RESOURCES, (JsonElement) param.getResources());
     }
     return request;
   }

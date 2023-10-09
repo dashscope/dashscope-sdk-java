@@ -86,6 +86,10 @@ public class ApiKeywords {
 
   public static final String CONTENT = "content";
 
+  public static final String RESOURCE_ID = "resource_id";
+
+  public static final String RESOURCE_TYPE = "resource_type";
+
   public static final String SENTENCE = "sentence";
 
   public static final String LABELS = "labels";

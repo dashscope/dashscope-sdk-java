@@ -24,4 +24,12 @@ public class TranscriptionApiKeywords {
   public static final String DIARIZATION_ENABLED = "diarization_enabled";
 
   public static final String SPEAKER_COUNT = "speaker_count";
+
+  public static final String DISFLUENCY_REMOVAL_ENABLED = "disfluency_removal_enabled";
+
+  public static final String TIMESTAMP_ALIGNMENT_ENABLED = "timestamp_alignment_enabled";
+
+  public static final String SPECIAL_WORD_FILTER = "special_word_filter";
+
+  public static final String AUDIO_EVENT_DETECTION_ENABLED = "audio_event_detection_enabled";
 }

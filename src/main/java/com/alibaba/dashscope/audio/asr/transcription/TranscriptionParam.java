@@ -2,9 +2,12 @@
 
 package com.alibaba.dashscope.audio.asr.transcription;
 
+import com.alibaba.dashscope.audio.asr.phrase.AsrPhraseApiKeywords;
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
 import com.alibaba.dashscope.exception.InputRequiredException;
+import com.alibaba.dashscope.utils.ApiKeywords;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -14,13 +17,17 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Slf4j
 public class TranscriptionParam extends HalfDuplexServiceParam {
 
   @NonNull private List<String> fileUrls;
+
+  private String phraseId;
 
   @Builder.Default private List<Integer> channelId = Collections.singletonList(0);
 
@@ -28,9 +35,16 @@ public class TranscriptionParam extends HalfDuplexServiceParam {
 
   private Integer speakerCount;
 
+  private Boolean disfluencyRemovalEnabled;
+
+  private Boolean timestampAlignmentEnabled;
+
+  private String specialWordFilter;
+
+  private Boolean audioEventDetectionEnabled;
+
   @Override
   public JsonObject getHttpBody() {
-
     JsonObject body = new JsonObject();
     body.addProperty("model", getModel());
     JsonArray jsonFileUrls = new JsonArray();
@@ -58,7 +72,33 @@ public class TranscriptionParam extends HalfDuplexServiceParam {
     if (speakerCount != null) {
       jsonParameters.addProperty(TranscriptionApiKeywords.SPEAKER_COUNT, speakerCount);
     }
+    if (disfluencyRemovalEnabled != null) {
+      jsonParameters.addProperty(
+          TranscriptionApiKeywords.DISFLUENCY_REMOVAL_ENABLED, disfluencyRemovalEnabled);
+    }
+    if (timestampAlignmentEnabled != null) {
+      jsonParameters.addProperty(
+          TranscriptionApiKeywords.TIMESTAMP_ALIGNMENT_ENABLED, timestampAlignmentEnabled);
+    }
+    if (specialWordFilter != null) {
+      jsonParameters.addProperty(TranscriptionApiKeywords.SPECIAL_WORD_FILTER, specialWordFilter);
+    }
+    if (audioEventDetectionEnabled != null) {
+      jsonParameters.addProperty(
+          TranscriptionApiKeywords.AUDIO_EVENT_DETECTION_ENABLED, audioEventDetectionEnabled);
+    }
     body.add("parameters", jsonParameters);
+
+    if (phraseId != null) {
+      JsonElement jsonResources = new JsonArray();
+      JsonObject jsonPhraseResource = new JsonObject();
+      jsonPhraseResource.addProperty(ApiKeywords.RESOURCE_ID, phraseId);
+      jsonPhraseResource.addProperty(
+          ApiKeywords.RESOURCE_TYPE, AsrPhraseApiKeywords.RESOURCE_TYPE_PHRASE);
+      jsonResources.getAsJsonArray().add(jsonPhraseResource);
+      body.add(ApiKeywords.RESOURCES, jsonResources);
+    }
+    log.info("body=>{}", body);
     return body;
   }
 

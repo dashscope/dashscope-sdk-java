@@ -29,6 +29,13 @@ public final class SpeechSynthesizer {
   @Getter private final List<Sentence> timestamps = Lists.newCopyOnWriteArrayList();
 
   @Getter private ByteBuffer audioData;
+
+  private AtomicReference<String> lastRequestId = new AtomicReference<>();
+
+  public String getLastRequestId() {
+    return lastRequestId.get();
+  }
+
   private ApiServiceOption serviceOption =
       ApiServiceOption.builder()
           .protocol(Protocol.WEBSOCKET)
@@ -49,6 +56,7 @@ public final class SpeechSynthesizer {
   public void call(SpeechSynthesisParam param, ResultCallback<SpeechSynthesisResult> callback) {
     timestamps.clear();
     audioData = null;
+    lastRequestId.set(null);
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     WritableByteChannel channel = Channels.newChannel(outputStream);
 
@@ -63,6 +71,9 @@ public final class SpeechSynthesizer {
       public void onEvent(DashScopeResult message) {
         SpeechSynthesisResult result = SpeechSynthesisResult.fromDashScopeResult(message);
         try {
+          if (lastRequestId.get() == null) {
+            lastRequestId.set(result.getRequestId());
+          }
           if (result.getTimestamp() != null) {
             Sentence sentence = result.getTimestamp();
             if (lastSentence == null) {
@@ -116,6 +127,7 @@ public final class SpeechSynthesizer {
   public Flowable<SpeechSynthesisResult> streamCall(SpeechSynthesisParam param) {
     audioData = null;
     timestamps.clear();
+    lastRequestId.set(null);
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     WritableByteChannel channel = Channels.newChannel(outputStream);
     AtomicReference<Sentence> lastSentenceRef = new AtomicReference<>();
@@ -125,6 +137,9 @@ public final class SpeechSynthesizer {
           .map(
               message -> {
                 SpeechSynthesisResult result = SpeechSynthesisResult.fromDashScopeResult(message);
+                if (lastRequestId.get() == null) {
+                  lastRequestId.set(result.getRequestId());
+                }
                 if (result.getTimestamp() != null) {
                   Sentence sentence = result.getTimestamp();
                   if (lastSentenceRef.get() == null) {
