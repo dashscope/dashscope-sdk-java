@@ -1,12 +1,16 @@
 package com.alibaba.dashscope.audio.asr.phrase;
 
 import com.alibaba.dashscope.api.AsynchronousApi;
+import com.alibaba.dashscope.exception.ApiException;
+import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.*;
 
 public final class AsrPhraseManager {
-  public static AsrPhraseStatusResult CreatePhrases(AsrPhraseParam param) throws NoApiKeyException {
+  public static AsrPhraseStatusResult CreatePhrases(AsrPhraseParam param)
+      throws ApiException, NoApiKeyException, InputRequiredException {
     param.setOperationType(AsrPhraseOperationType.CREATE);
+    param.validate();
     AsynchronousApi<AsrPhraseParam> asyncApi = new AsynchronousApi<>();
     AsrPhraseFinetuneOption finetunesServiceOptions =
         AsrPhraseFinetuneOption.builder()
@@ -21,9 +25,10 @@ public final class AsrPhraseManager {
   }
 
   public static AsrPhraseStatusResult UpdatePhrases(AsrPhraseParam param, String phraseId)
-      throws NoApiKeyException {
+      throws ApiException, NoApiKeyException, InputRequiredException {
     param.setFinetunedOutput(phraseId);
     param.setOperationType(AsrPhraseOperationType.UPDATE);
+    param.validate();
     AsynchronousApi<AsrPhraseParam> asyncApi = new AsynchronousApi<>();
     AsrPhraseFinetuneOption finetunesServiceOptions =
         AsrPhraseFinetuneOption.builder()
@@ -38,9 +43,10 @@ public final class AsrPhraseManager {
   }
 
   public static AsrPhraseStatusResult QueryPhrase(AsrPhraseParam param, String phraseId)
-      throws NoApiKeyException {
+      throws ApiException, NoApiKeyException, InputRequiredException {
     param.setFinetunedOutput(phraseId);
     param.setOperationType(AsrPhraseOperationType.QUERY);
+    param.validate();
     AsynchronousApi<AsrPhraseParam> asyncApi = new AsynchronousApi<>();
     AsrPhraseFinetuneOption finetunesServiceOptions =
         AsrPhraseFinetuneOption.builder()
@@ -56,9 +62,10 @@ public final class AsrPhraseManager {
   }
 
   public static AsrPhraseStatusResult DeletePhrase(AsrPhraseParam param, String phraseId)
-      throws NoApiKeyException {
+      throws ApiException, NoApiKeyException, InputRequiredException {
     param.setFinetunedOutput(phraseId);
     param.setOperationType(AsrPhraseOperationType.DELETE);
+    param.validate();
     AsynchronousApi<AsrPhraseParam> asyncApi = new AsynchronousApi<>();
     AsrPhraseFinetuneOption finetunesServiceOptions =
         AsrPhraseFinetuneOption.builder()
@@ -73,8 +80,10 @@ public final class AsrPhraseManager {
         asyncApi.asyncCall(param, finetunesServiceOptions));
   }
 
-  public static AsrPhraseStatusResult ListPhrases(AsrPhraseParam param) throws NoApiKeyException {
+  public static AsrPhraseStatusResult ListPhrases(AsrPhraseParam param)
+      throws ApiException, NoApiKeyException, InputRequiredException {
     param.setOperationType(AsrPhraseOperationType.LIST);
+    param.validate();
     AsynchronousApi<AsrPhraseParam> asyncApi = new AsynchronousApi<>();
     AsrPhraseFinetuneOption finetunesServiceOptions =
         AsrPhraseFinetuneOption.builder()
