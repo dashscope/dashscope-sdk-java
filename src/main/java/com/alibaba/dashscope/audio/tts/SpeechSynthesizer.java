@@ -78,9 +78,8 @@ public final class SpeechSynthesizer {
             Sentence sentence = result.getTimestamp();
             if (lastSentence == null) {
               lastSentence = sentence;
-              timestamps.add(sentence);
             } else {
-              if (!lastSentence.equals(sentence)) {
+              if (!lastSentence.equals(sentence) && sentence.getEndTime() != 0) {
                 lastSentence = sentence;
                 timestamps.add(sentence);
               }
@@ -144,14 +143,12 @@ public final class SpeechSynthesizer {
                   Sentence sentence = result.getTimestamp();
                   if (lastSentenceRef.get() == null) {
                     lastSentenceRef.set(sentence);
-                    timestamps.add(sentence);
                   } else {
-                    if (!lastSentenceRef.get().equals(sentence)) {
+                    if (!lastSentenceRef.get().equals(sentence) && sentence.getEndTime() != 0) {
                       lastSentenceRef.set(sentence);
                       timestamps.add(sentence);
                     }
                   }
-                  timestamps.add(result.getTimestamp());
                 }
                 if (result.getAudioFrame() != null) {
                   try {
