@@ -21,18 +21,36 @@ public final class ApiServiceOption implements ServiceOption {
   // if HTTP, set HTTP method.
   @Default private HttpMethod httpMethod = HttpMethod.POST;
   // Set service task group
-  @lombok.NonNull private String taskGroup;
+  private String taskGroup;
   // Set service task
-  @lombok.NonNull private String task;
+  private String task;
   // Set service function
-  @lombok.NonNull private String function;
+  private String function;
   // Set is asynchronous task, only for HTTP
   @Default private Boolean isAsyncTask = false;
   // Set is Server-Send-Event, only for HTTP
   @Default private Boolean isSSE = false;
 
+  @Default private Boolean isService = true;
+
   @Override
   public String httpUrl() {
-    return String.format("/services/%s/%s/%s", taskGroup, task, function);
+    StringBuffer sb = new StringBuffer();
+    if (isService) {
+      sb.append("/services");
+    }
+    if (taskGroup != null) {
+      sb.append("/");
+      sb.append(taskGroup);
+    }
+    if (task != null) {
+      sb.append("/");
+      sb.append(task);
+    }
+    if (function != null) {
+      sb.append("/");
+      sb.append(function);
+    }
+    return sb.toString();
   }
 }
