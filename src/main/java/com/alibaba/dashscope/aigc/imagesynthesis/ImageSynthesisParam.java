@@ -22,6 +22,8 @@ import lombok.experimental.SuperBuilder;
 public class ImageSynthesisParam extends HalfDuplexServiceParam {
   @Builder.Default private Integer n = null;
   @Builder.Default private String size = null;
+  @Builder.Default private Integer steps = null;
+  @Builder.Default private Integer scale = null;
   @lombok.NonNull private String prompt;
   private String negativePrompt;
 
@@ -44,6 +46,16 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
     if (size != null) {
       params.put(SIZE, size);
     }
+    if (negativePrompt != null) {
+      params.put(NEGATIVE_PROMPT, negativePrompt);
+    }
+    if (steps != null) {
+      params.put(STEPS, steps);
+    }
+    if (scale != null) {
+      params.put(SCALE, scale);
+    }
+
     params.putAll(super.getParameters());
     return params;
   }
