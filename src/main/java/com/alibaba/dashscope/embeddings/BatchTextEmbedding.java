@@ -22,6 +22,7 @@ public class BatchTextEmbedding {
 
   public final class Models {
     public static final String TEXT_EMBEDDING_ASYNC_V1 = "text-embedding-async-v1";
+    public static final String TEXT_EMBEDDING_ASYNC_V2 = "text-embedding-async-v2";
   }
 
   public BatchTextEmbedding() {
