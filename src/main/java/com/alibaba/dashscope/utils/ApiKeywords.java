@@ -40,6 +40,10 @@ public class ApiKeywords {
   public static final String PROMPT = "prompt";
   public static final String NEGATIVE_PROMPT = "negative_prompt";
 
+  public static final String SKETCH_IMAGE_URL = "sketch_image_url";
+  public static final String SKETCH_WEIGHT = "sketch_weight";
+  public static final String REALISTICNESS = "realisticness";
+
   public static final String TOP_P = "top_p";
 
   public static final String MAX_LENGTH = "max_length";

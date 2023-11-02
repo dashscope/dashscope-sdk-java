@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.aigc.imagesynthesis;
 
 import com.alibaba.dashscope.api.AsynchronousApi;
+import com.alibaba.dashscope.base.HalfDuplexServiceParam;
 import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
@@ -12,16 +13,17 @@ import com.alibaba.dashscope.protocol.StreamingMode;
 import com.alibaba.dashscope.task.AsyncTaskListParam;
 
 public final class ImageSynthesis {
-  private final AsynchronousApi<ImageSynthesisParam> asyncApi;
+  private final AsynchronousApi<HalfDuplexServiceParam> asyncApi;
   private final ApiServiceOption createServiceOptions;
 
   public static class Models {
     public static final String WANX_V1 = "wanx-v1";
+    public static final String WANX_SKETCH_TO_IMAGE_V1 = "wanx-sketch-to-image-v1";
   }
 
   public ImageSynthesis() {
     // only support http
-    asyncApi = new AsynchronousApi<ImageSynthesisParam>();
+    asyncApi = new AsynchronousApi<HalfDuplexServiceParam>();
     createServiceOptions =
         ApiServiceOption.builder()
             .protocol(Protocol.HTTP)
@@ -49,6 +51,31 @@ public final class ImageSynthesis {
    * @throws ApiException The request failed, possibly due to a network or data error.
    */
   public ImageSynthesisResult call(ImageSynthesisParam param)
+      throws ApiException, NoApiKeyException {
+    return ImageSynthesisResult.fromDashScopeResult(asyncApi.call(param, createServiceOptions));
+  }
+
+  /**
+   * @param param The input param of class `SketchImageSynthesisParam`
+   * @return
+   * @throws ApiException
+   * @throws NoApiKeyException
+   */
+  public ImageSynthesisResult asyncCall(SketchImageSynthesisParam param)
+      throws ApiException, NoApiKeyException {
+    return ImageSynthesisResult.fromDashScopeResult(
+        asyncApi.asyncCall(param, createServiceOptions));
+  }
+
+  /**
+   * Call the server to get the result.
+   *
+   * @param param The input param of class `SketchImageSynthesisParam`.
+   * @return The image synthesis result.
+   * @throws NoApiKeyException Can not find api key.
+   * @throws ApiException The request failed, possibly due to a network or data error.
+   */
+  public ImageSynthesisResult call(SketchImageSynthesisParam param)
       throws ApiException, NoApiKeyException {
     return ImageSynthesisResult.fromDashScopeResult(asyncApi.call(param, createServiceOptions));
   }
