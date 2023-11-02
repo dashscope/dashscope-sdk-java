@@ -20,4 +20,19 @@ public class MultiModalEmbeddingItemAudio extends MultiModalEmbeddingItemBase {
   public MultiModalEmbeddingItemAudio(String audio) {
     this.audio = audio;
   }
+
+  @Override
+  public String getModal() {
+    return "audio";
+  }
+
+  @Override
+  public String getContent() {
+    return audio;
+  }
+
+  @Override
+  public void setContent(String content) {
+    this.audio = content;
+  }
 }

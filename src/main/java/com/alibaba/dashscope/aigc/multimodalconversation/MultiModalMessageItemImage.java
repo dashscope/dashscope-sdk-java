@@ -19,4 +19,9 @@ public class MultiModalMessageItemImage implements MultiModalMessageItemBase {
   public String getContent() {
     return image;
   }
+
+  @Override
+  public void setContent(String content) {
+    this.image = content;
+  }
 }

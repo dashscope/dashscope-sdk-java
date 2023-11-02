@@ -19,7 +19,7 @@ public class GenerationCallWithMessages {
     Generation gen = new Generation();
     MessageManager msgManager = new MessageManager(10);
     Message systemMsg =
-        Message.builder().role(Role.SYSTEM.getValue()).content("你是达摩院的生活助手机器人。").build();
+        Message.builder().role(Role.SYSTEM.getValue()).content("You are a helpful assistant.").build();
     Message userMsg = Message.builder().role(Role.USER.getValue()).content("你好，周末去哪里玩？").build();
     msgManager.add(systemMsg);
     msgManager.add(userMsg);

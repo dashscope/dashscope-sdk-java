@@ -50,11 +50,11 @@ public class TestGeneration {
   private JsonObject usage;
   private String requestId;
   private String expectMessageBody =
-      "{\"model\":\"qwen-turbo\",\"input\":{\"messages\":[{\"role\":\"user\",\"content\":\"如何做土豆炖猪脚?\"}]},\"parameters\":{\"top_p\":0.8,\"result_format\":\"message\",\"enable_search\":false}}";
+      "{\"model\":\"qwen-turbo\",\"input\":{\"messages\":[{\"role\":\"user\",\"content\":\"如何做土豆炖猪脚?\"}]},\"parameters\":{\"top_p\":0.8,\"result_format\":\"message\"}}";
   private String expectTextBody =
-      "{\"model\":\"qwen-turbo\",\"input\":{\"prompt\":\"如何做土豆炖猪脚?\"},\"parameters\":{\"top_p\":0.8,\"enable_search\":false}}";
+      "{\"model\":\"qwen-turbo\",\"input\":{\"prompt\":\"如何做土豆炖猪脚?\"},\"parameters\":{\"top_p\":0.8}}";
   private String expectTextBodyOutputMessage =
-      "{\"model\":\"qwen-turbo\",\"input\":{\"prompt\":\"如何做土豆炖猪脚?\"},\"parameters\":{\"top_p\":0.8,\"result_format\":\"message\",\"enable_search\":false}}";
+      "{\"model\":\"qwen-turbo\",\"input\":{\"prompt\":\"如何做土豆炖猪脚?\"},\"parameters\":{\"top_p\":0.8,\"result_format\":\"message\",\"enable_search\":true}}";
 
   @BeforeEach
   public void before() {
@@ -144,6 +144,7 @@ public class TestGeneration {
             .resultFormat(QwenParam.ResultFormat.MESSAGE)
             .prompt("如何做土豆炖猪脚?")
             .topP(0.8)
+            .enableSearch(true)
             .build();
     Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", port);
     Generation generation = new Generation();
@@ -167,6 +168,7 @@ public class TestGeneration {
             .prompt("如何做土豆炖猪脚?")
             .resultFormat(QwenParam.ResultFormat.MESSAGE)
             .topP(0.8)
+            .enableSearch(true)
             .build();
     Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", port);
     Generation generation = new Generation();
@@ -211,6 +213,7 @@ public class TestGeneration {
             .prompt("如何做土豆炖猪脚?")
             .resultFormat(QwenParam.ResultFormat.MESSAGE)
             .topP(0.8)
+            .enableSearch(true)
             .build();
     Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", port);
     Generation generation = new Generation();
@@ -235,6 +238,7 @@ public class TestGeneration {
             .resultFormat(QwenParam.ResultFormat.MESSAGE)
             .prompt("如何做土豆炖猪脚?")
             .topP(0.8)
+            .enableSearch(true)
             .build();
     Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", port);
     Generation generation = new Generation();

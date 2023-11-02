@@ -9,7 +9,7 @@ import com.google.common.collect.Maps;
 import java.util.Map;
 
 public final class DashScopeHeaders {
-  private static String userAgent() {
+  public static String userAgent() {
     String userAgent =
         String.format(
             "dashscope/%s; java/%s; platform/%s; processor/%s",

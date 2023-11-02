@@ -37,7 +37,7 @@ public class TestTokenizor {
   private TokenizationUsage usage;
   private String requestId;
   private String expectBody =
-      "{\"model\":\"qwen-turbo\",\"input\":{\"prompt\":\"如何做土豆炖猪脚?\"},\"parameters\":{\"top_p\":0.8,\"seed\":100,\"enable_search\":false}}";
+      "{\"model\":\"qwen-turbo\",\"input\":{\"prompt\":\"如何做土豆炖猪脚?\"},\"parameters\":{\"top_p\":0.8,\"seed\":100}}";
 
   @BeforeEach
   public void before() {

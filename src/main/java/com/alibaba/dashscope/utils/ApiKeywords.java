@@ -95,4 +95,9 @@ public class ApiKeywords {
   public static final String LABELS = "labels";
 
   public static final String SCENE = "scene";
+
+  public static final String REQUEST_CONTENT_TEXT = "text";
+  public static final String REQUEST_CONTENT_IMAGE = "image";
+  public static final String REQUEST_CONTENT_AUDIO = "audio";
+  public static final String FILE_PATH_SCHEMA = "file://";
 }

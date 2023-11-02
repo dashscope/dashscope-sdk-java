@@ -12,12 +12,13 @@ import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalMessageItemTe
 import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
+import com.alibaba.dashscope.exception.UploadFileException;
 
 public class MultiModalConversationUsage {
-    private static final String modelName = "pre-qwen_vl_7b_chat-591";
-    public static void simpleMultiModalConversationCall() throws ApiException, NoApiKeyException {
+    private static final String modelName = "qwen-vl-chat-v1";
+    public static void simpleMultiModalConversationCall() throws ApiException, NoApiKeyException, UploadFileException {
         MultiModalConversation conv = new MultiModalConversation();
-        MultiModalMessageItemText systemText = new MultiModalMessageItemText("你是达摩院的生活助手机器人。");
+        MultiModalMessageItemText systemText = new MultiModalMessageItemText("You are a helpful assistant.");
         MultiModalConversationMessage systemMessage = MultiModalConversationMessage.builder()
                 .role(Role.SYSTEM.getValue()).content(Arrays.asList(systemText)).build();
         MultiModalMessageItemImage userImage = new MultiModalMessageItemImage(
@@ -33,9 +34,9 @@ public class MultiModalConversationUsage {
         System.out.print(result);
     }
 
-    public static void MultiRoundConversationCall() throws ApiException, NoApiKeyException {
+    public static void MultiRoundConversationCall() throws ApiException, NoApiKeyException, UploadFileException {
         MultiModalConversation conv = new MultiModalConversation();
-        MultiModalMessageItemText systemText = new MultiModalMessageItemText("你是达摩院的生活助手机器人。");
+        MultiModalMessageItemText systemText = new MultiModalMessageItemText("You are a helpful assistant.");
         MultiModalConversationMessage systemMessage = MultiModalConversationMessage.builder()
                 .role(Role.SYSTEM.getValue()).content(Arrays.asList(systemText)).build();
         MultiModalMessageItemImage userImage = new MultiModalMessageItemImage(
@@ -48,7 +49,8 @@ public class MultiModalConversationUsage {
         messages.add(systemMessage);
         messages.add(userMessage);
         MultiModalConversationParam param = MultiModalConversationParam.builder()
-                .model(MultiModalConversationUsage.modelName).messages(messages).build();
+                .model(MultiModalConversationUsage.modelName).messages(messages)
+                .build();
         MultiModalConversationResult result = conv.call(param);
         System.out.println(result);
         MultiModalMessageItemText assistentText = new MultiModalMessageItemText(
@@ -56,7 +58,7 @@ public class MultiModalConversationUsage {
         MultiModalConversationMessage assistentMessage = MultiModalConversationMessage.builder()
                 .role(Role.ASSISTANT.getValue()).content(Arrays.asList(assistentText)).build();
         messages.add(assistentMessage);
-        userText = new MultiModalMessageItemText("图片动物是    什么？");
+        userText = new MultiModalMessageItemText("图片动物是什么？");
         messages.add(MultiModalConversationMessage.builder().role(Role.USER.getValue())
                 .content(Arrays.asList(userText)).build());
         param.setMessages(messages);
@@ -68,7 +70,7 @@ public class MultiModalConversationUsage {
         try {
             simpleMultiModalConversationCall();
             MultiRoundConversationCall();
-        } catch (ApiException | NoApiKeyException e) {
+        } catch (ApiException | NoApiKeyException | UploadFileException e) {
             System.out.println(e.getMessage());
         }
         System.exit(0);

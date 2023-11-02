@@ -20,4 +20,19 @@ public class MultiModalEmbeddingItemText extends MultiModalEmbeddingItemBase {
   public MultiModalEmbeddingItemText(String text) {
     this.text = text;
   }
+
+  @Override
+  public String getModal() {
+    return "text";
+  }
+
+  @Override
+  public String getContent() {
+    return text;
+  }
+
+  @Override
+  public void setContent(String content) {
+    this.text = content;
+  }
 }

@@ -19,4 +19,9 @@ public class MultiModalMessageItemAudio implements MultiModalMessageItemBase {
   public String getContent() {
     return audio;
   }
+
+  @Override
+  public void setContent(String content) {
+    this.audio = content;
+  }
 }

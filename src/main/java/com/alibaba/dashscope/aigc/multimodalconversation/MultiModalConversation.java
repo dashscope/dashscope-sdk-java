@@ -6,7 +6,9 @@ import com.alibaba.dashscope.common.*;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
+import com.alibaba.dashscope.exception.UploadFileException;
 import com.alibaba.dashscope.protocol.*;
+import com.alibaba.dashscope.utils.PreprocessMessageInput;
 import io.reactivex.Flowable;
 import lombok.extern.slf4j.Slf4j;
 
@@ -55,11 +57,13 @@ public final class MultiModalConversation {
    * @param param The input param of class `MultiModalConversationParam`.
    * @return The output structure of `MultiModalConversationResult`.
    * @throws NoApiKeyException Can not find api key
+   * @throws UploadFileException
    */
   public MultiModalConversationResult call(MultiModalConversationParam param)
-      throws ApiException, NoApiKeyException {
+      throws ApiException, NoApiKeyException, UploadFileException {
     serviceOption.setIsSSE(false);
     serviceOption.setStreamingMode(StreamingMode.NONE);
+    preprocessInput(param);
     return MultiModalConversationResult.fromDashScopeResult(syncApi.call(param));
   }
 
@@ -71,12 +75,14 @@ public final class MultiModalConversation {
    *     `MultiModalConversationResult`.
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
+   * @throws UploadFileException
    */
   public void call(
       MultiModalConversationParam param, ResultCallback<MultiModalConversationResult> callback)
-      throws ApiException, NoApiKeyException {
+      throws ApiException, NoApiKeyException, UploadFileException {
     serviceOption.setIsSSE(false);
     serviceOption.setStreamingMode(StreamingMode.NONE);
+    preprocessInput(param);
     syncApi.call(
         param,
         new ResultCallback<DashScopeResult>() {
@@ -104,11 +110,13 @@ public final class MultiModalConversation {
    * @return A `Flowable` of the output structure.
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
+   * @throws UploadFileException
    */
   public Flowable<MultiModalConversationResult> streamCall(MultiModalConversationParam param)
-      throws ApiException, NoApiKeyException {
+      throws ApiException, NoApiKeyException, UploadFileException {
     serviceOption.setIsSSE(true);
     serviceOption.setStreamingMode(StreamingMode.OUT);
+    preprocessInput(param);
     return syncApi
         .streamCall(param)
         .map(item -> MultiModalConversationResult.fromDashScopeResult(item));
@@ -122,13 +130,15 @@ public final class MultiModalConversation {
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
    * @throws InputRequiredException The input field is missing.
+   * @throws UploadFileException
    */
   public void streamCall(
       MultiModalConversationParam param, ResultCallback<MultiModalConversationResult> callback)
-      throws ApiException, NoApiKeyException, InputRequiredException {
+      throws ApiException, NoApiKeyException, InputRequiredException, UploadFileException {
     param.validate();
     serviceOption.setIsSSE(true);
     serviceOption.setStreamingMode(StreamingMode.OUT);
+    preprocessInput(param);
     syncApi.streamCall(
         param,
         new ResultCallback<DashScopeResult>() {
@@ -147,5 +157,21 @@ public final class MultiModalConversation {
             callback.onError(e);
           }
         });
+  }
+
+  private void preprocessInput(MultiModalConversationParam param)
+      throws NoApiKeyException, UploadFileException {
+    boolean hasUpload = false;
+    for (MultiModalConversationMessage msg : param.getMessages()) {
+      boolean isUpload =
+          PreprocessMessageInput.preProcessMessageInputs(
+              param.getModel(), msg.getContent(), param.getApiKey());
+      if (isUpload && !hasUpload) {
+        hasUpload = true;
+      }
+    }
+    if (hasUpload) {
+      param.putHeader("X-DashScope-OssResourceResolve", "enable");
+    }
   }
 }

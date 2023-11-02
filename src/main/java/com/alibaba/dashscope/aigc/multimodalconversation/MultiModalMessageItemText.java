@@ -19,4 +19,9 @@ public class MultiModalMessageItemText implements MultiModalMessageItemBase {
   public String getContent() {
     return text;
   }
+
+  @Override
+  public void setContent(String content) {
+    this.text = content;
+  }
 }

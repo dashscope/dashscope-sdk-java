@@ -20,4 +20,19 @@ public class MultiModalEmbeddingItemImage extends MultiModalEmbeddingItemBase {
   public MultiModalEmbeddingItemImage(String image) {
     this.image = image;
   }
+
+  @Override
+  public String getModal() {
+    return "image";
+  }
+
+  @Override
+  public String getContent() {
+    return image;
+  }
+
+  @Override
+  public void setContent(String content) {
+    this.image = content;
+  }
 }

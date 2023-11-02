@@ -37,6 +37,7 @@ public abstract class HalfDuplexParamBase {
 
   /** The custom http header. */
   @Singular protected Map<String, Object> headers;
+
   /**
    * The custom http header.
    *

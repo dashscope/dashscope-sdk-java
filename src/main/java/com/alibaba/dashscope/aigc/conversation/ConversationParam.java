@@ -129,7 +129,9 @@ public class ConversationParam extends GenerationParamBase {
     if (topK != null) {
       params.put("top_k", topK);
     }
-    params.put("enable_search", enableSearch);
+    if (enableSearch) {
+      params.put("enable_search", enableSearch);
+    }
     // Server default is text.
     if (ResultFormat.MESSAGE.equals(getResultFormat())) {
       params.put("result_format", getResultFormat());

@@ -18,6 +18,10 @@ import lombok.experimental.SuperBuilder;
 public class MultiModalEmbeddingParam extends HalfDuplexServiceParam {
   @NonNull private List<MultiModalEmbeddingItemBase> contents;
 
+  public List<MultiModalEmbeddingItemBase> getContent() {
+    return contents;
+  }
+
   @Override
   public JsonObject getHttpBody() {
     JsonObject requestObject = new JsonObject();

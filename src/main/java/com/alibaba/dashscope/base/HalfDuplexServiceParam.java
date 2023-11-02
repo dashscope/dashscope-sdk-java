@@ -42,4 +42,15 @@ public abstract class HalfDuplexServiceParam extends HalfDuplexParamBase {
     }
     return res;
   }
+
+  public void putHeader(String key, String value) {
+    if (headers.size() == 0) {
+      headers = new HashMap<String, Object>();
+    } else {
+      HashMap<String, Object> newHeaders = new HashMap<>();
+      newHeaders.putAll(headers);
+      headers = newHeaders;
+      headers.put(key, value);
+    }
+  }
 }

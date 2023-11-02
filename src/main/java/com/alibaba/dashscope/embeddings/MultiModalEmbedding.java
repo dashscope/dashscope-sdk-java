@@ -11,10 +11,12 @@ import com.alibaba.dashscope.common.Task;
 import com.alibaba.dashscope.common.TaskGroup;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
+import com.alibaba.dashscope.exception.UploadFileException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
+import com.alibaba.dashscope.utils.PreprocessMessageInput;
 
 public class MultiModalEmbedding {
   private final SynchronizeHalfDuplexApi<MultiModalEmbeddingParam> syncApi;
@@ -46,10 +48,12 @@ public class MultiModalEmbedding {
    * @param callback The callback to receive response, the template class is `GenerationResult`.
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
+   * @throws UploadFileException
    */
   public void call(
       MultiModalEmbeddingParam param, ResultCallback<MultiModalEmbeddingResult> callback)
-      throws ApiException, NoApiKeyException {
+      throws ApiException, NoApiKeyException, UploadFileException {
+    preprocessInput(param);
     syncApi.call(
         param,
         new ResultCallback<DashScopeResult>() {
@@ -77,9 +81,21 @@ public class MultiModalEmbedding {
    * @return The output structure of `QWenConversationResult`.
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
+   * @throws UploadFileException
    */
   public MultiModalEmbeddingResult call(MultiModalEmbeddingParam param)
-      throws ApiException, NoApiKeyException {
+      throws ApiException, NoApiKeyException, UploadFileException {
+    preprocessInput(param);
     return MultiModalEmbeddingResult.fromDashScopeResult(syncApi.call(param));
+  }
+
+  private void preprocessInput(MultiModalEmbeddingParam param)
+      throws NoApiKeyException, UploadFileException {
+    boolean isUpload =
+        PreprocessMessageInput.preProcessMessageInputs(
+            param.getModel(), param.getContent(), param.getApiKey());
+    if (isUpload) {
+      param.putHeader("X-DashScope-OssResourceResolve", "enable");
+    }
   }
 }
