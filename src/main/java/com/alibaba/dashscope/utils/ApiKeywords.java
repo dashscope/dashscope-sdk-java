@@ -108,4 +108,8 @@ public class ApiKeywords {
   public static final String REQUEST_CONTENT_IMAGE = "image";
   public static final String REQUEST_CONTENT_AUDIO = "audio";
   public static final String FILE_PATH_SCHEMA = "file://";
+
+  public static final String STOP = "stop";
+  public static final String REPETITION_PENALTY = "repetition_penalty";
+  public static final String MAX_TOKENS = "max_tokens";
 }

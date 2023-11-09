@@ -13,6 +13,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.ToNumberPolicy;
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
 
 public class JsonUtils {
@@ -84,8 +85,12 @@ public class JsonUtils {
           jsonObject.addProperty(entry.getKey(), (Boolean) (entry.getValue()));
         } else if (entry.getValue() instanceof Character) {
           jsonObject.addProperty(entry.getKey(), (Character) (entry.getValue()));
+        } else if (entry.getValue() instanceof List<?>) {
+          jsonObject.add(entry.getKey(), JsonUtils.toJsonArray(entry.getValue()));
+        } else if (entry.getValue() instanceof Map<?, ?>) {
+          jsonObject.add(entry.getKey(), JsonUtils.toJsonObject(entry.getValue()));
         } else {
-          jsonObject.addProperty(entry.getKey(), entry.getValue().toString());
+          jsonObject.add(entry.getKey(), JsonUtils.toJsonElement(entry.getValue()));
         }
       }
       return jsonObject;

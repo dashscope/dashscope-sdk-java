@@ -20,6 +20,7 @@ import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Singular;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,11 +35,9 @@ public class QwenParam extends GenerationParamBase {
   }
 
   private List<Message> messages;
-  /* The maximum length of tokens to generate.
-  The token count of your prompt plus max_length
-  cannot exceed the model's context length. Most models
-  have a context length of 2000 tokens */
-  private Integer maxLength;
+  /* @deprecated use maxTokens instead */
+  @Deprecated private Integer maxLength;
+
   /* A sampling strategy, called nucleus
   sampling, where the model considers the results of the
   tokens with top_p probability mass. So 0.1 means only
@@ -94,6 +93,23 @@ public class QwenParam extends GenerationParamBase {
    */
   @Builder.Default private Boolean incrementalOutput = false;
 
+  /*
+   * Maximum tokens to generate.
+   */
+  private Integer maxTokens;
+  /*
+   * repetition penalty
+   */
+  private Float repetitionPenalty;
+
+  /*
+   * stopString and token are mutually exclusive.
+   */
+  @Singular("stopString")
+  private List<String> stopStrings;
+
+  @Singular private List<List<Integer>> stopTokens;
+
   @Override
   public JsonObject getInput() {
     JsonObject jsonObject = new JsonObject();
@@ -146,6 +162,17 @@ public class QwenParam extends GenerationParamBase {
     }
     if (incrementalOutput) {
       params.put("incremental_output", incrementalOutput);
+    }
+    if (repetitionPenalty != null) {
+      params.put(REPETITION_PENALTY, repetitionPenalty);
+    }
+    if (maxTokens != null) {
+      params.put(MAX_TOKENS, maxTokens);
+    }
+    if (stopStrings != null && !stopStrings.isEmpty()) {
+      params.put(STOP, stopStrings);
+    } else if (stopTokens != null && !stopTokens.isEmpty()) {
+      params.put(STOP, stopTokens);
     }
     params.putAll(parameters);
     return params;
