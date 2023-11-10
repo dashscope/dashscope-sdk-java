@@ -38,6 +38,7 @@ public final class Generation {
     @Deprecated public static final String QWEN_PLUS_V1 = "qwen-plus-v1";
 
     public static final String QWEN_PLUS = "qwen-plus";
+    public static final String QWEN_MAX = "qwen-max";
   }
 
   public Generation() {
