@@ -22,6 +22,7 @@ public class JsonUtils {
           .registerTypeAdapter(Message.class, new MessageAdapter())
           .registerTypeAdapter(MultiModalConversationMessage.class, new MultiModalMessageAdapter())
           .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+          .disableHtmlEscaping()
           .create();
 
   public static String toJson(Object obj) {
