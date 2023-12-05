@@ -1,5 +1,3 @@
-// Copyright (c) Alibaba, Inc. and its affiliates.
-
 package com.alibaba.dashscope.aigc.multimodalconversation;
 
 import com.alibaba.dashscope.utils.ApiKeywords;
@@ -11,7 +9,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public class MultiModalMessageAdapter extends TypeAdapter<MultiModalConversationMessage> {
+public class MultiModalConversationMessageAdapter
+    extends TypeAdapter<MultiModalConversationMessage> {
   @Override
   public void write(JsonWriter out, MultiModalConversationMessage value) throws IOException {
     out.beginObject();

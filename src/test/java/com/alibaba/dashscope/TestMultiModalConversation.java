@@ -10,6 +10,7 @@ import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationP
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationResult;
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalMessageItemImage;
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalMessageItemText;
+import com.alibaba.dashscope.common.MultiModalMessage;
 import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
@@ -87,8 +88,9 @@ public class TestMultiModalConversation {
     MultiModalConversationResult result = conv.call(param);
     RecordedRequest request = server.takeRequest();
     assertEquals(result.getRequestId(), "05753423-9cb2-9347-bf34-9c718bf45597");
+    MultiModalMessage msg = result.getOutput().getChoices().get(0).getMessage();
     assertEquals(
-        result.getOutput().getChoices().get(0).getMessage().getContent(),
+        msg.getContent().get(0).get("text"),
         "\u6839\u636e\u6211\u6240\u5728\u7684\u4f4d\u7f6e\uff0c\u4eca\u5929\u7684\u5929\u6c14\u60c5\u51b5\u662f\u6674\u6717\u7684\uff0c\u6c14\u6e29\u5927\u7ea6\u572825-30\u6444\u6c0f\u5ea6\u4e4b\u95f4\uff0c\u98ce\u529b\u8f83\u5927\uff0c\u591a\u4e91\u6709\u96e8\u3002");
     assertEquals(result.getUsage().getInputTokens(), (Integer) 26);
     assertEquals(result.getUsage().getOutputTokens(), (Integer) 46);

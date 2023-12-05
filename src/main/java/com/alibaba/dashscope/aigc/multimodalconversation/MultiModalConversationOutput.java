@@ -1,6 +1,6 @@
 package com.alibaba.dashscope.aigc.multimodalconversation;
 
-import com.alibaba.dashscope.common.Message;
+import com.alibaba.dashscope.common.MultiModalMessage;
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
 import lombok.Data;
@@ -13,7 +13,7 @@ public class MultiModalConversationOutput {
     @SerializedName("finish_reason")
     private String finishReason;
 
-    private Message message;
+    private MultiModalMessage message;
   }
 
   private List<Choice> choices;

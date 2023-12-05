@@ -2,9 +2,11 @@
 package com.alibaba.dashscope.utils;
 
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationMessage;
-import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalMessageAdapter;
+import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationMessageAdapter;
 import com.alibaba.dashscope.common.Message;
 import com.alibaba.dashscope.common.MessageAdapter;
+import com.alibaba.dashscope.common.MultiModalMessage;
+import com.alibaba.dashscope.common.MultiModalMessageAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -20,7 +22,9 @@ public class JsonUtils {
   public static final Gson gson =
       new GsonBuilder()
           .registerTypeAdapter(Message.class, new MessageAdapter())
-          .registerTypeAdapter(MultiModalConversationMessage.class, new MultiModalMessageAdapter())
+          .registerTypeAdapter(
+              MultiModalConversationMessage.class, new MultiModalConversationMessageAdapter())
+          .registerTypeAdapter(MultiModalMessage.class, new MultiModalMessageAdapter())
           .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
           .disableHtmlEscaping()
           .create();

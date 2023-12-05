@@ -20,7 +20,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class MultiModalConversationParam extends HalfDuplexServiceParam {
 
-  @Singular private List<MultiModalConversationMessage> messages;
+  @Singular private List<Object> messages;
   /* The maximum length of tokens to generate.
   The token count of your prompt plus max_length
   cannot exceed the model's context length. Most models

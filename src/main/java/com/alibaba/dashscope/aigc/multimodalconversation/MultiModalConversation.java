@@ -20,6 +20,7 @@ public final class MultiModalConversation {
 
   public static class Models {
     public static final String QWEN_VL_CHAT_V1 = "qwen-vl-chat-v1";
+    public static final String QWEN_VL_PLUS = "qwen-vl-plus";
   }
 
   public MultiModalConversation() {
@@ -162,10 +163,20 @@ public final class MultiModalConversation {
   private void preprocessInput(MultiModalConversationParam param)
       throws NoApiKeyException, UploadFileException {
     boolean hasUpload = false;
-    for (MultiModalConversationMessage msg : param.getMessages()) {
-      boolean isUpload =
-          PreprocessMessageInput.preProcessMessageInputs(
-              param.getModel(), msg.getContent(), param.getApiKey());
+    for (Object msg : param.getMessages()) {
+      boolean isUpload = false;
+      if (msg instanceof MultiModalConversationMessage) {
+        isUpload =
+            PreprocessMessageInput.preProcessMessageInputs(
+                param.getModel(),
+                ((MultiModalConversationMessage) msg).getContent(),
+                param.getApiKey());
+
+      } else {
+        isUpload =
+            PreprocessMessageInput.preProcessMultiModalMessageInputs(
+                param.getModel(), (MultiModalMessage) msg, param.getApiKey());
+      }
       if (isUpload && !hasUpload) {
         hasUpload = true;
       }

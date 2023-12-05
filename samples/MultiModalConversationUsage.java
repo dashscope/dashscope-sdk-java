@@ -9,6 +9,8 @@ import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationR
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationMessage;
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalMessageItemImage;
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalMessageItemText;
+import com.alibaba.dashscope.common.Message;
+import com.alibaba.dashscope.common.MultiModalMessage;
 import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
@@ -53,15 +55,16 @@ public class MultiModalConversationUsage {
                 .build();
         MultiModalConversationResult result = conv.call(param);
         System.out.println(result);
+        MultiModalMessage resultMessage = result.getOutput().getChoices().get(0).getMessage();
         MultiModalMessageItemText assistentText = new MultiModalMessageItemText(
-                result.getOutput().getChoices().get(0).getMessage().getContent());
+                (String)resultMessage.getContent().get(0).get("text"));
         MultiModalConversationMessage assistentMessage = MultiModalConversationMessage.builder()
                 .role(Role.ASSISTANT.getValue()).content(Arrays.asList(assistentText)).build();
         messages.add(assistentMessage);
         userText = new MultiModalMessageItemText("图片动物是什么？");
         messages.add(MultiModalConversationMessage.builder().role(Role.USER.getValue())
                 .content(Arrays.asList(userText)).build());
-        param.setMessages(messages);
+        param.setMessages((List)messages);
         result = conv.call(param);
         System.out.print(result);
     }
