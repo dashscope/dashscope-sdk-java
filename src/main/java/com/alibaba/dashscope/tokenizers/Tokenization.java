@@ -28,6 +28,9 @@ public final class Tokenization {
     public static final String QWEN_14B_CHAT = "qwen-14b-chat";
     public static final String LLAMA2_7B_CHAT_V2 = "llama2-7b-chat-v2";
     public static final String LLAMA2_13B_CHAT_V2 = "llama2-13b-chat-v2";
+    public static final String TEXT_EMBEDDING_V1 = "text-embedding-v1";
+    public static final String TEXT_EMBEDDING_V2 = "text-embedding-v2";
+    public static final String QWEN_72B_CHAT = "qwen-72b-chat";
   }
 
   public Tokenization() {
