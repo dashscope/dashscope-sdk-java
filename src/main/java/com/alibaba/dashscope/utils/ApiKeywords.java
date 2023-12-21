@@ -60,6 +60,8 @@ public class ApiKeywords {
 
   public static final String SCALE = "scale";
 
+  public static final String SEED = "seed";
+
   public static final String STEPS = "steps";
 
   public static final String SIMILARITY = "similarity";
