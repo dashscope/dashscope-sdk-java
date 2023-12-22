@@ -25,6 +25,7 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
   @Builder.Default private Integer steps = null;
   @Builder.Default private Integer scale = null;
   @Builder.Default private Integer seed = null;
+  @Builder.Default private String style = null;
   @lombok.NonNull private String prompt;
   private String negativePrompt;
 
@@ -58,6 +59,9 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
     }
     if (seed != null) {
       params.put(SEED, seed);
+    }
+    if (style != null) {
+      params.put(STYLE, style);
     }
 
     params.putAll(super.getParameters());
