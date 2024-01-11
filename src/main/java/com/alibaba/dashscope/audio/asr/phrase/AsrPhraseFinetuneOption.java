@@ -7,6 +7,7 @@ import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.ServiceOption;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
 
@@ -37,6 +38,11 @@ public class AsrPhraseFinetuneOption implements ServiceOption {
   private AsrPhraseOperationType operationType;
 
   private String fineTunedOutput;
+
+  /** The request base url */
+  @Default private String baseHttpUrl = null;
+
+  @Default private String baseWebSocketUrl = null;
 
   @Override
   public String httpUrl() {

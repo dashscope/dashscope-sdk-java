@@ -13,7 +13,7 @@ import lombok.experimental.SuperBuilder;
 public final class ClientOptions {
   private static final Duration DEFAULT_CONNECT_TIMEOUT = Duration.ofSeconds(120);
   private static final Duration DEFAULT_WRITE_TIMEOUT = Duration.ofSeconds(60);
-  private static final Duration DEFAULT_READ_TIMEOUT = Duration.ofSeconds(60);
+  private static final Duration DEFAULT_READ_TIMEOUT = Duration.ofSeconds(300);
   private static final Duration DEFAULT_CONNECTION_IDLE_TIMEOUT = Duration.ofSeconds(300);
   private static final Integer DEFAULT_CONNECTION_POOL_SIZE = 5;
   private static final String DEFAULT_IMPLEMENTATION = "okhttp";
@@ -22,9 +22,6 @@ public final class ClientOptions {
   // [NONE, BASIC, HEADERS, BODY]
   private static final String DEFAULT_NETWORK_LOGGING_LEVEL = "NONE";
   private static final String DEFAULT_SDK_LOGGING_LEVEL = "WARN";
-  // websocket streaming mode.
-  private static final String DEFAULT_STREAMING_MODE = "none";
-
   private Duration connectTimeout;
   private Duration writeTimeout;
   private Duration responseTimeout;

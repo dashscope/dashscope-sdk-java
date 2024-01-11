@@ -23,35 +23,43 @@ public final class MultiModalConversation {
     public static final String QWEN_VL_PLUS = "qwen-vl-plus";
   }
 
+  private ApiServiceOption defaultApiServiceOption() {
+    return ApiServiceOption.builder()
+        .protocol(Protocol.HTTP)
+        .httpMethod(HttpMethod.POST)
+        .streamingMode(StreamingMode.NONE)
+        .outputMode(OutputMode.ACCUMULATE)
+        .taskGroup(TaskGroup.AIGC.getValue())
+        .task(Task.MULTIMODAL_GENERATION.getValue())
+        .function(Function.GENERATION.getValue())
+        .build();
+  }
+
   public MultiModalConversation() {
-    serviceOption =
-        ApiServiceOption.builder()
-            .protocol(Protocol.HTTP)
-            .httpMethod(HttpMethod.POST)
-            .streamingMode(StreamingMode.NONE)
-            .outputMode(OutputMode.ACCUMULATE)
-            .taskGroup(TaskGroup.AIGC.getValue())
-            .task(Task.MULTIMODAL_GENERATION.getValue())
-            .function(Function.GENERATION.getValue())
-            .build();
+    serviceOption = defaultApiServiceOption();
     syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
 
   public MultiModalConversation(String protocol) {
-    serviceOption =
-        ApiServiceOption.builder()
-            .protocol(Protocol.of(protocol))
-            .streamingMode(StreamingMode.NONE)
-            .outputMode(OutputMode.ACCUMULATE)
-            .taskGroup(TaskGroup.AIGC.getValue())
-            .task(Task.MULTIMODAL_GENERATION.getValue())
-            .function(Function.GENERATION.getValue())
-            .build();
+    serviceOption = defaultApiServiceOption();
+    serviceOption.setProtocol(Protocol.of(protocol));
     syncApi =
         new SynchronizeHalfDuplexApi<>(
             ClientOptions.builder().protocol(protocol).build(), serviceOption);
   }
 
+  public MultiModalConversation(String protocol, String baseUrl) {
+    serviceOption = defaultApiServiceOption();
+    serviceOption.setProtocol(Protocol.of(protocol));
+    if (Protocol.HTTP.getValue().equals(protocol)) {
+      serviceOption.setBaseHttpUrl(baseUrl);
+    } else {
+      serviceOption.setBaseWebSocketUrl(baseUrl);
+    }
+    syncApi =
+        new SynchronizeHalfDuplexApi<>(
+            ClientOptions.builder().protocol(protocol).build(), serviceOption);
+  }
   /**
    * Call the server to get the whole result.
    *

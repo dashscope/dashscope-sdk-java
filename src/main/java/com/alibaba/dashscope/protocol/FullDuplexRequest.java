@@ -21,6 +21,10 @@ public class FullDuplexRequest {
     this.serviceOption = option;
   }
 
+  public String getBaseWebSocketUrl() {
+    return serviceOption.getBaseWebSocketUrl();
+  }
+
   public String getApiKey() {
     return param.getApiKey();
   }

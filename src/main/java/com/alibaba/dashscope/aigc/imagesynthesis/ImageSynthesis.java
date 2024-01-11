@@ -36,6 +36,22 @@ public final class ImageSynthesis {
             .build();
   }
 
+  public ImageSynthesis(String baseUrl) {
+    // only support http
+    asyncApi = new AsynchronousApi<HalfDuplexServiceParam>();
+    createServiceOptions =
+        ApiServiceOption.builder()
+            .protocol(Protocol.HTTP)
+            .httpMethod(HttpMethod.POST)
+            .baseHttpUrl(baseUrl)
+            .streamingMode(StreamingMode.NONE)
+            .taskGroup("aigc")
+            .task("text2image")
+            .function("image-synthesis")
+            .isAsyncTask(true)
+            .build();
+  }
+
   public ImageSynthesisResult asyncCall(ImageSynthesisParam param)
       throws ApiException, NoApiKeyException {
     return ImageSynthesisResult.fromDashScopeResult(

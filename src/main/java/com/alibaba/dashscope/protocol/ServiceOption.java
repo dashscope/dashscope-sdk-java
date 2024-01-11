@@ -23,6 +23,10 @@ public interface ServiceOption {
 
   public String httpUrl();
 
+  public String getBaseHttpUrl();
+
+  public String getBaseWebSocketUrl();
+
   public default Boolean getIsSSE() {
     return false;
   }

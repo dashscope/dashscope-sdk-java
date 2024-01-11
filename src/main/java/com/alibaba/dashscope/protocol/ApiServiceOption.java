@@ -33,6 +33,11 @@ public final class ApiServiceOption implements ServiceOption {
 
   @Default private Boolean isService = true;
 
+  /** The request base url */
+  @Default private String baseHttpUrl = null;
+
+  @Default private String baseWebSocketUrl = null;
+
   @Override
   public String httpUrl() {
     StringBuffer sb = new StringBuffer();

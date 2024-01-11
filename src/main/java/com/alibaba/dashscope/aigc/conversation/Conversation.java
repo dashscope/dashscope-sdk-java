@@ -29,30 +29,38 @@ public final class Conversation {
     public static final String QWEN_MAX = "qwen-max";
   }
 
+  public ApiServiceOption defaultApiServiceOption() {
+    return ApiServiceOption.builder()
+        .protocol(Protocol.HTTP)
+        .httpMethod(HttpMethod.POST)
+        .streamingMode(StreamingMode.OUT)
+        .outputMode(OutputMode.ACCUMULATE)
+        .taskGroup(TaskGroup.AIGC.getValue())
+        .task(Task.TEXT_GENERATION.getValue())
+        .function(Function.GENERATION.getValue())
+        .build();
+  }
+
   public Conversation() {
-    serviceOption =
-        ApiServiceOption.builder()
-            .protocol(Protocol.HTTP)
-            .httpMethod(HttpMethod.POST)
-            .streamingMode(StreamingMode.OUT)
-            .outputMode(OutputMode.ACCUMULATE)
-            .taskGroup(TaskGroup.AIGC.getValue())
-            .task(Task.TEXT_GENERATION.getValue())
-            .function(Function.GENERATION.getValue())
-            .build();
+    serviceOption = defaultApiServiceOption();
     syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
 
   public Conversation(String protocol) {
-    serviceOption =
-        ApiServiceOption.builder()
-            .protocol(Protocol.of(protocol))
-            .streamingMode(StreamingMode.OUT)
-            .outputMode(OutputMode.ACCUMULATE)
-            .taskGroup(TaskGroup.AIGC.getValue())
-            .task(Task.TEXT_GENERATION.getValue())
-            .function(Function.GENERATION.getValue())
-            .build();
+    serviceOption = defaultApiServiceOption();
+    serviceOption.setProtocol(Protocol.of(protocol));
+    syncApi =
+        new SynchronizeHalfDuplexApi<>(
+            ClientOptions.builder().protocol(protocol).build(), serviceOption);
+  }
+
+  public Conversation(String protocol, String baseUrl) {
+    serviceOption = defaultApiServiceOption();
+    if (Protocol.HTTP.getValue().equals(protocol)) {
+      serviceOption.setBaseHttpUrl(baseUrl);
+    } else {
+      serviceOption.setBaseWebSocketUrl(baseUrl);
+    }
     syncApi =
         new SynchronizeHalfDuplexApi<>(
             ClientOptions.builder().protocol(protocol).build(), serviceOption);

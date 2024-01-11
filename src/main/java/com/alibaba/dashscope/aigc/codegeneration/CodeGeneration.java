@@ -29,36 +29,43 @@ public class CodeGeneration {
     public static final String NL2SQL = "nl2sql";
   }
 
+  private ApiServiceOption defaultServiceOption() {
+    return ApiServiceOption.builder()
+        .protocol(Protocol.HTTP)
+        .httpMethod(HttpMethod.POST)
+        .streamingMode(StreamingMode.OUT)
+        .outputMode(OutputMode.ACCUMULATE)
+        .taskGroup(TaskGroup.AIGC.getValue())
+        .task(Task.CODE_GENERATION.getValue())
+        .function(Function.GENERATION.getValue())
+        .build();
+  }
+
   public CodeGeneration() {
-    serviceOption =
-        ApiServiceOption.builder()
-            .protocol(Protocol.HTTP)
-            .httpMethod(HttpMethod.POST)
-            .streamingMode(StreamingMode.OUT)
-            .outputMode(OutputMode.ACCUMULATE)
-            .taskGroup(TaskGroup.AIGC.getValue())
-            .task(Task.CODE_GENERATION.getValue())
-            .function(Function.GENERATION.getValue())
-            .build();
+    serviceOption = defaultServiceOption();
     syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
 
   public CodeGeneration(String protocol) {
-    serviceOption =
-        ApiServiceOption.builder()
-            .protocol(Protocol.HTTP)
-            .httpMethod(HttpMethod.POST)
-            .streamingMode(StreamingMode.OUT)
-            .outputMode(OutputMode.ACCUMULATE)
-            .taskGroup(TaskGroup.AIGC.getValue())
-            .task(Task.CODE_GENERATION.getValue())
-            .function(Function.GENERATION.getValue())
-            .build();
+    serviceOption = defaultServiceOption();
+    serviceOption.setProtocol(Protocol.of(protocol));
     syncApi =
         new SynchronizeHalfDuplexApi<>(
             ClientOptions.builder().protocol(protocol).build(), serviceOption);
   }
 
+  public CodeGeneration(String protocol, String baseUrl) {
+    serviceOption = defaultServiceOption();
+    serviceOption.setProtocol(Protocol.of(protocol));
+    if (Protocol.HTTP.getValue().equals(protocol)) {
+      serviceOption.setBaseHttpUrl(baseUrl);
+    } else {
+      serviceOption.setBaseWebSocketUrl(baseUrl);
+    }
+    syncApi =
+        new SynchronizeHalfDuplexApi<>(
+            ClientOptions.builder().protocol(protocol).build(), serviceOption);
+  }
   /**
    * Call the server to get the whole result.
    *

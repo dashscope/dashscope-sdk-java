@@ -24,6 +24,7 @@ import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.Observable;
 import io.reactivex.functions.Action;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
@@ -61,18 +62,28 @@ public class OkHttpWebSocketClient extends WebSocketListener
   }
 
   private Request buildConnectionRequest(
-      String apiKey, boolean isSecurityCheck, Map<String, String> customHeaders)
+      String apiKey,
+      boolean isSecurityCheck,
+      Map<String, String> customHeaders,
+      String baseWebSocketUrl)
       throws NoApiKeyException {
     // build the request builder.
     Builder bd = new Request.Builder();
     bd.headers(
         Headers.of(DashScopeHeaders.buildWebSocketHeaders(apiKey, isSecurityCheck, customHeaders)));
-    Request request = bd.url(Constants.baseWebsocketApiUrl).build();
+    String url = Constants.baseWebsocketApiUrl;
+    if (baseWebSocketUrl != null) {
+      url = baseWebSocketUrl;
+    }
+    Request request = bd.url(url).build();
     return request;
   }
 
   private void establishWebSocketClient(
-      String apiKey, boolean isSecurityCheck, Map<String, String> customHeaders) {
+      String apiKey,
+      boolean isSecurityCheck,
+      Map<String, String> customHeaders,
+      String baseWebSocketUrl) {
     int reconnectionTimes = 0;
     String errorMessage = "";
     while (reconnectionTimes < MAX_CONNECTION_TIMES) {
@@ -85,7 +96,9 @@ public class OkHttpWebSocketClient extends WebSocketListener
                     client = OkHttpClientFactory.getOkHttpClient();
                     webSocketClient =
                         client.newWebSocket(
-                            buildConnectionRequest(apiKey, isSecurityCheck, customHeaders), this);
+                            buildConnectionRequest(
+                                apiKey, isSecurityCheck, customHeaders, baseWebSocketUrl),
+                            this);
                   } catch (Throwable ex) {
                     this.connectionEmitter.onError(ex);
                   }
@@ -96,10 +109,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
         return;
       } catch (Throwable ex) {
         reconnectionTimes += 1;
-        errorMessage =
-            String.format(
-                "Establish websocket connection to: %s exception: %s",
-                Constants.baseWebsocketApiUrl, ex.getMessage());
+        errorMessage = ex.getMessage();
         log.error(errorMessage);
         if (errorMessage.contains("401 Unauthorized")) {
           break;
@@ -164,16 +174,29 @@ public class OkHttpWebSocketClient extends WebSocketListener
     // writing to the network.
     // Both outgoing and incoming messages may have been lost. No further calls to
     // this listener will be made.
-    String msg = String.format("Websocket failure %s", t.getMessage());
-    log.error(msg);
+
+    String responseBody = "";
+    // Get response body if there is.
+    if (response != null) {
+      try {
+        responseBody = response.body().string();
+      } catch (IOException ex) {
+        log.error(ex.getMessage());
+      }
+    }
+    String failureMessage =
+        String.format(
+            "Websocket failure %s, cause: %s, body: %s",
+            t.getMessage(), t.getCause(), responseBody);
+    log.error(failureMessage);
     isOpen.set(false);
     if (connectionEmitter != null && !connectionEmitter.isCancelled()) {
-      connectionEmitter.onError(t);
+      connectionEmitter.onError(new Exception(failureMessage, t));
     } else if (responseEmitter != null && !responseEmitter.isCancelled()) {
       // error on request
-      responseEmitter.onError(t);
+      responseEmitter.onError(new Exception(failureMessage, t));
     } else {
-      log.error(msg);
+      log.error(failureMessage);
     }
   }
 
@@ -282,10 +305,14 @@ public class OkHttpWebSocketClient extends WebSocketListener
   }
 
   private void sendTextWithRetry(
-      String apiKey, boolean isSecurityCheck, String message, Map<String, String> customHeaders) {
+      String apiKey,
+      boolean isSecurityCheck,
+      String message,
+      Map<String, String> customHeaders,
+      String baseWebSocketUrl) {
     // simple retry with fixed delay, no strategy
     if (!isOpen.get()) {
-      establishWebSocketClient(apiKey, isSecurityCheck, customHeaders);
+      establishWebSocketClient(apiKey, isSecurityCheck, customHeaders, baseWebSocketUrl);
     }
     int maxRetries = 3;
     int retryCount = 0;
@@ -295,7 +322,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
       if (isOk) {
         break;
       } else {
-        establishWebSocketClient(apiKey, isSecurityCheck, customHeaders);
+        establishWebSocketClient(apiKey, isSecurityCheck, customHeaders, baseWebSocketUrl);
         log.warn(
             String.format(
                 "Send request failed, the connection may closed, will reconnect and send again"));
@@ -309,9 +336,10 @@ public class OkHttpWebSocketClient extends WebSocketListener
       String apiKey,
       boolean isSecurityCheck,
       ByteString message,
-      Map<String, String> customHeaders) {
+      Map<String, String> customHeaders,
+      String baseWebSocketUrl) {
     if (!isOpen.get()) {
-      establishWebSocketClient(apiKey, isSecurityCheck, customHeaders);
+      establishWebSocketClient(apiKey, isSecurityCheck, customHeaders, baseWebSocketUrl);
     }
     int maxRetries = 3;
     int retryCount = 0;
@@ -320,7 +348,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
       if (isOk) {
         break;
       } else {
-        establishWebSocketClient(apiKey, isSecurityCheck, customHeaders);
+        establishWebSocketClient(apiKey, isSecurityCheck, customHeaders, baseWebSocketUrl);
         log.warn(
             String.format(
                 "Send request failed, the connection may closed, will reconnect and send again"));
@@ -337,20 +365,23 @@ public class OkHttpWebSocketClient extends WebSocketListener
           req.getApiKey(),
           req.isSecurityCheck(),
           JsonUtils.toJson(req.getStartTaskMessage()),
-          req.getHeaders());
+          req.getHeaders(),
+          req.getBaseWebSocketUrl());
       // send binary data.
       sendBinaryWithRetry(
           req.getApiKey(),
           req.isSecurityCheck(),
           ByteString.of(req.getWebsocketBinaryData()),
-          req.getHeaders());
+          req.getHeaders(),
+          req.getBaseWebSocketUrl());
     } else {
       // data and start-task in same package.
       sendTextWithRetry(
           req.getApiKey(),
           req.isSecurityCheck(),
           JsonUtils.toJson(req.getStartTaskMessage()),
-          req.getHeaders());
+          req.getHeaders(),
+          req.getBaseWebSocketUrl());
     }
   }
 
@@ -461,7 +492,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
                     req.getApiKey(),
                     req.isSecurityCheck(),
                     JsonUtils.toJson(startMessage),
-                    req.getHeaders());
+                    req.getHeaders(),
+                    req.getBaseWebSocketUrl());
 
                 Flowable<Object> streamingData = req.getStreamingData();
                 streamingData.subscribe(
@@ -473,26 +505,30 @@ public class OkHttpWebSocketClient extends WebSocketListener
                               req.getApiKey(),
                               req.isSecurityCheck(),
                               JsonUtils.toJson(continueData),
-                              req.getHeaders());
+                              req.getHeaders(),
+                              req.getBaseWebSocketUrl());
                         } else if (data instanceof byte[]) {
                           sendBinaryWithRetry(
                               req.getApiKey(),
                               req.isSecurityCheck(),
                               ByteString.of((byte[]) data),
-                              req.getHeaders());
+                              req.getHeaders(),
+                              req.getBaseWebSocketUrl());
                         } else if (data instanceof ByteBuffer) {
                           sendBinaryWithRetry(
                               req.getApiKey(),
                               req.isSecurityCheck(),
                               ByteString.of((ByteBuffer) data),
-                              req.getHeaders());
+                              req.getHeaders(),
+                              req.getBaseWebSocketUrl());
                         } else {
                           JsonObject continueData = req.getContinueMessage(data, taskId);
                           sendTextWithRetry(
                               req.getApiKey(),
                               req.isSecurityCheck(),
                               JsonUtils.toJson(continueData),
-                              req.getHeaders());
+                              req.getHeaders(),
+                              req.getBaseWebSocketUrl());
                         }
                       } catch (Throwable ex) {
                         log.error(String.format("sendStreamData exception: %s", ex.getMessage()));
@@ -511,7 +547,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
                             req.getApiKey(),
                             req.isSecurityCheck(),
                             JsonUtils.toJson(req.getFinishedTaskMessage(taskId)),
-                            req.getHeaders());
+                            req.getHeaders(),
+                            req.getBaseWebSocketUrl());
                       }
                     });
               } catch (Throwable ex) {

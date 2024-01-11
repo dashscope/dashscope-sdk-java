@@ -17,37 +17,40 @@ public class Understanding {
     public static final String OPENNLU_V1 = "opennlu-v1";
   }
 
+  private ApiServiceOption defaultApiServiceOption() {
+    return ApiServiceOption.builder()
+        .protocol(Protocol.HTTP)
+        .httpMethod(HttpMethod.POST)
+        .streamingMode(StreamingMode.OUT)
+        .outputMode(OutputMode.ACCUMULATE)
+        .taskGroup(TaskGroup.NLP.getValue())
+        .task(Task.NLU.getValue())
+        .function(Function.UNDERSTANDING.getValue())
+        .isSSE(false)
+        .streamingMode(StreamingMode.NONE)
+        .build();
+  }
+
   public Understanding() {
-    serviceOption =
-        ApiServiceOption.builder()
-            .protocol(Protocol.HTTP)
-            .httpMethod(HttpMethod.POST)
-            .streamingMode(StreamingMode.OUT)
-            .outputMode(OutputMode.ACCUMULATE)
-            .taskGroup(TaskGroup.NLP.getValue())
-            .task(Task.NLU.getValue())
-            .function(Function.UNDERSTANDING.getValue())
-            .isSSE(false)
-            .streamingMode(StreamingMode.NONE)
-            .build();
+    serviceOption = defaultApiServiceOption();
     syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
 
   public Understanding(String protocol) {
-    serviceOption =
-        ApiServiceOption.builder()
-            .protocol(Protocol.of(protocol))
-            .streamingMode(StreamingMode.OUT)
-            .outputMode(OutputMode.ACCUMULATE)
-            .taskGroup(TaskGroup.NLP.getValue())
-            .task(Task.NLU.getValue())
-            .function(Function.UNDERSTANDING.getValue())
-            .isSSE(false)
-            .streamingMode(StreamingMode.NONE)
-            .build();
-    syncApi =
-        new SynchronizeHalfDuplexApi<>(
-            ClientOptions.builder().protocol(protocol).build(), serviceOption);
+    serviceOption = defaultApiServiceOption();
+    serviceOption.setProtocol(Protocol.of(protocol));
+    syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
+  }
+
+  public Understanding(String protocol, String baseUrl) {
+    serviceOption = defaultApiServiceOption();
+    serviceOption.setProtocol(Protocol.of(protocol));
+    if (Protocol.HTTP.getValue().equals(protocol)) {
+      serviceOption.setBaseHttpUrl(baseUrl);
+    } else {
+      serviceOption.setBaseWebSocketUrl(baseUrl);
+    }
+    syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
 
   /**

@@ -25,18 +25,27 @@ public class BatchTextEmbedding {
     public static final String TEXT_EMBEDDING_ASYNC_V2 = "text-embedding-async-v2";
   }
 
+  private ApiServiceOption defaultApiServiceOption() {
+    return ApiServiceOption.builder()
+        .protocol(Protocol.HTTP)
+        .httpMethod(HttpMethod.POST)
+        .streamingMode(StreamingMode.NONE)
+        .outputMode(OutputMode.DIVIDE)
+        .taskGroup(TaskGroup.EMBEDDINGS.getValue())
+        .task(Task.TEXT_EMBEDDING.getValue())
+        .isAsyncTask(true)
+        .function(Function.TEXT_EMBEDDING.getValue())
+        .build();
+  }
+
   public BatchTextEmbedding() {
-    serviceOption =
-        ApiServiceOption.builder()
-            .protocol(Protocol.HTTP)
-            .httpMethod(HttpMethod.POST)
-            .streamingMode(StreamingMode.NONE)
-            .outputMode(OutputMode.DIVIDE)
-            .taskGroup(TaskGroup.EMBEDDINGS.getValue())
-            .task(Task.TEXT_EMBEDDING.getValue())
-            .isAsyncTask(true)
-            .function(Function.TEXT_EMBEDDING.getValue())
-            .build();
+    serviceOption = defaultApiServiceOption();
+    asyncApi = new AsynchronousApi<>();
+  }
+
+  public BatchTextEmbedding(String baseUrl) {
+    serviceOption = defaultApiServiceOption();
+    serviceOption.setBaseHttpUrl(baseUrl);
     asyncApi = new AsynchronousApi<>();
   }
 

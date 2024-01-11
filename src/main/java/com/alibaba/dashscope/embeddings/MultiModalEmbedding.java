@@ -27,17 +27,26 @@ public class MultiModalEmbedding {
         "multimodal-embedding-one-peace-v1";
   }
 
+  private ApiServiceOption defaulApiServiceOption() {
+    return ApiServiceOption.builder()
+        .protocol(Protocol.HTTP)
+        .httpMethod(HttpMethod.POST)
+        .streamingMode(StreamingMode.NONE)
+        .outputMode(OutputMode.ACCUMULATE)
+        .taskGroup(TaskGroup.EMBEDDINGS.getValue())
+        .task(Task.MULTIMODAL_EMBEDDING.getValue())
+        .function(Function.MULTIMODAL_EMBEDDING.getValue())
+        .build();
+  }
+
   public MultiModalEmbedding() {
-    serviceOption =
-        ApiServiceOption.builder()
-            .protocol(Protocol.HTTP)
-            .httpMethod(HttpMethod.POST)
-            .streamingMode(StreamingMode.NONE)
-            .outputMode(OutputMode.ACCUMULATE)
-            .taskGroup(TaskGroup.EMBEDDINGS.getValue())
-            .task(Task.MULTIMODAL_EMBEDDING.getValue())
-            .function(Function.MULTIMODAL_EMBEDDING.getValue())
-            .build();
+    serviceOption = defaulApiServiceOption();
+    syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
+  }
+
+  public MultiModalEmbedding(String baseUrl) {
+    serviceOption = defaulApiServiceOption();
+    serviceOption.setBaseHttpUrl(baseUrl);
     syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
 

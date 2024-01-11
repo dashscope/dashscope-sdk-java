@@ -4,12 +4,19 @@ package com.alibaba.dashscope.protocol;
 
 import com.alibaba.dashscope.common.OutputMode;
 import lombok.Builder.Default;
+import lombok.Data;
 import lombok.experimental.SuperBuilder;
 
+@Data
 @SuperBuilder
 public final class AsyncTaskOption implements ServiceOption {
   @Default private final Protocol protocol = Protocol.HTTP;
   @Default private final HttpMethod httpMethod = HttpMethod.POST;
+
+  /** The request base url */
+  @Default private String baseHttpUrl = null;
+
+  @Default private String baseWebSocketUrl = null;
 
   private String url;
 

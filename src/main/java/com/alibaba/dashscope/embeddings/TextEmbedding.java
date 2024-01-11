@@ -25,17 +25,26 @@ public class TextEmbedding {
     public static final String TEXT_EMBEDDING_V2 = "text-embedding-v2";
   }
 
+  private ApiServiceOption defaulApiServiceOption() {
+    return ApiServiceOption.builder()
+        .protocol(Protocol.HTTP)
+        .httpMethod(HttpMethod.POST)
+        .streamingMode(StreamingMode.NONE)
+        .outputMode(OutputMode.DIVIDE)
+        .taskGroup(TaskGroup.EMBEDDINGS.getValue())
+        .task(Task.TEXT_EMBEDDING.getValue())
+        .function(Function.TEXT_EMBEDDING.getValue())
+        .build();
+  }
+
   public TextEmbedding() {
-    serviceOption =
-        ApiServiceOption.builder()
-            .protocol(Protocol.HTTP)
-            .httpMethod(HttpMethod.POST)
-            .streamingMode(StreamingMode.NONE)
-            .outputMode(OutputMode.DIVIDE)
-            .taskGroup(TaskGroup.EMBEDDINGS.getValue())
-            .task(Task.TEXT_EMBEDDING.getValue())
-            .function(Function.TEXT_EMBEDDING.getValue())
-            .build();
+    serviceOption = defaulApiServiceOption();
+    syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
+  }
+
+  public TextEmbedding(String baseUrl) {
+    serviceOption = defaulApiServiceOption();
+    serviceOption.setBaseHttpUrl(baseUrl);
     syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
 

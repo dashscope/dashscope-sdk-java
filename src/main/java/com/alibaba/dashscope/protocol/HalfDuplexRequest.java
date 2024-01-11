@@ -37,8 +37,15 @@ public class HalfDuplexRequest {
     return serviceOption.getOutputMode();
   }
 
+  public String getBaseWebSocketUrl() {
+    return serviceOption.getBaseWebSocketUrl();
+  }
+
   public String getHttpUrl() {
     String baseUrl = Constants.baseHttpApiUrl;
+    if (serviceOption.getBaseHttpUrl() != null) {
+      baseUrl = serviceOption.getBaseHttpUrl();
+    }
     if (baseUrl.endsWith("/")) {
       baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
     }

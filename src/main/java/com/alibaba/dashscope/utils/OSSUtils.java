@@ -59,7 +59,7 @@ public final class OSSUtils {
             .addFormDataPart(
                 "file",
                 uploadFile.getName(),
-                RequestBody.create(uploadFile, MediaType.parse(getContentType(filePath))))
+                RequestBody.create(MediaType.parse(getContentType(filePath)), uploadFile))
             .build();
 
     Request request = new Request.Builder().url(host).post(requestBody).build();
