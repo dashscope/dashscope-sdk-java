@@ -48,6 +48,34 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
    */
   private Integer seed;
 
+  /**
+   * Used to control the degree of randomness and diversity. Specifically, the temperature value
+   * controls the degree to which the probability distribution of each candidate word is smoothed
+   * when generating text. A higher temperature value will reduce the peak value of the probability
+   * distribution, allowing more low-probability words to be selected, and the generated results
+   * will be more diverse; while a lower temperature value will enhance the peak value of the
+   * probability distribution, making it easier for high-probability words to be selected, the
+   * generated results are more deterministic, range(0, 2).
+   */
+  private Float temperature;
+
+  /**
+   * Used to control the streaming output mode. If true, the subsequent output will include the
+   * previously input content by default. Otherwise, the subsequent output will not include the
+   * previously output content. Default: false eg(false):
+   *
+   * <pre>
+   * I
+   * I like
+   * I like apple
+   * when true:
+   * I
+   * like
+   * apple
+   * </pre>
+   */
+  @Builder.Default private Boolean incrementalOutput = false;
+
   @Override
   public JsonObject getHttpBody() {
     JsonObject requestObject = new JsonObject();
@@ -82,6 +110,12 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
     params.put("enable_search", enableSearch);
     if (seed != null) {
       params.put("seed", seed);
+    }
+    if (temperature != null) {
+      params.put("temperature", temperature);
+    }
+    if (incrementalOutput) {
+      params.put("incremental_output", incrementalOutput);
     }
     params.putAll(parameters);
     return params;
