@@ -162,4 +162,8 @@ public class FullDuplexRequest {
   public Map<String, String> getHeaders() {
     return param.getHeaders();
   }
+
+  public String getWorkspace() {
+    return param.getWorkspace();
+  }
 }

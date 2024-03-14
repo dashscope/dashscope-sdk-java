@@ -72,6 +72,7 @@ public class HalfDuplexRequest {
                   Protocol.HTTP,
                   serviceOption.getIsSSE(),
                   serviceOption.getIsAsyncTask(),
+                  param.getWorkspace(),
                   param.getHeaders()))
           .parameters(param.getParameters())
           .httpMethod(getHttpMethod())
@@ -87,6 +88,7 @@ public class HalfDuplexRequest {
                   Protocol.HTTP,
                   serviceOption.getIsSSE(),
                   serviceOption.getIsAsyncTask(),
+                  param.getWorkspace(),
                   param.getHeaders()))
           .body(body == null ? null : JsonUtils.toJson(body))
           .httpMethod(getHttpMethod())
@@ -151,5 +153,9 @@ public class HalfDuplexRequest {
 
   public Map<String, String> getHeaders() {
     return param.getHeaders();
+  }
+
+  public String getWorkspace() {
+    return param.getWorkspace();
   }
 }

@@ -20,6 +20,13 @@ public abstract class HalfDuplexParamBase {
   /** Open security check */
   @Builder.Default private boolean securityCheck = false;
 
+  /** workspace */
+  private String workspace;
+
+  public String getWorkspace() {
+    return workspace;
+  }
+
   public String getApiKey() {
     return apiKey;
   }

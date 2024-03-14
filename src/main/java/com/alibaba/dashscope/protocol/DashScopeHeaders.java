@@ -21,11 +21,14 @@ public final class DashScopeHeaders {
   }
 
   public static Map<String, String> buildWebSocketHeaders(
-      String apiKey, boolean isSecurityCheck, Map<String, String> customHeaders)
+      String apiKey, boolean isSecurityCheck, String workspace, Map<String, String> customHeaders)
       throws NoApiKeyException {
     Map<String, String> headers = Maps.newHashMap();
     headers.put("Authorization", "bearer " + ApiKey.getApiKey(apiKey));
     headers.put("user-agent", userAgent());
+    if (workspace != null && !workspace.isEmpty()) {
+      headers.put("X-DashScope-WorkSpace", workspace);
+    }
     if (isSecurityCheck) {
       headers.put("X-DashScope-DataInspection", "enable");
     }
@@ -41,6 +44,7 @@ public final class DashScopeHeaders {
       Protocol protocol,
       Boolean isSSE,
       Boolean isAsyncTask,
+      String workspace,
       Map<String, String> customHeaders)
       throws NoApiKeyException {
     Map<String, String> headers = Maps.newHashMap();
@@ -48,6 +52,9 @@ public final class DashScopeHeaders {
     headers.put("user-agent", userAgent());
     if (isSecurityCheck) {
       headers.put("X-DashScope-DataInspection", "enable");
+    }
+    if (workspace != null && !workspace.isEmpty()) {
+      headers.put("X-DashScope-WorkSpace", workspace);
     }
     if (protocol == Protocol.HTTP) {
       if (isAsyncTask) {

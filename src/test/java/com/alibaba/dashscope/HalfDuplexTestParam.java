@@ -30,7 +30,7 @@ public class HalfDuplexTestParam extends HalfDuplexServiceParam {
   public JsonObject getInput() {
     JsonObject jsonObject = new JsonObject();
     jsonObject.addProperty(PROMPT, getPrompt());
-    if (history != null && !history.isEmpty()) {
+    if (history != null && history.size() > 0) {
       jsonObject.add(HISTORY, getHistory());
     }
     return jsonObject;

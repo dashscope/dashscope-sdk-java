@@ -10,10 +10,15 @@ import com.alibaba.dashscope.protocol.NetworkResponse;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.okhttp.OkHttpClientFactory;
 import com.google.gson.JsonObject;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.spi.FileTypeDetector;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -97,6 +102,7 @@ public final class OSSUtils {
                         Protocol.HTTP,
                         false,
                         false,
+                        "",
                         new HashMap<String, String>())))
             .build();
     try (Response response = client.newCall(request).execute()) {
@@ -153,6 +159,18 @@ public final class OSSUtils {
           .message(response.message())
           .isJson(isJson)
           .build();
+    }
+  }
+
+  public class ImageFileTypeDetector extends FileTypeDetector {
+    @Override
+    public String probeContentType(Path path) {
+      try (InputStream in =
+          new BufferedInputStream(Files.newInputStream(path, StandardOpenOption.READ))) {
+        return URLConnection.guessContentTypeFromStream(in);
+      } catch (IOException e) {
+        return URLConnection.guessContentTypeFromName(path.getFileName().toString());
+      }
     }
   }
 
