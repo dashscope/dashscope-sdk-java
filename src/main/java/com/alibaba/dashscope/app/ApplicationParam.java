@@ -1,0 +1,172 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
+package com.alibaba.dashscope.app;
+
+import static com.alibaba.dashscope.utils.ApiKeywords.HISTORY;
+import static com.alibaba.dashscope.utils.ApiKeywords.PROMPT;
+
+import com.alibaba.dashscope.base.HalfDuplexParamBase;
+import com.alibaba.dashscope.common.History;
+import com.alibaba.dashscope.exception.InputRequiredException;
+import com.alibaba.dashscope.utils.ApiKeywords;
+import com.alibaba.dashscope.utils.JsonUtils;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * Title Application call input parameters.<br>
+ * Description Application call input parameters.<br>
+ * Created at 2024-02-23 16:15
+ *
+ * @since jdk8
+ */
+@EqualsAndHashCode(callSuper = true)
+@Data
+@SuperBuilder
+public class ApplicationParam extends HalfDuplexParamBase {
+  @Builder.Default private Object resources = null;
+
+  /** Id of bailian application */
+  @lombok.NonNull private String appId;
+
+  /** prompt */
+  private String prompt;
+
+  /** chat history */
+  private List<History> history;
+
+  /** Session id for storing chat history note: this will be ignored if history passed */
+  private String sessionId;
+
+  /** Flag to return rag or plugin process details */
+  private Boolean hasThoughts;
+
+  /** The extra parameters for flow or plugin. */
+  private JsonObject bizParams;
+
+  /**
+   * A sampling strategy, called nucleus sampling, where the model considers the results of the
+   * tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10%
+   * probability mass are considered
+   */
+  private Double topP;
+
+  /** A sampling strategy, the k largest elements of the given mass are considered */
+  private Integer topK;
+
+  /**
+   * When generating, the seed of the random number is used to control the randomness of the model
+   * generation. If you use the same seed, each run will generate the same results; you can use the
+   * same seed when you need to reproduce the model's generated results. The seed parameter supports
+   * unsigned 64-bit integer types. Default value 1234
+   */
+  private Integer seed;
+
+  /**
+   * Used to control the degree of randomness and diversity. Specifically, the temperature value
+   * controls the degree to which the probability distribution of each candidate word is smoothed
+   * when generating text. A higher temperature value will reduce the peak value of the probability
+   * distribution, allowing more low-probability words to be selected, and the generated results
+   * will be more diverse; while a lower temperature value will enhance the peak value of the
+   * probability distribution, making it easier for high-probability words to be selected, the
+   * generated results are more deterministic, range(0, 2).
+   */
+  private Float temperature;
+
+  @Override
+  public String getModel() {
+    return null;
+  }
+
+  @Override
+  public Map<String, Object> getParameters() {
+    Map<String, Object> params = new HashMap<>(0);
+    if (topP != null) {
+      params.put(AppKeywords.TOP_P, topP);
+    }
+    if (topK != null) {
+      params.put(AppKeywords.TOP_K, topK);
+    }
+    if (seed != null) {
+      params.put(AppKeywords.SEED, seed);
+    }
+    if (temperature != null) {
+      params.put(AppKeywords.TEMPERATURE, temperature);
+    }
+    if (hasThoughts != null) {
+      params.put(AppKeywords.HAS_THOUGHTS, hasThoughts);
+    }
+
+    params.putAll(parameters);
+    return params;
+  }
+
+  @Override
+  public Map<String, String> getHeaders() {
+    Map<String, String> reqHeaders = new HashMap<>();
+
+    for (Map.Entry<String, Object> entry : headers.entrySet()) {
+      String key = entry.getKey();
+      String value = entry.getValue().toString();
+      reqHeaders.put(key, value);
+    }
+
+    return reqHeaders;
+  }
+
+  @Override
+  public JsonObject getHttpBody() {
+    JsonObject body = new JsonObject();
+
+    body.add(ApiKeywords.INPUT, getInput());
+    Map<String, Object> params = getParameters();
+
+    if (params != null && !params.isEmpty()) {
+      body.add(ApiKeywords.PARAMETERS, JsonUtils.parametersToJsonObject(params));
+    }
+
+    return body;
+  }
+
+  @Override
+  public JsonObject getInput() {
+    JsonObject input = new JsonObject();
+
+    input.addProperty(PROMPT, getPrompt());
+    input.addProperty(AppKeywords.SESSION_ID, getSessionId());
+    if (history != null && !history.isEmpty()) {
+      JsonArray historyJson = JsonUtils.toJsonElement(history).getAsJsonArray();
+      input.add(HISTORY, historyJson);
+    }
+
+    if (bizParams != null) {
+      input.add(AppKeywords.BIZ_PARAMS, bizParams);
+    }
+
+    return input;
+  }
+
+  @Override
+  public Object getResources() {
+    return resources;
+  }
+
+  @Override
+  public ByteBuffer getBinaryData() {
+    return null;
+  }
+
+  @Override
+  public void validate() throws InputRequiredException {
+    if (getPrompt() == null) {
+      throw new InputRequiredException("prompt must not be null");
+    }
+  }
+}
