@@ -131,6 +131,12 @@
             <artifactId>okhttp</artifactId>
             <version>4.11.0</version>
         </dependency>
+        <!-- function call support -->
+        <dependency>
+            <groupId>com.github.victools</groupId>
+            <artifactId>jsonschema-generator</artifactId>
+            <version>4.31.1</version>
+        </dependency>
     </dependencies>
 
     <build>

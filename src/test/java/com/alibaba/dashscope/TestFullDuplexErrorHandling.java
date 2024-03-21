@@ -11,7 +11,6 @@ import com.alibaba.dashscope.common.OutputMode;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
-import com.alibaba.dashscope.protocol.ClientOptions;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import com.alibaba.dashscope.utils.Constants;
@@ -175,9 +174,7 @@ public class TestFullDuplexErrorHandling {
             ApiException.class,
             () -> {
               SynchronizeFullDuplexApi<FullDuplexTestParam> api =
-                  new SynchronizeFullDuplexApi<>(
-                      ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(),
-                      serviceOption);
+                  new SynchronizeFullDuplexApi<>(serviceOption);
               Flowable<DashScopeResult> results = api.duplexCall(param);
               results.blockingForEach(
                   msg -> {
@@ -202,9 +199,7 @@ public class TestFullDuplexErrorHandling {
             Exception.class,
             () -> {
               SynchronizeFullDuplexApi<FullDuplexTestParam> api =
-                  new SynchronizeFullDuplexApi<>(
-                      ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(),
-                      serviceOption);
+                  new SynchronizeFullDuplexApi<>(serviceOption);
               Flowable<DashScopeResult> results = api.duplexCall(param);
               results.blockingForEach(
                   msg -> {
@@ -242,9 +237,7 @@ public class TestFullDuplexErrorHandling {
             Exception.class,
             () -> {
               SynchronizeFullDuplexApi<FullDuplexTestParam> api =
-                  new SynchronizeFullDuplexApi<>(
-                      ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(),
-                      serviceOption);
+                  new SynchronizeFullDuplexApi<>(serviceOption);
               Flowable<DashScopeResult> results = api.duplexCall(param);
               results.blockingForEach(
                   msg -> {
@@ -267,8 +260,7 @@ public class TestFullDuplexErrorHandling {
     Constants.baseWebsocketApiUrl = String.format("ws://127.0.0.1:%s/api-ws/v1/inference/", port);
     FullDuplexTestParam param = getStreamTextParam();
     SynchronizeFullDuplexApi<FullDuplexTestParam> api =
-        new SynchronizeFullDuplexApi<>(
-            ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(), serviceOption);
+        new SynchronizeFullDuplexApi<>(serviceOption);
     Flowable<DashScopeResult> results = api.duplexCall(param);
     Semaphore semaphore = new Semaphore(0);
     AtomicBoolean isError = new AtomicBoolean(false);

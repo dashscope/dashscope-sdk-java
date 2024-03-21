@@ -116,4 +116,6 @@ public class ApiKeywords {
   public static final String STOP = "stop";
   public static final String REPETITION_PENALTY = "repetition_penalty";
   public static final String MAX_TOKENS = "max_tokens";
+
+  public static final String TOOL_CALLS = "tool_calls";
 }

@@ -11,7 +11,6 @@ import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
-import com.alibaba.dashscope.protocol.ClientOptions;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import com.alibaba.dashscope.protocol.WebSocketResponse;
@@ -224,9 +223,9 @@ public class TestFullDuplexApi {
   @Test
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
   public void testCustomHeaders() throws ApiException, NoApiKeyException, InterruptedException {
+    serviceOption.setProtocol(Protocol.WEBSOCKET);
     SynchronizeFullDuplexApi<FullDuplexTestParam> api =
-        new SynchronizeFullDuplexApi<>(
-            ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(), serviceOption);
+        new SynchronizeFullDuplexApi<>(serviceOption);
     Map<String, String> headers =
         new HashMap<String, String>() {
           {
@@ -256,10 +255,9 @@ public class TestFullDuplexApi {
   @Test
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
   public void testText2Binary() throws ApiException, NoApiKeyException, InterruptedException {
-
+    serviceOption.setProtocol(Protocol.WEBSOCKET);
     SynchronizeFullDuplexApi<FullDuplexTestParam> api =
-        new SynchronizeFullDuplexApi<>(
-            ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(), serviceOption);
+        new SynchronizeFullDuplexApi<>(serviceOption);
     FullDuplexTestParam param = getStreamTextParam();
     Flowable<DashScopeResult> results = api.duplexCall(param);
     Semaphore receiveCompleted = new Semaphore(0);
@@ -282,10 +280,9 @@ public class TestFullDuplexApi {
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
   public void testText2BinaryWithResources()
       throws ApiException, NoApiKeyException, InterruptedException {
-
+    serviceOption.setProtocol(Protocol.WEBSOCKET);
     SynchronizeFullDuplexApi<FullDuplexTestParam> api =
-        new SynchronizeFullDuplexApi<>(
-            ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(), serviceOption);
+        new SynchronizeFullDuplexApi<>(serviceOption);
     FullDuplexTestParam param = getStreamTextParamWithResources();
     Flowable<DashScopeResult> results = api.duplexCall(param);
     Semaphore receiveCompleted = new Semaphore(0);
@@ -308,9 +305,9 @@ public class TestFullDuplexApi {
   @Test
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
   public void testBinary2Binary() throws ApiException, NoApiKeyException, InterruptedException {
+    serviceOption.setProtocol(Protocol.WEBSOCKET);
     SynchronizeFullDuplexApi<FullDuplexTestParam> api =
-        new SynchronizeFullDuplexApi<>(
-            ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(), serviceOption);
+        new SynchronizeFullDuplexApi<>(serviceOption);
     FullDuplexTestParam param = getStreamBinaryParam();
     Flowable<DashScopeResult> results = api.duplexCall(param);
     Semaphore receiveCompleted = new Semaphore(0);
@@ -332,10 +329,9 @@ public class TestFullDuplexApi {
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
   public void testBinary2BinaryCallback()
       throws ApiException, NoApiKeyException, InterruptedException {
-
+    serviceOption.setProtocol(Protocol.WEBSOCKET);
     SynchronizeFullDuplexApi<FullDuplexTestParam> api =
-        new SynchronizeFullDuplexApi<>(
-            ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(), serviceOption);
+        new SynchronizeFullDuplexApi<>(serviceOption);
     FullDuplexTestParam param = getStreamBinaryParam();
     List<DashScopeResult> results = new ArrayList<>();
     Semaphore receiveCompleted = new Semaphore(0);
@@ -382,10 +378,9 @@ public class TestFullDuplexApi {
   @Test
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
   public void testMixType2MixType() throws ApiException, NoApiKeyException, InterruptedException {
-
+    serviceOption.setProtocol(Protocol.WEBSOCKET);
     SynchronizeFullDuplexApi<FullDuplexTestParam> api =
-        new SynchronizeFullDuplexApi<>(
-            ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(), serviceOption);
+        new SynchronizeFullDuplexApi<>(serviceOption);
     FullDuplexTestParam param = getStreamMixParam();
     Flowable<DashScopeResult> results = api.duplexCall(param);
     Semaphore receiveCompleted = new Semaphore(0);

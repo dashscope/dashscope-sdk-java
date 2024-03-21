@@ -14,7 +14,6 @@ import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
-import com.alibaba.dashscope.protocol.ClientOptions;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import com.google.gson.Gson;
@@ -92,9 +91,7 @@ public final class Recognition {
             .task(Task.ASR.getValue())
             .function(Function.RECOGNITION.getValue())
             .build();
-    duplexApi =
-        new SynchronizeFullDuplexApi<>(
-            ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(), serviceOption);
+    duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
   }
 
   public Flowable<RecognitionResult> streamCall(

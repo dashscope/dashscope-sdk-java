@@ -10,6 +10,7 @@ import com.alibaba.dashscope.protocol.*;
 import io.reactivex.Flowable;
 import lombok.extern.slf4j.Slf4j;
 
+/** @deprecated use `Generation` instead */
 @Slf4j
 public final class Conversation {
   /* Auto history messages */
@@ -49,9 +50,7 @@ public final class Conversation {
   public Conversation(String protocol) {
     serviceOption = defaultApiServiceOption();
     serviceOption.setProtocol(Protocol.of(protocol));
-    syncApi =
-        new SynchronizeHalfDuplexApi<>(
-            ClientOptions.builder().protocol(protocol).build(), serviceOption);
+    syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
 
   public Conversation(String protocol, String baseUrl) {
@@ -61,9 +60,17 @@ public final class Conversation {
     } else {
       serviceOption.setBaseWebSocketUrl(baseUrl);
     }
-    syncApi =
-        new SynchronizeHalfDuplexApi<>(
-            ClientOptions.builder().protocol(protocol).build(), serviceOption);
+    syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
+  }
+
+  public Conversation(String protocol, String baseUrl, ConnectionOptions connectionOptions) {
+    serviceOption = defaultApiServiceOption();
+    if (Protocol.HTTP.getValue().equals(protocol)) {
+      serviceOption.setBaseHttpUrl(baseUrl);
+    } else {
+      serviceOption.setBaseWebSocketUrl(baseUrl);
+    }
+    syncApi = new SynchronizeHalfDuplexApi<>(connectionOptions, serviceOption);
   }
 
   /**

@@ -7,8 +7,8 @@ import com.alibaba.dashscope.protocol.okhttp.OkHttpHttpClient;
 import com.alibaba.dashscope.protocol.okhttp.OkHttpWebSocketClient;
 
 public class ClientProviders {
-  public static HalfDuplexClient getHalfDuplexClient() {
-    return getHalfDuplexClient(null);
+  public static HalfDuplexClient getHalfDuplexClient(String protocol) {
+    return getHalfDuplexClient(null, protocol);
   }
 
   public static FullDuplexClient getFullDuplexClient() {
@@ -18,15 +18,22 @@ public class ClientProviders {
   /**
    * Create a dashscope half duplex client. only okhttp http and websocket is supported.
    *
-   * @param options The client options.
+   * @param options The client connection options.
    * @return The half duplex client.
    */
-  public static HalfDuplexClient getHalfDuplexClient(ClientOptions options) {
+  public static HalfDuplexClient getHalfDuplexClient(ConnectionOptions options, String protocol) {
+    if (protocol == null) {
+      protocol = "https";
+    }
     if (options == null) {
       // create default config client, create default http client.
-      return new OkHttpHttpClient(OkHttpClientFactory.getOkHttpClient());
+      if (protocol.toLowerCase().startsWith("http")) {
+        return new OkHttpHttpClient(OkHttpClientFactory.getOkHttpClient());
+      } else {
+        return new OkHttpWebSocketClient(OkHttpClientFactory.getOkHttpClient());
+      }
     } else {
-      if (options.getProtocol().toLowerCase().startsWith("http")) {
+      if (protocol.toLowerCase().startsWith("http")) {
         return new OkHttpHttpClient(OkHttpClientFactory.getNewOkHttpClient(options));
       } else {
         return new OkHttpWebSocketClient(OkHttpClientFactory.getNewOkHttpClient(options));
@@ -35,17 +42,17 @@ public class ClientProviders {
   }
 
   /**
-   * Create a dashscope full duplex client. only okhttp http and websocket is supported.
+   * Create a dashscope full duplex client. only websocket is supported.
    *
-   * @param options The client options.
+   * @param connectionOptions The client options.
    * @return The full duplex client.
    */
-  public static FullDuplexClient getFullDuplexClient(ClientOptions options) {
-    if (options == null) {
+  public static FullDuplexClient getFullDuplexClient(ConnectionOptions connectionOptions) {
+    if (connectionOptions == null) {
       // create default config client, create default http client.
       return new OkHttpWebSocketClient(OkHttpClientFactory.getOkHttpClient());
     } else {
-      return new OkHttpWebSocketClient(OkHttpClientFactory.getNewOkHttpClient(options));
+      return new OkHttpWebSocketClient(OkHttpClientFactory.getNewOkHttpClient(connectionOptions));
     }
   }
 }

@@ -1,6 +1,9 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.common;
 
+import com.alibaba.dashscope.tools.ToolCallBase;
+import com.google.gson.annotations.SerializedName;
+import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -10,9 +13,17 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class Message {
 
-  /** The role, can be `user` and `bot`. */
+  /** The role, can be `user` and `system` and `assistant` and 'tool'. */
   String role;
 
   /** The conversation content. */
   String content;
+
+  /** For tool calls */
+  @SerializedName("tool_calls")
+  List<ToolCallBase> toolCalls;
+
+  /** For tool result */
+  @SerializedName("tool_call_id")
+  String toolCallId;
 }

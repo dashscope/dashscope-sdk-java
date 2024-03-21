@@ -3,6 +3,9 @@
 package com.alibaba.dashscope.protocol.okhttp;
 
 import com.alibaba.dashscope.protocol.ClientOptions;
+import com.alibaba.dashscope.protocol.ConnectionConfigurations;
+import com.alibaba.dashscope.protocol.ConnectionOptions;
+import com.alibaba.dashscope.utils.Constants;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -26,42 +29,61 @@ public class OkHttpClientFactory {
     private static final OkHttpClient INSTANCE = createInstance();
 
     private static OkHttpClient createInstance() {
+      ConnectionConfigurations connectionConfigurations = Constants.connectionConfigurations;
+      if (connectionConfigurations == null) {
+        // build default configuration
+        connectionConfigurations = ConnectionConfigurations.builder().build();
+      }
+
       ClientOptions defaultOptions = ClientOptions.builder().build();
       HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
       logging.setLevel(Level.valueOf(defaultOptions.getNetworkLoggingLevel()));
-
+      int connectionPoolSize = connectionConfigurations.getConnectionPoolSize();
       Dispatcher dispatcher = new Dispatcher();
-      if (dispatcher.getMaxRequests() < defaultOptions.getConnectionPoolSize()) {
-        dispatcher.setMaxRequests(defaultOptions.getConnectionPoolSize());
-        dispatcher.setMaxRequestsPerHost(defaultOptions.getConnectionPoolSize());
-      }
+      dispatcher.setMaxRequests(connectionConfigurations.getMaximumAsyncRequests());
+      dispatcher.setMaxRequestsPerHost(connectionConfigurations.getMaximumAsyncRequestsPerHost());
+
       Builder clientBuilder = new OkHttpClient.Builder();
       clientBuilder
-          .connectTimeout(defaultOptions.getConnectTimeout())
-          .readTimeout(defaultOptions.getReadTimeout())
-          .writeTimeout(defaultOptions.getWriteTimeout())
+          .connectTimeout(connectionConfigurations.getConnectTimeout())
+          .readTimeout(connectionConfigurations.getReadTimeout())
+          .writeTimeout(connectionConfigurations.getWriteTimeout())
           .addInterceptor(logging)
           .dispatcher(dispatcher)
           .protocols(Collections.singletonList(Protocol.HTTP_1_1))
           .connectionPool(
               new ConnectionPool(
-                  defaultOptions.getConnectionPoolSize(),
-                  defaultOptions.getConnectionIdelTimeout().getSeconds(),
+                  connectionPoolSize,
+                  connectionConfigurations.getConnectionIdleTimeout().getSeconds(),
                   TimeUnit.SECONDS));
+      if (connectionConfigurations.getProxy() != null) {
+        clientBuilder.proxy(connectionConfigurations.getProxy());
+      }
+      if (connectionConfigurations.getProxyAuthenticator() != null) {
+        clientBuilder.proxyAuthenticator(connectionConfigurations.getProxyAuthenticator());
+      }
       return clientBuilder.build();
     }
   }
 
   public static OkHttpClient getOkHttpClient() {
+    /** Use default http client pool. */
     return Holder.INSTANCE;
   }
 
-  public static OkHttpClient getNewOkHttpClient(ClientOptions options) {
+  public static OkHttpClient getNewOkHttpClient(ConnectionOptions connectionOptions) {
     Builder builder = Holder.INSTANCE.newBuilder();
     builder
-        .connectTimeout(options.getConnectTimeout())
-        .readTimeout(options.getReadTimeout())
-        .writeTimeout(options.getWriteTimeout());
+        .connectTimeout(connectionOptions.getConnectTimeout())
+        .readTimeout(connectionOptions.getReadTimeout())
+        .writeTimeout(connectionOptions.getWriteTimeout())
+        .connectionPool(new ConnectionPool(1, 2, TimeUnit.MINUTES));
+    if (connectionOptions.getProxy() != null) {
+      builder.proxy(connectionOptions.getProxy());
+    }
+    if (connectionOptions.getProxyAuthenticator() != null) {
+      builder.proxyAuthenticator(connectionOptions.getProxyAuthenticator());
+    }
     return builder.build();
   }
 }

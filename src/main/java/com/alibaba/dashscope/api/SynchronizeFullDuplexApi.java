@@ -8,8 +8,8 @@ import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
-import com.alibaba.dashscope.protocol.ClientOptions;
 import com.alibaba.dashscope.protocol.ClientProviders;
+import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.FullDuplexClient;
 import com.alibaba.dashscope.protocol.FullDuplexRequest;
 import io.reactivex.Flowable;
@@ -17,7 +17,7 @@ import io.reactivex.Flowable;
 /** DashScope synchronize full duplex request processing, only websocket support. */
 public final class SynchronizeFullDuplexApi<ParamT extends FullDuplexServiceParam> {
   final FullDuplexClient client;
-  ClientOptions clientOptions;
+  ConnectionOptions connectionOptions;
   final ApiServiceOption serviceOptions;
   /**
    * Create default http client.
@@ -26,19 +26,20 @@ public final class SynchronizeFullDuplexApi<ParamT extends FullDuplexServicePara
    */
   public SynchronizeFullDuplexApi(ApiServiceOption serviceOptions) {
     this.client = ClientProviders.getFullDuplexClient(null);
-    this.clientOptions = null;
+    this.connectionOptions = null;
     this.serviceOptions = serviceOptions;
   }
 
   /**
    * Create custom http client
    *
-   * @param clientOptions The client option.
+   * @param connectionOptions The client option.
    * @param serviceOptions The service option.
    */
-  public SynchronizeFullDuplexApi(ClientOptions clientOptions, ApiServiceOption serviceOptions) {
-    this.client = ClientProviders.getFullDuplexClient(clientOptions);
-    this.clientOptions = clientOptions;
+  public SynchronizeFullDuplexApi(
+      ConnectionOptions connectionOptions, ApiServiceOption serviceOptions) {
+    this.client = ClientProviders.getFullDuplexClient(connectionOptions);
+    this.connectionOptions = connectionOptions;
     this.serviceOptions = serviceOptions;
   }
 

@@ -13,7 +13,7 @@ import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
-import com.alibaba.dashscope.protocol.ClientOptions;
+import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.HttpMethod;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
@@ -49,14 +49,12 @@ public final class GeneralHalfDuplexApi {
             .task(Task.TEXT_GENERATION.getValue())
             .function(Function.GENERATION.getValue())
             .build();
-    syncApi =
-        new SynchronizeHalfDuplexApi<>(
-            ClientOptions.builder().protocol(protocol).build(), serviceOption);
+    syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
 
-  public GeneralHalfDuplexApi(ApiServiceOption serviceOption, ClientOptions clientOptions) {
+  public GeneralHalfDuplexApi(ApiServiceOption serviceOption, ConnectionOptions connectionOptions) {
     this.serviceOption = serviceOption;
-    syncApi = new SynchronizeHalfDuplexApi<>(clientOptions, serviceOption);
+    syncApi = new SynchronizeHalfDuplexApi<>(connectionOptions, serviceOption);
   }
 
   /**

@@ -10,8 +10,8 @@ import com.alibaba.dashscope.common.TaskStatus;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.AsyncTaskOption;
-import com.alibaba.dashscope.protocol.ClientOptions;
 import com.alibaba.dashscope.protocol.ClientProviders;
+import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.HalfDuplexClient;
 import com.alibaba.dashscope.protocol.HalfDuplexRequest;
 import com.alibaba.dashscope.protocol.HttpMethod;
@@ -25,22 +25,22 @@ import java.net.HttpURLConnection;
 /** Support DashScope async task CRUD. */
 public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
   final HalfDuplexClient client;
-  ClientOptions clientOptions;
+  ConnectionOptions connectionOptions;
 
   /** Create default http client. */
   public AsynchronousApi() {
-    this.client = ClientProviders.getHalfDuplexClient(null);
-    this.clientOptions = null;
+    this.client = ClientProviders.getHalfDuplexClient("https");
+    this.connectionOptions = null;
   }
 
   /**
    * Create custom http client
    *
-   * @param clientOptions The client option.
+   * @param connectionOptions The client option.
    */
-  public AsynchronousApi(ClientOptions clientOptions) {
-    this.client = ClientProviders.getHalfDuplexClient(clientOptions);
-    this.clientOptions = clientOptions;
+  public AsynchronousApi(ConnectionOptions connectionOptions) {
+    this.client = ClientProviders.getHalfDuplexClient(connectionOptions, "https");
+    this.connectionOptions = connectionOptions;
   }
 
   /**

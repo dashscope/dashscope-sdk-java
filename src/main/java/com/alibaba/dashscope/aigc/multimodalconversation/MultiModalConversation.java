@@ -43,9 +43,7 @@ public final class MultiModalConversation {
   public MultiModalConversation(String protocol) {
     serviceOption = defaultApiServiceOption();
     serviceOption.setProtocol(Protocol.of(protocol));
-    syncApi =
-        new SynchronizeHalfDuplexApi<>(
-            ClientOptions.builder().protocol(protocol).build(), serviceOption);
+    syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
 
   public MultiModalConversation(String protocol, String baseUrl) {
@@ -56,9 +54,19 @@ public final class MultiModalConversation {
     } else {
       serviceOption.setBaseWebSocketUrl(baseUrl);
     }
-    syncApi =
-        new SynchronizeHalfDuplexApi<>(
-            ClientOptions.builder().protocol(protocol).build(), serviceOption);
+    syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
+  }
+
+  public MultiModalConversation(
+      String protocol, String baseUrl, ConnectionOptions connectionOptions) {
+    serviceOption = defaultApiServiceOption();
+    serviceOption.setProtocol(Protocol.of(protocol));
+    if (Protocol.HTTP.getValue().equals(protocol)) {
+      serviceOption.setBaseHttpUrl(baseUrl);
+    } else {
+      serviceOption.setBaseWebSocketUrl(baseUrl);
+    }
+    syncApi = new SynchronizeHalfDuplexApi<>(connectionOptions, serviceOption);
   }
   /**
    * Call the server to get the whole result.

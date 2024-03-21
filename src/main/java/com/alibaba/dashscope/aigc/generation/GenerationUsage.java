@@ -13,4 +13,7 @@ public final class GenerationUsage {
 
   @SerializedName("output_tokens")
   private Integer outputTokens;
+
+  @SerializedName("total_tokens")
+  private Integer totalTokens;
 }

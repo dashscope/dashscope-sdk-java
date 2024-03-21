@@ -14,6 +14,8 @@ public final class GenerationOutput {
     @SerializedName("finish_reason")
     private String finishReason;
 
+    private Integer index;
+
     private Message message;
   }
   // output text

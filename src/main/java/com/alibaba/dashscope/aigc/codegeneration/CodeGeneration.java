@@ -49,9 +49,7 @@ public class CodeGeneration {
   public CodeGeneration(String protocol) {
     serviceOption = defaultServiceOption();
     serviceOption.setProtocol(Protocol.of(protocol));
-    syncApi =
-        new SynchronizeHalfDuplexApi<>(
-            ClientOptions.builder().protocol(protocol).build(), serviceOption);
+    syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
 
   public CodeGeneration(String protocol, String baseUrl) {
@@ -62,10 +60,20 @@ public class CodeGeneration {
     } else {
       serviceOption.setBaseWebSocketUrl(baseUrl);
     }
-    syncApi =
-        new SynchronizeHalfDuplexApi<>(
-            ClientOptions.builder().protocol(protocol).build(), serviceOption);
+    syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
+
+  public CodeGeneration(String protocol, String baseUrl, ConnectionOptions connectionOptions) {
+    serviceOption = defaultServiceOption();
+    serviceOption.setProtocol(Protocol.of(protocol));
+    if (Protocol.HTTP.getValue().equals(protocol)) {
+      serviceOption.setBaseHttpUrl(baseUrl);
+    } else {
+      serviceOption.setBaseWebSocketUrl(baseUrl);
+    }
+    syncApi = new SynchronizeHalfDuplexApi<>(connectionOptions, serviceOption);
+  }
+
   /**
    * Call the server to get the whole result.
    *

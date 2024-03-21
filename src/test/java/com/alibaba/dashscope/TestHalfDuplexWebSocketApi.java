@@ -11,7 +11,6 @@ import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
-import com.alibaba.dashscope.protocol.ClientOptions;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import com.alibaba.dashscope.utils.Constants;
@@ -116,9 +115,9 @@ public class TestHalfDuplexWebSocketApi {
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
   public void testStreamingNoneText2Text()
       throws ApiException, NoApiKeyException, IOException, InterruptedException {
+    serviceOption.setProtocol(Protocol.WEBSOCKET);
     SynchronizeHalfDuplexApi<HalfDuplexTestParam> syncApi =
-        new SynchronizeHalfDuplexApi<>(
-            ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(), serviceOption);
+        new SynchronizeHalfDuplexApi<>(serviceOption);
     ;
     HalfDuplexTestParam param =
         HalfDuplexTestParam.builder()
@@ -162,9 +161,9 @@ public class TestHalfDuplexWebSocketApi {
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
   public void testStreamingNoneText2TextWithResources()
       throws ApiException, NoApiKeyException, IOException, InterruptedException {
+    serviceOption.setProtocol(Protocol.WEBSOCKET);
     SynchronizeHalfDuplexApi<HalfDuplexTestParam> syncApi =
-        new SynchronizeHalfDuplexApi<>(
-            ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(), serviceOption);
+        new SynchronizeHalfDuplexApi<>(serviceOption);
     JsonObject resources = new JsonObject();
     resources.addProperty("str", "String");
     resources.addProperty("num", 100);
@@ -209,9 +208,9 @@ public class TestHalfDuplexWebSocketApi {
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
   public void testStreamingNoneBinary2Text()
       throws ApiException, NoApiKeyException, IOException, InterruptedException {
+    serviceOption.setProtocol(Protocol.WEBSOCKET);
     SynchronizeHalfDuplexApi<HalfDuplexBinaryParam> syncApi =
-        new SynchronizeHalfDuplexApi<>(
-            ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(), serviceOption);
+        new SynchronizeHalfDuplexApi<>(serviceOption);
     ;
     HalfDuplexBinaryParam param =
         HalfDuplexBinaryParam.builder()
@@ -253,9 +252,9 @@ public class TestHalfDuplexWebSocketApi {
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
   public void testStreamingNoneText2Binary()
       throws ApiException, NoApiKeyException, IOException, InterruptedException {
+    serviceOption.setProtocol(Protocol.WEBSOCKET);
     SynchronizeHalfDuplexApi<HalfDuplexTestParam> syncApi =
-        new SynchronizeHalfDuplexApi<>(
-            ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(), serviceOption);
+        new SynchronizeHalfDuplexApi<>(serviceOption);
     ;
     HalfDuplexTestParam param =
         HalfDuplexTestParam.builder()
@@ -297,9 +296,9 @@ public class TestHalfDuplexWebSocketApi {
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
   public void testStreamingNoneBinary2Binary()
       throws ApiException, NoApiKeyException, IOException, InterruptedException {
+    serviceOption.setProtocol(Protocol.WEBSOCKET);
     SynchronizeHalfDuplexApi<HalfDuplexBinaryParam> syncApi =
-        new SynchronizeHalfDuplexApi<>(
-            ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(), serviceOption);
+        new SynchronizeHalfDuplexApi<>(serviceOption);
     ;
     HalfDuplexBinaryParam param =
         HalfDuplexBinaryParam.builder()
@@ -341,9 +340,9 @@ public class TestHalfDuplexWebSocketApi {
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
   public void testStreamingOutBinary2Mix()
       throws ApiException, NoApiKeyException, IOException, InterruptedException {
+    serviceOption.setProtocol(Protocol.WEBSOCKET);
     SynchronizeHalfDuplexApi<HalfDuplexBinaryParam> syncApi =
-        new SynchronizeHalfDuplexApi<>(
-            ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(), serviceOption);
+        new SynchronizeHalfDuplexApi<>(serviceOption);
     ;
     HalfDuplexBinaryParam param =
         HalfDuplexBinaryParam.builder()

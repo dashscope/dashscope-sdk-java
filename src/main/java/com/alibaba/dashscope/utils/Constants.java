@@ -1,6 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.utils;
 
+import com.alibaba.dashscope.protocol.ConnectionConfigurations;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -20,8 +21,6 @@ public final class Constants {
 
   public static final String HTTP_CONNECTION_REQUEST_TIMEOUT_ENV =
       "HTTP_CONNECTION_REQUEST_TIMEOUT";
-
-  public static final String HTTP_SOCKET_TIMEOUT_ENV = "HTTP_SOCKET_TIMEOUT";
 
   public static final String DASHSCOPE_API_KEY_ENV = "DASHSCOPE_API_KEY";
 
@@ -49,9 +48,6 @@ public final class Constants {
   public static int CONNECTION_REQUEST_TIMEOUT =
       Integer.parseInt(System.getenv().getOrDefault(HTTP_CONNECTION_REQUEST_TIMEOUT_ENV, "30000"));
 
-  public static int SOCKET_TIMEOUT =
-      Integer.parseInt(System.getenv().getOrDefault(HTTP_SOCKET_TIMEOUT_ENV, "30000"));
-
   public static String apiVersion = System.getenv().getOrDefault(DASHSCOPE_API_VERSION_ENV, "v1");
 
   public static String apiRegion =
@@ -77,6 +73,7 @@ public final class Constants {
           .getOrDefault(
               DASHSCOPE_WEBSOCKET_BASE_URL_ENV,
               String.format("wss://dashscope.aliyuncs.com/api-ws/%s/inference/", apiVersion));
+  public static ConnectionConfigurations connectionConfigurations = null;
 
   public static void init() {}
 

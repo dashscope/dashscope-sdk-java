@@ -8,8 +8,8 @@ import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
-import com.alibaba.dashscope.protocol.ClientOptions;
 import com.alibaba.dashscope.protocol.ClientProviders;
+import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.HalfDuplexClient;
 import com.alibaba.dashscope.protocol.HalfDuplexRequest;
 import io.reactivex.Flowable;
@@ -17,7 +17,7 @@ import io.reactivex.Flowable;
 /** Dashscope synchronize half duplex request processing, both http and websocket support. */
 public final class SynchronizeHalfDuplexApi<ParamT extends HalfDuplexParamBase> {
   final HalfDuplexClient client;
-  ClientOptions clientOptions;
+  ConnectionOptions connectionOptions;
   final ApiServiceOption serviceOptions;
   /**
    * Create default client, http or websocket.
@@ -25,20 +25,23 @@ public final class SynchronizeHalfDuplexApi<ParamT extends HalfDuplexParamBase> 
    * @param serviceOptions The service option.
    */
   public SynchronizeHalfDuplexApi(ApiServiceOption serviceOptions) {
-    this.client = ClientProviders.getHalfDuplexClient(null);
-    this.clientOptions = null;
+    this.client = ClientProviders.getHalfDuplexClient(serviceOptions.getProtocol().getValue());
+    this.connectionOptions = null;
     this.serviceOptions = serviceOptions;
   }
 
   /**
    * Create custom client
    *
-   * @param clientOptions The client option.
+   * @param connectionOptions The client option.
    * @param serviceOptions The api service option.
    */
-  public SynchronizeHalfDuplexApi(ClientOptions clientOptions, ApiServiceOption serviceOptions) {
-    this.client = ClientProviders.getHalfDuplexClient(clientOptions);
-    this.clientOptions = clientOptions;
+  public SynchronizeHalfDuplexApi(
+      ConnectionOptions connectionOptions, ApiServiceOption serviceOptions) {
+    this.client =
+        ClientProviders.getHalfDuplexClient(
+            connectionOptions, serviceOptions.getProtocol().getValue());
+    this.connectionOptions = connectionOptions;
     this.serviceOptions = serviceOptions;
   }
 

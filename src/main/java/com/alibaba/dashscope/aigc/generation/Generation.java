@@ -13,7 +13,7 @@ import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
-import com.alibaba.dashscope.protocol.ClientOptions;
+import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.HttpMethod;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
@@ -61,9 +61,7 @@ public final class Generation {
   public Generation(String protocol) {
     serviceOption = defaultApiServiceOption();
     serviceOption.setProtocol(Protocol.of(protocol));
-    syncApi =
-        new SynchronizeHalfDuplexApi<>(
-            ClientOptions.builder().protocol(protocol).build(), serviceOption);
+    syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
 
   public Generation(String protocol, String baseUrl) {
@@ -74,9 +72,18 @@ public final class Generation {
     } else {
       serviceOption.setBaseWebSocketUrl(baseUrl);
     }
-    syncApi =
-        new SynchronizeHalfDuplexApi<>(
-            ClientOptions.builder().protocol(protocol).build(), serviceOption);
+    syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
+  }
+
+  public Generation(String protocol, String baseUrl, ConnectionOptions connectionOptions) {
+    serviceOption = defaultApiServiceOption();
+    serviceOption.setProtocol(Protocol.of(protocol));
+    if (protocol.equals(Protocol.HTTP.getValue())) {
+      serviceOption.setBaseHttpUrl(baseUrl);
+    } else {
+      serviceOption.setBaseWebSocketUrl(baseUrl);
+    }
+    syncApi = new SynchronizeHalfDuplexApi<>(connectionOptions, serviceOption);
   }
 
   /**

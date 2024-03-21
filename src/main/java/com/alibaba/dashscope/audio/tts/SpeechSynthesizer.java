@@ -8,7 +8,6 @@ import com.alibaba.dashscope.common.*;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
-import com.alibaba.dashscope.protocol.ClientOptions;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import com.google.common.collect.Lists;
@@ -48,9 +47,7 @@ public final class SpeechSynthesizer {
   private final SynchronizeHalfDuplexApi<SpeechSynthesisParam> syncApi;
 
   public SpeechSynthesizer() {
-    syncApi =
-        new SynchronizeHalfDuplexApi<>(
-            ClientOptions.builder().protocol(Protocol.WEBSOCKET.getValue()).build(), serviceOption);
+    syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
 
   public void call(SpeechSynthesisParam param, ResultCallback<SpeechSynthesisResult> callback) {

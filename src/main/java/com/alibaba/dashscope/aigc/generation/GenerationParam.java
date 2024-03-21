@@ -12,6 +12,7 @@ import static com.alibaba.dashscope.utils.ApiKeywords.STOP;
 import com.alibaba.dashscope.common.Message;
 import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.InputRequiredException;
+import com.alibaba.dashscope.tools.ToolBase;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -36,7 +37,8 @@ public class GenerationParam extends GenerationParamBase {
   }
 
   private List<Message> messages;
-
+  /* @deprecated use maxTokens instead */
+  @Deprecated private Integer maxLength;
   /* A sampling strategy, called nucleus
   sampling, where the model considers the results of the
   tokens with top_p probability mass. So 0.1 means only
@@ -109,6 +111,11 @@ public class GenerationParam extends GenerationParamBase {
 
   @Singular private List<List<Integer>> stopTokens;
 
+  /*
+   * Specify which tools the model can use.
+   */
+  private List<ToolBase> tools;
+
   @Override
   public JsonObject getInput() {
     JsonObject jsonObject = new JsonObject();
@@ -137,6 +144,9 @@ public class GenerationParam extends GenerationParamBase {
   @Override
   public Map<String, Object> getParameters() {
     Map<String, Object> params = new HashMap<>();
+    if (maxLength != null) {
+      params.put("max_length", maxLength);
+    }
     if (topP != null) {
       params.put("top_p", topP);
     }
@@ -170,6 +180,10 @@ public class GenerationParam extends GenerationParamBase {
     } else if (stopTokens != null && !stopTokens.isEmpty()) {
       params.put(STOP, stopTokens);
     }
+    if (tools != null && !tools.isEmpty()) {
+      params.put("tools", tools);
+    }
+
     params.putAll(parameters);
     return params;
   }
