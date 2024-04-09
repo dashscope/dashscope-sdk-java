@@ -65,8 +65,8 @@ public class BatchTextEmbedding {
   /**
    * @param param The async embedding request parameter, class `AsyncTextEmbeddingParam`
    * @return The async task information of `AsyncTextEmbeddingResult`
-   * @throws ApiException
-   * @throws NoApiKeyException
+   * @throws NoApiKeyException Can not find api key
+   * @throws ApiException The request failed, possibly due to a network or data error.
    */
   public BatchTextEmbeddingResult asyncCall(BatchTextEmbeddingParam param)
       throws ApiException, NoApiKeyException {

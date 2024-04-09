@@ -73,9 +73,9 @@ public final class ImageSynthesis {
 
   /**
    * @param param The input param of class `SketchImageSynthesisParam`
-   * @return
-   * @throws ApiException
-   * @throws NoApiKeyException
+   * @return The image synthesis result `ImageSynthesisResult`
+   * @throws ApiException The dashscope exception.
+   * @throws NoApiKeyException No api key provide.
    */
   public ImageSynthesisResult asyncCall(SketchImageSynthesisParam param)
       throws ApiException, NoApiKeyException {

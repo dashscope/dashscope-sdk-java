@@ -74,7 +74,7 @@ public final class MultiModalConversation {
    * @param param The input param of class `MultiModalConversationParam`.
    * @return The output structure of `MultiModalConversationResult`.
    * @throws NoApiKeyException Can not find api key
-   * @throws UploadFileException
+   * @throws UploadFileException Fail upload failed.
    */
   public MultiModalConversationResult call(MultiModalConversationParam param)
       throws ApiException, NoApiKeyException, UploadFileException {
@@ -92,7 +92,7 @@ public final class MultiModalConversation {
    *     `MultiModalConversationResult`.
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
-   * @throws UploadFileException
+   * @throws UploadFileException File upload failed.
    */
   public void call(
       MultiModalConversationParam param, ResultCallback<MultiModalConversationResult> callback)
@@ -127,7 +127,7 @@ public final class MultiModalConversation {
    * @return A `Flowable` of the output structure.
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
-   * @throws UploadFileException
+   * @throws UploadFileException File upload failed.
    */
   public Flowable<MultiModalConversationResult> streamCall(MultiModalConversationParam param)
       throws ApiException, NoApiKeyException, UploadFileException {
@@ -147,7 +147,7 @@ public final class MultiModalConversation {
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
    * @throws InputRequiredException The input field is missing.
-   * @throws UploadFileException
+   * @throws UploadFileException File upload failed.
    */
   public void streamCall(
       MultiModalConversationParam param, ResultCallback<MultiModalConversationResult> callback)

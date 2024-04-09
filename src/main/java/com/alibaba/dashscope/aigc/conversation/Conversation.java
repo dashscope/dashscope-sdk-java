@@ -79,7 +79,7 @@ public final class Conversation {
    * @param param The input param of class `ConversationParam`.
    * @return The output structure of `QWenConversationResult`.
    * @throws NoApiKeyException Can not find api key
-   * @throws InputRequiredException
+   * @throws InputRequiredException The input fields are missing.
    */
   public ConversationResult call(ConversationParam param)
       throws ApiException, NoApiKeyException, InputRequiredException {
@@ -96,7 +96,7 @@ public final class Conversation {
    * @param callback The callback to receive response, the template class is `ConversationResult`.
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
-   * @throws InputRequiredException
+   * @throws InputRequiredException The input fields are missing.
    */
   public void call(ConversationParam param, ResultCallback<ConversationResult> callback)
       throws ApiException, NoApiKeyException, InputRequiredException {
@@ -130,7 +130,7 @@ public final class Conversation {
    * @return A `Flowable` of the output structure.
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
-   * @throws InputRequiredException
+   * @throws InputRequiredException The input fields are missing.
    */
   public Flowable<ConversationResult> streamCall(ConversationParam param)
       throws ApiException, NoApiKeyException, InputRequiredException {
@@ -147,7 +147,7 @@ public final class Conversation {
    * @param callback The result callback.
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
-   * @throws InputRequiredException The input field is missing.
+   * @throws InputRequiredException The input fields are missing.
    */
   public void streamCall(ConversationParam param, ResultCallback<ConversationResult> callback)
       throws ApiException, NoApiKeyException, InputRequiredException {

@@ -19,6 +19,7 @@ public class ClientProviders {
    * Create a dashscope half duplex client. only okhttp http and websocket is supported.
    *
    * @param options The client connection options.
+   * @param protocol The protocol to use, one of "http|https|websocket"
    * @return The half duplex client.
    */
   public static HalfDuplexClient getHalfDuplexClient(ConnectionOptions options, String protocol) {

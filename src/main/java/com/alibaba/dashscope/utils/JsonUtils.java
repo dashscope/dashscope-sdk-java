@@ -111,8 +111,10 @@ public class JsonUtils {
   /**
    * Returns the next value from the JSON stream as a parse tree.
    *
+   * @param reader The json reader.
    * @throws JsonParseException if there is an IOException or if the specified text is not valid
    *     JSON
+   * @return The `JsonElement` of the reader.
    */
   public static JsonElement parseReader(JsonReader reader)
       throws JsonIOException, JsonSyntaxException {

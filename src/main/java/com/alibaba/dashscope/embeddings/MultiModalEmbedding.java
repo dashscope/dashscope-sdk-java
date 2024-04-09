@@ -57,7 +57,7 @@ public class MultiModalEmbedding {
    * @param callback The callback to receive response, the template class is `GenerationResult`.
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
-   * @throws UploadFileException
+   * @throws UploadFileException File upload failed.
    */
   public void call(
       MultiModalEmbeddingParam param, ResultCallback<MultiModalEmbeddingResult> callback)
@@ -90,7 +90,7 @@ public class MultiModalEmbedding {
    * @return The output structure of `QWenConversationResult`.
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
-   * @throws UploadFileException
+   * @throws UploadFileException File upload failed.
    */
   public MultiModalEmbeddingResult call(MultiModalEmbeddingParam param)
       throws ApiException, NoApiKeyException, UploadFileException {
