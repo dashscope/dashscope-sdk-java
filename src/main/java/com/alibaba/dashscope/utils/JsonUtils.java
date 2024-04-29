@@ -7,6 +7,16 @@ import com.alibaba.dashscope.common.Message;
 import com.alibaba.dashscope.common.MessageAdapter;
 import com.alibaba.dashscope.common.MultiModalMessage;
 import com.alibaba.dashscope.common.MultiModalMessageAdapter;
+import com.alibaba.dashscope.threads.AnnotationBase;
+import com.alibaba.dashscope.threads.AnnotationDeserializer;
+import com.alibaba.dashscope.threads.ContentBase;
+import com.alibaba.dashscope.threads.MessageContentDeserializer;
+import com.alibaba.dashscope.threads.runs.StepDetailBase;
+import com.alibaba.dashscope.threads.runs.StepDetailDeserializer;
+import com.alibaba.dashscope.tools.ToolBase;
+import com.alibaba.dashscope.tools.ToolCallBase;
+import com.alibaba.dashscope.tools.ToolCallGsonDeserializer;
+import com.alibaba.dashscope.tools.ToolGsonDeserializer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -33,6 +43,12 @@ public class JsonUtils {
           .registerTypeAdapter(
               MultiModalConversationMessage.class, new MultiModalConversationMessageAdapter())
           .registerTypeAdapter(MultiModalMessage.class, new MultiModalMessageAdapter())
+          .registerTypeAdapter(ToolBase.class, new ToolGsonDeserializer())
+          .registerTypeAdapter(ContentBase.class, new MessageContentDeserializer())
+          .registerTypeAdapter(AnnotationBase.class, new AnnotationDeserializer())
+          .registerTypeAdapter(StepDetailBase.class, new StepDetailDeserializer())
+          .registerTypeAdapter(ToolCallBase.class, new ToolCallGsonDeserializer())
+          .addSerializationExclusionStrategy(new AnnotationExclusionStrategy())
           .disableHtmlEscaping()
           .create();
 

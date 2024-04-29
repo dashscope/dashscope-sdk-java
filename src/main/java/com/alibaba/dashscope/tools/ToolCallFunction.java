@@ -1,19 +1,24 @@
 package com.alibaba.dashscope.tools;
 
-import lombok.Builder;
 import lombok.Data;
-import lombok.experimental.SuperBuilder;
+import lombok.EqualsAndHashCode;
 
 @Data
-@SuperBuilder
-public class ToolCallFunction implements ToolCallBase {
+@EqualsAndHashCode(callSuper = false)
+public class ToolCallFunction extends ToolCallBase {
+  static {
+    registerToolCall("function", ToolCallFunction.class);
+  }
+
   @Data
   public class CallFunction {
     private String name;
     private String arguments;
+    private String output;
   }
 
   private String id;
-  @Builder.Default private String type = "function";
+  private String type = "function";
+
   private CallFunction function;
 }

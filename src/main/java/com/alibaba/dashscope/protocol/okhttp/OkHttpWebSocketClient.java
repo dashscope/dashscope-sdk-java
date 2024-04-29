@@ -55,6 +55,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
   private AtomicBoolean isFirstMessage = new AtomicBoolean(false);
   // used for get request response
   private FlowableEmitter<DashScopeResult> responseEmitter;
+  // is the result is flatten format.
+  private boolean isFlattenResult;
   private FlowableEmitter<DashScopeResult> connectionEmitter;
 
   public OkHttpWebSocketClient(OkHttpClient client) {
@@ -226,7 +228,9 @@ public class OkHttpWebSocketClient extends WebSocketListener
             responseEmitter.onNext(
                 new DashScopeResult()
                     .fromResponse(
-                        Protocol.WEBSOCKET, NetworkResponse.builder().message(text).build()));
+                        Protocol.WEBSOCKET,
+                        NetworkResponse.builder().message(text).build(),
+                        isFlattenResult));
           }
           break;
         case TASK_FAILED:
@@ -251,7 +255,9 @@ public class OkHttpWebSocketClient extends WebSocketListener
             responseEmitter.onNext(
                 new DashScopeResult()
                     .fromResponse(
-                        Protocol.WEBSOCKET, NetworkResponse.builder().message(text).build()));
+                        Protocol.WEBSOCKET,
+                        NetworkResponse.builder().message(text).build(),
+                        isFlattenResult));
           }
           responseEmitter.onComplete();
           break;
@@ -260,7 +266,9 @@ public class OkHttpWebSocketClient extends WebSocketListener
           responseEmitter.onNext(
               new DashScopeResult()
                   .fromResponse(
-                      Protocol.WEBSOCKET, NetworkResponse.builder().message(text).build()));
+                      Protocol.WEBSOCKET,
+                      NetworkResponse.builder().message(text).build(),
+                      isFlattenResult));
           break;
         default:
           // throw new ApiException(Status.builder().code("")
@@ -296,7 +304,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
         new DashScopeResult()
             .fromResponse(
                 Protocol.WEBSOCKET,
-                NetworkResponse.builder().binary(bytes.asByteBuffer()).build()));
+                NetworkResponse.builder().binary(bytes.asByteBuffer()).build(),
+                isFlattenResult));
   }
 
   @Override
@@ -409,6 +418,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
           Flowable.<DashScopeResult>create(
               emitter -> {
                 this.responseEmitter = emitter;
+                this.isFlattenResult = req.getIsFlatten();
               },
               BackpressureStrategy.BUFFER);
       flowable.subscribe().dispose();
@@ -432,6 +442,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
           Flowable.<DashScopeResult>create(
               emitter -> {
                 this.responseEmitter = emitter;
+                this.isFlattenResult = req.getIsFlatten();
               },
               BackpressureStrategy.BUFFER);
       flowable.subscribe().dispose();
@@ -466,6 +477,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
         Flowable.<DashScopeResult>create(
             emitter -> {
               this.responseEmitter = emitter;
+              this.isFlattenResult = req.getIsFlatten();
             },
             BackpressureStrategy.BUFFER);
     flowable.subscribe().dispose();
@@ -599,6 +611,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
         Flowable.<DashScopeResult>create(
             emitter -> {
               this.responseEmitter = emitter;
+              this.isFlattenResult = req.getIsFlatten();
             },
             BackpressureStrategy.BUFFER);
     flowable.subscribe().dispose();
@@ -635,6 +648,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
         Flowable.<DashScopeResult>create(
             emitter -> {
               this.responseEmitter = emitter;
+              this.isFlattenResult = req.getIsFlatten();
             },
             BackpressureStrategy.BUFFER);
     flowable.subscribe().dispose();

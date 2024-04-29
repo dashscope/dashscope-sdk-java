@@ -7,24 +7,24 @@ import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
-import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.ClientProviders;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.HalfDuplexClient;
 import com.alibaba.dashscope.protocol.HalfDuplexRequest;
+import com.alibaba.dashscope.protocol.ServiceOption;
 import io.reactivex.Flowable;
 
 /** Dashscope synchronize half duplex request processing, both http and websocket support. */
 public final class SynchronizeHalfDuplexApi<ParamT extends HalfDuplexParamBase> {
   final HalfDuplexClient client;
   ConnectionOptions connectionOptions;
-  final ApiServiceOption serviceOptions;
+  final ServiceOption serviceOptions;
   /**
    * Create default client, http or websocket.
    *
    * @param serviceOptions The service option.
    */
-  public SynchronizeHalfDuplexApi(ApiServiceOption serviceOptions) {
+  public SynchronizeHalfDuplexApi(ServiceOption serviceOptions) {
     this.client = ClientProviders.getHalfDuplexClient(serviceOptions.getProtocol().getValue());
     this.connectionOptions = null;
     this.serviceOptions = serviceOptions;
@@ -37,7 +37,7 @@ public final class SynchronizeHalfDuplexApi<ParamT extends HalfDuplexParamBase> 
    * @param serviceOptions The api service option.
    */
   public SynchronizeHalfDuplexApi(
-      ConnectionOptions connectionOptions, ApiServiceOption serviceOptions) {
+      ConnectionOptions connectionOptions, ServiceOption serviceOptions) {
     this.client =
         ClientProviders.getHalfDuplexClient(
             connectionOptions, serviceOptions.getProtocol().getValue());

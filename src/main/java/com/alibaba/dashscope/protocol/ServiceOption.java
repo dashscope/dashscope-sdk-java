@@ -7,15 +7,23 @@ import com.alibaba.dashscope.utils.Constants;
 
 /** Internal used for config the service. */
 public interface ServiceOption {
-  public String getTaskGroup();
+  public default String getTaskGroup() {
+    return null;
+  };
 
-  public String getTask();
+  public default String getTask() {
+    return null;
+  };
 
-  public String getFunction();
+  public default String getFunction() {
+    return null;
+  };
 
   public StreamingMode getStreamingMode();
 
-  public OutputMode getOutputMode();
+  public default OutputMode getOutputMode() {
+    return null;
+  };
 
   public Protocol getProtocol();
 
@@ -37,5 +45,14 @@ public interface ServiceOption {
 
   public default String webSocketUrl() {
     return Constants.baseWebsocketApiUrl;
+  }
+
+  /**
+   * Is flatten request and response
+   *
+   * @return if the result is flatten
+   */
+  public default boolean getIsFlatten() {
+    return false;
   }
 }

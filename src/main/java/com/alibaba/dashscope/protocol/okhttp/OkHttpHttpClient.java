@@ -152,6 +152,8 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
         // RequestBody.create((String) (req.getBody()), MEDIA_TYPE_APPLICATION_JSON));
         requestBuilder.post(
             RequestBody.create(MEDIA_TYPE_APPLICATION_JSON, (String) (req.getBody())));
+      } else {
+        requestBuilder.post(RequestBody.create(MEDIA_TYPE_APPLICATION_JSON, ""));
       }
       request = requestBuilder.build();
     } else if (req.getHttpMethod() == HttpMethod.DELETE) {
@@ -161,6 +163,8 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
         requestBuilder.delete(
             // RequestBody.create((String) (req.getBody()), MEDIA_TYPE_APPLICATION_JSON));
             RequestBody.create(MEDIA_TYPE_APPLICATION_JSON, (String) req.getBody()));
+      } else {
+        requestBuilder.delete();
       }
       request = requestBuilder.build();
     } else {
@@ -188,7 +192,9 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       }
       return new DashScopeResult()
           .fromResponse(
-              Protocol.HTTP, NetworkResponse.builder().message(response.body().string()).build());
+              Protocol.HTTP,
+              NetworkResponse.builder().message(response.body().string()).build(),
+              req.getIsFlatten());
     } catch (Throwable e) {
       throw new ApiException(e);
     }
@@ -218,9 +224,8 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                         new DashScopeResult()
                             .fromResponse(
                                 Protocol.HTTP,
-                                NetworkResponse.builder()
-                                    .message(response.body().string())
-                                    .build()));
+                                NetworkResponse.builder().message(response.body().string()).build(),
+                                req.getIsFlatten()));
                     callback.onComplete();
                   }
                 }
@@ -229,19 +234,37 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
   }
 
   private void handleSSEEvent(
-      FlowableEmitter<DashScopeResult> emitter, String id, String type, String data) {
-    log.debug(String.format("Event: id %s, type: %s, data: %s", id, type, data));
-    if (SSEEventType.ERROR.equals(type)) {
+      FlowableEmitter<DashScopeResult> emitter,
+      String id,
+      String eventType,
+      String data,
+      boolean isFlattenResult) {
+    log.debug(String.format("Event: id %s, type: %s, data: %s", id, eventType, data));
+    if (SSEEventType.ERROR.equals(eventType)) {
       Status st = parseStreamEventData(data);
       emitter.onError(new ApiException(st));
-    } else if (SSEEventType.DATA.equals(type) || SSEEventType.RESULT.equals(type)) {
+    } else if (SSEEventType.DATA.equals(eventType) || SSEEventType.RESULT.equals(eventType)) {
       emitter.onNext(
           new DashScopeResult()
-              .fromResponse(Protocol.HTTP, NetworkResponse.builder().message(data).build()));
-    } else if (type == null) {
+              .fromResponse(
+                  Protocol.HTTP,
+                  NetworkResponse.builder().message(data).event(eventType).build(),
+                  isFlattenResult));
+    } else if (SSEEventType.DONE.equals(eventType)) { // event done ignore message
+      log.debug(String.format("Ignore event id: %s, type: %s, data: %s", id, eventType, data));
+    } else if (eventType != null) {
+      // process assistant events.
       emitter.onNext(
           new DashScopeResult()
-              .fromResponse(Protocol.HTTP, NetworkResponse.builder().message(data).build()));
+              .fromResponse(
+                  Protocol.HTTP,
+                  NetworkResponse.builder().message(data).event(eventType).build(),
+                  isFlattenResult));
+    } else if (eventType == null) {
+      emitter.onNext(
+          new DashScopeResult()
+              .fromResponse(
+                  Protocol.HTTP, NetworkResponse.builder().message(data).build(), isFlattenResult));
     }
   }
 
@@ -262,7 +285,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                             java.lang.String id,
                             java.lang.String type,
                             java.lang.String data) {
-                          handleSSEEvent(emitter, id, type, data);
+                          handleSSEEvent(emitter, id, type, data, req.getIsFlatten());
                         }
 
                         @java.lang.Override
@@ -291,7 +314,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
   private class SSEEventType {
     public static final String ERROR = "error";
     public static final String DATA = "data";
-    public static final String DONE = "DONE";
+    public static final String DONE = "done";
     public static final String RESULT = "result";
   }
 
@@ -317,12 +340,23 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                   callback.onEvent(
                       new DashScopeResult()
                           .fromResponse(
-                              Protocol.HTTP, NetworkResponse.builder().message(data).build()));
+                              Protocol.HTTP,
+                              NetworkResponse.builder().message(data).event(type).build(),
+                              req.getIsFlatten()));
+                } else if (type != null) {
+                  callback.onEvent(
+                      new DashScopeResult()
+                          .fromResponse(
+                              Protocol.HTTP,
+                              NetworkResponse.builder().message(data).event(type).build(),
+                              req.getIsFlatten()));
                 } else if (type == null) {
                   callback.onEvent(
                       new DashScopeResult()
                           .fromResponse(
-                              Protocol.HTTP, NetworkResponse.builder().message(data).build()));
+                              Protocol.HTTP,
+                              NetworkResponse.builder().message(data).build(),
+                              req.getIsFlatten()));
                 }
               }
 

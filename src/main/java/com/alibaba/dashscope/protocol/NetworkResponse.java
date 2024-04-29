@@ -2,8 +2,8 @@
 
 package com.alibaba.dashscope.protocol;
 
-import com.google.common.collect.Maps;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
@@ -13,10 +13,13 @@ import lombok.Data;
 public class NetworkResponse {
 
   /** The response headers. */
-  @Builder.Default private Map<String, String> headers = Maps.newHashMap();
+  @Builder.Default private Map<String, String> headers = new HashMap<>();
 
   /** The String type response message. */
   private String message;
+
+  /** The event, used in assistant */
+  private String event;
 
   /** The binary type response. */
   private ByteBuffer binary;

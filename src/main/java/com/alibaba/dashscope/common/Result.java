@@ -34,6 +34,9 @@ public abstract class Result {
    * @return The result.
    * @throws ApiException Failed, possibly due to a data error.
    */
-  public abstract <T extends Result> T fromResponse(Protocol protocol, NetworkResponse response)
+  protected abstract <T extends Result> T fromResponse(Protocol protocol, NetworkResponse response)
       throws ApiException;
+
+  public abstract <T extends Result> T fromResponse(
+      Protocol protocol, NetworkResponse response, boolean isFlattenResult) throws ApiException;
 }

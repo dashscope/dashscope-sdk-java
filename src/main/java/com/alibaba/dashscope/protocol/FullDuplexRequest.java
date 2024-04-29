@@ -15,10 +15,15 @@ import java.util.UUID;
 public class FullDuplexRequest {
   FullDuplexServiceParam param;
   ServiceOption serviceOption;
+  boolean isFlattenResult = false;
 
   public FullDuplexRequest(FullDuplexServiceParam param, ServiceOption option) {
     this.param = param;
     this.serviceOption = option;
+  }
+
+  public boolean getIsFlatten() {
+    return serviceOption.getIsFlatten();
   }
 
   public String getBaseWebSocketUrl() {

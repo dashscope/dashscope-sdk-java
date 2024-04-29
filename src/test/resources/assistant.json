@@ -1,0 +1,164 @@
+{
+    "test_list_response": {
+        "object": "list",
+        "data": [
+            {
+                "id": "asst_1",
+                "object": "assistant",
+                "created_at": 1709716540139,
+                "model": "xxx",
+                "name": "Assistant",
+                "description": "",
+                "instructions": "你是一个智能小助手，你可以根据用户的需求去调用不同的工具，进而给出回答。请酌情使用工具。",
+                "tools": [
+                    {
+                        "type": "code_interpreter"
+                    }
+                ],
+                "file_ids": [],
+                "metadata": {},
+                "account_id": "sk-xxxx",
+                "gmt_crete": "2024-03-06 17:15:40",
+                "gmt_update": "2024-03-06 17:15:40",
+                "is_deleted": false
+            },
+            {
+                "id": "asst_2",
+                "object": "assistant",
+                "created_at": 1709714043262,
+                "model": "xxx",
+                "name": "智能小助手",
+                "description": "这是一个智能小助手，可以查天气、检索信息、写代码解决问题",
+                "instructions": "你是一个智能小助手，你可以根据用户的需求去调用不同的工具，进而给出回答。请酌情使用工具。",
+                "tools": [
+                    {
+                        "type": "quark_search"
+                    },
+                    {
+                        "type": "code_interpreter"
+                    }
+                ],
+                "file_ids": [],
+                "metadata": {},
+                "account_id": "sk-xxxx",
+                "gmt_crete": "2024-03-06 16:34:03",
+                "gmt_update": "2024-03-06 16:34:03",
+                "is_deleted": false
+            }
+        ],
+        "first_id": "asst_c324b6b1-bee2-4eb2-a514-e5d89042b92c",
+        "last_id": "asst_a4be266e-2402-44ec-9647-a98c0f712078",
+        "has_more": true,
+        "request_id": "b1bd90d2-bf02-909c-815b-0a17eb579076"
+    },
+    "test_function_call_request": {
+        "instructions": "You are a helpful assistant. When asked a question, use tools wherever possible.",
+        "name": "smart assistant",
+        "tools": [
+            {
+                "type": "code_interpreter"
+            },
+            {
+                "type": "quark_search"
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "big_add",
+                    "description": "Add to number",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "left": {
+                                "type": "integer",
+                                "description": "The left operator"
+                            },
+                            "right": {
+                                "type": "integer",
+                                "description": "The right operator."
+                            }
+                        },
+                        "required": [
+                            "left",
+                            "right"
+                        ]
+                    }
+                }
+            }
+        ],
+        "model": "qwen"
+    },
+    "test_function_call_response": {
+        "created_at": 1709540000,
+        "description": null,
+        "file_ids": [],
+        "id": "asst_test",
+        "instructions": "You are a helpful assistant. When asked a question, use tools wherever possible.",
+        "metadata": {},
+        "model": "qwen",
+        "name": "smart assistant",
+        "object": "assistant",
+        "tools": [
+            {
+                "type": "code_interpreter"
+            },
+            {
+                "type": "quark_search"
+            },
+            {
+                "type": "hhh"
+            },
+            {
+                "function": {
+                    "description": "Add to number",
+                    "name": "big_add",
+                    "parameters": {
+                        "properties": {
+                            "left": {
+                                "description": "The left operator",
+                                "type": "integer"
+                            },
+                            "right": {
+                                "description": "The right operator.",
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "left",
+                            "right"
+                        ],
+                        "type": "object"
+                    }
+                },
+                "type": "function"
+            }
+        ],
+        "request_id": "b1bd90d2-bf02-909c-815b-0a17eb579076"
+    },
+    "create_assistant_file": {
+        "id": "file_1",
+        "object": "assistant.file",
+        "created_at": 1699055364,
+        "assistant_id": "asst_1"
+    },
+    "list_assistant_files": {
+        "object": "list",
+        "data": [
+            {
+                "id": "file_1",
+                "object": "assistant.file",
+                "created_at": 1699060412,
+                "assistant_id": "asst_1"
+            },
+            {
+                "id": "file_2",
+                "object": "assistant.file",
+                "created_at": 1699060412,
+                "assistant_id": "asst_1"
+            }
+        ],
+        "first_id": "file_1",
+        "last_id": "file_2",
+        "has_more": false
+    }
+}

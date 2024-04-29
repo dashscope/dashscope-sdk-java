@@ -28,6 +28,8 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
   @Builder.Default private String style = null;
   @lombok.NonNull private String prompt;
   private String negativePrompt;
+  private String refImage;
+  private String sketchImageUrl;
 
   @Override
   public JsonObject getInput() {
@@ -36,6 +38,13 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
     if (negativePrompt != null && !negativePrompt.isEmpty()) {
       jsonObject.addProperty(NEGATIVE_PROMPT, negativePrompt);
     }
+    if (refImage != null && !refImage.isEmpty()) {
+      jsonObject.addProperty("ref_img", refImage);
+    }
+    if (sketchImageUrl != null && !sketchImageUrl.isEmpty()) {
+      jsonObject.addProperty("sketch_image_url", sketchImageUrl);
+    }
+
     return jsonObject;
   }
 

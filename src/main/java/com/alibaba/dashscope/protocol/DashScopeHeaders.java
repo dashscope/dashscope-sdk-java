@@ -5,7 +5,7 @@ package com.alibaba.dashscope.protocol;
 import com.alibaba.dashscope.Version;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.utils.ApiKey;
-import com.google.common.collect.Maps;
+import java.util.HashMap;
 import java.util.Map;
 
 public final class DashScopeHeaders {
@@ -23,7 +23,7 @@ public final class DashScopeHeaders {
   public static Map<String, String> buildWebSocketHeaders(
       String apiKey, boolean isSecurityCheck, String workspace, Map<String, String> customHeaders)
       throws NoApiKeyException {
-    Map<String, String> headers = Maps.newHashMap();
+    Map<String, String> headers = new HashMap<>();
     headers.put("Authorization", "bearer " + ApiKey.getApiKey(apiKey));
     headers.put("user-agent", userAgent());
     if (workspace != null && !workspace.isEmpty()) {
@@ -47,7 +47,7 @@ public final class DashScopeHeaders {
       String workspace,
       Map<String, String> customHeaders)
       throws NoApiKeyException {
-    Map<String, String> headers = Maps.newHashMap();
+    Map<String, String> headers = new HashMap<>();
     headers.put("Authorization", "Bearer " + ApiKey.getApiKey(apiKey));
     headers.put("user-agent", userAgent());
     if (isSecurityCheck) {

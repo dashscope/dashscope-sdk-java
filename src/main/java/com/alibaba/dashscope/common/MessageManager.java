@@ -12,6 +12,12 @@ import com.google.gson.JsonObject;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Will be delete next release.
+ *
+ * @deprecated
+ */
+@Deprecated
 public final class MessageManager {
   private static final int DEFAULT_MAXIMUM_MESSAGES = 10;
   private final EvictingQueue<Message> messages;

@@ -6,6 +6,8 @@ import com.google.common.collect.EvictingQueue;
 import java.util.Arrays;
 import java.util.List;
 
+/** will be delete next release. */
+@Deprecated
 public final class HistoryManager {
   private static final int DEFAULT_MAXIMUM_MESSAGES = 10;
   private final EvictingQueue<History> history;

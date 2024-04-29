@@ -25,6 +25,10 @@ public class HalfDuplexRequest {
     this.serviceOption = option;
   }
 
+  public boolean getIsFlatten() {
+    return serviceOption.getIsFlatten();
+  }
+
   public String getApiKey() {
     return param.getApiKey();
   }

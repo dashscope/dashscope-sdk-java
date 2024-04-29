@@ -16,6 +16,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class DashScopeResult extends Result {
   private Object output;
+  private String event;
 
   public Boolean isBinaryOutput() {
     return output instanceof ByteBuffer;
@@ -23,7 +24,7 @@ public class DashScopeResult extends Result {
 
   @Override
   @SuppressWarnings("unchecked")
-  public <T extends Result> T fromResponse(Protocol protocol, NetworkResponse response)
+  protected <T extends Result> T fromResponse(Protocol protocol, NetworkResponse response)
       throws ApiException {
     if (protocol == Protocol.WEBSOCKET) {
       if (response.getBinary() == null) {
@@ -77,5 +78,30 @@ public class DashScopeResult extends Result {
       }
     }
     return (T) this;
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T extends Result> T fromResponse(
+      Protocol protocol, NetworkResponse response, boolean isFlattenResult) throws ApiException {
+    if (!isFlattenResult) {
+      return fromResponse(protocol, response);
+    } else {
+      // flatten not support websocket.
+      if (protocol == Protocol.WEBSOCKET) {
+        if (response.getBinary() == null) {
+          JsonObject jsonObject = JsonUtils.parse(response.getMessage());
+          this.output = jsonObject;
+          // convert to the result
+        } else {
+          this.output = response.getBinary();
+        }
+      } else { // HTTP
+        JsonObject jsonObject = JsonUtils.parse(response.getMessage());
+        this.output = jsonObject;
+        this.event = response.getEvent();
+      }
+      return (T) this;
+    }
   }
 }

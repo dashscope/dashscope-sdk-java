@@ -1,0 +1,37 @@
+{
+    "thread_1": {
+        "created_at": 1709538994,
+        "id": "thread_1",
+        "metadata": {"key":"value"},
+        "object": "thread"
+    },
+    "test_list_response":{
+        "object": "list",
+        "first_id": "thread_1",
+        "last_id": "thread_4",
+        "has_more": false,
+        "request_id": "b1bd90d2-bf02-909c-815b-0a17eb579076",
+        "data": [{
+            "created_at": 1709538994,
+            "id": "thread_1",
+            "metadata": {"key":"value"},
+            "object": "thread"
+        },
+        {
+            "created_at": 1709538995,
+            "id": "thread_2",
+            "object": "thread"
+        },
+        {
+            "created_at": 1709538996,
+            "id": "thread_3",
+            "metadata": {},
+            "object": "thread"
+        },
+        {
+            "created_at": 1709538997,
+            "id": "thread_4",
+            "object": "thread"
+        }]
+    }
+}

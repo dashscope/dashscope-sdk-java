@@ -112,7 +112,9 @@ public final class OSSUtils {
       }
       return new DashScopeResult()
           .fromResponse(
-              Protocol.HTTP, NetworkResponse.builder().message(response.body().string()).build());
+              Protocol.HTTP,
+              NetworkResponse.builder().message(response.body().string()).build(),
+              false);
     } catch (Throwable e) {
       throw new ApiException(e);
     }

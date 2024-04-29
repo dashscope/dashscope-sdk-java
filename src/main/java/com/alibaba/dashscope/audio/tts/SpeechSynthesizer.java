@@ -10,13 +10,13 @@ import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
-import com.google.common.collect.Lists;
 import io.reactivex.Flowable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.Getter;
@@ -25,7 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public final class SpeechSynthesizer {
 
-  @Getter private final List<Sentence> timestamps = Lists.newCopyOnWriteArrayList();
+  @Getter
+  private final List<Sentence> timestamps = new ArrayList<>(); // Lists.newCopyOnWriteArrayList();
 
   @Getter private ByteBuffer audioData;
 

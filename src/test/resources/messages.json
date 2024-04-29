@@ -1,0 +1,101 @@
+{
+    "create_message_request": {
+        "role": "user",
+        "content": "Who are you.",
+        "thread_id": "thread_create"
+    },
+    "create_message_response": {
+        "assistant_id": null,
+        "content": [
+            {
+                "text": {
+                    "annotations": [],
+                    "value": "Who are you."
+                },
+                "type": "text"
+            }
+        ],
+        "created_at": 12344,
+        "file_ids": [],
+        "id": "msg_created",
+        "metadata": {},
+        "object": "thread.message",
+        "role": "user",
+        "run_id": null,
+        "thread_id": "thread_create"
+    },
+    "list_message_response": {
+        "data": [
+            {
+                "assistant_id": "asst_list",
+                "content": [
+                    {
+                        "text": {
+                            "annotations": [],
+                            "value": "I'm qwen."
+                        },
+                        "type": "text"
+                    }
+                ],
+                "created_at": 1709544603,
+                "file_ids": [],
+                "id": "msg_1",
+                "metadata": {},
+                "object": "thread.message",
+                "role": "assistant",
+                "run_id": "run_test",
+                "thread_id": "thread_test"
+            },
+            {
+                "assistant_id": null,
+                "content": [
+                    {
+                        "text": {
+                            "annotations": [],
+                            "value": "Who are you."
+                        },
+                        "type": "text"
+                    }
+                ],
+                "created_at": 1709539505,
+                "file_ids": [],
+                "id": "msg_0",
+                "metadata": {},
+                "object": "thread.message",
+                "role": "user",
+                "run_id": null,
+                "thread_id": "thread_test"
+            }
+        ],
+        "first_id": "msg_0",
+        "has_more": false,
+        "last_id": "msg_1",
+        "object": "list"
+    },
+    "list_message_files_response": {
+        "object": "list",
+        "data": [
+            {
+                "id": "file-1",
+                "object": "thread.message.file",
+                "created_at": 1699061776,
+                "message_id": "msg_1"
+            },
+            {
+                "id": "file-2",
+                "object": "thread.message.file",
+                "created_at": 1699061776,
+                "message_id": "msg_1"
+            }
+        ],
+        "first_id": "file-1",
+        "last_id": "file-2",
+        "has_more": false
+    },
+    "retrieve_message_file_response": {
+        "id": "file-2",
+        "object": "thread.message.file",
+        "created_at": 1699061776,
+        "message_id": "msg_1"
+    }
+}

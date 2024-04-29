@@ -1,0 +1,485 @@
+{
+    "create_run_response": {
+        "id": "run_123",
+        "object": "thread.run",
+        "created_at": 1709546043,
+        "assistant_id": "asst_123",
+        "thread_id": "thread_123",
+        "status": "completed",
+        "started_at": 1709546044,
+        "expires_at": null,
+        "cancelled_at": null,
+        "failed_at": null,
+        "completed_at": 1709546046,
+        "last_error": null,
+        "model": "qwen-plus",
+        "instructions": null,
+        "tools": [
+            {
+                "type": "code_interpreter"
+            },
+            {
+                "type": "quark_search"
+            },
+            {
+                "function": {
+                    "description": "Add to number",
+                    "name": "big_add",
+                    "parameters": {
+                        "properties": {
+                            "left": {
+                                "description": "The left operator",
+                                "type": "integer"
+                            },
+                            "right": {
+                                "description": "The right operator.",
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "left",
+                            "right"
+                        ],
+                        "type": "object"
+                    }
+                },
+                "type": "function"
+            }
+        ],
+        "file_ids": [
+            "file_1",
+            "file_2"
+        ],
+        "metadata": {
+            "key": "value"
+        },
+        "incomplete_details": null,
+        "usage": {
+            "prompt_tokens": 123,
+            "completion_tokens": 456,
+            "total_tokens": 579
+        },
+        "temperature": 1,
+        "max_prompt_tokens": 1000,
+        "max_completion_tokens": 1000,
+        "truncation_strategy": {
+            "type": "auto",
+            "last_messages": null
+        },
+        "response_format": "auto",
+        "tool_choice": "auto"
+    },
+    "list_run_response": {
+        "data": [
+            {
+                "assistant_id": "asst_1",
+                "cancelled_at": null,
+                "completed_at": 1709544635,
+                "created_at": 1709544601,
+                "expires_at": null,
+                "failed_at": null,
+                "file_ids": [
+                    "file-41"
+                ],
+                "id": "run_1",
+                "instructions": "You are a helpful assistant. When asked a question, use tools wherever possible.",
+                "last_error": null,
+                "metadata": {},
+                "model": "qwen",
+                "object": "thread.run",
+                "required_action": null,
+                "started_at": 1709544601,
+                "status": "completed",
+                "thread_id": "thread_T1",
+                "tools": [
+                    {
+                        "type": "code_interpreter"
+                    },
+                    {
+                        "type": "search"
+                    },
+                    {
+                        "function": {
+                            "description": "Add to number",
+                            "name": "big_add",
+                            "parameters": {
+                                "properties": {
+                                    "left": {
+                                        "description": "The left operator",
+                                        "type": "integer"
+                                    },
+                                    "right": {
+                                        "description": "The right operator.",
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "left",
+                                    "right"
+                                ],
+                                "type": "object"
+                            }
+                        },
+                        "type": "function"
+                    }
+                ],
+                "usage": {
+                    "completion_tokens": 457,
+                    "prompt_tokens": 827,
+                    "total_tokens": 1284
+                }
+            },
+            {
+                "id": "run_2",
+                "object": "thread.run",
+                "created_at": 1709546043,
+                "assistant_id": "asst_123",
+                "thread_id": "thread_123",
+                "status": "completed",
+                "started_at": 1709546044,
+                "expires_at": null,
+                "cancelled_at": null,
+                "failed_at": null,
+                "completed_at": 1709546046,
+                "last_error": null,
+                "model": "qwen-plus",
+                "instructions": null,
+                "tools": [
+                    {
+                        "type": "code_interpreter"
+                    },
+                    {
+                        "type": "quark_search"
+                    },
+                    {
+                        "function": {
+                            "description": "Add to number",
+                            "name": "big_add",
+                            "parameters": {
+                                "properties": {
+                                    "left": {
+                                        "description": "The left operator",
+                                        "type": "integer"
+                                    },
+                                    "right": {
+                                        "description": "The right operator.",
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "left",
+                                    "right"
+                                ],
+                                "type": "object"
+                            }
+                        },
+                        "type": "function"
+                    }
+                ],
+                "file_ids": [
+                    "file_1",
+                    "file_2"
+                ],
+                "metadata": {
+                    "key": "value"
+                },
+                "incomplete_details": null,
+                "usage": {
+                    "prompt_tokens": 123,
+                    "completion_tokens": 456,
+                    "total_tokens": 579
+                },
+                "temperature": 1,
+                "max_prompt_tokens": 1000,
+                "max_completion_tokens": 1000,
+                "truncation_strategy": {
+                    "type": "auto",
+                    "last_messages": null
+                },
+                "response_format": "auto",
+                "tool_choice": "auto"
+            }
+        ],
+        "first_id": "run_1",
+        "has_more": false,
+        "last_id": "run_1",
+        "object": "list"
+    },
+    "submit_function_call_result": {
+        "assistant_id": "asst_1",
+        "cancelled_at": null,
+        "completed_at": null,
+        "created_at": 1709866208,
+        "expires_at": 1709866808,
+        "failed_at": null,
+        "file_ids": [],
+        "id": "run_1",
+        "instructions": "You are a helpful assistant. When asked a question, use tools wherever possible.",
+        "last_error": null,
+        "metadata": {},
+        "model": "qwen",
+        "object": "thread.run",
+        "required_action": null,
+        "started_at": 1709866208,
+        "status": "queued",
+        "thread_id": "thread_7",
+        "tools": [
+            {
+                "type": "code_interpreter"
+            },
+            {
+                "type": "search"
+            },
+            {
+                "function": {
+                    "description": "Add to number",
+                    "name": "big_add",
+                    "parameters": {
+                        "properties": {
+                            "left": {
+                                "description": "The left operator",
+                                "type": "integer"
+                            },
+                            "right": {
+                                "description": "The right operator.",
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "left",
+                            "right"
+                        ],
+                        "type": "object"
+                    }
+                },
+                "type": "function"
+            }
+        ],
+        "usage": null
+    },
+    "list_run_steps_response": {
+        "data": [
+            {
+                "assistant_id": "asst_1",
+                "cancelled_at": null,
+                "completed_at": 1709866473,
+                "created_at": 1709866472,
+                "expires_at": null,
+                "failed_at": null,
+                "id": "step_1",
+                "last_error": null,
+                "object": "thread.run.step",
+                "run_id": "run_1",
+                "status": "completed",
+                "step_details": {
+                    "message_creation": {
+                        "message_id": "msg_1"
+                    },
+                    "type": "message_creation"
+                },
+                "thread_id": "thread_1",
+                "type": "message_creation",
+                "usage": {
+                    "completion_tokens": 25,
+                    "prompt_tokens": 809,
+                    "total_tokens": 834
+                }
+            },
+            {
+                "assistant_id": "asst_1",
+                "cancelled_at": null,
+                "completed_at": 1709866471,
+                "created_at": 1709866209,
+                "expires_at": null,
+                "failed_at": null,
+                "id": "step_2",
+                "last_error": null,
+                "object": "thread.run.step",
+                "run_id": "run_1",
+                "status": "completed",
+                "step_details": {
+                    "tool_calls": [
+                        {
+                            "function": {
+                                "arguments": "{\"left\":87787,\"right\":788988737}",
+                                "name": "big_add",
+                                "output": "789076524"
+                            },
+                            "id": "call_1",
+                            "type": "function"
+                        }
+                    ],
+                    "type": "tool_calls"
+                },
+                "thread_id": "thread_1",
+                "type": "tool_calls",
+                "usage": {
+                    "completion_tokens": 22,
+                    "prompt_tokens": 776,
+                    "total_tokens": 798
+                }
+            }
+        ],
+        "first_id": "step_1",
+        "has_more": false,
+        "last_id": "step_2",
+        "object": "list"
+    },
+    "required_action_function_call_response": {
+        "assistant_id": "asst_1",
+        "cancelled_at": null,
+        "completed_at": null,
+        "created_at": 1709866208,
+        "expires_at": 1709866808,
+        "failed_at": null,
+        "file_ids": [],
+        "id": "run_7",
+        "instructions": "You are a helpful assistant. When asked a question, use tools wherever possible.",
+        "last_error": null,
+        "metadata": {},
+        "model": "qwen",
+        "object": "thread.run",
+        "required_action": {
+            "submit_tool_outputs": {
+                "tool_calls": [
+                    {
+                        "function": {
+                            "arguments": "{\"left\":87787,\"right\":788988737}",
+                            "name": "big_add"
+                        },
+                        "id": "call_1",
+                        "type": "function"
+                    }
+                ]
+            },
+            "type": "submit_tool_outputs"
+        },
+        "started_at": 1709866208,
+        "status": "requires_action",
+        "thread_id": "thread_1",
+        "tools": [
+            {
+                "type": "code_interpreter"
+            },
+            {
+                "type": "search"
+            },
+            {
+                "function": {
+                    "description": "Add to number",
+                    "name": "big_add",
+                    "parameters": {
+                        "properties": {
+                            "left": {
+                                "description": "The left operator",
+                                "type": "integer"
+                            },
+                            "right": {
+                                "description": "The right operator.",
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "left",
+                            "right"
+                        ],
+                        "type": "object"
+                    }
+                },
+                "type": "function"
+            }
+        ],
+        "usage": null
+    },
+    "retrieve_run_step": {
+        "assistant_id": "asst_1",
+        "cancelled_at": null,
+        "completed_at": 1709866471,
+        "created_at": 1709866209,
+        "expires_at": null,
+        "failed_at": null,
+        "id": "step_1",
+        "last_error": null,
+        "object": "thread.run.step",
+        "run_id": "run_1",
+        "status": "completed",
+        "step_details": {
+            "tool_calls": [
+                {
+                    "function": {
+                        "arguments": "{\"left\":87787,\"right\":788988737}",
+                        "name": "big_add",
+                        "output": "789076524"
+                    },
+                    "id": "call_1",
+                    "type": "function"
+                }
+            ],
+            "type": "tool_calls"
+        },
+        "thread_id": "thread_1",
+        "type": "tool_calls",
+        "usage": {
+            "completion_tokens": 22,
+            "prompt_tokens": 776,
+            "total_tokens": 798
+        }
+    },
+    "submit_tool_outputs": {
+        "id": "run_1",
+        "object": "thread.run",
+        "created_at": 1699075592,
+        "assistant_id": "asst_1",
+        "thread_id": "thread_1",
+        "status": "queued",
+        "started_at": 1699075592,
+        "expires_at": 1699076192,
+        "cancelled_at": null,
+        "failed_at": null,
+        "completed_at": null,
+        "last_error": null,
+        "model": "qwen",
+        "instructions": null,
+        "incomplete_details": null,
+        "tools": [
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_current_weather",
+                    "description": "Get the current weather in a given location",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "location": {
+                                "type": "string",
+                                "description": "The city and state, e.g. San Francisco, CA"
+                            },
+                            "unit": {
+                                "type": "string",
+                                "enum": [
+                                    "celsius",
+                                    "fahrenheit"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "location"
+                        ]
+                    }
+                }
+            }
+        ],
+        "file_ids": [],
+        "metadata": {},
+        "usage": null,
+        "temperature": 1,
+        "max_prompt_tokens": 1000,
+        "max_completion_tokens": 1000,
+        "truncation_strategy": {
+            "type": "auto",
+            "last_messages": null
+        },
+        "response_format": "auto",
+        "tool_choice": "auto"
+    }
+}

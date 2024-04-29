@@ -3,6 +3,7 @@
 package com.alibaba.dashscope.base;
 
 import com.alibaba.dashscope.exception.InputRequiredException;
+import com.alibaba.dashscope.utils.GsonExclude;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -18,10 +19,10 @@ public abstract class HalfDuplexParamBase {
   /** The apiKey. */
   private String apiKey;
   /** Open security check */
-  @Builder.Default private boolean securityCheck = false;
+  @GsonExclude @Builder.Default private boolean securityCheck = false;
 
   /** workspace */
-  private String workspace;
+  @GsonExclude private String workspace;
 
   public String getWorkspace() {
     return workspace;
@@ -32,7 +33,7 @@ public abstract class HalfDuplexParamBase {
   }
 
   /** The extra parameters. */
-  @Singular protected Map<String, Object> parameters;
+  @GsonExclude @Singular protected Map<String, Object> parameters;
 
   public abstract String getModel();
   /**
@@ -43,7 +44,7 @@ public abstract class HalfDuplexParamBase {
   public abstract Map<String, Object> getParameters();
 
   /** The custom http header. */
-  @Singular protected Map<String, Object> headers;
+  @GsonExclude @Singular protected Map<String, Object> headers;
 
   /**
    * The custom http header.

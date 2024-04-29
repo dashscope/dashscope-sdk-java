@@ -23,7 +23,6 @@ import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
@@ -118,7 +117,7 @@ public final class WebSocketRecorder extends WebSocketListener {
   }
 
   @Override
-  public void onFailure(WebSocket webSocket, Throwable t, @Nullable Response response) {
+  public void onFailure(WebSocket webSocket, Throwable t, Response response) {
     Platform.get().log("[WS " + name + "] onFailure", Platform.INFO, t);
 
     WebSocketListener delegate = this.delegate;
