@@ -3,7 +3,6 @@ import java.util.List;
 import com.alibaba.dashscope.assistants.Assistant;
 import com.alibaba.dashscope.assistants.AssistantParam;
 import com.alibaba.dashscope.tools.ToolFunction;
-import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.assistants.Assistants;
 import com.alibaba.dashscope.common.GeneralListParam;
 import com.alibaba.dashscope.common.ListResult;
@@ -17,6 +16,7 @@ import com.alibaba.dashscope.threads.messages.Messages;
 import com.alibaba.dashscope.threads.messages.TextMessageParam;
 import com.alibaba.dashscope.threads.messages.ThreadMessage;
 import com.alibaba.dashscope.threads.runs.AssistantStreamMessage;
+import com.alibaba.dashscope.threads.runs.RequiredAction;
 import com.alibaba.dashscope.threads.runs.Run;
 import com.alibaba.dashscope.threads.runs.RunParam;
 import com.alibaba.dashscope.threads.runs.Runs;
@@ -24,6 +24,7 @@ import com.alibaba.dashscope.threads.runs.SubmitToolOutputsParam;
 import com.alibaba.dashscope.threads.runs.ThreadAndRunParam;
 import com.alibaba.dashscope.threads.runs.ToolOutput;
 import com.alibaba.dashscope.tools.FunctionDefinition;
+import com.alibaba.dashscope.tools.ToolCallBase;
 import com.alibaba.dashscope.tools.wanx.ToolWanX;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -34,6 +35,7 @@ import com.github.victools.jsonschema.generator.SchemaGeneratorConfig;
 import com.github.victools.jsonschema.generator.SchemaGeneratorConfigBuilder;
 import com.github.victools.jsonschema.generator.SchemaVersion;
 import io.reactivex.Flowable;
+import com.alibaba.dashscope.tools.ToolCallFunction;
 
 public class AssistantFunctionCallStream {
     public class AddFunctionTool {
@@ -121,18 +123,35 @@ public class AssistantFunctionCallStream {
         });
         run = (Run)assistantStreamMessages.get(assistantStreamMessages.size() - 1).getData();
         if(run.getStatus().equals(Run.Status.REQUIRES_ACTION)){ 
-            SubmitToolOutputsParam submitToolOutputsParam = SubmitToolOutputsParam.builder()
-            .toolOutput(ToolOutput.builder().toolCallId("").output("100000000").build())
-            .stream(true)
-            .build();
-            streamResponse = runs.submitStreamToolOutputs(thread.getId(), run.getId(), submitToolOutputsParam);
-            assistantStreamMessages.clear();
-            streamResponse.blockingForEach(assistantStreamMessage->{
-                System.out.println("Event: " + assistantStreamMessage.getEvent());
-                System.out.println("data: ");
-                System.out.println(assistantStreamMessage.getData());
-                assistantStreamMessages.add(assistantStreamMessage);
-            });
+            // submit action output.
+            RequiredAction requiredAction = run.getRequiredAction();
+            if(requiredAction.getType().equals("submit_tool_outputs")){
+                ToolCallBase toolCall = requiredAction.getSubmitToolOutputs().getToolCalls().get(0);
+                if (toolCall.getType().equals("function")) {
+                    // get function call name and argument, both String.
+                    String functionName = ((ToolCallFunction) toolCall).getFunction().getName();
+                    String functionArgument = ((ToolCallFunction) toolCall).getFunction().getArguments();
+                    if (functionName.equals("add")) {
+                      // Create the function object.
+                      AddFunctionTool addFunction =
+                          JsonUtils.fromJson(functionArgument, AddFunctionTool.class);
+                      // call function.
+                      int sum = addFunction.call();
+                      System.out.println(sum);
+                      SubmitToolOutputsParam submitToolOutputsParam = SubmitToolOutputsParam.builder()
+                      .toolOutput(ToolOutput.builder().toolCallId("").output(String.valueOf(sum)).build())
+                      .build();
+                      streamResponse = runs.submitStreamToolOutputs(thread.getId(), run.getId(), submitToolOutputsParam);
+                      assistantStreamMessages.clear();
+                      streamResponse.blockingForEach(assistantStreamMessage->{
+                          System.out.println("Event: " + assistantStreamMessage.getEvent());
+                          System.out.println("data: ");
+                          System.out.println(assistantStreamMessage.getData());
+                          assistantStreamMessages.add(assistantStreamMessage);
+                      });
+                    }
+                  }
+            }
         }
         GeneralListParam listParam = GeneralListParam.builder().limit(100l).build();
         ListResult<ThreadMessage> threadMessages = messages.list(thread.getId(), listParam);
@@ -143,8 +162,6 @@ public class AssistantFunctionCallStream {
     }
 
     public static void main(String[] args) throws ApiException, NoApiKeyException, InputRequiredException, InvalidateParameter {
-        Constants.baseHttpApiUrl = "";
-        Constants.apiKey = "";
         Assistant assistant = createAssistant();
         streamRun(assistant.getId());
     }

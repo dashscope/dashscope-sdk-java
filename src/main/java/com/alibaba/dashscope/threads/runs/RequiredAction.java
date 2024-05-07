@@ -15,5 +15,9 @@ public class RequiredAction {
   public static class InnerRequiredAction {
     @SerializedName("tool_calls")
     private List<ToolCallBase> toolCalls;
+
+    public List<ToolCallBase> getToolCalls() {
+      return toolCalls;
+    }
   }
 }

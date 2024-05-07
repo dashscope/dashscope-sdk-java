@@ -18,6 +18,7 @@ public class ConversationStreamCall {
         .prompt(prompt)
         .topP(0.8)
         .enableSearch(true)
+        .incrementalOutput(true)
         .build();
         try{
             Flowable<ConversationResult> result = conversation.streamCall(param);
