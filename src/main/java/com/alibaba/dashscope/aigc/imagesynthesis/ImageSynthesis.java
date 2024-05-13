@@ -15,6 +15,7 @@ import com.alibaba.dashscope.task.AsyncTaskListParam;
 public final class ImageSynthesis {
   private final AsynchronousApi<HalfDuplexServiceParam> asyncApi;
   private final ApiServiceOption createServiceOptions;
+  private final String baseUrl;
 
   public static class Models {
     public static final String WANX_V1 = "wanx-v1";
@@ -34,6 +35,7 @@ public final class ImageSynthesis {
             .function("image-synthesis")
             .isAsyncTask(true)
             .build();
+    this.baseUrl = null;
   }
 
   public ImageSynthesis(String baseUrl) {
@@ -50,6 +52,7 @@ public final class ImageSynthesis {
             .function("image-synthesis")
             .isAsyncTask(true)
             .build();
+    this.baseUrl = baseUrl;
   }
 
   public ImageSynthesisResult asyncCall(ImageSynthesisParam param)
@@ -98,7 +101,7 @@ public final class ImageSynthesis {
 
   public ImageSynthesisListResult list(AsyncTaskListParam param)
       throws ApiException, NoApiKeyException {
-    return ImageSynthesisListResult.fromDashScopeResult(asyncApi.list(param));
+    return ImageSynthesisListResult.fromDashScopeResult(asyncApi.list(param, baseUrl));
   }
 
   public ImageSynthesisListResult list(
@@ -112,40 +115,41 @@ public final class ImageSynthesis {
       Integer pageSize)
       throws ApiException, NoApiKeyException {
     return ImageSynthesisListResult.fromDashScopeResult(
-        asyncApi.list(startTime, endTime, modelName, apiKeyId, region, status, pageNo, pageSize));
+        asyncApi.list(
+            startTime, endTime, modelName, apiKeyId, region, status, pageNo, pageSize, baseUrl));
   }
 
   public ImageSynthesisResult fetch(String taskId, String apiKey)
       throws ApiException, NoApiKeyException {
-    return ImageSynthesisResult.fromDashScopeResult(asyncApi.fetch(taskId, apiKey));
+    return ImageSynthesisResult.fromDashScopeResult(asyncApi.fetch(taskId, apiKey, baseUrl));
   }
 
   public ImageSynthesisResult fetch(ImageSynthesisResult taskInfo, String apiKey)
       throws ApiException, NoApiKeyException {
 
     return ImageSynthesisResult.fromDashScopeResult(
-        asyncApi.fetch(taskInfo.getOutput().getTaskId(), apiKey));
+        asyncApi.fetch(taskInfo.getOutput().getTaskId(), apiKey, baseUrl));
   }
 
   public ImageSynthesisResult cancel(String taskId, String apiKey)
       throws ApiException, NoApiKeyException {
-    return ImageSynthesisResult.fromDashScopeResult(asyncApi.cancel(taskId, apiKey));
+    return ImageSynthesisResult.fromDashScopeResult(asyncApi.cancel(taskId, apiKey, baseUrl));
   }
 
   public ImageSynthesisResult cancel(ImageSynthesisResult taskInfo, String apiKey)
       throws ApiException, NoApiKeyException {
-    DashScopeResult res = asyncApi.cancel(taskInfo.getOutput().getTaskId(), apiKey);
+    DashScopeResult res = asyncApi.cancel(taskInfo.getOutput().getTaskId(), apiKey, baseUrl);
     return ImageSynthesisResult.fromDashScopeResult(res);
   }
 
   public ImageSynthesisResult wait(String taskId, String apiKey)
       throws ApiException, NoApiKeyException {
-    return ImageSynthesisResult.fromDashScopeResult(asyncApi.wait(taskId, apiKey));
+    return ImageSynthesisResult.fromDashScopeResult(asyncApi.wait(taskId, apiKey, baseUrl));
   }
 
   public ImageSynthesisResult wait(ImageSynthesisResult taskInfo, String apiKey)
       throws ApiException, NoApiKeyException {
     return ImageSynthesisResult.fromDashScopeResult(
-        asyncApi.wait(taskInfo.getOutput().getTaskId(), apiKey));
+        asyncApi.wait(taskInfo.getOutput().getTaskId(), apiKey, baseUrl));
   }
 }

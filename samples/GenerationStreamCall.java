@@ -2,8 +2,8 @@
 
 import java.util.concurrent.Semaphore;
 import com.alibaba.dashscope.aigc.generation.Generation;
+import com.alibaba.dashscope.aigc.generation.GenerationParam;
 import com.alibaba.dashscope.aigc.generation.GenerationResult;
-import com.alibaba.dashscope.aigc.generation.models.QwenParam;
 import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
@@ -15,7 +15,7 @@ public class GenerationStreamCall {
   public static void streamCall()
       throws NoApiKeyException, ApiException, InputRequiredException {
     Generation gen = new Generation();
-    QwenParam param = QwenParam.builder().model(Generation.Models.QWEN_PLUS)
+    GenerationParam param = GenerationParam.builder().model(Generation.Models.QWEN_PLUS)
         .prompt("就当前的海洋污染的情况，写一份限塑的倡议书提纲，需要有理有据地号召大家克制地使用塑料制品").topP(0.8).build();
     Flowable<GenerationResult> result = gen.streamCall(param);
     result.blockingForEach(message -> {
@@ -26,7 +26,7 @@ public class GenerationStreamCall {
   public static void streamCallWithCallback()
       throws NoApiKeyException, ApiException, InputRequiredException,InterruptedException {
     Generation gen = new Generation();
-    QwenParam param = QwenParam.builder().model(Generation.Models.QWEN_PLUS)
+    GenerationParam param = GenerationParam.builder().model(Generation.Models.QWEN_PLUS)
         .prompt("就当前的海洋污染的情况，写一份限塑的倡议书提纲，需要有理有据地号召大家克制地使用塑料制品").topP(0.8).build();
     Semaphore semaphore = new Semaphore(0);
     gen.streamCall(param, new ResultCallback<GenerationResult>() {

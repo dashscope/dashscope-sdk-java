@@ -96,6 +96,29 @@ public class TestBatchTextEmbedding {
   }
 
   @Test
+  @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "BODY")
+  public void testFetchTaskWithDiffUrl()
+      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+          InputRequiredException {
+    String responseBody =
+        "{\"request_id\":\"78a74ba9-b8eb-9ca5-ab34-5a56f453cf03\",\"output\":{\"task_id\":\"2a1d8589-7148-422a-b9e7-f41682f07160\",\"task_status\":\"PENDING\"}}";
+    server.enqueue(
+        new MockResponse()
+            .setBody(responseBody)
+            .setHeader("content-type", MEDIA_TYPE_APPLICATION_JSON));
+    int port = server.getPort();
+    String url = String.format("http://127.0.0.1:%s/customurl", port);
+    BatchTextEmbedding textEmbedding = new BatchTextEmbedding(url);
+    BatchTextEmbeddingResult result =
+        textEmbedding.fetch("2a1d8589-7148-422a-b9e7-f41682f07160", null);
+    System.out.println(JsonUtils.toJson(result));
+    assertEquals(responseBody, JsonUtils.toJson(result));
+    RecordedRequest req = server.takeRequest();
+    // verify call customurl
+    assertEquals(req.getPath(), "/customurl/tasks/2a1d8589-7148-422a-b9e7-f41682f07160");
+  }
+
+  @Test
   public void testListParameters() throws ApiException, NoApiKeyException, InterruptedException {
     AsyncTaskListParam param =
         AsyncTaskListParam.builder()

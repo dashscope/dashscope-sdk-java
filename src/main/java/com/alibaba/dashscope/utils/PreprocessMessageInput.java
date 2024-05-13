@@ -7,15 +7,28 @@ import com.alibaba.dashscope.exception.UploadFileException;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
 public final class PreprocessMessageInput {
+
+  public static boolean isValidPath(String pathString) {
+    try {
+      Paths.get(pathString);
+      return true;
+    } catch (InvalidPathException e) {
+      return false;
+    }
+  }
+
   public static boolean checkAndUpload(
       String model, MultiModalMessageItemBase message, String apiKey)
       throws NoApiKeyException, UploadFileException {
     boolean isUpload = false;
-    if (message.getContent().startsWith(ApiKeywords.FILE_PATH_SCHEMA)) {
+    if (!message.getModal().equals("text")
+        && message.getContent().startsWith(ApiKeywords.FILE_PATH_SCHEMA)) {
       try {
         URI fileURI = new URI(message.getContent());
         File f = new File(fileURI);
@@ -33,6 +46,19 @@ public final class PreprocessMessageInput {
         }
       } catch (URISyntaxException e) {
         throw new UploadFileException(e.getMessage());
+      }
+    } else if (!message.getModal().equals("text") && !message.getContent().startsWith("http")) {
+      if (isValidPath(message.getContent())) {
+        File f = new File(message.getContent());
+        if (f.exists()) {
+          String fileUrl = OSSUtils.upload(model, f.getAbsolutePath(), apiKey);
+          if (fileUrl == null) {
+            throw new UploadFileException(
+                String.format("Uploading file: %s failed", message.getContent()));
+          }
+          message.setContent(fileUrl);
+          isUpload = true;
+        }
       }
     }
     return isUpload;
@@ -72,6 +98,18 @@ public final class PreprocessMessageInput {
           }
         } catch (URISyntaxException e) {
           throw new UploadFileException(e.getMessage());
+        }
+      } else if (!entry.getKey().equals("text") && !v.startsWith("http")) {
+        if (isValidPath(v)) {
+          File f = new File(v);
+          if (f.exists()) {
+            String fileUrl = OSSUtils.upload(model, f.getAbsolutePath(), apiKey);
+            if (fileUrl == null) {
+              throw new UploadFileException(String.format("Uploading file: %s failed", v));
+            }
+            entry.setValue(fileUrl);
+            isUpload = true;
+          }
         }
       }
     }

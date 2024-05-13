@@ -1,10 +1,11 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 
+import java.util.ArrayList;
+import java.util.List;
 import com.alibaba.dashscope.aigc.conversation.Conversation;
 import com.alibaba.dashscope.aigc.conversation.ConversationParam;
 import com.alibaba.dashscope.aigc.conversation.ConversationResult;
 import com.alibaba.dashscope.common.History;
-import com.alibaba.dashscope.common.HistoryManager;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
@@ -15,7 +16,7 @@ public class ConversationManagerHistory {
     public static void callWithHistoryStream() throws ApiException, NoApiKeyException, InputRequiredException {
         Conversation conversation = new Conversation();
 
-        HistoryManager historyManager = new HistoryManager(10);
+        List<History> historyManager = new ArrayList<>();
         History his = History.builder().bot("今天天气不错，要出去玩玩嘛？").user("今天天气好吗？").build();
         historyManager.add(his);
         String prompt = "那你有什么地方推荐？";
@@ -23,7 +24,7 @@ public class ConversationManagerHistory {
         .builder()
         .model(Conversation.Models.QWEN_TURBO)
         .prompt(prompt)
-        .history(historyManager.get())
+        .history(historyManager)
         .topP(0.8)
         .enableSearch(true)
         .build();
@@ -41,7 +42,7 @@ public class ConversationManagerHistory {
         his = History.builder().user(prompt).bot(finalResult.toString()).build();
         historyManager.add(his);
         prompt = "那个公园最近？";
-        param.setHistory(historyManager.get());
+        param.setHistory(historyManager);
         param.setPrompt(prompt);
         ConversationResult result = conversation.call(param);
         System.out.println(result);

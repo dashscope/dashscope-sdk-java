@@ -4,7 +4,6 @@ package com.alibaba.dashscope.exception;
 import com.alibaba.dashscope.common.ErrorType;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.utils.JsonUtils;
-import java.net.HttpURLConnection;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,9 +18,9 @@ public class ApiException extends RuntimeException {
     } else {
       this.status =
           Status.builder()
-              .statusCode(HttpURLConnection.HTTP_INTERNAL_ERROR)
-              .code(ErrorType.UNKNOWN_ERROR.getValue())
-              .message(e.getMessage())
+              .statusCode(-1)
+              .code(ErrorType.NETORK_ERROR.getValue())
+              .message(String.format("%s: %s", e.getClass().getSimpleName(), e.getMessage()))
               .build();
     }
     this.setStackTrace(e.getStackTrace());

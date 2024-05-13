@@ -55,7 +55,7 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
   public DashScopeResult call(ParamT param, ServiceOption serviceOption)
       throws ApiException, NoApiKeyException {
     DashScopeResult task = this.asyncCall(param, serviceOption);
-    return this.wait(getTaskId(task), param.getApiKey());
+    return this.wait(getTaskId(task), param.getApiKey(), serviceOption.getBaseHttpUrl());
   }
 
   /**
@@ -82,12 +82,14 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
    */
-  public DashScopeResult wait(String taskId, String apiKey) throws ApiException, NoApiKeyException {
+  public DashScopeResult wait(String taskId, String apiKey, String baseUrl)
+      throws ApiException, NoApiKeyException {
     AsyncTaskOption serviceOption =
         AsyncTaskOption.builder()
             .protocol(Protocol.HTTP)
             .httpMethod(HttpMethod.GET)
             .url(String.format("/tasks/%s", taskId))
+            .baseHttpUrl(baseUrl)
             .build();
 
     AsyncTaskParam getParam = AsyncTaskParam.builder().taskId(taskId).apiKey(apiKey).build();
@@ -133,9 +135,9 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
     }
   }
 
-  public DashScopeResult wait(DashScopeResult taskInfo, String apiKey)
+  public DashScopeResult wait(DashScopeResult taskInfo, String apiKey, String baseUrl)
       throws ApiException, NoApiKeyException {
-    return wait(getTaskId(taskInfo), apiKey);
+    return wait(getTaskId(taskInfo), apiKey, baseUrl);
   }
 
   /**
@@ -148,12 +150,13 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
    */
-  public DashScopeResult fetch(String taskId, String apiKey)
+  public DashScopeResult fetch(String taskId, String apiKey, String baseUrl)
       throws ApiException, NoApiKeyException {
     AsyncTaskOption serviceOption =
         AsyncTaskOption.builder()
             .protocol(Protocol.HTTP)
             .httpMethod(HttpMethod.GET)
+            .baseHttpUrl(baseUrl)
             .url(String.format("/tasks/%s", taskId))
             .build();
 
@@ -163,28 +166,36 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
     return taskResult;
   }
 
-  public DashScopeResult fetch(DashScopeResult taskInfo, String apiKey)
+  public DashScopeResult fetch(DashScopeResult taskInfo, String apiKey, String baseUrl)
       throws ApiException, NoApiKeyException {
-    return fetch(getTaskId(taskInfo), apiKey);
+    return fetch(getTaskId(taskInfo), apiKey, baseUrl);
   }
 
-  public DashScopeResult cancel(String taskId, String apiKey)
+  public DashScopeResult cancel(String taskId, String apiKey, String baseUrl)
       throws ApiException, NoApiKeyException {
     AsyncTaskParam param = AsyncTaskParam.builder().taskId(taskId).apiKey(apiKey).build();
     AsyncTaskOption taskOption =
-        AsyncTaskOption.builder().url(String.format("/tasks/%s/cancel", taskId)).build();
+        AsyncTaskOption.builder()
+            .baseHttpUrl(baseUrl)
+            .url(String.format("/tasks/%s/cancel", taskId))
+            .build();
     DashScopeResult result = client.send(new HalfDuplexRequest(param, taskOption));
     return result;
   }
 
-  public DashScopeResult cancel(DashScopeResult taskInfo, String apiKey)
+  public DashScopeResult cancel(DashScopeResult taskInfo, String apiKey, String baseUrl)
       throws ApiException, NoApiKeyException {
-    return cancel(getTaskId(taskInfo), apiKey);
+    return cancel(getTaskId(taskInfo), apiKey, baseUrl);
   }
 
-  public DashScopeResult list(AsyncTaskListParam param) throws ApiException, NoApiKeyException {
+  public DashScopeResult list(AsyncTaskListParam param, String baseUrl)
+      throws ApiException, NoApiKeyException {
     AsyncTaskOption taskOption =
-        AsyncTaskOption.builder().url("/tasks").httpMethod(HttpMethod.GET).build();
+        AsyncTaskOption.builder()
+            .baseHttpUrl(baseUrl)
+            .url("/tasks")
+            .httpMethod(HttpMethod.GET)
+            .build();
     DashScopeResult result = client.send(new HalfDuplexRequest(param, taskOption));
     return result;
   }
@@ -197,7 +208,8 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
       String region,
       String status,
       Integer pageNo,
-      Integer pageSize)
+      Integer pageSize,
+      String baseUrl)
       throws ApiException, NoApiKeyException {
     AsyncTaskListParam.AsyncTaskListParamBuilder<?, ?> builder = AsyncTaskListParam.builder();
     if (startTime != null) {
@@ -225,7 +237,7 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
       builder.parameter("page_size", pageSize);
     }
     AsyncTaskListParam param = builder.build();
-    return list(param);
+    return list(param, baseUrl);
   }
 
   public String getTaskId(DashScopeResult task) {

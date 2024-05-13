@@ -19,6 +19,7 @@ import com.alibaba.dashscope.task.AsyncTaskListResult;
 public class BatchTextEmbedding {
   private final AsynchronousApi<BatchTextEmbeddingParam> asyncApi;
   private final ApiServiceOption serviceOption;
+  private final String baseUrl;
 
   public final class Models {
     public static final String TEXT_EMBEDDING_ASYNC_V1 = "text-embedding-async-v1";
@@ -41,12 +42,14 @@ public class BatchTextEmbedding {
   public BatchTextEmbedding() {
     serviceOption = defaultApiServiceOption();
     asyncApi = new AsynchronousApi<>();
+    this.baseUrl = null;
   }
 
   public BatchTextEmbedding(String baseUrl) {
     serviceOption = defaultApiServiceOption();
     serviceOption.setBaseHttpUrl(baseUrl);
     asyncApi = new AsynchronousApi<>();
+    this.baseUrl = baseUrl;
   }
 
   /**
@@ -74,7 +77,7 @@ public class BatchTextEmbedding {
   }
 
   public AsyncTaskListResult list(AsyncTaskListParam param) throws ApiException, NoApiKeyException {
-    return AsyncTaskListResult.fromDashScopeResult(asyncApi.list(param));
+    return AsyncTaskListResult.fromDashScopeResult(asyncApi.list(param, baseUrl));
   }
 
   public AsyncTaskListResult list(
@@ -88,39 +91,40 @@ public class BatchTextEmbedding {
       Integer pageSize)
       throws ApiException, NoApiKeyException {
     return AsyncTaskListResult.fromDashScopeResult(
-        asyncApi.list(startTime, endTime, modelName, apiKeyId, region, status, pageNo, pageSize));
+        asyncApi.list(
+            startTime, endTime, modelName, apiKeyId, region, status, pageNo, pageSize, baseUrl));
   }
 
   public BatchTextEmbeddingResult fetch(String taskId, String apiKey)
       throws ApiException, NoApiKeyException {
-    return BatchTextEmbeddingResult.fromDashScopeResult(asyncApi.fetch(taskId, apiKey));
+    return BatchTextEmbeddingResult.fromDashScopeResult(asyncApi.fetch(taskId, apiKey, baseUrl));
   }
 
   public BatchTextEmbeddingResult fetch(BatchTextEmbeddingResult taskInfo, String apiKey)
       throws ApiException, NoApiKeyException {
     return BatchTextEmbeddingResult.fromDashScopeResult(
-        asyncApi.fetch(taskInfo.getOutput().getTaskId(), apiKey));
+        asyncApi.fetch(taskInfo.getOutput().getTaskId(), apiKey, baseUrl));
   }
 
   public BatchTextEmbeddingResult cancel(String taskId, String apiKey)
       throws ApiException, NoApiKeyException {
-    return BatchTextEmbeddingResult.fromDashScopeResult(asyncApi.cancel(taskId, apiKey));
+    return BatchTextEmbeddingResult.fromDashScopeResult(asyncApi.cancel(taskId, apiKey, baseUrl));
   }
 
   public BatchTextEmbeddingResult cancel(BatchTextEmbeddingResult taskInfo, String apiKey)
       throws ApiException, NoApiKeyException {
     return BatchTextEmbeddingResult.fromDashScopeResult(
-        asyncApi.cancel(taskInfo.getOutput().getTaskId(), apiKey));
+        asyncApi.cancel(taskInfo.getOutput().getTaskId(), apiKey, baseUrl));
   }
 
   public BatchTextEmbeddingResult wait(String taskId, String apiKey)
       throws ApiException, NoApiKeyException {
-    return BatchTextEmbeddingResult.fromDashScopeResult(asyncApi.wait(taskId, apiKey));
+    return BatchTextEmbeddingResult.fromDashScopeResult(asyncApi.wait(taskId, apiKey, baseUrl));
   }
 
   public BatchTextEmbeddingResult wait(BatchTextEmbeddingResult taskInfo, String apiKey)
       throws ApiException, NoApiKeyException {
     return BatchTextEmbeddingResult.fromDashScopeResult(
-        asyncApi.wait(taskInfo.getOutput().getTaskId(), apiKey));
+        asyncApi.wait(taskInfo.getOutput().getTaskId(), apiKey, baseUrl));
   }
 }

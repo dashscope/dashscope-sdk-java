@@ -1,5 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import com.alibaba.dashscope.aigc.conversation.Conversation;
 import com.alibaba.dashscope.aigc.conversation.ConversationParam.ResultFormat;
@@ -7,7 +9,6 @@ import com.alibaba.dashscope.aigc.generation.Generation;
 import com.alibaba.dashscope.aigc.generation.GenerationResult;
 import com.alibaba.dashscope.aigc.generation.models.QwenParam;
 import com.alibaba.dashscope.common.Message;
-import com.alibaba.dashscope.common.MessageManager;
 import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.ApiException;
@@ -58,13 +59,13 @@ public class GenerationQuickStart {
 
   public static void quickStartWithMessage() throws ApiException, NoApiKeyException, InputRequiredException {
     Generation gen = new Generation();
-    MessageManager messageManager = new MessageManager(10);
+    List<Message> messageManager = new ArrayList<>();
     messageManager.add(Message.builder().role(Role.USER.getValue()).content("今天天气好吗？").build());
     messageManager
         .add(Message.builder().role(Role.ASSISTANT.getValue()).content("今天天气不错，要出去玩玩嘛？").build());
     messageManager.add(Message.builder().role(Role.USER.getValue()).content("那你有什么地方推荐？").build());
     QwenParam param = QwenParam.builder().model(Conversation.Models.QWEN_PLUS)
-        .messages(messageManager.get()).topP(0.8).resultFormat(ResultFormat.MESSAGE).enableSearch(true).build();
+        .messages(messageManager).topP(0.8).resultFormat(ResultFormat.MESSAGE).enableSearch(true).build();
     GenerationResult result = gen.call(param);
     System.out.println(result);
   }

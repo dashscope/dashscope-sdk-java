@@ -14,9 +14,14 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junitpioneer.jupiter.ClearEnvironmentVariable;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
 
 @Slf4j
+@Execution(ExecutionMode.SAME_THREAD)
+@ClearEnvironmentVariable(key = "DASHSCOPE_API_KEY")
 public class TestApiKey {
   static final String environmentValue = "1111";
   static final String environmentPath = "/tmp/ds_api_key";

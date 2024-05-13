@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 public final class Transcription {
   private final AsynchronousApi<TranscriptionParam> asyncApi;
   private final ApiServiceOption createServiceOptions;
+  private final String baseUrl;
 
   public Transcription() {
     asyncApi = new AsynchronousApi<TranscriptionParam>();
@@ -28,6 +29,7 @@ public final class Transcription {
             .function(Function.TRANSCRIPTION.getValue())
             .isAsyncTask(true)
             .build();
+    this.baseUrl = null;
   }
 
   public TranscriptionResult asyncCall(TranscriptionParam param) {
@@ -42,7 +44,7 @@ public final class Transcription {
   public TranscriptionResult wait(TranscriptionQueryParam queryParam) {
     try {
       return TranscriptionResult.fromDashScopeResult(
-          asyncApi.wait(queryParam.getTaskId(), queryParam.getApiKey()));
+          asyncApi.wait(queryParam.getTaskId(), queryParam.getApiKey(), baseUrl));
     } catch (NoApiKeyException e) {
       throw new ApiException(e);
     }
@@ -51,7 +53,7 @@ public final class Transcription {
   public TranscriptionResult fetch(TranscriptionQueryParam queryParam) {
     try {
       return TranscriptionResult.fromDashScopeResult(
-          asyncApi.fetch(queryParam.getTaskId(), queryParam.getApiKey()));
+          asyncApi.fetch(queryParam.getTaskId(), queryParam.getApiKey(), baseUrl));
     } catch (NoApiKeyException e) {
       throw new ApiException(e);
     }
