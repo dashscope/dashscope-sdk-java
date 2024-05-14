@@ -77,40 +77,76 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
     }
   }
 
+  private Status parseFailedJson(int statusCode, String body) {
+    try {
+      JsonObject jsonResponse = JsonUtils.parse(body);
+      String code = "";
+      String message = "";
+      String requestId = "";
+      if (jsonResponse.has(ApiKeywords.REQUEST_ID)) {
+        requestId = jsonResponse.get(ApiKeywords.REQUEST_ID).getAsString();
+      }
+      if (jsonResponse.has(ApiKeywords.CODE)) {
+        code = jsonResponse.get(ApiKeywords.CODE).getAsString();
+      }
+      if (jsonResponse.has(ApiKeywords.MESSAGE)) {
+        message = jsonResponse.get(ApiKeywords.MESSAGE).getAsString();
+      }
+      return Status.builder()
+          .statusCode(statusCode)
+          .code(code)
+          .message(message)
+          .requestId(requestId)
+          .isJson(true)
+          .build();
+    } catch (Throwable e) {
+      return Status.builder()
+          .statusCode(statusCode)
+          .code(ErrorType.RESPONSE_ERROR.getValue())
+          .message(body)
+          .isJson(true)
+          .build();
+    }
+  }
+
   private Status parseFailed(Response response) {
-    boolean isJson = false;
     String contentType = response.header("Content-Type");
-    if (contentType != null
-        && (contentType.toLowerCase().contains("application/json")
-            || contentType.toLowerCase().contains("text/event-stream"))) {
-      isJson = true;
+    // process http failed.
+    if (contentType != null && (contentType.toLowerCase().contains("application/json"))) {
+      String body;
       try {
-        JsonObject jsonResponse = JsonUtils.parse(response.body().string());
-        String code = "";
-        String message = "";
-        String requestId = "";
-        if (jsonResponse.has(ApiKeywords.REQUEST_ID)) {
-          requestId = jsonResponse.get(ApiKeywords.REQUEST_ID).getAsString();
-        }
-        if (jsonResponse.has(ApiKeywords.CODE)) {
-          code = jsonResponse.get(ApiKeywords.CODE).getAsString();
-        }
-        if (jsonResponse.has(ApiKeywords.MESSAGE)) {
-          message = jsonResponse.get(ApiKeywords.MESSAGE).getAsString();
-        }
-        return Status.builder()
-            .statusCode(response.code())
-            .code(code)
-            .message(message)
-            .requestId(requestId)
-            .isJson(isJson)
-            .build();
-      } catch (Throwable e) {
+        body = response.body().string();
+      } catch (IOException e) {
         return Status.builder()
             .statusCode(response.code())
             .code(ErrorType.RESPONSE_ERROR.getValue())
-            .message(response.message())
-            .isJson(isJson)
+            .message("Failed read response body: " + e.getMessage())
+            .isJson(true)
+            .build();
+      }
+      return parseFailedJson(response.code(), body);
+    } else if (contentType != null && contentType.toLowerCase().contains("text/event-stream")) {
+      try {
+        String body = response.body().string();
+        for (String part : body.split("\n")) {
+          part = part.trim();
+          if (part.startsWith("data:")) {
+            body = part.replace("data:", "");
+            return parseFailedJson(response.code(), body);
+          }
+        }
+        return Status.builder()
+            .statusCode(response.code())
+            .code(ErrorType.RESPONSE_ERROR.getValue())
+            .message(body)
+            .isJson(false)
+            .build();
+      } catch (IOException e) {
+        return Status.builder()
+            .statusCode(response.code())
+            .code(ErrorType.RESPONSE_ERROR.getValue())
+            .message("Failed read response body: " + e.getMessage())
+            .isJson(true)
             .build();
       }
     } else {
@@ -118,7 +154,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
           .statusCode(response.code())
           .code(ErrorType.RESPONSE_ERROR.getValue())
           .message(response.message())
-          .isJson(isJson)
+          .isJson(false)
           .build();
     }
   }
