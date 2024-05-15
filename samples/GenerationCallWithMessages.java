@@ -3,8 +3,8 @@
 import java.util.ArrayList;
 import java.util.List;
 import com.alibaba.dashscope.aigc.generation.Generation;
+import com.alibaba.dashscope.aigc.generation.GenerationParam;
 import com.alibaba.dashscope.aigc.generation.GenerationResult;
-import com.alibaba.dashscope.aigc.generation.models.QwenParam;
 import com.alibaba.dashscope.common.Message;
 import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.ApiException;
@@ -24,9 +24,10 @@ public class GenerationCallWithMessages {
     Message userMsg = Message.builder().role(Role.USER.getValue()).content("你好，周末去哪里玩？").build();
     msgManager.add(systemMsg);
     msgManager.add(userMsg);
-    QwenParam param =
-        QwenParam.builder().model(Generation.Models.QWEN_PLUS).messages(msgManager)
-            .resultFormat(QwenParam.ResultFormat.MESSAGE)
+    GenerationParam param =
+        GenerationParam.builder().model(Generation.Models.QWEN_PLUS).messages(msgManager)
+            .resultFormat(GenerationParam.ResultFormat.MESSAGE)
+            .incrementalOutput(true)
             .topP(0.8)
             .enableSearch(true)
             .build();

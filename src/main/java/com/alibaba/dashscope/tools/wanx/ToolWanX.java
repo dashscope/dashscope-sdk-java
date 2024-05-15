@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
 
-/** CodeInterpreterTool */
+/** @deprecated use `Text2Image` instead */
 @Data
 @EqualsAndHashCode(callSuper = false)
 @SuperBuilder
