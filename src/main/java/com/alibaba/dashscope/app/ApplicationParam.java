@@ -46,7 +46,7 @@ public class ApplicationParam extends HalfDuplexParamBase {
   private String sessionId;
 
   /** Flag to return rag or plugin process details */
-  private Boolean hasThoughts;
+  @Builder.Default private Boolean hasThoughts = false;
 
   /** The extra parameters for flow or plugin. */
   private JsonObject bizParams;
@@ -80,6 +80,13 @@ public class ApplicationParam extends HalfDuplexParamBase {
    */
   private Float temperature;
 
+  /**
+   * Used to control the streaming output mode. If true, the subsequent output will include the
+   * previously input content by default. Otherwise, the subsequent output will not include the
+   * previously output content. Default: false.
+   */
+  @Builder.Default private Boolean incrementalOutput = false;
+
   @Override
   public String getModel() {
     return null;
@@ -104,7 +111,9 @@ public class ApplicationParam extends HalfDuplexParamBase {
       params.put(AppKeywords.HAS_THOUGHTS, hasThoughts);
     }
 
+    params.put("incremental_output", incrementalOutput);
     params.putAll(parameters);
+
     return params;
   }
 

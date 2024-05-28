@@ -81,7 +81,7 @@ public class ApplicationCalls {
                 result.getRequestId(), result.getOutput().getText(), result.getOutput().getFinishReason());
 
         List<ApplicationOutput.Thought> thoughts = result.getOutput().getThoughts();
-        if (thoughts != null && thoughts.size() > 0) {
+        if (thoughts != null && !thoughts.isEmpty()) {
             for (ApplicationOutput.Thought thought : thoughts) {
                 System.out.printf("thought: %s\n", thought);
             }
@@ -140,7 +140,7 @@ public class ApplicationCalls {
                 result.getRequestId(), result.getOutput().getText(), result.getOutput().getFinishReason());
 
         List<ApplicationOutput.Thought> thoughts = result.getOutput().getThoughts();
-        if (thoughts != null && thoughts.size() > 0) {
+        if (thoughts != null && !thoughts.isEmpty()) {
             for (ApplicationOutput.Thought thought : thoughts) {
                 System.out.printf("thought: %s\n", thought);
             }
@@ -184,15 +184,13 @@ public class ApplicationCalls {
                 .appId(APP_ID)
                 .prompt("如何做土豆炖猪脚?")
                 .topP(0.8)
+                .incrementalOutput(true)
                 .build();
 
         Application application = new Application();
         Flowable<ApplicationResult> result = application.streamCall(param);
-        result.blockingForEach(data -> {
-            System.out.printf("requestId: %s, text: %s, finishReason: %s\n",
-                    data.getRequestId(), data.getOutput().getText(), data.getOutput().getFinishReason());
-
-        });
+        result.blockingForEach(data -> System.out.printf(data.getOutput().getText()));
+        System.out.print("\n");
     }
 
     /**
@@ -223,8 +221,8 @@ public class ApplicationCalls {
 //        ragCallWithTags();
 //        flowCall();
 //        callWithSession();
-//        streamCall();
-        callWithWorkspace();
+        streamCall();
+//        callWithWorkspace();
         } catch (ApiException | NoApiKeyException | InputRequiredException e) {
             System.out.printf("Exception: %s", e.getMessage());
         }
