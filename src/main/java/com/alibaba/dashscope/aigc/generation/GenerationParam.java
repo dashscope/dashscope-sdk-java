@@ -116,6 +116,12 @@ public class GenerationParam extends GenerationParamBase {
    */
   private List<ToolBase> tools;
 
+  /*
+   * Specify tool choice
+   */
+  @SerializedName("tool_choice")
+  protected Object toolChoice;
+
   @Override
   public JsonObject getInput() {
     JsonObject jsonObject = new JsonObject();
@@ -183,7 +189,13 @@ public class GenerationParam extends GenerationParamBase {
     if (tools != null && !tools.isEmpty()) {
       params.put("tools", tools);
     }
-
+    if (toolChoice != null) {
+      if (toolChoice instanceof String) {
+        params.put("tool_choice", (String) toolChoice);
+      } else {
+        params.put("tool_choice", JsonUtils.toJsonObject(toolChoice));
+      }
+    }
     params.putAll(parameters);
     return params;
   }
