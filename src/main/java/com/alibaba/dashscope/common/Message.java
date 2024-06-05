@@ -26,4 +26,8 @@ public class Message {
   /** For tool result */
   @SerializedName("tool_call_id")
   String toolCallId;
+
+  /** tool name */
+  @SerializedName("name")
+  String name;
 }

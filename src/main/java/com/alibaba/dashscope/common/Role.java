@@ -10,6 +10,7 @@ public enum Role {
   BOT("bot"),
   SYSTEM("system"),
   ATTACHMENT("attachment"),
+  TOOL("tool"),
   ;
 
   private final String value;
