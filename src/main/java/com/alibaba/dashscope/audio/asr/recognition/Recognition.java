@@ -66,6 +66,8 @@ public final class Recognition {
         RecognitionParam param, Flowable<ByteBuffer> audioStream) {
       RecognitionParamWithStream recognitionParamWithStream =
           RecognitionParamWithStream.builder()
+              .parameters((param.getParameters()))
+              .headers(param.getHeaders())
               .format(param.getFormat())
               .audioStream(audioStream)
               .disfluencyRemovalEnabled(param.isDisfluencyRemovalEnabled())
