@@ -12,9 +12,7 @@ import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import io.reactivex.Flowable;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.UUID;
+import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -267,6 +265,11 @@ public class TestApplication {
 
     result.setRequestId(UUID.randomUUID().toString());
 
+    List<String> images = new ArrayList<>();
+    images.add("http://127.0.0.1:8080/qqq.png");
+    images.add("http://127.0.0.1:8080/www.png");
+    images.add("http://127.0.0.1:8080/eee.png");
+
     ApplicationOutput output =
         ApplicationOutput.builder()
             .text("API接口说明中，通过parameters的topP属性设置，取值范围在(0,1.0)。")
@@ -282,6 +285,7 @@ public class TestApplication {
                         .title("API接口说明")
                         .text("topP取值范围在(0,1.0),取值越大,生成的随机性越高")
                         .bizId("2345")
+                        .images(images)
                         .build()))
             .thoughts(
                 Collections.singletonList(
@@ -373,6 +377,9 @@ public class TestApplication {
         Assertions.assertEquals(docReference.getTitle(), expectedDocReference.getTitle());
         Assertions.assertEquals(docReference.getText(), expectedDocReference.getText());
         Assertions.assertEquals(docReference.getBizId(), expectedDocReference.getBizId());
+        Assertions.assertEquals(
+            JsonUtils.toJson(docReference.getImages()),
+            JsonUtils.toJson(expectedDocReference.getImages()));
       }
     }
 

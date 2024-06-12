@@ -18,6 +18,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class RagApplicationParam extends ApplicationParam {
   /** Doc reference type for returning query result of document retrival */
   public static class DocReferenceType {

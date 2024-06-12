@@ -107,5 +107,9 @@ public class ApplicationOutput {
     /** Biz id that caller is able to associated for biz logic */
     @SerializedName("biz_id")
     private String bizId;
+
+    /** List of referenced image URLs */
+    @SerializedName("images")
+    private List<String> images;
   }
 }
