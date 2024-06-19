@@ -110,6 +110,14 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
   }
 
   private Status parseFailed(Response response) {
+    if (response == null) {
+      return Status.builder()
+          .statusCode(-1)
+          .code(ErrorType.NETORK_ERROR.getValue())
+          .message("Get response failed!")
+          .isJson(false)
+          .build();
+    }
     String contentType = response.header("Content-Type");
     // process http failed.
     if (contentType != null && (contentType.toLowerCase().contains("application/json"))) {
