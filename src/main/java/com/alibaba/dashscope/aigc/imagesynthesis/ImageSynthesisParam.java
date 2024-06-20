@@ -6,6 +6,7 @@ import static com.alibaba.dashscope.utils.ApiKeywords.*;
 
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
 import com.alibaba.dashscope.exception.InputRequiredException;
+import com.alibaba.dashscope.utils.GsonExclude;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
@@ -14,6 +15,7 @@ import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Singular;
 import lombok.experimental.SuperBuilder;
 
 @EqualsAndHashCode(callSuper = true)
@@ -31,6 +33,9 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
   private String refImage;
   private String sketchImageUrl;
 
+  /** The extra parameters. */
+  @GsonExclude @Singular protected Map<String, Object> extraInputs;
+
   @Override
   public JsonObject getInput() {
     JsonObject jsonObject = new JsonObject();
@@ -44,7 +49,10 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
     if (sketchImageUrl != null && !sketchImageUrl.isEmpty()) {
       jsonObject.addProperty("sketch_image_url", sketchImageUrl);
     }
-
+    if (extraInputs != null && !extraInputs.isEmpty()) {
+      JsonObject extraInputsJsonObject = JsonUtils.parametersToJsonObject(extraInputs);
+      jsonObject = JsonUtils.merge(jsonObject, extraInputsJsonObject);
+    }
     return jsonObject;
   }
 

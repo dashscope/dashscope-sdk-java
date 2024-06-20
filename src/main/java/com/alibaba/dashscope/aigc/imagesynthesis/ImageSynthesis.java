@@ -22,6 +22,7 @@ public final class ImageSynthesis {
     public static final String WANX_SKETCH_TO_IMAGE_V1 = "wanx-sketch-to-image-v1";
   }
 
+  /** Default test2image */
   public ImageSynthesis() {
     // only support http
     asyncApi = new AsynchronousApi<HalfDuplexServiceParam>();
@@ -38,7 +39,34 @@ public final class ImageSynthesis {
     this.baseUrl = null;
   }
 
-  public ImageSynthesis(String baseUrl) {
+  /**
+   * The task of the image synthesis image2image or test2image.
+   *
+   * @param task The task of image synthesis(image2image|text2image).
+   */
+  public ImageSynthesis(String task) {
+    // only support http
+    asyncApi = new AsynchronousApi<HalfDuplexServiceParam>();
+    createServiceOptions =
+        ApiServiceOption.builder()
+            .protocol(Protocol.HTTP)
+            .httpMethod(HttpMethod.POST)
+            .streamingMode(StreamingMode.NONE)
+            .taskGroup("aigc")
+            .task(task)
+            .function("image-synthesis")
+            .isAsyncTask(true)
+            .build();
+    this.baseUrl = null;
+  }
+
+  /**
+   * Create with task and custom baseUrl
+   *
+   * @param task The task of image synthesis(image2image|text2image).
+   * @param baseUrl The service base url.
+   */
+  public ImageSynthesis(String task, String baseUrl) {
     // only support http
     asyncApi = new AsynchronousApi<HalfDuplexServiceParam>();
     createServiceOptions =
@@ -48,7 +76,7 @@ public final class ImageSynthesis {
             .baseHttpUrl(baseUrl)
             .streamingMode(StreamingMode.NONE)
             .taskGroup("aigc")
-            .task("text2image")
+            .task(task)
             .function("image-synthesis")
             .isAsyncTask(true)
             .build();
