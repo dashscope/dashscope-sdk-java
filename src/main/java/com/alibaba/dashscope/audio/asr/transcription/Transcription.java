@@ -8,7 +8,10 @@ import com.alibaba.dashscope.common.Task;
 import com.alibaba.dashscope.common.TaskGroup;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
-import com.alibaba.dashscope.protocol.*;
+import com.alibaba.dashscope.protocol.ApiServiceOption;
+import com.alibaba.dashscope.protocol.HttpMethod;
+import com.alibaba.dashscope.protocol.Protocol;
+import com.alibaba.dashscope.protocol.StreamingMode;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -44,7 +47,11 @@ public final class Transcription {
   public TranscriptionResult wait(TranscriptionQueryParam queryParam) {
     try {
       return TranscriptionResult.fromDashScopeResult(
-          asyncApi.wait(queryParam.getTaskId(), queryParam.getApiKey(), baseUrl));
+          asyncApi.wait(
+              queryParam.getTaskId(),
+              queryParam.getApiKey(),
+              baseUrl,
+              queryParam.getCustomHeaders()));
     } catch (NoApiKeyException e) {
       throw new ApiException(e);
     }
@@ -53,7 +60,11 @@ public final class Transcription {
   public TranscriptionResult fetch(TranscriptionQueryParam queryParam) {
     try {
       return TranscriptionResult.fromDashScopeResult(
-          asyncApi.fetch(queryParam.getTaskId(), queryParam.getApiKey(), baseUrl));
+          asyncApi.fetch(
+              queryParam.getTaskId(),
+              queryParam.getApiKey(),
+              baseUrl,
+              queryParam.getCustomHeaders()));
     } catch (NoApiKeyException e) {
       throw new ApiException(e);
     }
