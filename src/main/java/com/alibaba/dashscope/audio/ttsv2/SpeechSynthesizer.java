@@ -58,6 +58,9 @@ public final class SpeechSynthesizer {
   private boolean isFirst = true;
   private AtomicBoolean canceled = new AtomicBoolean(false);
   private boolean async_call = false;
+  private long startStreamTimeStamp = -1;
+  private long firstPackageTimeStamp = -1;
+  private double recvAudioLength = 0;
 
   /**
    * CosyVoice Speech Synthesis SDK
@@ -175,11 +178,37 @@ public final class SpeechSynthesizer {
    */
   public Flowable<SpeechSynthesisResult> streamingCallAsFlowable(Flowable<String> textStream)
       throws ApiException, NoApiKeyException {
+    startStreamTimeStamp = System.currentTimeMillis();
+    recvAudioLength = 0;
     return duplexApi
         .duplexCall(
             StreamInputTtsParamWithStream.fromStreamInputTtsParam(this.parameters, textStream))
         .map(SpeechSynthesisResult::fromDashScopeResult)
-        .filter(item -> !canceled.get());
+        .filter(item -> !canceled.get())
+        .doOnNext(
+            result -> {
+              if (result.getAudioFrame() != null) {
+                if (recvAudioLength == 0) {
+                  firstPackageTimeStamp = System.currentTimeMillis();
+                  log.debug(
+                      "[TtsV2] first package delay: "
+                          + (System.currentTimeMillis() - startStreamTimeStamp)
+                          + " ms");
+                }
+                recvAudioLength +=
+                    (double) result.getAudioFrame().capacity()
+                        / ((double) (2 * parameters.getFormat().getSampleRate()) / 1000);
+                long current = System.currentTimeMillis();
+                double current_rtf = (current - firstPackageTimeStamp) / recvAudioLength;
+                log.debug(
+                    "[TtsV2] Recv Audio Binary: "
+                        + result.getAudioFrame().capacity()
+                        + " bytes, total audio "
+                        + recvAudioLength
+                        + " ms, current_rtf: "
+                        + current_rtf);
+              }
+            });
   }
 
   /**
@@ -190,6 +219,8 @@ public final class SpeechSynthesizer {
    */
   public Flowable<SpeechSynthesisResult> callAsFlowable(String text)
       throws ApiException, NoApiKeyException {
+    startStreamTimeStamp = System.currentTimeMillis();
+    recvAudioLength = 0;
     return duplexApi
         .duplexCall(
             StreamInputTtsParamWithStream.fromStreamInputTtsParam(
@@ -204,7 +235,31 @@ public final class SpeechSynthesizer {
                           .start();
                     },
                     BackpressureStrategy.BUFFER)))
-        .map(SpeechSynthesisResult::fromDashScopeResult);
+        .map(SpeechSynthesisResult::fromDashScopeResult)
+        .doOnNext(
+            result -> {
+              if (result.getAudioFrame() != null) {
+                if (recvAudioLength == 0) {
+                  firstPackageTimeStamp = System.currentTimeMillis();
+                  log.debug(
+                      "[TtsV2] first package delay: "
+                          + (System.currentTimeMillis() - startStreamTimeStamp)
+                          + " ms");
+                }
+                recvAudioLength +=
+                    (double) result.getAudioFrame().capacity()
+                        / ((double) (2 * parameters.getFormat().getSampleRate()) / 1000);
+                long current = System.currentTimeMillis();
+                double current_rtf = (current - firstPackageTimeStamp) / recvAudioLength;
+                log.debug(
+                    "[TtsV2] Recv Audio Binary: "
+                        + result.getAudioFrame().capacity()
+                        + " bytes, total audio "
+                        + recvAudioLength
+                        + " ms, current_rtf: "
+                        + current_rtf);
+              }
+            });
   }
 
   /**
@@ -212,6 +267,8 @@ public final class SpeechSynthesizer {
    * request, and synchronously receive confirmation from the server.
    */
   private void startStream() {
+    startStreamTimeStamp = System.currentTimeMillis();
+    recvAudioLength = 0;
     this.canceled.set(false);
     if (this.callback == null) {
       throw new ApiException(
@@ -284,15 +341,33 @@ public final class SpeechSynthesizer {
                     }
                 }
                  */
-                if (speechSynthesisResult.getAudioFrame() != null && !async_call) {
+                if (speechSynthesisResult.getAudioFrame() != null) {
+                  if (recvAudioLength == 0) {
+                    firstPackageTimeStamp = System.currentTimeMillis();
+                    log.debug(
+                        "[TtsV2] first package delay: "
+                            + (System.currentTimeMillis() - startStreamTimeStamp)
+                            + " ms");
+                  }
+                  recvAudioLength +=
+                      (double) speechSynthesisResult.getAudioFrame().capacity()
+                          / ((double) (2 * parameters.getFormat().getSampleRate()) / 1000);
+                  long current = System.currentTimeMillis();
+                  double current_rtf = (current - firstPackageTimeStamp) / recvAudioLength;
                   log.debug(
                       "[TtsV2] Recv Audio Binary: "
-                          + speechSynthesisResult.getAudioFrame().capacity());
-                  try {
-                    channel.write(speechSynthesisResult.getAudioFrame());
-                  } catch (IOException e) {
-                    log.error(
-                        "Failed to write audio: {}", speechSynthesisResult.getAudioFrame(), e);
+                          + speechSynthesisResult.getAudioFrame().capacity()
+                          + " bytes, total audio "
+                          + recvAudioLength
+                          + " ms, current_rtf: "
+                          + current_rtf);
+                  if (!async_call) {
+                    try {
+                      channel.write(speechSynthesisResult.getAudioFrame());
+                    } catch (IOException e) {
+                      log.error(
+                          "Failed to write audio: {}", speechSynthesisResult.getAudioFrame(), e);
+                    }
                   }
                 }
               } catch (Exception e) {
@@ -376,8 +451,9 @@ public final class SpeechSynthesizer {
    * Synchronously stop the streaming input speech synthesis task. Wait for all remaining
    * synthesized audio before returning
    *
-   * @param completeTimeoutMillis The timeout period for await. Throws TimeoutError exception if it
-   *     times out.
+   * @param completeTimeoutMillis The timeout period for await. If the timeout is set to a value
+   *     greater than zero, it will wait for the corresponding number of milliseconds; otherwise, it
+   *     will wait indefinitely. Throws TimeoutError exception if it times out.
    */
   public void streamingComplete(long completeTimeoutMillis) {
     synchronized (this) {
@@ -395,8 +471,13 @@ public final class SpeechSynthesizer {
 
     if (stopLatch.get() != null) {
       try {
-        stopLatch.get().await(completeTimeoutMillis, TimeUnit.MILLISECONDS);
+        if (completeTimeoutMillis > 0) {
+          stopLatch.get().await(completeTimeoutMillis, TimeUnit.MILLISECONDS);
+        } else {
+          stopLatch.get().await();
+        }
       } catch (InterruptedException ignored) {
+        log.error("Interrupted while waiting for streaming complete");
       }
     }
   }
@@ -468,10 +549,13 @@ public final class SpeechSynthesizer {
    * the complete audio data.
    *
    * @param text utf-8 encoded text
+   * @param timeoutMillis timeout for waiting audio data. If the timeout is set to a value greater
+   *     than zero, it will wait for the corresponding number of milliseconds; otherwise, it will
+   *     wait indefinitely.
    * @return If a callback is not set during initialization, the complete audio is returned as the
    *     function's return value. Otherwise, the return value is null.
    */
-  public ByteBuffer call(String text) {
+  public ByteBuffer call(String text, long timeoutMillis) {
     if (this.callback == null) {
       this.callback =
           new ResultCallback<SpeechSynthesisResult>() {
@@ -491,9 +575,22 @@ public final class SpeechSynthesizer {
       this.asyncStreamingComplete();
       return null;
     } else {
-      this.streamingComplete(10000);
+      this.streamingComplete(timeoutMillis);
       return audioData;
     }
+  }
+
+  /**
+   * Speech synthesis If a callback is set, the audio will be returned in real-time through the
+   * on_event interface Otherwise, this function blocks until all audio is received and then returns
+   * the complete audio data.
+   *
+   * @param text utf-8 encoded text
+   * @return If a callback is not set during initialization, the complete audio is returned as the
+   *     function's return value. Otherwise, the return value is null.
+   */
+  public ByteBuffer call(String text) {
+    return call(text, 0);
   }
 
   @SuperBuilder

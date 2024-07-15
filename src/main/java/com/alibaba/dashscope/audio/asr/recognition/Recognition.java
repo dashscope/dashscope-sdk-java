@@ -4,12 +4,7 @@ package com.alibaba.dashscope.audio.asr.recognition;
 
 import com.alibaba.dashscope.api.SynchronizeFullDuplexApi;
 import com.alibaba.dashscope.audio.asr.recognition.timestamp.Sentence;
-import com.alibaba.dashscope.common.DashScopeResult;
-import com.alibaba.dashscope.common.Function;
-import com.alibaba.dashscope.common.OutputMode;
-import com.alibaba.dashscope.common.ResultCallback;
-import com.alibaba.dashscope.common.Task;
-import com.alibaba.dashscope.common.TaskGroup;
+import com.alibaba.dashscope.common.*;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
@@ -24,13 +19,18 @@ import io.reactivex.Flowable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import lombok.*;
+import lombok.Builder;
+import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
 @Slf4j
 public final class Recognition {
@@ -51,6 +51,9 @@ public final class Recognition {
   private RecognitionState state = RecognitionState.IDLE;
 
   private AtomicReference<CountDownLatch> stopLatch = new AtomicReference<>(null);
+
+  private long startStreamTimeStamp = -1;
+  private long firstPackageTimeStamp = -1;
 
   @SuperBuilder
   private static class RecognitionParamWithStream extends RecognitionParam {
@@ -99,13 +102,38 @@ public final class Recognition {
   public Flowable<RecognitionResult> streamCall(
       RecognitionParam param, Flowable<ByteBuffer> audioFrame)
       throws ApiException, NoApiKeyException {
+
     return duplexApi
-        .duplexCall(RecognitionParamWithStream.FromRecognitionParam(param, audioFrame))
+        .duplexCall(
+            RecognitionParamWithStream.FromRecognitionParam(
+                param,
+                audioFrame.doOnNext(
+                    buffer -> {
+                      if (startStreamTimeStamp < 0) {
+                        startStreamTimeStamp = System.currentTimeMillis();
+                      }
+                      log.debug("send audio frame: " + buffer.remaining());
+                    })))
         .map(
             item -> {
               return RecognitionResult.fromDashScopeResult(item);
             })
-        .filter(item -> item != null && item.getSentence() != null && !item.isCompleteResult());
+        .filter(item -> item != null && item.getSentence() != null && !item.isCompleteResult())
+        .doOnNext(
+            result -> {
+              if (firstPackageTimeStamp < 0) {
+                firstPackageTimeStamp = System.currentTimeMillis();
+                log.debug(
+                    "first package delay: "
+                        + (System.currentTimeMillis() - startStreamTimeStamp)
+                        + " ms");
+              }
+              log.debug(
+                  "Recv Result: "
+                      + result.getSentence().getText()
+                      + ", isEnd: "
+                      + result.isSentenceEnd());
+            });
   }
 
   public void call(RecognitionParam param, ResultCallback<RecognitionResult> callback) {
@@ -152,6 +180,18 @@ public final class Recognition {
             public void onEvent(DashScopeResult message) {
               RecognitionResult recognitionResult = RecognitionResult.fromDashScopeResult(message);
               if (!recognitionResult.isCompleteResult()) {
+                if (firstPackageTimeStamp < 0) {
+                  firstPackageTimeStamp = System.currentTimeMillis();
+                  log.debug(
+                      "first package delay: "
+                          + (System.currentTimeMillis() - startStreamTimeStamp)
+                          + " ms");
+                }
+                log.debug(
+                    "Recv Result: "
+                        + recognitionResult.getSentence().getText()
+                        + ", isEnd: "
+                        + recognitionResult.isSentenceEnd());
                 callback.onEvent(recognitionResult);
               }
             }
@@ -201,6 +241,8 @@ public final class Recognition {
           new InputRequiredException("Parameter invalid: Input file is null or not exists"));
     }
 
+    startStreamTimeStamp = System.currentTimeMillis();
+
     AtomicBoolean cancel = new AtomicBoolean(false);
     AtomicReference<String> finalResult = new AtomicReference<>(null);
     AtomicReference<Throwable> finalError = new AtomicReference<>(null);
@@ -235,6 +277,18 @@ public final class Recognition {
               res -> {
                 RecognitionResult recognitionResult = RecognitionResult.fromDashScopeResult(res);
                 if (!recognitionResult.isCompleteResult() && recognitionResult.isSentenceEnd()) {
+                  if (firstPackageTimeStamp < 0) {
+                    firstPackageTimeStamp = System.currentTimeMillis();
+                    log.debug(
+                        "first package delay: "
+                            + (System.currentTimeMillis() - startStreamTimeStamp)
+                            + " ms");
+                  }
+                  log.debug(
+                      "Recv Result: "
+                          + recognitionResult.getSentence().getText()
+                          + ", isEnd: "
+                          + recognitionResult.isSentenceEnd());
                   sentenceList.add(recognitionResult.getSentence());
                 }
               },
@@ -263,6 +317,10 @@ public final class Recognition {
     if (audioFrame == null) {
       throw new ApiException(new InputRequiredException("Parameter invalid: audioFrame is null"));
     }
+    if (this.startStreamTimeStamp < 0) {
+      this.startStreamTimeStamp = System.currentTimeMillis();
+    }
+    log.debug("send audio frame: " + audioFrame.remaining());
     synchronized (this) {
       if (state != RecognitionState.RECOGNITION_STARTED) {
         throw new ApiException(
