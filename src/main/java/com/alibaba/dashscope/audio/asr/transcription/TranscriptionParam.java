@@ -6,12 +6,14 @@ import com.alibaba.dashscope.audio.asr.phrase.AsrPhraseApiKeywords;
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.utils.ApiKeywords;
+import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -86,6 +88,10 @@ public class TranscriptionParam extends HalfDuplexServiceParam {
     if (audioEventDetectionEnabled != null) {
       jsonParameters.addProperty(
           TranscriptionApiKeywords.AUDIO_EVENT_DETECTION_ENABLED, audioEventDetectionEnabled);
+    }
+    Map<String, Object> params = getParameters();
+    if (params != null && !params.isEmpty()) {
+      jsonParameters.add(ApiKeywords.PARAMETERS, JsonUtils.parametersToJsonObject(params));
     }
     body.add("parameters", jsonParameters);
 
