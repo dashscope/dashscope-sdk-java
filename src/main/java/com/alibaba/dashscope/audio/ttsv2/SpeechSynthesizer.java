@@ -484,11 +484,11 @@ public final class SpeechSynthesizer {
 
   /**
    * Synchronously stop the streaming input speech synthesis task. Wait for all remaining
-   * synthesized audio before returning. If it does not complete within 10 seconds, a timeout occurs
-   * and a TimeoutError exception is thrown.
+   * synthesized audio before returning. If it does not complete within 600 seconds, a timeout
+   * occurs and a TimeoutError exception is thrown.
    */
   public void streamingComplete() {
-    streamingComplete(10000);
+    streamingComplete(600000);
   }
 
   /**
