@@ -127,7 +127,11 @@ public class TestTtsV2SpeechSynthesizer {
     for (int i = 0; i < 3; i++) {
       synthesizer.streamingCall("今天天气怎么样？");
     }
-    synthesizer.streamingComplete();
+    try {
+      synthesizer.streamingComplete();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
     assertEquals(audioBuffer.size(), 9);
     for (int i = 0; i < 9; i++) {
       assertEquals((byte) audioBuffer.get(i), (byte) 0x01);

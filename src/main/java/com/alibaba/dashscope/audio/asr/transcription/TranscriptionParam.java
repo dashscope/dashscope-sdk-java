@@ -13,7 +13,6 @@ import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -66,7 +65,7 @@ public class TranscriptionParam extends HalfDuplexServiceParam {
     jsonInput.add(TranscriptionApiKeywords.FILE_URLS, jsonFileUrls);
     body.add("input", jsonInput);
 
-    JsonObject jsonParameters = new JsonObject();
+    JsonObject jsonParameters = JsonUtils.parametersToJsonObject(getParameters());
     jsonParameters.add(TranscriptionApiKeywords.CHANNEL_ID, jsonChannelId);
     if (diarizationEnabled != null) {
       jsonParameters.addProperty(TranscriptionApiKeywords.DIARIZATION_ENABLED, diarizationEnabled);
@@ -89,12 +88,7 @@ public class TranscriptionParam extends HalfDuplexServiceParam {
       jsonParameters.addProperty(
           TranscriptionApiKeywords.AUDIO_EVENT_DETECTION_ENABLED, audioEventDetectionEnabled);
     }
-    Map<String, Object> params = getParameters();
-    if (params != null && !params.isEmpty()) {
-      jsonParameters.add(ApiKeywords.PARAMETERS, JsonUtils.parametersToJsonObject(params));
-    }
     body.add("parameters", jsonParameters);
-
     if (phraseId != null) {
       JsonElement jsonResources = new JsonArray();
       JsonObject jsonPhraseResource = new JsonObject();

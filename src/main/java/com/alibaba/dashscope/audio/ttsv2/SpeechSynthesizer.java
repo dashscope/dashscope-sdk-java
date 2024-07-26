@@ -455,7 +455,7 @@ public final class SpeechSynthesizer {
    *     greater than zero, it will wait for the corresponding number of milliseconds; otherwise, it
    *     will wait indefinitely. Throws TimeoutError exception if it times out.
    */
-  public void streamingComplete(long completeTimeoutMillis) {
+  public void streamingComplete(long completeTimeoutMillis) throws RuntimeException {
     synchronized (this) {
       if (state != SpeechSynthesisState.TTS_STARTED) {
         throw new ApiException(
@@ -472,7 +472,9 @@ public final class SpeechSynthesizer {
     if (stopLatch.get() != null) {
       try {
         if (completeTimeoutMillis > 0) {
-          stopLatch.get().await(completeTimeoutMillis, TimeUnit.MILLISECONDS);
+          if (!stopLatch.get().await(completeTimeoutMillis, TimeUnit.MILLISECONDS)) {
+            throw new RuntimeException("TimeoutError: waiting for streaming complete");
+          }
         } else {
           stopLatch.get().await();
         }
@@ -487,7 +489,7 @@ public final class SpeechSynthesizer {
    * synthesized audio before returning. If it does not complete within 600 seconds, a timeout
    * occurs and a TimeoutError exception is thrown.
    */
-  public void streamingComplete() {
+  public void streamingComplete() throws RuntimeException {
     streamingComplete(600000);
   }
 
@@ -555,7 +557,7 @@ public final class SpeechSynthesizer {
    * @return If a callback is not set during initialization, the complete audio is returned as the
    *     function's return value. Otherwise, the return value is null.
    */
-  public ByteBuffer call(String text, long timeoutMillis) {
+  public ByteBuffer call(String text, long timeoutMillis) throws RuntimeException {
     if (this.callback == null) {
       this.callback =
           new ResultCallback<SpeechSynthesisResult>() {
@@ -589,7 +591,7 @@ public final class SpeechSynthesizer {
    * @return If a callback is not set during initialization, the complete audio is returned as the
    *     function's return value. Otherwise, the return value is null.
    */
-  public ByteBuffer call(String text) {
+  public ByteBuffer call(String text) throws RuntimeException {
     return call(text, 0);
   }
 
