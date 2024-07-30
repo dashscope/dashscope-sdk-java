@@ -4,6 +4,7 @@ package com.alibaba.dashscope.protocol;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
@@ -13,7 +14,7 @@ import lombok.Data;
 public class NetworkResponse {
 
   /** The response headers. */
-  @Builder.Default private Map<String, String> headers = new HashMap<>();
+  @Builder.Default private Map<String, List<String>> headers = new HashMap<>();
 
   /** The String type response message. */
   private String message;

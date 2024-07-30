@@ -228,8 +228,9 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
    */
   @Override
   public DashScopeResult send(HalfDuplexRequest req) throws NoApiKeyException, ApiException {
-    Request request = buildRequest(req.getHttpRequest());
-    try (Response response = client.newCall(request).execute()) {
+    try {
+      Request request = buildRequest(req.getHttpRequest());
+      Response response = client.newCall(request).execute();
       if (!response.isSuccessful()) {
         Status status = parseFailed(response);
         throw new ApiException(status);
@@ -237,8 +238,12 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       return new DashScopeResult()
           .fromResponse(
               Protocol.HTTP,
-              NetworkResponse.builder().message(response.body().string()).build(),
-              req.getIsFlatten());
+              NetworkResponse.builder()
+                  .headers(response.headers().toMultimap())
+                  .message(response.body().string())
+                  .build(),
+              req.getIsFlatten(),
+              req);
     } catch (Throwable e) {
       throw new ApiException(e);
     }
@@ -268,8 +273,12 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                         new DashScopeResult()
                             .fromResponse(
                                 Protocol.HTTP,
-                                NetworkResponse.builder().message(response.body().string()).build(),
-                                req.getIsFlatten()));
+                                NetworkResponse.builder()
+                                    .headers(response.headers().toMultimap())
+                                    .message(response.body().string())
+                                    .build(),
+                                req.getIsFlatten(),
+                                req));
                     callback.onComplete();
                   }
                 }
@@ -282,7 +291,9 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       String id,
       String eventType,
       String data,
-      boolean isFlattenResult) {
+      boolean isFlattenResult,
+      Response response,
+      HalfDuplexRequest req) {
     log.debug(String.format("Event: id %s, type: %s, data: %s", id, eventType, data));
     if (SSEEventType.ERROR.equals(eventType)) {
       Status st = parseStreamEventData(data);
@@ -292,8 +303,13 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
           new DashScopeResult()
               .fromResponse(
                   Protocol.HTTP,
-                  NetworkResponse.builder().message(data).event(eventType).build(),
-                  isFlattenResult));
+                  NetworkResponse.builder()
+                      .headers(response.headers().toMultimap())
+                      .message(data)
+                      .event(eventType)
+                      .build(),
+                  isFlattenResult,
+                  req));
     } else if (SSEEventType.DONE.equals(eventType)) { // event done ignore message
       log.debug(String.format("Ignore event id: %s, type: %s, data: %s", id, eventType, data));
     } else if (eventType != null) {
@@ -302,13 +318,24 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
           new DashScopeResult()
               .fromResponse(
                   Protocol.HTTP,
-                  NetworkResponse.builder().message(data).event(eventType).build(),
-                  isFlattenResult));
+                  NetworkResponse.builder()
+                      .headers(response.headers().toMultimap())
+                      .message(data)
+                      .event(eventType)
+                      .build(),
+                  isFlattenResult,
+                  req));
     } else if (eventType == null) {
       emitter.onNext(
           new DashScopeResult()
               .fromResponse(
-                  Protocol.HTTP, NetworkResponse.builder().message(data).build(), isFlattenResult));
+                  Protocol.HTTP,
+                  NetworkResponse.builder()
+                      .headers(response.headers().toMultimap())
+                      .message(data)
+                      .build(),
+                  isFlattenResult,
+                  req));
     }
   }
 
@@ -323,23 +350,28 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                   .newEventSource(
                       request,
                       new EventSourceListener() {
+                        private Response response;
+
                         @java.lang.Override
                         public void onEvent(
                             EventSource eventSource,
                             java.lang.String id,
                             java.lang.String type,
                             java.lang.String data) {
-                          handleSSEEvent(emitter, id, type, data, req.getIsFlatten());
+                          handleSSEEvent(
+                              emitter, id, type, data, req.getIsFlatten(), response, req);
                         }
 
                         @java.lang.Override
                         public void onOpen(EventSource eventSource, Response response) {
+                          this.response = response;
                           super.onOpen(eventSource, response);
                         }
 
                         @java.lang.Override
                         public void onFailure(
                             EventSource eventSource, java.lang.Throwable t, Response response) {
+                          this.response = response;
                           super.onFailure(eventSource, t, response);
                           emitter.onError(new ApiException(parseFailed(response)));
                         }
@@ -370,6 +402,8 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
         .newEventSource(
             request,
             new EventSourceListener() {
+              private Response response;
+
               @java.lang.Override
               public void onEvent(
                   EventSource eventSource,
@@ -385,33 +419,49 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                       new DashScopeResult()
                           .fromResponse(
                               Protocol.HTTP,
-                              NetworkResponse.builder().message(data).event(type).build(),
-                              req.getIsFlatten()));
+                              NetworkResponse.builder()
+                                  .headers(response.headers().toMultimap())
+                                  .message(data)
+                                  .event(type)
+                                  .build(),
+                              req.getIsFlatten(),
+                              req));
                 } else if (type != null) {
                   callback.onEvent(
                       new DashScopeResult()
                           .fromResponse(
                               Protocol.HTTP,
-                              NetworkResponse.builder().message(data).event(type).build(),
-                              req.getIsFlatten()));
+                              NetworkResponse.builder()
+                                  .headers(response.headers().toMultimap())
+                                  .message(data)
+                                  .event(type)
+                                  .build(),
+                              req.getIsFlatten(),
+                              req));
                 } else if (type == null) {
                   callback.onEvent(
                       new DashScopeResult()
                           .fromResponse(
                               Protocol.HTTP,
-                              NetworkResponse.builder().message(data).build(),
-                              req.getIsFlatten()));
+                              NetworkResponse.builder()
+                                  .headers(response.headers().toMultimap())
+                                  .message(data)
+                                  .build(),
+                              req.getIsFlatten(),
+                              req));
                 }
               }
 
               @java.lang.Override
               public void onOpen(EventSource eventSource, Response response) {
+                this.response = response;
                 callback.onOpen(null);
               }
 
               @java.lang.Override
               public void onFailure(
                   EventSource eventSource, java.lang.Throwable t, Response response) {
+                this.response = response;
                 callback.onError(new ApiException(parseFailed(response)));
               }
 

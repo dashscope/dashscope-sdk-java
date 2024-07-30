@@ -12,6 +12,8 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.annotations.SerializedName;
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import okhttp3.MediaType;
 import okhttp3.mockwebserver.MockResponse;
@@ -73,6 +75,19 @@ public class TestUtils {
         .setHeader("Content-Type", APPLICATION_JSON)
         .setResponseCode(statusCode)
         .setBody(responseBody);
+  }
+
+  public static MockResponse createMockResponse(
+      String responseBody, int statusCode, Map<String, String> headers) {
+    MockResponse rsp =
+        new MockResponse()
+            .setHeader("Content-Type", APPLICATION_JSON)
+            .setResponseCode(statusCode)
+            .setBody(responseBody);
+    for (Entry<String, String> header : headers.entrySet()) {
+      rsp.addHeader(header.getKey(), header.getValue());
+    }
+    return rsp;
   }
 
   public static void verifyRequest(

@@ -3,9 +3,11 @@
 package com.alibaba.dashscope.common;
 
 import com.alibaba.dashscope.exception.ApiException;
+import com.alibaba.dashscope.protocol.HalfDuplexRequest;
 import com.alibaba.dashscope.protocol.NetworkResponse;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.utils.ApiKeywords;
+import com.alibaba.dashscope.utils.EncryptionUtils;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
@@ -103,5 +105,48 @@ public class DashScopeResult extends Result {
       }
       return (T) this;
     }
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T extends Result> T fromResponse(
+      Protocol protocol, NetworkResponse response, boolean isFlattenResult, HalfDuplexRequest req)
+      throws ApiException {
+    // check it's encrypted output
+    if ((response.getHeaders().containsKey("X-DashScope-OutputEncrypted".toLowerCase())
+            || req.getEncryptionConfig() != null)
+        && protocol == Protocol.HTTP) {
+      JsonObject jsonObject = JsonUtils.parse(response.getMessage());
+      String encryptedOutput =
+          jsonObject.get(ApiKeywords.OUTPUT).isJsonNull()
+              ? null
+              : jsonObject.get(ApiKeywords.OUTPUT).getAsString();
+      if (encryptedOutput != null) {
+        String plainOutput =
+            EncryptionUtils.AESDecrypt(
+                encryptedOutput,
+                req.getEncryptionConfig().getAESEncryptKey(),
+                req.getEncryptionConfig().getIv());
+        this.output = JsonUtils.parse(plainOutput);
+      } else {
+        this.output = null;
+      }
+      if (jsonObject.has(ApiKeywords.USAGE)) {
+        this.setUsage(
+            jsonObject.get(ApiKeywords.USAGE).isJsonNull()
+                ? null
+                : jsonObject.get(ApiKeywords.USAGE).getAsJsonObject());
+      }
+      if (jsonObject.has(ApiKeywords.REQUEST_ID)) {
+        this.setRequestId(jsonObject.get(ApiKeywords.REQUEST_ID).getAsString());
+      }
+      if (jsonObject.has(ApiKeywords.DATA)) {
+        if (jsonObject.has(ApiKeywords.REQUEST_ID)) {
+          jsonObject.remove(ApiKeywords.REQUEST_ID);
+        }
+      }
+      return (T) this;
+    }
+    return fromResponse(protocol, response, isFlattenResult);
   }
 }

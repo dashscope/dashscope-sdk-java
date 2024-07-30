@@ -7,10 +7,13 @@ import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.Constants;
+import com.alibaba.dashscope.utils.EncryptionConfig;
+import com.alibaba.dashscope.utils.EncryptionUtils;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
+import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -64,36 +67,61 @@ public class HalfDuplexRequest {
     return serviceOption.getHttpMethod();
   }
 
+  public Boolean isEncryptRequest() {
+    return param.getEncryptionConfig() != null;
+  }
+
+  public EncryptionConfig getEncryptionConfig() {
+    return param.getEncryptionConfig();
+  }
+
+  private String getEncryptionKeyHeader(EncryptionConfig encryptionConfig) throws ApiException {
+    byte[] cipherBytes = encryptionConfig.getAESEncryptKey().getEncoded();
+    String base64Cipher = Base64.getEncoder().encodeToString(cipherBytes);
+    return String.format(
+        "{\"public_key_id\":\"%s\",\"encrypt_key\":\"%s\",\"iv\":\"%s\"}",
+        encryptionConfig.getPublicKeyId(),
+        EncryptionUtils.RSAEncrypt(base64Cipher, encryptionConfig.getBase64PublicKey()),
+        Base64.getEncoder().encodeToString(encryptionConfig.getIv()));
+  }
+
   public HttpRequest getHttpRequest() throws NoApiKeyException, ApiException {
+    Map<String, String> requestHeaders =
+        DashScopeHeaders.buildHttpHeaders(
+            param.getApiKey(),
+            param.isSecurityCheck(),
+            Protocol.HTTP,
+            serviceOption.getIsSSE(),
+            serviceOption.getIsAsyncTask(),
+            param.getWorkspace(),
+            param.getHeaders());
+    if (param.getEncryptionConfig() != null) {
+      requestHeaders.put(
+          "X-DashScope-EncryptionKey", getEncryptionKeyHeader(param.getEncryptionConfig()));
+    }
+
     if (getHttpMethod() == HttpMethod.GET) {
       return HttpRequest.builder()
           .url(getHttpUrl())
           .httpMethod(getHttpMethod())
-          .headers(
-              DashScopeHeaders.buildHttpHeaders(
-                  param.getApiKey(),
-                  param.isSecurityCheck(),
-                  Protocol.HTTP,
-                  serviceOption.getIsSSE(),
-                  serviceOption.getIsAsyncTask(),
-                  param.getWorkspace(),
-                  param.getHeaders()))
+          .headers(requestHeaders)
           .parameters(param.getParameters())
           .httpMethod(getHttpMethod())
           .build();
     } else if (getHttpMethod() == HttpMethod.POST || getHttpMethod() == HttpMethod.DELETE) {
       JsonObject body = param.getHttpBody();
+      if (param.getEncryptionConfig() != null && body != null) { // we need to encrypt the input.
+        JsonObject input = body.get("input").getAsJsonObject();
+        String chiperInput =
+            EncryptionUtils.AESEncrypt(
+                JsonUtils.toJson(input),
+                param.getEncryptionConfig().getAESEncryptKey(),
+                param.getEncryptionConfig().getIv());
+        body.addProperty("input", chiperInput);
+      }
       return HttpRequest.builder()
           .url(getHttpUrl())
-          .headers(
-              DashScopeHeaders.buildHttpHeaders(
-                  param.getApiKey(),
-                  param.isSecurityCheck(),
-                  Protocol.HTTP,
-                  serviceOption.getIsSSE(),
-                  serviceOption.getIsAsyncTask(),
-                  param.getWorkspace(),
-                  param.getHeaders()))
+          .headers(requestHeaders)
           .body(body == null ? null : JsonUtils.toJson(body))
           .httpMethod(getHttpMethod())
           .build();

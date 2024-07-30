@@ -3,6 +3,7 @@
 package com.alibaba.dashscope.common;
 
 import com.alibaba.dashscope.exception.ApiException;
+import com.alibaba.dashscope.protocol.HalfDuplexRequest;
 import com.alibaba.dashscope.protocol.NetworkResponse;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.google.gson.JsonElement;
@@ -39,4 +40,8 @@ public abstract class Result {
 
   public abstract <T extends Result> T fromResponse(
       Protocol protocol, NetworkResponse response, boolean isFlattenResult) throws ApiException;
+
+  public abstract <T extends Result> T fromResponse(
+      Protocol protocol, NetworkResponse response, boolean isFlattenResult, HalfDuplexRequest req)
+      throws ApiException;
 }
