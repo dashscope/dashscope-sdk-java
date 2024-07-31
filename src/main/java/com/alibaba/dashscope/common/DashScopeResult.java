@@ -114,7 +114,7 @@ public class DashScopeResult extends Result {
       throws ApiException {
     // check it's encrypted output
     if ((response.getHeaders().containsKey("X-DashScope-OutputEncrypted".toLowerCase())
-            || req.getEncryptionConfig() != null)
+            || req.isEncryptRequest())
         && protocol == Protocol.HTTP) {
       JsonObject jsonObject = JsonUtils.parse(response.getMessage());
       String encryptedOutput =

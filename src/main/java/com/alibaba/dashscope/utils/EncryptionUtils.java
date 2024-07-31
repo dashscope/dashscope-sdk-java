@@ -1,6 +1,7 @@
 package com.alibaba.dashscope.utils;
 
 import com.alibaba.dashscope.exception.ApiException;
+import com.alibaba.dashscope.exception.NoApiKeyException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -145,5 +146,21 @@ public class EncryptionUtils {
         | InvalidAlgorithmParameterException e) {
       throw new ApiException(e);
     }
+  }
+
+  /** Generate a EncryptionConfig. */
+  public static EncryptionConfig generateEncryptionConfig() throws ApiException, NoApiKeyException {
+    EncryptionKeys encryptionKeys = new EncryptionKeys();
+    EncryptionKey encryptionKey = encryptionKeys.get();
+    byte[] iv = new byte[12];
+    new SecureRandom().nextBytes(iv);
+    EncryptionConfig encryptionConfig =
+        EncryptionConfig.builder()
+            .base64PublicKey(encryptionKey.getPublicKey())
+            .publicKeyId(encryptionKey.getPublicKeyId())
+            .AESEncryptKey(EncryptionUtils.generateAESKey())
+            .iv(iv)
+            .build();
+    return encryptionConfig;
   }
 }

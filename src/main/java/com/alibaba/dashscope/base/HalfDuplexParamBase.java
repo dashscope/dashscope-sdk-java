@@ -3,7 +3,6 @@
 package com.alibaba.dashscope.base;
 
 import com.alibaba.dashscope.exception.InputRequiredException;
-import com.alibaba.dashscope.utils.EncryptionConfig;
 import com.alibaba.dashscope.utils.GsonExclude;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
@@ -25,7 +24,7 @@ public abstract class HalfDuplexParamBase {
   /** workspace */
   @GsonExclude private String workspace;
 
-  @GsonExclude private EncryptionConfig encryptionConfig = null;
+  @GsonExclude @Builder.Default private Boolean enableEncrypt = false;
 
   public String getWorkspace() {
     return workspace;

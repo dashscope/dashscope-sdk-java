@@ -22,10 +22,12 @@ import lombok.extern.slf4j.Slf4j;
 public class HalfDuplexRequest {
   HalfDuplexParamBase param;
   ServiceOption serviceOption;
+  EncryptionConfig encryptionConfig;
 
   public HalfDuplexRequest(HalfDuplexParamBase param, ServiceOption option) {
     this.param = param;
     this.serviceOption = option;
+    encryptionConfig = null;
   }
 
   public boolean getIsFlatten() {
@@ -68,11 +70,11 @@ public class HalfDuplexRequest {
   }
 
   public Boolean isEncryptRequest() {
-    return param.getEncryptionConfig() != null;
+    return param.getEnableEncrypt();
   }
 
   public EncryptionConfig getEncryptionConfig() {
-    return param.getEncryptionConfig();
+    return encryptionConfig;
   }
 
   private String getEncryptionKeyHeader(EncryptionConfig encryptionConfig) throws ApiException {
@@ -95,10 +97,6 @@ public class HalfDuplexRequest {
             serviceOption.getIsAsyncTask(),
             param.getWorkspace(),
             param.getHeaders());
-    if (param.getEncryptionConfig() != null) {
-      requestHeaders.put(
-          "X-DashScope-EncryptionKey", getEncryptionKeyHeader(param.getEncryptionConfig()));
-    }
 
     if (getHttpMethod() == HttpMethod.GET) {
       return HttpRequest.builder()
@@ -110,13 +108,15 @@ public class HalfDuplexRequest {
           .build();
     } else if (getHttpMethod() == HttpMethod.POST || getHttpMethod() == HttpMethod.DELETE) {
       JsonObject body = param.getHttpBody();
-      if (param.getEncryptionConfig() != null && body != null) { // we need to encrypt the input.
+      if (isEncryptRequest() && body != null) { // we need to encrypt the input
+        this.encryptionConfig = EncryptionUtils.generateEncryptionConfig();
+        requestHeaders.put("X-DashScope-EncryptionKey", getEncryptionKeyHeader(encryptionConfig));
         JsonObject input = body.get("input").getAsJsonObject();
         String chiperInput =
             EncryptionUtils.AESEncrypt(
                 JsonUtils.toJson(input),
-                param.getEncryptionConfig().getAESEncryptKey(),
-                param.getEncryptionConfig().getIv());
+                encryptionConfig.getAESEncryptKey(),
+                encryptionConfig.getIv());
         body.addProperty("input", chiperInput);
       }
       return HttpRequest.builder()
