@@ -149,9 +149,10 @@ public class EncryptionUtils {
   }
 
   /** Generate a EncryptionConfig. */
-  public static EncryptionConfig generateEncryptionConfig() throws ApiException, NoApiKeyException {
+  public static EncryptionConfig generateEncryptionConfig(String apiKey)
+      throws ApiException, NoApiKeyException {
     EncryptionKeys encryptionKeys = new EncryptionKeys();
-    EncryptionKey encryptionKey = encryptionKeys.get();
+    EncryptionKey encryptionKey = encryptionKeys.get(apiKey);
     byte[] iv = new byte[12];
     new SecureRandom().nextBytes(iv);
     EncryptionConfig encryptionConfig =

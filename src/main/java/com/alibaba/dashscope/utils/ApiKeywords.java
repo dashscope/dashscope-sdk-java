@@ -118,4 +118,8 @@ public class ApiKeywords {
   public static final String MAX_TOKENS = "max_tokens";
 
   public static final String TOOL_CALLS = "tool_calls";
+
+  public static final String TOOL_CALL_ID = "tool_call_id";
+
+  public static final String NAME = "name";
 }

@@ -109,7 +109,7 @@ public class HalfDuplexRequest {
     } else if (getHttpMethod() == HttpMethod.POST || getHttpMethod() == HttpMethod.DELETE) {
       JsonObject body = param.getHttpBody();
       if (isEncryptRequest() && body != null) { // we need to encrypt the input
-        this.encryptionConfig = EncryptionUtils.generateEncryptionConfig();
+        this.encryptionConfig = EncryptionUtils.generateEncryptionConfig(param.getApiKey());
         requestHeaders.put("X-DashScope-EncryptionKey", getEncryptionKeyHeader(encryptionConfig));
         JsonObject input = body.get("input").getAsJsonObject();
         String chiperInput =
