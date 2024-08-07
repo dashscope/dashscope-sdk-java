@@ -87,7 +87,7 @@ public final class Messages {
 
   public ThreadMessage retrieve(String threadId, String messageId, String apiKey)
       throws ApiException, NoApiKeyException, InputRequiredException {
-    return retrieve(threadId, messageId, null, new HashMap<>());
+    return retrieve(threadId, messageId, apiKey, new HashMap<>());
   }
 
   public ThreadMessage retrieve(
