@@ -18,6 +18,8 @@ import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class Messages {
   private final GeneralApi<HalfDuplexParamBase> api;
@@ -85,6 +87,12 @@ public final class Messages {
 
   public ThreadMessage retrieve(String threadId, String messageId, String apiKey)
       throws ApiException, NoApiKeyException, InputRequiredException {
+    return retrieve(threadId, messageId, null, new HashMap<>());
+  }
+
+  public ThreadMessage retrieve(
+      String threadId, String messageId, String apiKey, Map<String, String> headers)
+      throws ApiException, NoApiKeyException, InputRequiredException {
     if (threadId == null || threadId.isEmpty() || messageId == null || messageId.isEmpty()) {
       throw new InputRequiredException("The threadId and messageId are required.");
     }
@@ -102,6 +110,12 @@ public final class Messages {
 
   public MessageFile retrieveFile(String threadId, String messageId, String fileId, String apiKey)
       throws ApiException, NoApiKeyException, InputRequiredException {
+    return retrieveFile(threadId, messageId, fileId, apiKey, new HashMap<>());
+  }
+
+  public MessageFile retrieveFile(
+      String threadId, String messageId, String fileId, String apiKey, Map<String, String> headers)
+      throws ApiException, NoApiKeyException, InputRequiredException {
     if (threadId == null
         || threadId.isEmpty()
         || messageId == null
@@ -114,7 +128,7 @@ public final class Messages {
     serviceOption.setPath(
         String.format("threads/%s/messages/%s/files/%s", threadId, messageId, fileId));
     DashScopeResult result =
-        api.get(GeneralGetParam.builder().apiKey(apiKey).build(), serviceOption);
+        api.get(GeneralGetParam.builder().headers(headers).apiKey(apiKey).build(), serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, MessageFile.class);
   }
 

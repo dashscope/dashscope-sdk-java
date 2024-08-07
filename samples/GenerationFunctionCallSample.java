@@ -42,6 +42,7 @@ public class GenerationFunctionCallSample {
     }
   }
 
+
   public static void callFunctionAdd()
       throws NoApiKeyException, ApiException, InputRequiredException {
     // create jsonschema generator
@@ -55,7 +56,7 @@ public class GenerationFunctionCallSample {
     ObjectNode jsonSchema = generator.generateSchema(AddFunctionTool.class);
 
     // call with tools of function call, jsonSchema.toString() is jsonschema String.
-    FunctionDefinition fd = FunctionDefinition.builder().name("add").description("add two number")
+    FunctionDefinition fd = FunctionDefinition.builder().name("mycalc").description("calc")
         .parameters(JsonUtils.parseString(jsonSchema.toString()).getAsJsonObject()).build();
 
     // build system message
@@ -65,14 +66,14 @@ public class GenerationFunctionCallSample {
 
     // user message to call function.
     Message userMsg =
-        Message.builder().role(Role.USER.getValue()).content("Add 32393 and 88909").build();
+        Message.builder().role(Role.USER.getValue()).content("Call mycalc 32393 and 88909").build();
 
     // messages to store message request and response.
     List<Message> messages = new ArrayList<>();
     messages.addAll(Arrays.asList(systemMsg, userMsg));
 
     // create generation call parameter
-    GenerationParam param = GenerationParam.builder().model(Generation.Models.QWEN_MAX)
+    GenerationParam param = GenerationParam.builder().model("qwen-max")
         .messages(messages).resultFormat(ResultFormat.MESSAGE)
         .tools(Arrays.asList(ToolFunction.builder().function(fd).build())).build();
 
@@ -96,7 +97,7 @@ public class GenerationFunctionCallSample {
             // get function call name and argument, both String.
             String functionName = ((ToolCallFunction) toolCall).getFunction().getName();
             String functionArgument = ((ToolCallFunction) toolCall).getFunction().getArguments();
-            if (functionName.equals("add")) {
+            if (functionName.equals("mycalc")) {
               // Create the function object.
               AddFunctionTool addFunction =
                   JsonUtils.fromJson(functionArgument, AddFunctionTool.class);

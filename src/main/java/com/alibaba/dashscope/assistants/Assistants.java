@@ -18,6 +18,8 @@ import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class Assistants {
   private final GeneralApi<HalfDuplexParamBase> api;
@@ -77,13 +79,18 @@ public final class Assistants {
 
   public Assistant retrieve(String assistantId, String apiKey)
       throws ApiException, NoApiKeyException, InputRequiredException {
+    return retrieve(assistantId, apiKey, new HashMap<>());
+  }
+
+  public Assistant retrieve(String assistantId, String apiKey, Map<String, String> headers)
+      throws ApiException, NoApiKeyException, InputRequiredException {
     if (assistantId == null || assistantId.isEmpty()) {
       throw new InputRequiredException("assistantId is required!");
     }
     serviceOption.setHttpMethod(HttpMethod.GET);
     serviceOption.setPath(String.format("assistants/%s", assistantId));
     DashScopeResult result =
-        api.get(GeneralGetParam.builder().apiKey(apiKey).build(), serviceOption);
+        api.get(GeneralGetParam.builder().headers(headers).apiKey(apiKey).build(), serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, Assistant.class);
   }
 
@@ -94,13 +101,19 @@ public final class Assistants {
 
   public DeletionStatus delete(String assistantId, String apiKey)
       throws ApiException, NoApiKeyException, InputRequiredException {
+    return delete(assistantId, apiKey, new HashMap<>());
+  }
+
+  public DeletionStatus delete(String assistantId, String apiKey, Map<String, String> headers)
+      throws ApiException, NoApiKeyException, InputRequiredException {
     if (assistantId == null || assistantId.isEmpty()) {
       throw new InputRequiredException("assistantId is required!");
     }
     serviceOption.setHttpMethod(HttpMethod.DELETE);
     serviceOption.setPath(String.format("assistants/%s", assistantId));
     DashScopeResult result =
-        api.delete(GeneralGetParam.builder().apiKey(apiKey).build(), serviceOption);
+        api.delete(
+            GeneralGetParam.builder().headers(headers).apiKey(apiKey).build(), serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, DeletionStatus.class);
   }
 
@@ -134,13 +147,19 @@ public final class Assistants {
 
   public AssistantFile retrieveFile(String assistantId, String fileId, String apiKey)
       throws ApiException, NoApiKeyException, InputRequiredException {
+    return retrieveFile(assistantId, fileId, apiKey, new HashMap<>());
+  }
+
+  public AssistantFile retrieveFile(
+      String assistantId, String fileId, String apiKey, Map<String, String> headers)
+      throws ApiException, NoApiKeyException, InputRequiredException {
     if (assistantId == null || assistantId.isEmpty() || fileId == null || fileId.isEmpty()) {
       throw new InputRequiredException("assistantId and fileId are required!");
     }
     serviceOption.setHttpMethod(HttpMethod.GET);
     serviceOption.setPath(String.format("assistants/%s/files/%s", assistantId, fileId));
     DashScopeResult result =
-        api.get(GeneralGetParam.builder().apiKey(apiKey).build(), serviceOption);
+        api.get(GeneralGetParam.builder().headers(headers).apiKey(apiKey).build(), serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, AssistantFile.class);
   }
 }

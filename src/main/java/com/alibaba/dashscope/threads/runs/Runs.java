@@ -20,6 +20,8 @@ import com.alibaba.dashscope.protocol.StreamingMode;
 import com.google.gson.reflect.TypeToken;
 import io.reactivex.Flowable;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class Runs {
   private final GeneralApi<HalfDuplexParamBase> api;
@@ -267,10 +269,15 @@ public final class Runs {
    */
   public Run retrieve(String threadId, String runId, String apiKey)
       throws ApiException, NoApiKeyException {
+    return retrieve(threadId, runId, apiKey, new HashMap<>());
+  }
+
+  public Run retrieve(String threadId, String runId, String apiKey, Map<String, String> headers)
+      throws ApiException, NoApiKeyException {
     serviceOption.setHttpMethod(HttpMethod.GET);
     serviceOption.setPath(String.format("threads/%s/runs/%s", threadId, runId));
     DashScopeResult result =
-        api.get(GeneralGetParam.builder().apiKey(apiKey).build(), serviceOption);
+        api.get(GeneralGetParam.builder().headers(headers).apiKey(apiKey).build(), serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, Run.class);
   }
 
@@ -302,10 +309,16 @@ public final class Runs {
    */
   public RunStep retrieveStep(String threadId, String runId, String stepId, String apiKey)
       throws ApiException, NoApiKeyException {
+    return retrieveStep(threadId, runId, stepId, apiKey, new HashMap<>());
+  }
+
+  public RunStep retrieveStep(
+      String threadId, String runId, String stepId, String apiKey, Map<String, String> headers)
+      throws ApiException, NoApiKeyException {
     serviceOption.setHttpMethod(HttpMethod.GET);
     serviceOption.setPath(String.format("threads/%s/runs/%s/steps/%s", threadId, runId, stepId));
     DashScopeResult result =
-        api.get(GeneralGetParam.builder().apiKey(apiKey).build(), serviceOption);
+        api.get(GeneralGetParam.builder().headers(headers).apiKey(apiKey).build(), serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, RunStep.class);
   }
 

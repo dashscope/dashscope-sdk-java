@@ -108,6 +108,7 @@ public class AssistantFunctionCall {
                 if (toolCall.getType().equals("function")) {
                     // get function call name and argument, both String.
                     String functionName = ((ToolCallFunction) toolCall).getFunction().getName();
+                    String functionId = ((ToolCallFunction)toolCall).getId();
                     String functionArgument = ((ToolCallFunction) toolCall).getFunction().getArguments();
                     if (functionName.equals("add")) {
                       // Create the function object.
@@ -117,7 +118,7 @@ public class AssistantFunctionCall {
                       int sum = addFunction.call();
                       System.out.println(sum);
                       SubmitToolOutputsParam submitToolOutputsParam = SubmitToolOutputsParam.builder()
-                      .toolOutput(ToolOutput.builder().toolCallId("").output(String.valueOf(sum)).build())
+                      .toolOutput(ToolOutput.builder().toolCallId(functionId).output(String.valueOf(sum)).build())
                       .build();
                       run = runs.submitToolOutputs(assistantThread.getId(), run.getId(), submitToolOutputsParam);
                     }

@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+/** represent input and output messages. */
 @Data
 @SuperBuilder
 @NoArgsConstructor
@@ -30,4 +31,7 @@ public class Message {
   /** tool name */
   @SerializedName("name")
   String name;
+
+  /** for multi modal message type: [text|image_url] image_url: url detail */
+  private List<MessageContentBase> contents;
 }

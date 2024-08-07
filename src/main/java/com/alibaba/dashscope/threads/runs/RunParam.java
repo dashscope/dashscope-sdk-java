@@ -69,6 +69,9 @@ public class RunParam extends FlattenHalfDuplexParamBase {
   @Default
   protected Object responseFormat = "json_object";
 
+  @SerializedName("parallel_tool_calls")
+  protected Boolean parallelToolCalls;
+
   @Override
   public JsonObject getHttpBody() {
     JsonObject requestObject = new JsonObject();
@@ -113,6 +116,9 @@ public class RunParam extends FlattenHalfDuplexParamBase {
     }
     if (responseFormat != null) {
       requestObject.addProperty("response_format", (String) responseFormat);
+    }
+    if (parallelToolCalls != null) {
+      requestObject.addProperty("parallel_tool_calls", parallelToolCalls);
     }
     addExtraBody(requestObject);
     return requestObject;

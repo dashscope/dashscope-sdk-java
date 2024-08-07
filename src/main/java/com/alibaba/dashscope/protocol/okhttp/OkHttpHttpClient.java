@@ -326,6 +326,10 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                   isFlattenResult,
                   req));
     } else if (eventType == null) {
+      if (data.equals("[DONE]")) {
+        emitter.onComplete();
+        return;
+      }
       emitter.onNext(
           new DashScopeResult()
               .fromResponse(

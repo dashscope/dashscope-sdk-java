@@ -22,8 +22,42 @@ public class MessageAdapter extends TypeAdapter<Message> {
     out.beginObject();
     out.name(ApiKeywords.ROLE);
     out.value(value.getRole());
-    out.name(ApiKeywords.CONTENT);
-    out.value(value.getContent());
+    if (value.getContent() != null) {
+      out.name(ApiKeywords.CONTENT);
+      out.value(value.getContent());
+    }
+    // array of content
+    if (value.getContents() != null) {
+      out.name(ApiKeywords.CONTENT).beginArray();
+      for (MessageContentBase content : value.getContents()) {
+        if (content.getType().equals(ApiKeywords.CONTENT_TYPE_TEXT)) {
+          // text content
+          out.beginObject();
+          out.name("type");
+          out.value(ApiKeywords.CONTENT_TYPE_TEXT);
+          out.name(ApiKeywords.CONTENT_TYPE_TEXT);
+          out.value(((MessageContentText) content).getText());
+          out.endObject();
+        } else if (content.getType().equals(ApiKeywords.CONTENT_TYPE_IMAGE_URL)) {
+          out.beginObject();
+          out.name("type");
+          out.value(ApiKeywords.CONTENT_TYPE_IMAGE_URL);
+          out.name(ApiKeywords.CONTENT_TYPE_IMAGE_URL);
+          out.beginObject();
+          out.name("url");
+          ImageURL imageURL = ((MessageContentImageURL) content).getImageURL();
+          out.value(imageURL.getUrl());
+          if (imageURL.getDetail() != null) {
+            out.name("detail");
+            out.value(imageURL.getDetail());
+          }
+          out.endObject();
+          out.endObject(); // image url
+        }
+        // not support type, TODO extends types.
+      }
+      out.endArray();
+    }
     if (value.getToolCalls() != null) {
       out.name(ApiKeywords.TOOL_CALLS).beginArray();
       for (ToolCallBase toolCall : value.getToolCalls()) {
@@ -40,6 +74,14 @@ public class MessageAdapter extends TypeAdapter<Message> {
         out.endObject();
       }
       out.endArray();
+    }
+    if (value.getToolCallId() != null) {
+      out.name(ApiKeywords.TOOL_CALL_ID);
+      out.value(value.getToolCallId());
+    }
+    if (value.getName() != null) {
+      out.name(ApiKeywords.NAME);
+      out.value(value.getName());
     }
     out.endObject();
   }
