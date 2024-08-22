@@ -87,6 +87,11 @@ public class ApplicationParam extends HalfDuplexParamBase {
    */
   @Builder.Default private Boolean incrementalOutput = false;
 
+  /**
+   * Long term memory id is used to store long term context summary between end users and assistant.
+   */
+  private String memoryId;
+
   @Override
   public String getModel() {
     return null;
@@ -150,6 +155,8 @@ public class ApplicationParam extends HalfDuplexParamBase {
 
     input.addProperty(PROMPT, getPrompt());
     input.addProperty(AppKeywords.SESSION_ID, getSessionId());
+    input.addProperty(AppKeywords.MEMORY_ID, memoryId);
+
     if (history != null && !history.isEmpty()) {
       JsonArray historyJson = JsonUtils.toJsonElement(history).getAsJsonArray();
       input.add(HISTORY, historyJson);

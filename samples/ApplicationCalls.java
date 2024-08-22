@@ -35,7 +35,7 @@ public class ApplicationCalls {
      */
     public static void ragCall()
             throws ApiException, NoApiKeyException, InputRequiredException {
-        RagApplicationParam param = RagApplicationParam.builder()
+        ApplicationParam param = ApplicationParam.builder()
                 .appId(APP_ID)
                 .prompt("API接口说明中, TopP参数改如何传递?")
                 .topP(0.2)
@@ -64,12 +64,10 @@ public class ApplicationCalls {
      */
     public static void ragCallWithTags()
             throws ApiException, NoApiKeyException, InputRequiredException {
-        RagApplicationParam param = RagApplicationParam.builder()
+        ApplicationParam param = ApplicationParam.builder()
                 .appId(APP_ID)
                 .prompt("API接口说明中, TopP参数改如何传递?")
                 .topP(0.2)
-                // 指定标签范围进行检索
-                .docTagCodes(Arrays.asList("471d*******3427", "471d*******3428"))
                 // 开启检索过程信息返回结果
                 .hasThoughts(true)
                 .build();
@@ -214,15 +212,38 @@ public class ApplicationCalls {
                 result.getRequestId(), result.getOutput().getText(), result.getOutput().getFinishReason());
     }
 
+    /**
+     * Application call with long term memory sample
+     *
+     * @throws NoApiKeyException      Can not find api key
+     * @throws ApiException           The request failed, possibly due to a network or data error.
+     * @throws InputRequiredException Missing inputs.
+     */
+    public static void callWithMemory()
+            throws ApiException, NoApiKeyException, InputRequiredException {
+        ApplicationParam param = ApplicationParam.builder()
+                .appId(APP_ID)
+                .prompt("我想去新疆")
+                .memoryId("")
+                .topP(0.2)
+                .build();
+
+        Application application = new Application();
+        ApplicationResult result = application.call(param);
+
+        System.out.printf("requestId: %s, text: %s\n", result.getRequestId(), result.getOutput().getText());
+    }
+
 
     public static void main(String[] args) {
         try {
-//            ragCall();
+//        ragCall();
 //        ragCallWithTags();
 //        flowCall();
 //        callWithSession();
-        streamCall();
+//        streamCall();
 //        callWithWorkspace();
+            callWithMemory();
         } catch (ApiException | NoApiKeyException | InputRequiredException e) {
             System.out.printf("Exception: %s", e.getMessage());
         }

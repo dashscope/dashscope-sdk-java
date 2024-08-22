@@ -21,6 +21,8 @@ public interface AppKeywords {
 
   String DOC_REFERENCE_TYPE = "doc_reference_type";
 
+  String MEMORY_ID = "memory_id";
+
   /** parameters key */
   String TOP_P = "top_p";
 
