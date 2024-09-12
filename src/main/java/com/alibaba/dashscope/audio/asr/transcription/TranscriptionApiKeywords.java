@@ -32,4 +32,6 @@ public class TranscriptionApiKeywords {
   public static final String SPECIAL_WORD_FILTER = "special_word_filter";
 
   public static final String AUDIO_EVENT_DETECTION_ENABLED = "audio_event_detection_enabled";
+
+  public static final String VOCABULARY_ID = "vocabulary_id";
 }

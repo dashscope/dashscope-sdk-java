@@ -44,6 +44,8 @@ public class TranscriptionParam extends HalfDuplexServiceParam {
 
   private Boolean audioEventDetectionEnabled;
 
+  private String vocabularyId;
+
   @Override
   public JsonObject getHttpBody() {
     JsonObject body = new JsonObject();
@@ -87,6 +89,9 @@ public class TranscriptionParam extends HalfDuplexServiceParam {
     if (audioEventDetectionEnabled != null) {
       jsonParameters.addProperty(
           TranscriptionApiKeywords.AUDIO_EVENT_DETECTION_ENABLED, audioEventDetectionEnabled);
+    }
+    if (vocabularyId != null) {
+      jsonParameters.addProperty(TranscriptionApiKeywords.VOCABULARY_ID, vocabularyId);
     }
     body.add("parameters", jsonParameters);
     if (phraseId != null) {

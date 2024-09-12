@@ -30,12 +30,17 @@ public class RecognitionParam extends FullDuplexServiceParam {
 
   private String phraseId;
 
+  private String vocabularyId;
+
   @Override
   public Map<String, Object> getParameters() {
     Map<String, Object> params = new HashMap<>();
     params.put(RecognitionApiKeywords.FORMAT, format);
     params.put(RecognitionApiKeywords.SAMPLE_RATE, sampleRate);
     params.put(RecognitionApiKeywords.DISFLUENCY_REMOVAL_ENABLED, disfluencyRemovalEnabled);
+    if (vocabularyId != null) {
+      params.put(RecognitionApiKeywords.VOCABULARY_ID, vocabularyId);
+    }
     params.putAll(parameters);
     return params;
   }
