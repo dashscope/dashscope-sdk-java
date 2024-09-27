@@ -24,4 +24,8 @@ public interface FullDuplexClient {
 
   void duplex(FullDuplexRequest req, ResultCallback<DashScopeResult> callback)
       throws NoApiKeyException, ApiException;
+
+  boolean close(int code, String reason);
+
+  void cancel();
 }

@@ -84,6 +84,24 @@ public class OkHttpWebSocketClient extends WebSocketListener
     return request;
   }
 
+  public boolean close(int code, String reason) {
+    /**
+     * close websocket connection see.
+     * https://square.github.io/okhttp/3.x/okhttp/okhttp3/WebSocket.html
+     */
+    if (webSocketClient != null) {
+      return webSocketClient.close(code, reason);
+    } else {
+      return true;
+    }
+  }
+
+  public void cancel() {
+    if (webSocketClient != null) {
+      webSocketClient.cancel();
+    }
+  }
+
   private void establishWebSocketClient(
       String apiKey,
       boolean isSecurityCheck,

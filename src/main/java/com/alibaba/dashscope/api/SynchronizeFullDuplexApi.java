@@ -30,6 +30,20 @@ public final class SynchronizeFullDuplexApi<ParamT extends FullDuplexServicePara
     this.serviceOptions = serviceOptions;
   }
 
+  public boolean close(int code, String reason) {
+    if (client != null) {
+      return client.close(code, reason);
+    } else {
+      return true;
+    }
+  }
+
+  public void cancel() {
+    if (client != null) {
+      client.cancel();
+    }
+  }
+
   /**
    * Create custom http client
    *
