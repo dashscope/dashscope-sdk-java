@@ -72,18 +72,11 @@ public class OkHttpClientFactory {
   }
 
   public static OkHttpClient getNewOkHttpClient(ConnectionOptions connectionOptions) {
-    Builder builder = Holder.INSTANCE.newBuilder();
-    builder
+    return Holder.INSTANCE
+        .newBuilder()
         .connectTimeout(connectionOptions.getConnectTimeout())
         .readTimeout(connectionOptions.getReadTimeout())
         .writeTimeout(connectionOptions.getWriteTimeout())
-        .connectionPool(new ConnectionPool(1, 2, TimeUnit.MINUTES));
-    if (connectionOptions.getProxy() != null) {
-      builder.proxy(connectionOptions.getProxy());
-    }
-    if (connectionOptions.getProxyAuthenticator() != null) {
-      builder.proxyAuthenticator(connectionOptions.getProxyAuthenticator());
-    }
-    return builder.build();
+        .build();
   }
 }
