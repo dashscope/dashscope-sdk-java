@@ -103,6 +103,62 @@ public final class SpeechSynthesizer {
   /**
    * CosyVoice Speech Synthesis SDK
    *
+   * @param baseUrl Base URL
+   * @param connectionOptions Connection options
+   */
+  public SpeechSynthesizer(String baseUrl, ConnectionOptions connectionOptions) {
+    this.parameters = null;
+    serviceOption =
+        ApiServiceOption.builder()
+            .protocol(Protocol.WEBSOCKET)
+            .streamingMode(StreamingMode.DUPLEX)
+            .outputMode(OutputMode.ACCUMULATE)
+            .taskGroup(TaskGroup.AUDIO.getValue())
+            .task(Task.TEXT_TO_SPEECH.getValue())
+            .function(Function.SPEECH_SYNTHESIZER.getValue())
+            .baseWebSocketUrl(baseUrl)
+            .build();
+    duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
+    this.callback = null;
+  }
+
+  /** CosyVoice Speech Synthesis SDK */
+  public SpeechSynthesizer() {
+    this.parameters = null;
+    serviceOption =
+        ApiServiceOption.builder()
+            .protocol(Protocol.WEBSOCKET)
+            .streamingMode(StreamingMode.DUPLEX)
+            .outputMode(OutputMode.ACCUMULATE)
+            .taskGroup(TaskGroup.AUDIO.getValue())
+            .task(Task.TEXT_TO_SPEECH.getValue())
+            .function(Function.SPEECH_SYNTHESIZER.getValue())
+            .build();
+    duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
+    this.callback = null;
+  }
+
+  public void updateParamAndCallback(
+      SpeechSynthesisParam param, ResultCallback<SpeechSynthesisResult> callback) {
+    this.parameters = param;
+    this.callback = callback;
+
+    // reset inner params
+    this.stopLatch = new AtomicReference<>(null);
+    this.cmdBuffer.clear();
+    this.textEmitter = null;
+    this.isFirst = true;
+
+    if (this.callback == null) {
+      this.async_call = false;
+    } else {
+      this.async_call = true;
+    }
+  }
+
+  /**
+   * CosyVoice Speech Synthesis SDK
+   *
    * @param param Configuration for speech synthesis, including voice type, volume, etc.
    * @param callback In non-streaming output scenarios, this can be set to null
    * @param baseUrl Base URL
@@ -267,6 +323,7 @@ public final class SpeechSynthesizer {
    * request, and synchronously receive confirmation from the server.
    */
   private void startStream() {
+
     startStreamTimeStamp = System.currentTimeMillis();
     recvAudioLength = 0;
     this.canceled.set(false);
@@ -296,6 +353,7 @@ public final class SpeechSynthesizer {
                   }
                   cmdBuffer.clear();
                 }
+                log.info("set textEmitter");
                 textEmitter = emitter;
               }
             },
@@ -440,8 +498,10 @@ public final class SpeechSynthesizer {
                 "State invalid: expect stream input tts state is started but " + state.getValue()));
       }
       if (textEmitter == null) {
+        log.debug("submitText to new emitter: " + text);
         cmdBuffer.add(AsyncCmdBuffer.builder().text(text).build());
       } else {
+        log.debug("submitText to emitter: " + text);
         textEmitter.onNext(text);
       }
     }
@@ -456,6 +516,7 @@ public final class SpeechSynthesizer {
    *     will wait indefinitely. Throws TimeoutError exception if it times out.
    */
   public void streamingComplete(long completeTimeoutMillis) throws RuntimeException {
+    log.info("streamingComplete with timeout: " + completeTimeoutMillis);
     synchronized (this) {
       if (state != SpeechSynthesisState.TTS_STARTED) {
         throw new ApiException(
@@ -463,8 +524,10 @@ public final class SpeechSynthesizer {
                 "State invalid: expect stream input tts state is started but " + state.getValue()));
       }
       if (textEmitter == null) {
+        log.info("adding stop to new emitter");
         cmdBuffer.add(AsyncCmdBuffer.builder().isStop(true).build());
       } else {
+        log.info("adding stop to emitter");
         textEmitter.onComplete();
       }
     }
@@ -472,12 +535,15 @@ public final class SpeechSynthesizer {
     if (stopLatch.get() != null) {
       try {
         if (completeTimeoutMillis > 0) {
+          log.info("start waiting for stopLatch");
           if (!stopLatch.get().await(completeTimeoutMillis, TimeUnit.MILLISECONDS)) {
             throw new RuntimeException("TimeoutError: waiting for streaming complete");
           }
         } else {
+          log.info("start waiting for stopLatch");
           stopLatch.get().await();
         }
+        log.info("stopLatch is done");
       } catch (InterruptedException ignored) {
         log.error("Interrupted while waiting for streaming complete");
       }

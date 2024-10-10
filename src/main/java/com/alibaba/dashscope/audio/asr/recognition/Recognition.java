@@ -27,6 +27,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +35,7 @@ import lombok.val;
 
 @Slf4j
 public final class Recognition {
-  SynchronizeFullDuplexApi<RecognitionParamWithStream> duplexApi;
+  @Getter SynchronizeFullDuplexApi<RecognitionParamWithStream> duplexApi;
 
   private ApiServiceOption serviceOption;
 
@@ -133,6 +134,10 @@ public final class Recognition {
                       + result.getSentence().getText()
                       + ", isEnd: "
                       + result.isSentenceEnd());
+            })
+        .doOnComplete(
+            () -> {
+              duplexApi.close(1000, "bye");
             });
   }
 
@@ -309,7 +314,7 @@ public final class Recognition {
       apiException.setStackTrace(finalError.get().getStackTrace());
       throw apiException;
     }
-
+    duplexApi.close(1000, "bye");
     return finalResult.get();
   }
 
@@ -355,5 +360,6 @@ public final class Recognition {
       } catch (InterruptedException ignored) {
       }
     }
+    duplexApi.close(1000, "bye");
   }
 }
