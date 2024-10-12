@@ -10,10 +10,12 @@ import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
 
 public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
+  @SuppressWarnings({"rawtypes", "unchecked"})
   private void writeMapObject(JsonWriter out, Map<String, Object> mapObject) throws IOException {
     if (mapObject != null) {
       out.beginObject();
@@ -29,11 +31,32 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
           out.value((Boolean) (entry.getValue()));
         } else if (entry.getValue() instanceof Character) {
           out.value((Character) (entry.getValue()));
-        } else {
-
+        } else if (entry.getValue() instanceof List){
+          out.beginArray();
+          for (Object v : (List)entry.getValue()) {
+            writePrimitiveType(out, v);
+          }
+          out.endArray();
+        }
+        else{
+          writeMapObject(out, (Map<String, Object>)entry.getValue());
         }
       }
       out.endObject();
+    }
+  }
+
+  private void writePrimitiveType(JsonWriter out, Object value) throws IOException{
+    if (value instanceof String) {
+      out.value((String) value);
+    } else if (value instanceof Integer) {
+      out.value((Integer) value);
+    } else if (value instanceof Double) {
+      out.value((Double) value);
+    } else if (value instanceof Boolean) {
+      out.value((Boolean) value);
+    } else if (value instanceof Character) {
+      out.value((Character) value);
     }
   }
 
