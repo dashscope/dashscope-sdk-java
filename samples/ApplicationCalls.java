@@ -1,12 +1,15 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
+
 import com.alibaba.dashscope.app.*;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.google.gson.JsonObject;
 import io.reactivex.Flowable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -224,7 +227,7 @@ public class ApplicationCalls {
         ApplicationParam param = ApplicationParam.builder()
                 .appId(APP_ID)
                 .prompt("我想去新疆")
-                .memoryId("")
+                .memoryId("mem_123")
                 .topP(0.2)
                 .build();
 
@@ -232,6 +235,33 @@ public class ApplicationCalls {
         ApplicationResult result = application.call(param);
 
         System.out.printf("requestId: %s, text: %s\n", result.getRequestId(), result.getOutput().getText());
+    }
+
+    public static void callWithAssistantServing() throws NoApiKeyException, InputRequiredException {
+        JsonObject metadataFilter = new JsonObject();
+        metadataFilter.addProperty("key", "meta123");
+
+        JsonObject structureFilter = new JsonObject();
+        structureFilter.addProperty("key", "structured123");
+
+        ApplicationParam param = ApplicationParam.builder()
+                .appId(APP_ID)
+                .prompt("我想去新疆")
+                .images(Collections.singletonList("img_123"))
+                .ragOptions(RagOptions.builder()
+                        .tags(Collections.singletonList("tag_123"))
+                        .pipelineIds(Collections.singletonList("pipeline_123"))
+                        .fileIds(Collections.singletonList("files_123"))
+                        .metadataFilter(metadataFilter)
+                        .structuredFilter(structureFilter)
+                        .build())
+                .build();
+
+        Application application = new Application();
+        ApplicationResult result = application.call(param);
+
+        System.out.printf("requestId: %s, text: %s\n", result.getRequestId(), result.getOutput().getText());
+
     }
 
 
@@ -243,7 +273,8 @@ public class ApplicationCalls {
 //        callWithSession();
 //        streamCall();
 //        callWithWorkspace();
-            callWithMemory();
+//            callWithMemory();
+            callWithAssistantServing();
         } catch (ApiException | NoApiKeyException | InputRequiredException e) {
             System.out.printf("Exception: %s", e.getMessage());
         }

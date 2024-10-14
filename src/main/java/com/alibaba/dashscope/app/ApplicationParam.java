@@ -92,6 +92,12 @@ public class ApplicationParam extends HalfDuplexParamBase {
    */
   private String memoryId;
 
+  /** image list */
+  private List<String> images;
+
+  /** rag options */
+  private RagOptions ragOptions;
+
   @Override
   public String getModel() {
     return null;
@@ -115,8 +121,13 @@ public class ApplicationParam extends HalfDuplexParamBase {
     if (hasThoughts != null) {
       params.put(AppKeywords.HAS_THOUGHTS, hasThoughts);
     }
+    if (incrementalOutput != null) {
+      params.put("incremental_output", incrementalOutput);
+    }
+    if (ragOptions != null) {
+      params.put("rag_options", ragOptions);
+    }
 
-    params.put("incremental_output", incrementalOutput);
     params.putAll(parameters);
 
     return params;
@@ -164,6 +175,11 @@ public class ApplicationParam extends HalfDuplexParamBase {
 
     if (bizParams != null) {
       input.add(AppKeywords.BIZ_PARAMS, bizParams);
+    }
+
+    if (images != null && !images.isEmpty()) {
+      JsonArray imagesJson = JsonUtils.toJsonElement(images).getAsJsonArray();
+      input.add(AppKeywords.IMAGES, imagesJson);
     }
 
     return input;

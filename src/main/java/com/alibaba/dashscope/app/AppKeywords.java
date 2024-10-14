@@ -33,4 +33,6 @@ public interface AppKeywords {
   String TEMPERATURE = "temperature";
 
   String HAS_THOUGHTS = "has_thoughts";
+
+  String IMAGES = "image_list";
 }
