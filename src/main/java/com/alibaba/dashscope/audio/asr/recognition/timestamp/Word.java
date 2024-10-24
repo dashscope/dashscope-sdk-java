@@ -19,4 +19,6 @@ public class Word {
   String text;
 
   String punctuation;
+
+  boolean fixed;
 }

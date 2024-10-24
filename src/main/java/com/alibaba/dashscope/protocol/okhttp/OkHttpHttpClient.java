@@ -475,4 +475,9 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
               }
             });
   }
+
+  @Override
+  public boolean close(int code, String reason) {
+    return false;
+  }
 }

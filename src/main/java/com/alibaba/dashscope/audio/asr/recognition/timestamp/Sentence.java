@@ -22,6 +22,8 @@ public class Sentence {
   /** Sentence words. */
   List<Word> words;
 
+  //  Stash stash;
+
   public static Sentence from(String message) {
     return JsonUtils.fromJson(message, Sentence.class);
   }

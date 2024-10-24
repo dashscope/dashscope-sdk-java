@@ -103,7 +103,7 @@ public final class Recognition {
   public Flowable<RecognitionResult> streamCall(
       RecognitionParam param, Flowable<ByteBuffer> audioFrame)
       throws ApiException, NoApiKeyException {
-
+    this.reset();
     return duplexApi
         .duplexCall(
             RecognitionParamWithStream.FromRecognitionParam(
@@ -135,13 +135,11 @@ public final class Recognition {
                       + ", isEnd: "
                       + result.isSentenceEnd());
             })
-        .doOnComplete(
-            () -> {
-              duplexApi.close(1000, "bye");
-            });
+        .doOnComplete(() -> {});
   }
 
   public void call(RecognitionParam param, ResultCallback<RecognitionResult> callback) {
+    this.reset();
     if (param == null) {
       throw new ApiException(
           new InputRequiredException("Parameter invalid: RecognitionParam is null"));
@@ -237,6 +235,7 @@ public final class Recognition {
   }
 
   public String call(RecognitionParam param, File file) {
+    this.reset();
     if (param == null) {
       throw new ApiException(
           new InputRequiredException("Parameter invalid: RecognitionParam is null"));
@@ -314,7 +313,6 @@ public final class Recognition {
       apiException.setStackTrace(finalError.get().getStackTrace());
       throw apiException;
     }
-    duplexApi.close(1000, "bye");
     return finalResult.get();
   }
 
@@ -360,6 +358,14 @@ public final class Recognition {
       } catch (InterruptedException ignored) {
       }
     }
-    duplexApi.close(1000, "bye");
+  }
+
+  private void reset() {
+    this.audioEmitter = null;
+    this.cmdBuffer.clear();
+    this.state = RecognitionState.IDLE;
+    this.stopLatch = new AtomicReference<>(null);
+    this.startStreamTimeStamp = -1;
+    this.firstPackageTimeStamp = -1;
   }
 }

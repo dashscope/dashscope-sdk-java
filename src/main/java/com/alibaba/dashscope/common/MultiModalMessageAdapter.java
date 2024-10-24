@@ -10,7 +10,6 @@ import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
 
@@ -31,22 +30,21 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
           out.value((Boolean) (entry.getValue()));
         } else if (entry.getValue() instanceof Character) {
           out.value((Character) (entry.getValue()));
-        } else if (entry.getValue() instanceof List){
+        } else if (entry.getValue() instanceof List) {
           out.beginArray();
-          for (Object v : (List)entry.getValue()) {
+          for (Object v : (List) entry.getValue()) {
             writePrimitiveType(out, v);
           }
           out.endArray();
-        }
-        else{
-          writeMapObject(out, (Map<String, Object>)entry.getValue());
+        } else {
+          writeMapObject(out, (Map<String, Object>) entry.getValue());
         }
       }
       out.endObject();
     }
   }
 
-  private void writePrimitiveType(JsonWriter out, Object value) throws IOException{
+  private void writePrimitiveType(JsonWriter out, Object value) throws IOException {
     if (value instanceof String) {
       out.value((String) value);
     } else if (value instanceof Integer) {

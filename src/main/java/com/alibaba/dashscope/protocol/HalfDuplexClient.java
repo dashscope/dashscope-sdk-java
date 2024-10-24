@@ -31,4 +31,6 @@ public interface HalfDuplexClient {
 
   void streamOut(HalfDuplexRequest req, ResultCallback<DashScopeResult> callback)
       throws NoApiKeyException, ApiException;
+
+  boolean close(int code, String reason);
 }

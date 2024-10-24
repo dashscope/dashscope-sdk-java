@@ -45,7 +45,7 @@ public final class SpeechSynthesizer {
           .task(Task.TEXT_TO_SPEECH.getValue())
           .function(Function.SPEECH_SYNTHESIZER.getValue())
           .build();
-  private final SynchronizeHalfDuplexApi<SpeechSynthesisParam> syncApi;
+  @Getter private final SynchronizeHalfDuplexApi<SpeechSynthesisParam> syncApi;
 
   public SpeechSynthesizer() {
     syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);

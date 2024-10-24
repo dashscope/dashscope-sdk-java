@@ -98,4 +98,12 @@ public final class SynchronizeHalfDuplexApi<ParamT extends HalfDuplexParamBase> 
     HalfDuplexRequest req = new HalfDuplexRequest(param, serviceOptions);
     client.streamOut(req, callback);
   }
+
+  public boolean close(int code, String reason) {
+    if (client != null) {
+      return client.close(code, reason);
+    } else {
+      return true;
+    }
+  }
 }

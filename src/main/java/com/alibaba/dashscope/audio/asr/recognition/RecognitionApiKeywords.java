@@ -10,5 +10,7 @@ public class RecognitionApiKeywords {
   public static final String DISFLUENCY_REMOVAL_ENABLED = "disfluency_removal_enabled";
   public static final String SENTENCE = "sentence";
 
+  public static final String STASH = "stash";
+
   public static final String VOCABULARY_ID = "vocabulary_id";
 }

@@ -39,10 +39,13 @@ public class OkHttpClientFactory {
       HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
       logging.setLevel(Level.valueOf(defaultOptions.getNetworkLoggingLevel()));
       int connectionPoolSize = connectionConfigurations.getConnectionPoolSize();
+      log.debug("[connectionPool Config] connectionPoolSize: {}", connectionPoolSize);
       Dispatcher dispatcher = new Dispatcher();
       dispatcher.setMaxRequests(connectionConfigurations.getMaximumAsyncRequests());
+      log.debug("[connectionPool Config] maxRequests: {}", dispatcher.getMaxRequests());
       dispatcher.setMaxRequestsPerHost(connectionConfigurations.getMaximumAsyncRequestsPerHost());
-
+      log.debug(
+          "[connectionPool Config] maxRequestsPerHost: {}", dispatcher.getMaxRequestsPerHost());
       Builder clientBuilder = new OkHttpClient.Builder();
       clientBuilder
           .connectTimeout(connectionConfigurations.getConnectTimeout())
