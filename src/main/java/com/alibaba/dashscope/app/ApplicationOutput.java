@@ -111,5 +111,9 @@ public class ApplicationOutput {
     /** List of referenced image URLs */
     @SerializedName("images")
     private List<String> images;
+
+    /** List of referenced page number */
+    @SerializedName("page_number")
+    private List<Integer> pageNumber;
   }
 }

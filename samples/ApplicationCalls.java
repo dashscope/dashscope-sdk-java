@@ -264,6 +264,26 @@ public class ApplicationCalls {
 
     }
 
+    public static void ragCallWithDocReference()
+            throws ApiException, NoApiKeyException, InputRequiredException {
+        ApplicationParam param = ApplicationParam.builder()
+                .appId(APP_ID)
+                .prompt("ChatDev的亮点是什么？")
+                .topP(0.2)
+                .build();
+
+        Application application = new Application();
+        ApplicationResult result = application.call(param);
+
+        System.out.printf("requestId: %s, text: %s, finishReason: %s\n",
+                result.getRequestId(), result.getOutput().getText(), result.getOutput().getFinishReason());
+
+        if (result.getOutput().getDocReferences() != null && !result.getOutput().getDocReferences().isEmpty()) {
+            for (ApplicationOutput.DocReference docReference : result.getOutput().getDocReferences()) {
+                System.out.println(docReference.toString());
+            }
+        }
+    }
 
     public static void main(String[] args) {
         try {
@@ -274,7 +294,8 @@ public class ApplicationCalls {
 //        streamCall();
 //        callWithWorkspace();
 //            callWithMemory();
-            callWithAssistantServing();
+//            callWithAssistantServing();
+            ragCallWithDocReference();
         } catch (ApiException | NoApiKeyException | InputRequiredException e) {
             System.out.printf("Exception: %s", e.getMessage());
         }
