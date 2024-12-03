@@ -352,8 +352,6 @@ public class OkHttpWebSocketClient extends WebSocketListener
     }
     int maxRetries = 3;
     int retryCount = 0;
-    message =
-        "{\"header\":{\"action\":\"run-task\",\"task_id\":\"5de3904e-73cd-4b09-a432-8d1720238be0\",\"streaming\":\"duplex\"},\"payload\":{\"model\":\"cosyvoice-v1\",\"task_group\":\"audio\",\"task\":\"tts\",\"function\":\"SpeechSynthesizer\",\"input\":{},\"parameters\":{\"voice\":\"longxiaochun\",\"volume\":50,\"text_type\":\"PlainText\",\"sample_rate\":0,\"rate\":1,\"phoneme_timestamp_enabled\":false,\"format\":\"Default\",\"pitch\":1,\"word_timestamp_enabled\":false}}}";
     while (retryCount < maxRetries) {
       log.debug("Sending message: " + message);
       Boolean isOk = webSocketClient.send(message);
