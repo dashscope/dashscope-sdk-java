@@ -47,7 +47,6 @@ public class TextMessageParam extends MessageParamBase {
   @Override
   public void validate() throws InputRequiredException {
     if (role.equals("")
-        || content.equals("")
         || !(role.equals("user") || role.equals("assistant"))) {
       throw new InputRequiredException("role mast be set and mast one of[user|assistant]");
     }
