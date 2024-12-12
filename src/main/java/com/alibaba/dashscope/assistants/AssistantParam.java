@@ -22,12 +22,14 @@ public class AssistantParam extends FlattenHalfDuplexParamBase {
   @NonNull private String model;
   @Default private String name = null;
   @Default private String description = null;
+
   /** Instructions */
   @SerializedName("instructions")
   @Default
   private String instructions = null;
 
   @Singular private List<ToolBase> tools;
+
   /**
    * File Ids
    *
@@ -55,7 +57,7 @@ public class AssistantParam extends FlattenHalfDuplexParamBase {
     if (instructions != null) {
       requestObject.addProperty("instructions", instructions);
     }
-    if (tools != null && !tools.isEmpty()) {
+    if (tools != null) {
       requestObject.add("tools", JsonUtils.toJsonArray(tools));
     }
     if (fileIds != null && !fileIds.isEmpty()) {
