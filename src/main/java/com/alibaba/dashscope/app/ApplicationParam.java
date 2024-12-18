@@ -217,8 +217,8 @@ public class ApplicationParam extends HalfDuplexParamBase {
 
   @Override
   public void validate() throws InputRequiredException {
-    if (getPrompt() == null) {
-      throw new InputRequiredException("prompt must not be null");
+    if (getPrompt() == null && (getMessages() == null || getMessages().isEmpty())) {
+      throw new InputRequiredException("prompt or messages must not be null");
     }
   }
 }
