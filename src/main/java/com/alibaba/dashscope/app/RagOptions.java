@@ -40,4 +40,8 @@ public class RagOptions {
   /** structured filter of knowledge base query */
   @SerializedName("structured_filter")
   private JsonObject structuredFilter;
+
+  /** file ID is a temporary file associated with the current session */
+  @SerializedName("session_file_ids")
+  private List<String> sessionFileIds;
 }
