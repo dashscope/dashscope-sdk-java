@@ -5,8 +5,9 @@ package com.alibaba.dashscope.audio.asr.recognition.timestamp;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
-import java.util.List;
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 public class Sentence {
@@ -22,7 +23,13 @@ public class Sentence {
   /** Sentence words. */
   List<Word> words;
 
-  //  Stash stash;
+  Stash stash;
+
+  @SerializedName("emo_tag")
+  String emoTag;
+
+  @SerializedName("emo_confidence")
+  Double emoConfidence;
 
   public static Sentence from(String message) {
     return JsonUtils.fromJson(message, Sentence.class);
