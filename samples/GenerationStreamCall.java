@@ -76,7 +76,6 @@ public class GenerationStreamCall {
   }
 
   public static void main(String[] args) {
-/*
     try {
       streamCall();
     } catch (ApiException | NoApiKeyException | InputRequiredException e) {
@@ -88,7 +87,6 @@ public class GenerationStreamCall {
     } catch (ApiException | NoApiKeyException | InputRequiredException | InterruptedException e) {
       System.out.println(e.getMessage());
     }
-*/
 
     try {
       streamCallWithSearchOptions();
