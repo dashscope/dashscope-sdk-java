@@ -16,22 +16,20 @@ import com.google.gson.JsonObject;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
-import java.io.File;
-import java.io.FileInputStream;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 public final class Recognition {
@@ -55,6 +53,11 @@ public final class Recognition {
 
   private long startStreamTimeStamp = -1;
   private long firstPackageTimeStamp = -1;
+  private long stopStreamTimeStamp = -1;
+  private long onCompleteTimeStamp = -1;
+  private AtomicReference<String> lastRequestId = new AtomicReference<>(null);
+
+  private String preRequestId = null;
 
   @SuperBuilder
   private static class RecognitionParamWithStream extends RecognitionParam {
@@ -67,10 +70,11 @@ public final class Recognition {
     }
 
     public static RecognitionParamWithStream FromRecognitionParam(
-        RecognitionParam param, Flowable<ByteBuffer> audioStream) {
+        RecognitionParam param, Flowable<ByteBuffer> audioStream, String preRequestId) {
       RecognitionParamWithStream recognitionParamWithStream =
           RecognitionParamWithStream.builder()
               .parameters((param.getParameters()))
+              .parameter("pre_task_id", preRequestId)
               .headers(param.getHeaders())
               .format(param.getFormat())
               .audioStream(audioStream)
@@ -104,6 +108,7 @@ public final class Recognition {
       RecognitionParam param, Flowable<ByteBuffer> audioFrame)
       throws ApiException, NoApiKeyException {
     this.reset();
+    preRequestId = UUID.randomUUID().toString();
     return duplexApi
         .duplexCall(
             RecognitionParamWithStream.FromRecognitionParam(
@@ -114,7 +119,12 @@ public final class Recognition {
                         startStreamTimeStamp = System.currentTimeMillis();
                       }
                       log.debug("send audio frame: " + buffer.remaining());
-                    })))
+                    }),
+                preRequestId))
+        .doOnComplete(
+            () -> {
+              this.stopStreamTimeStamp = System.currentTimeMillis();
+            })
         .map(
             item -> {
               return RecognitionResult.fromDashScopeResult(item);
@@ -122,12 +132,12 @@ public final class Recognition {
         .filter(item -> item != null && item.getSentence() != null && !item.isCompleteResult())
         .doOnNext(
             result -> {
+              if (lastRequestId.get() == null && result.getRequestId() != null) {
+                lastRequestId.set(result.getRequestId());
+              }
               if (firstPackageTimeStamp < 0) {
                 firstPackageTimeStamp = System.currentTimeMillis();
-                log.debug(
-                    "first package delay: "
-                        + (System.currentTimeMillis() - startStreamTimeStamp)
-                        + " ms");
+                log.debug("first package delay: " + getFirstPackageDelay());
               }
               log.debug(
                   "Recv Result: "
@@ -135,7 +145,11 @@ public final class Recognition {
                       + ", isEnd: "
                       + result.isSentenceEnd());
             })
-        .doOnComplete(() -> {});
+        .doOnComplete(
+            () -> {
+              onCompleteTimeStamp = System.currentTimeMillis();
+              log.debug("last package delay: " + getLastPackageDelay());
+            });
   }
 
   public void call(RecognitionParam param, ResultCallback<RecognitionResult> callback) {
@@ -175,20 +189,21 @@ public final class Recognition {
     }
     stopLatch = new AtomicReference<>(new CountDownLatch(1));
 
+    preRequestId = UUID.randomUUID().toString();
     try {
       duplexApi.duplexCall(
-          RecognitionParamWithStream.FromRecognitionParam(param, audioFrames),
+          RecognitionParamWithStream.FromRecognitionParam(param, audioFrames, preRequestId),
           new ResultCallback<DashScopeResult>() {
             @Override
             public void onEvent(DashScopeResult message) {
               RecognitionResult recognitionResult = RecognitionResult.fromDashScopeResult(message);
+              if (lastRequestId.get() == null && recognitionResult.getRequestId() != null) {
+                lastRequestId.set(recognitionResult.getRequestId());
+              }
               if (!recognitionResult.isCompleteResult()) {
                 if (firstPackageTimeStamp < 0) {
                   firstPackageTimeStamp = System.currentTimeMillis();
-                  log.debug(
-                      "first package delay: "
-                          + (System.currentTimeMillis() - startStreamTimeStamp)
-                          + " ms");
+                  log.debug("first package delay: " + getFirstPackageDelay());
                 }
                 log.debug(
                     "Recv Result: "
@@ -201,6 +216,8 @@ public final class Recognition {
 
             @Override
             public void onComplete() {
+              onCompleteTimeStamp = System.currentTimeMillis();
+              log.debug("last package delay: " + getLastPackageDelay());
               synchronized (Recognition.this) {
                 state = RecognitionState.IDLE;
               }
@@ -231,7 +248,7 @@ public final class Recognition {
         stopLatch.get().countDown();
       }
     }
-    log.info("Recognition started");
+    log.debug("Recognition started");
   }
 
   public String call(RecognitionParam param, File file) {
@@ -267,6 +284,7 @@ public final class Recognition {
                             }
                           }
                           emitter.onComplete();
+                          this.stopStreamTimeStamp = System.currentTimeMillis();
                         } catch (Exception e) {
                           emitter.onError(e);
                         }
@@ -274,19 +292,25 @@ public final class Recognition {
                   .start();
             },
             BackpressureStrategy.BUFFER);
+    preRequestId = UUID.randomUUID().toString();
     try {
       duplexApi
-          .duplexCall(RecognitionParamWithStream.FromRecognitionParam(param, audioFrames))
+          .duplexCall(RecognitionParamWithStream.FromRecognitionParam(param, audioFrames, preRequestId))
+          .doOnComplete(
+              () -> {
+                onCompleteTimeStamp = System.currentTimeMillis();
+                log.debug("last package delay: " + getLastPackageDelay());
+              })
           .blockingSubscribe(
               res -> {
                 RecognitionResult recognitionResult = RecognitionResult.fromDashScopeResult(res);
+                if (lastRequestId.get() == null && recognitionResult.getRequestId() != null) {
+                  lastRequestId.set(recognitionResult.getRequestId());
+                }
                 if (!recognitionResult.isCompleteResult() && recognitionResult.isSentenceEnd()) {
                   if (firstPackageTimeStamp < 0) {
                     firstPackageTimeStamp = System.currentTimeMillis();
-                    log.debug(
-                        "first package delay: "
-                            + (System.currentTimeMillis() - startStreamTimeStamp)
-                            + " ms");
+                    log.debug("first package delay: " + getFirstPackageDelay());
                   }
                   log.debug(
                       "Recv Result: "
@@ -339,6 +363,7 @@ public final class Recognition {
   }
 
   public void stop() {
+    this.stopStreamTimeStamp = System.currentTimeMillis();
     synchronized (this) {
       if (state != RecognitionState.RECOGNITION_STARTED) {
         throw new ApiException(
@@ -367,5 +392,20 @@ public final class Recognition {
     this.stopLatch = new AtomicReference<>(null);
     this.startStreamTimeStamp = -1;
     this.firstPackageTimeStamp = -1;
+    this.lastRequestId.set(null);
+  }
+
+  /** First Package Delay is the time between start sending audio and receive first words package */
+  public long getFirstPackageDelay() {
+    return this.firstPackageTimeStamp - this.startStreamTimeStamp;
+  }
+
+  /** Last Package Delay is the time between stop sending audio and receive last words package */
+  public long getLastPackageDelay() {
+    return this.onCompleteTimeStamp - this.stopStreamTimeStamp;
+  }
+
+  public String getLastRequestId() {
+    return preRequestId;
   }
 }
