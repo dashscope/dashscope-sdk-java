@@ -16,22 +16,25 @@ import com.google.gson.JsonObject;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.util.LinkedList;
+import java.util.Objects;
 import java.util.Queue;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.experimental.SuperBuilder;
-import lombok.extern.slf4j.Slf4j;
 
 /** @author lengjiayi */
 @Slf4j
@@ -54,10 +57,10 @@ public final class SpeechSynthesizer {
 
   @Getter private ByteBuffer audioData;
   private ByteArrayOutputStream outputStream;
-  private AtomicReference<String> lastRequestId = new AtomicReference<>();
+  private String preRequestId = null;
   private boolean isFirst = true;
   private AtomicBoolean canceled = new AtomicBoolean(false);
-  private boolean async_call = false;
+  private boolean asyncCall = false;
   private long startStreamTimeStamp = -1;
   private long firstPackageTimeStamp = -1;
   private double recvAudioLength = 0;
@@ -93,11 +96,7 @@ public final class SpeechSynthesizer {
             .build();
     duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
     this.callback = callback;
-    if (this.callback == null) {
-      this.async_call = false;
-    } else {
-      this.async_call = true;
-    }
+    this.asyncCall = this.callback != null;
   }
 
   /**
@@ -149,11 +148,7 @@ public final class SpeechSynthesizer {
     this.textEmitter = null;
     this.isFirst = true;
 
-    if (this.callback == null) {
-      this.async_call = false;
-    } else {
-      this.async_call = true;
-    }
+    this.asyncCall = this.callback != null;
   }
 
   /**
@@ -167,7 +162,7 @@ public final class SpeechSynthesizer {
       SpeechSynthesisParam param, ResultCallback<SpeechSynthesisResult> callback, String baseUrl) {
     if (param == null) {
       throw new ApiException(
-          new InputRequiredException("Parameter invalid: StreamInputTtsParam is null"));
+          new InputRequiredException("Parameter invalid: SpeechSynthesisParam is null"));
     }
 
     this.parameters = param;
@@ -183,11 +178,7 @@ public final class SpeechSynthesizer {
             .build();
     duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
     this.callback = callback;
-    if (this.callback == null) {
-      this.async_call = false;
-    } else {
-      this.async_call = true;
-    }
+    this.asyncCall = this.callback != null;
   }
 
   /**
@@ -215,15 +206,11 @@ public final class SpeechSynthesizer {
             .build();
     duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
     this.callback = callback;
-    if (this.callback == null) {
-      this.async_call = false;
-    } else {
-      this.async_call = true;
-    }
+    this.asyncCall = this.callback != null;
   }
 
   public String getLastRequestId() {
-    return lastRequestId.get();
+    return preRequestId;
   }
 
   /**
@@ -236,9 +223,10 @@ public final class SpeechSynthesizer {
       throws ApiException, NoApiKeyException {
     startStreamTimeStamp = System.currentTimeMillis();
     recvAudioLength = 0;
+    preRequestId = UUID.randomUUID().toString();
     return duplexApi
         .duplexCall(
-            StreamInputTtsParamWithStream.fromStreamInputTtsParam(this.parameters, textStream))
+            StreamInputTtsParamWithStream.fromStreamInputTtsParam(this.parameters, textStream, preRequestId))
         .map(SpeechSynthesisResult::fromDashScopeResult)
         .filter(item -> !canceled.get())
         .doOnNext(
@@ -246,23 +234,20 @@ public final class SpeechSynthesizer {
               if (result.getAudioFrame() != null) {
                 if (recvAudioLength == 0) {
                   firstPackageTimeStamp = System.currentTimeMillis();
-                  log.debug(
-                      "[TtsV2] first package delay: "
-                          + (System.currentTimeMillis() - startStreamTimeStamp)
-                          + " ms");
+                  log.debug("[TtsV2] first package delay: " + getFirstPackageDelay() + " ms");
                 }
                 recvAudioLength +=
                     (double) result.getAudioFrame().capacity()
                         / ((double) (2 * parameters.getFormat().getSampleRate()) / 1000);
                 long current = System.currentTimeMillis();
-                double current_rtf = (current - firstPackageTimeStamp) / recvAudioLength;
+                double currentRtf = (current - startStreamTimeStamp) / recvAudioLength;
                 log.debug(
                     "[TtsV2] Recv Audio Binary: "
                         + result.getAudioFrame().capacity()
                         + " bytes, total audio "
                         + recvAudioLength
                         + " ms, current_rtf: "
-                        + current_rtf);
+                        + currentRtf);
               }
             });
   }
@@ -277,6 +262,7 @@ public final class SpeechSynthesizer {
       throws ApiException, NoApiKeyException {
     startStreamTimeStamp = System.currentTimeMillis();
     recvAudioLength = 0;
+    preRequestId = UUID.randomUUID().toString();
     return duplexApi
         .duplexCall(
             StreamInputTtsParamWithStream.fromStreamInputTtsParam(
@@ -290,30 +276,28 @@ public final class SpeechSynthesizer {
                               })
                           .start();
                     },
-                    BackpressureStrategy.BUFFER)))
+                    BackpressureStrategy.BUFFER),
+                    preRequestId))
         .map(SpeechSynthesisResult::fromDashScopeResult)
         .doOnNext(
             result -> {
               if (result.getAudioFrame() != null) {
                 if (recvAudioLength == 0) {
                   firstPackageTimeStamp = System.currentTimeMillis();
-                  log.debug(
-                      "[TtsV2] first package delay: "
-                          + (System.currentTimeMillis() - startStreamTimeStamp)
-                          + " ms");
+                  log.debug("[TtsV2] first package delay: " + getFirstPackageDelay() + " ms");
                 }
                 recvAudioLength +=
                     (double) result.getAudioFrame().capacity()
                         / ((double) (2 * parameters.getFormat().getSampleRate()) / 1000);
                 long current = System.currentTimeMillis();
-                double current_rtf = (current - firstPackageTimeStamp) / recvAudioLength;
+                double currentRtf = (current - startStreamTimeStamp) / recvAudioLength;
                 log.debug(
                     "[TtsV2] Recv Audio Binary: "
                         + result.getAudioFrame().capacity()
                         + " bytes, total audio "
                         + recvAudioLength
                         + " ms, current_rtf: "
-                        + current_rtf);
+                        + currentRtf);
               }
             });
   }
@@ -332,7 +316,6 @@ public final class SpeechSynthesizer {
           new InputRequiredException("Parameter invalid: ResultCallback is null"));
     }
     // 新的session开始，重置所有buffer
-    lastRequestId.set(null);
     outputStream = new ByteArrayOutputStream();
     audioData = null;
     //        timestamps.clear();
@@ -353,7 +336,7 @@ public final class SpeechSynthesizer {
                   }
                   cmdBuffer.clear();
                 }
-                log.info("set textEmitter");
+                log.debug("set textEmitter");
                 textEmitter = emitter;
               }
             },
@@ -363,11 +346,11 @@ public final class SpeechSynthesizer {
       cmdBuffer.clear();
     }
     stopLatch = new AtomicReference<>(new CountDownLatch(1));
-
+    preRequestId = UUID.randomUUID().toString();
     try {
       duplexApi.duplexCall(
           SpeechSynthesizer.StreamInputTtsParamWithStream.fromStreamInputTtsParam(
-              this.parameters, textFrames),
+              this.parameters, textFrames, preRequestId),
           new ResultCallback<DashScopeResult>() {
             //                        private Sentence lastSentence = null;
 
@@ -380,9 +363,6 @@ public final class SpeechSynthesizer {
                   SpeechSynthesisResult.fromDashScopeResult(message);
 
               try {
-                if (lastRequestId.get() == null) {
-                  lastRequestId.set(speechSynthesisResult.getRequestId());
-                }
                 /*
                 if (speechSynthesisResult.getTimestamp() != null && !async_call) {
                     Sentence sentence = speechSynthesisResult.getTimestamp();
@@ -402,24 +382,21 @@ public final class SpeechSynthesizer {
                 if (speechSynthesisResult.getAudioFrame() != null) {
                   if (recvAudioLength == 0) {
                     firstPackageTimeStamp = System.currentTimeMillis();
-                    log.debug(
-                        "[TtsV2] first package delay: "
-                            + (System.currentTimeMillis() - startStreamTimeStamp)
-                            + " ms");
+                    log.debug("[TtsV2] first package delay: " + getFirstPackageDelay() + " ms");
                   }
                   recvAudioLength +=
                       (double) speechSynthesisResult.getAudioFrame().capacity()
                           / ((double) (2 * parameters.getFormat().getSampleRate()) / 1000);
                   long current = System.currentTimeMillis();
-                  double current_rtf = (current - firstPackageTimeStamp) / recvAudioLength;
+                  double currentRtf = (current - startStreamTimeStamp) / recvAudioLength;
                   log.debug(
                       "[TtsV2] Recv Audio Binary: "
                           + speechSynthesisResult.getAudioFrame().capacity()
                           + " bytes, total audio "
                           + recvAudioLength
                           + " ms, current_rtf: "
-                          + current_rtf);
-                  if (!async_call) {
+                          + currentRtf);
+                  if (!asyncCall) {
                     try {
                       channel.write(speechSynthesisResult.getAudioFrame());
                     } catch (IOException e) {
@@ -488,7 +465,7 @@ public final class SpeechSynthesizer {
    * @param text utf-8 encoded text
    */
   private void submitText(String text) {
-    if (text == "") {
+    if (Objects.equals(text, "")) {
       throw new ApiException(new InputRequiredException("Parameter invalid: text is null"));
     }
     synchronized (this) {
@@ -516,7 +493,7 @@ public final class SpeechSynthesizer {
    *     will wait indefinitely. Throws TimeoutError exception if it times out.
    */
   public void streamingComplete(long completeTimeoutMillis) throws RuntimeException {
-    log.info("streamingComplete with timeout: " + completeTimeoutMillis);
+    log.debug("streamingComplete with timeout: " + completeTimeoutMillis);
     synchronized (this) {
       if (state != SpeechSynthesisState.TTS_STARTED) {
         throw new ApiException(
@@ -524,10 +501,10 @@ public final class SpeechSynthesizer {
                 "State invalid: expect stream input tts state is started but " + state.getValue()));
       }
       if (textEmitter == null) {
-        log.info("adding stop to new emitter");
+        log.debug("adding stop to new emitter");
         cmdBuffer.add(AsyncCmdBuffer.builder().isStop(true).build());
       } else {
-        log.info("adding stop to emitter");
+        log.debug("adding stop to emitter");
         textEmitter.onComplete();
       }
     }
@@ -535,15 +512,15 @@ public final class SpeechSynthesizer {
     if (stopLatch.get() != null) {
       try {
         if (completeTimeoutMillis > 0) {
-          log.info("start waiting for stopLatch");
+          log.debug("start waiting for stopLatch");
           if (!stopLatch.get().await(completeTimeoutMillis, TimeUnit.MILLISECONDS)) {
             throw new RuntimeException("TimeoutError: waiting for streaming complete");
           }
         } else {
-          log.info("start waiting for stopLatch");
+          log.debug("start waiting for stopLatch");
           stopLatch.get().await();
         }
-        log.info("stopLatch is done");
+        log.debug("stopLatch is done");
       } catch (InterruptedException ignored) {
         log.error("Interrupted while waiting for streaming complete");
       }
@@ -639,7 +616,7 @@ public final class SpeechSynthesizer {
     }
     this.startStream();
     this.submitText(text);
-    if (this.async_call) {
+    if (this.asyncCall) {
       this.asyncStreamingComplete();
       return null;
     } else {
@@ -673,10 +650,11 @@ public final class SpeechSynthesizer {
     @NonNull private Flowable<String> textStream;
 
     public static StreamInputTtsParamWithStream fromStreamInputTtsParam(
-        SpeechSynthesisParam param, Flowable<String> textStream) {
+        SpeechSynthesisParam param, Flowable<String> textStream, String preRequestId) {
       return StreamInputTtsParamWithStream.builder()
           .headers(param.getHeaders())
           .parameters(param.getParameters())
+          .parameter("pre_task_id", preRequestId)
           .format(param.getFormat())
           .textStream(textStream)
           .model(param.getModel())
@@ -696,5 +674,10 @@ public final class SpeechSynthesizer {
               })
           .cast(Object.class);
     }
+  }
+
+  /** First Package Delay is the time between start sending text and receive first audio package */
+  public long getFirstPackageDelay() {
+    return this.firstPackageTimeStamp - this.startStreamTimeStamp;
   }
 }
