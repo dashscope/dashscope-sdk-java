@@ -103,7 +103,7 @@ public class TranscriptionParam extends HalfDuplexServiceParam {
       jsonResources.getAsJsonArray().add(jsonPhraseResource);
       body.add(ApiKeywords.RESOURCES, jsonResources);
     }
-    log.info("body=>{}", body);
+    log.debug("body=>{}", body);
     return body;
   }
 
