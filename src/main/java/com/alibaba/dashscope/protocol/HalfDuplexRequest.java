@@ -171,7 +171,11 @@ public class HalfDuplexRequest {
   public JsonObject getStartTaskMessage() {
     JsonObject header = new JsonObject();
     header.addProperty(ApiKeywords.ACTION, WebSocketEventType.RUN_TASK.getValue());
-    header.addProperty(ApiKeywords.TASKID, UUID.randomUUID().toString());
+    if (param.getParameters() != null && param.getParameters().containsKey("pre_task_id")) {
+      header.addProperty(ApiKeywords.TASKID, (String) param.getParameters().get("pre_task_id"));
+    } else {
+      header.addProperty(ApiKeywords.TASKID, UUID.randomUUID().toString());
+    }
     header.addProperty(ApiKeywords.STREAMING, serviceOption.getStreamingMode().getValue());
     JsonObject wsMessage = new JsonObject();
     wsMessage.add(ApiKeywords.HEADER, header);
