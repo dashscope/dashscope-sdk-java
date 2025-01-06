@@ -11,6 +11,9 @@ import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import io.reactivex.Flowable;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -18,9 +21,8 @@ import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public final class SpeechSynthesizer {
@@ -30,10 +32,16 @@ public final class SpeechSynthesizer {
 
   @Getter private ByteBuffer audioData;
 
-  private AtomicReference<String> lastRequestId = new AtomicReference<>();
+  private long startStreamTimeStamp = -1;
+  private long firstPackageTimeStamp = -1;
+  private double recvAudioLength = 0;
+
+  private AtomicReference<String> lastRequestId = new AtomicReference<>(null);
+
+  private String preRequestId = null;
 
   public String getLastRequestId() {
-    return lastRequestId.get();
+    return preRequestId;
   }
 
   private ApiServiceOption serviceOption =
@@ -51,16 +59,22 @@ public final class SpeechSynthesizer {
     syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
 
+
   public void call(SpeechSynthesisParam param, ResultCallback<SpeechSynthesisResult> callback) {
+    startStreamTimeStamp = System.currentTimeMillis();
+    recvAudioLength = 0;
+    firstPackageTimeStamp = -1;
+    preRequestId = UUID.randomUUID().toString();
+    param.getParameters().put("pre_task_id", preRequestId);
     timestamps.clear();
     audioData = null;
-    lastRequestId.set(null);
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     WritableByteChannel channel = Channels.newChannel(outputStream);
 
     class SynthesisCallback extends ResultCallback<DashScopeResult> {
       private Sentence lastSentence = null;
 
+      @Override
       public void onOpen(Status status) {
         callback.onOpen(status);
       }
@@ -69,9 +83,6 @@ public final class SpeechSynthesizer {
       public void onEvent(DashScopeResult message) {
         SpeechSynthesisResult result = SpeechSynthesisResult.fromDashScopeResult(message);
         try {
-          if (lastRequestId.get() == null) {
-            lastRequestId.set(result.getRequestId());
-          }
           if (result.getTimestamp() != null) {
             Sentence sentence = result.getTimestamp();
             if (lastSentence == null) {
@@ -87,6 +98,22 @@ public final class SpeechSynthesizer {
             }
           }
           if (result.getAudioFrame() != null) {
+            if (recvAudioLength == 0) {
+              firstPackageTimeStamp = System.currentTimeMillis();
+              log.debug("[TtsV2] first package delay: " + getFirstPackageDelay() + " ms");
+            }
+            recvAudioLength +=
+                (double) result.getAudioFrame().capacity()
+                    / ((double) (2 * param.getSampleRate()) / 1000);
+            long current = System.currentTimeMillis();
+            double current_rtf = (current - startStreamTimeStamp) / recvAudioLength;
+            log.debug(
+                "[TtsV2] Recv Audio Binary: "
+                    + result.getAudioFrame().capacity()
+                    + " bytes, total audio "
+                    + recvAudioLength
+                    + " ms, current_rtf: "
+                    + current_rtf);
             try {
               channel.write(result.getAudioFrame());
             } catch (IOException e) {
@@ -125,9 +152,13 @@ public final class SpeechSynthesizer {
   }
 
   public Flowable<SpeechSynthesisResult> streamCall(SpeechSynthesisParam param) {
+    startStreamTimeStamp = System.currentTimeMillis();
+    recvAudioLength = 0;
+    firstPackageTimeStamp = -1;
+    preRequestId = UUID.randomUUID().toString();
+    param.getParameters().put("pre_task_id", preRequestId);
     audioData = null;
     timestamps.clear();
-    lastRequestId.set(null);
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     WritableByteChannel channel = Channels.newChannel(outputStream);
     AtomicReference<Sentence> lastSentenceRef = new AtomicReference<>();
@@ -137,9 +168,6 @@ public final class SpeechSynthesizer {
           .map(
               message -> {
                 SpeechSynthesisResult result = SpeechSynthesisResult.fromDashScopeResult(message);
-                if (lastRequestId.get() == null) {
-                  lastRequestId.set(result.getRequestId());
-                }
                 if (result.getTimestamp() != null) {
                   Sentence sentence = result.getTimestamp();
                   if (lastSentenceRef.get() == null) {
@@ -155,6 +183,22 @@ public final class SpeechSynthesizer {
                   }
                 }
                 if (result.getAudioFrame() != null) {
+                  if (recvAudioLength == 0) {
+                    firstPackageTimeStamp = System.currentTimeMillis();
+                    log.debug("[TtsV2] first package delay: " + getFirstPackageDelay() + " ms");
+                  }
+                  recvAudioLength +=
+                      (double) result.getAudioFrame().capacity()
+                          / ((double) (2 * param.getSampleRate()) / 1000);
+                  long current = System.currentTimeMillis();
+                  double current_rtf = (current - startStreamTimeStamp) / recvAudioLength;
+                  log.debug(
+                      "[TtsV2] Recv Audio Binary: "
+                          + result.getAudioFrame().capacity()
+                          + " bytes, total audio "
+                          + recvAudioLength
+                          + " ms, current_rtf: "
+                          + current_rtf);
                   try {
                     channel.write(result.getAudioFrame());
                   } catch (IOException e) {
@@ -197,5 +241,10 @@ public final class SpeechSynthesizer {
       throw new ApiException(finalError.get());
     }
     return audioData;
+  }
+
+  /** First Package Delay is the time between start sending text and receive first audio package */
+  public long getFirstPackageDelay() {
+    return this.firstPackageTimeStamp - this.startStreamTimeStamp;
   }
 }
