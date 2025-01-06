@@ -71,7 +71,6 @@ public class Vocabulary {
   public static Vocabulary vocabularyFromQueryResult(DashScopeResult dashScopeResult) {
     Vocabulary vocabulary = new Vocabulary();
     JsonObject output = (JsonObject) dashScopeResult.getOutput();
-    System.out.println(output);
     if (output.has("vocabulary")) {
       vocabulary.gmtModified = output.get("gmt_modified").getAsString();
       vocabulary.gmtCreate = output.get("gmt_create").getAsString();
