@@ -130,8 +130,11 @@ public class MessageAdapter extends TypeAdapter<Message> {
     }
     if (objectMap.containsKey(ApiKeywords.TOOL_CALLS)) {
       msg.toolCalls = new ArrayList<ToolCallBase>();
-      for (LinkedTreeMap<String, Object> toolCall :
-          (List<LinkedTreeMap>) objectMap.get(ApiKeywords.TOOL_CALLS)) {
+      List<LinkedTreeMap> toolCalls = (List<LinkedTreeMap>) objectMap.get(ApiKeywords.TOOL_CALLS);
+      if (toolCalls == null) {
+        toolCalls = new ArrayList<>();
+      }
+      for (LinkedTreeMap<String, Object> toolCall : toolCalls) {
         // convert to toolCall
         String type = toolCall.get("type").toString();
         if (type.equals("function")) {
