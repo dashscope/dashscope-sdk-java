@@ -36,7 +36,7 @@ public class TranslationRecognizerParam extends FullDuplexServiceParam {
   private String sourceLanguage = null;
   private boolean translationEnabled = true;
   private String[] translationLanguages = null;
-  private boolean semanticPuctationEnabled = false;
+  private boolean semanticPunctationEnabled = false;
   private Integer maxEndSilence = null;
 
   @Override
@@ -55,7 +55,7 @@ public class TranslationRecognizerParam extends FullDuplexServiceParam {
       params.put(TranslationRecognizerApiKeywords.TRANSLATE_TARGET_LANGUAGES, translationLanguages);
     }
     params.put(
-        TranslationRecognizerApiKeywords.SEMANTIC_PUNCTUATION_ENABLED, semanticPuctationEnabled);
+        TranslationRecognizerApiKeywords.SEMANTIC_PUNCTUATION_ENABLED, semanticPunctationEnabled);
     if (vocabularyId != null) {
       params.put(TranslationRecognizerApiKeywords.VOCABULARY_ID, vocabularyId);
     }

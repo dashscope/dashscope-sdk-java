@@ -180,7 +180,7 @@ public final class TranslationRecognizerRealtime {
             item ->
                 item != null
                     && (item.getTranslationResult() != null
-                        && item.getTranscriptionResult() != null)
+                        || item.getTranscriptionResult() != null)
                     && !item.isCompleteResult())
         .doOnNext(
             result -> {
