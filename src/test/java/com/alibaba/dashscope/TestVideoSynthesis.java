@@ -46,7 +46,7 @@ public class TestVideoSynthesis {
       throws ApiException, NoApiKeyException, IOException, InterruptedException,
           InputRequiredException {
     String responseBody =
-        "{\"request_id\":\"39\",\"output\":{\"task_id\":\"e4\",\"task_status\":\"SUCCEEDED\",\"result\":{\"url\":\"https://1\"}},\"usage\":{\"video_count\":1}}";
+        "{\"request_id\":\"39\",\"output\":{\"task_id\":\"e4\",\"task_status\":\"SUCCEEDED\",\"video_url\":\"https://1\"},\"usage\":{\"video_count\":1}}";
     assert MEDIA_TYPE_APPLICATION_JSON != null;
     server.enqueue(
         new MockResponse()
@@ -80,7 +80,7 @@ public class TestVideoSynthesis {
       throws ApiException, NoApiKeyException, IOException, InterruptedException,
           InputRequiredException {
     String responseBody =
-        "{\"request_id\":\"39\",\"output\":{\"task_id\":\"e4\",\"task_status\":\"SUCCEEDED\",\"result\":{\"url\":\"https://1\"}},\"usage\":{\"video_count\":1},\"video_url\":\"https://1\"}";
+        "{\"request_id\":\"39\",\"output\":{\"task_id\":\"e4\",\"task_status\":\"SUCCEEDED\",\"video_url\":\"https://1\"},\"usage\":{\"video_count\":1}}";
     assert MEDIA_TYPE_APPLICATION_JSON != null;
     server.enqueue(
         new MockResponse()
