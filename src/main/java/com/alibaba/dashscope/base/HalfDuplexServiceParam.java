@@ -17,6 +17,7 @@ public abstract class HalfDuplexServiceParam extends HalfDuplexParamBase {
 
   @Default private Object resources = null;
 
+  @lombok.NonNull
   @Override
   public String getModel() {
     return model;
@@ -44,12 +45,10 @@ public abstract class HalfDuplexServiceParam extends HalfDuplexParamBase {
   }
 
   public void putHeader(String key, String value) {
-    if (headers.size() == 0) {
-      headers = new HashMap<String, Object>();
+    if (headers.isEmpty()) {
+      headers = new HashMap<>();
     } else {
-      HashMap<String, Object> newHeaders = new HashMap<>();
-      newHeaders.putAll(headers);
-      headers = newHeaders;
+        headers = new HashMap<>(headers);
     }
     headers.put(key, value);
   }
