@@ -11,7 +11,7 @@ import lombok.Data;
 @Data
 public class Stash {
   @SerializedName("sentence_id")
-  int sentenceId;
+  Long sentenceId;
 
   @SerializedName("begin_time")
   Long beginTime;

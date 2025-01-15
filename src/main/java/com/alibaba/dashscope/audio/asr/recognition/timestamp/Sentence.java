@@ -31,6 +31,8 @@ public class Sentence {
   @SerializedName("emo_confidence")
   Double emoConfidence;
 
+  @SerializedName("sentence_id")
+  private Long sentenceId;
   public static Sentence from(String message) {
     return JsonUtils.fromJson(message, Sentence.class);
   }

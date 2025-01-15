@@ -20,9 +20,6 @@ public class RecognitionResult {
 
   private Sentence sentence;
 
-  @SerializedName("sentence_id")
-  private Long sentenceId;
-
   private RecognitionUsage usage;
 
   private boolean isCompleteResult = false;
