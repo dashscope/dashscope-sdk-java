@@ -34,7 +34,7 @@ public class TranslationRecognizerParam extends FullDuplexServiceParam {
 
   private boolean transcriptionEnabled = true;
   private String sourceLanguage = null;
-  private boolean translationEnabled = true;
+  private boolean translationEnabled = false;
   private String[] translationLanguages = null;
   private boolean semanticPunctationEnabled = false;
   private Integer maxEndSilence = null;
