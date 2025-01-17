@@ -48,7 +48,7 @@ public abstract class HalfDuplexServiceParam extends HalfDuplexParamBase {
     if (headers.isEmpty()) {
       headers = new HashMap<>();
     } else {
-        headers = new HashMap<>(headers);
+      headers = new HashMap<>(headers);
     }
     headers.put(key, value);
   }

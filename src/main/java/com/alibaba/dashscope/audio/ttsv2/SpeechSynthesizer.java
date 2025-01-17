@@ -16,12 +16,6 @@ import com.google.gson.JsonObject;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.experimental.SuperBuilder;
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -35,6 +29,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
 
 /** @author lengjiayi */
 @Slf4j
@@ -226,7 +225,8 @@ public final class SpeechSynthesizer {
     preRequestId = UUID.randomUUID().toString();
     return duplexApi
         .duplexCall(
-            StreamInputTtsParamWithStream.fromStreamInputTtsParam(this.parameters, textStream, preRequestId))
+            StreamInputTtsParamWithStream.fromStreamInputTtsParam(
+                this.parameters, textStream, preRequestId))
         .map(SpeechSynthesisResult::fromDashScopeResult)
         .filter(item -> !canceled.get())
         .doOnNext(
@@ -277,7 +277,7 @@ public final class SpeechSynthesizer {
                           .start();
                     },
                     BackpressureStrategy.BUFFER),
-                    preRequestId))
+                preRequestId))
         .map(SpeechSynthesisResult::fromDashScopeResult)
         .doOnNext(
             result -> {

@@ -11,9 +11,6 @@ import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import io.reactivex.Flowable;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -23,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public final class SpeechSynthesizer {
@@ -58,7 +57,6 @@ public final class SpeechSynthesizer {
   public SpeechSynthesizer() {
     syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
-
 
   public void call(SpeechSynthesisParam param, ResultCallback<SpeechSynthesisResult> callback) {
     startStreamTimeStamp = System.currentTimeMillis();

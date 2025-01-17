@@ -16,13 +16,6 @@ import com.google.gson.JsonObject;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.experimental.SuperBuilder;
-import lombok.extern.slf4j.Slf4j;
-import lombok.val;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.nio.ByteBuffer;
@@ -30,6 +23,12 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
 @Slf4j
 public final class Recognition {
@@ -295,7 +294,8 @@ public final class Recognition {
     preRequestId = UUID.randomUUID().toString();
     try {
       duplexApi
-          .duplexCall(RecognitionParamWithStream.FromRecognitionParam(param, audioFrames, preRequestId))
+          .duplexCall(
+              RecognitionParamWithStream.FromRecognitionParam(param, audioFrames, preRequestId))
           .doOnComplete(
               () -> {
                 onCompleteTimeStamp = System.currentTimeMillis();

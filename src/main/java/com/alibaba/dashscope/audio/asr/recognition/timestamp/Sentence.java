@@ -5,9 +5,8 @@ package com.alibaba.dashscope.audio.asr.recognition.timestamp;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
-import lombok.Data;
-
 import java.util.List;
+import lombok.Data;
 
 @Data
 public class Sentence {
@@ -33,6 +32,7 @@ public class Sentence {
 
   @SerializedName("sentence_id")
   private Long sentenceId;
+
   public static Sentence from(String message) {
     return JsonUtils.fromJson(message, Sentence.class);
   }

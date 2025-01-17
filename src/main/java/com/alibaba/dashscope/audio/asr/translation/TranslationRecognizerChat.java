@@ -190,7 +190,8 @@ public final class TranslationRecognizerChat {
 
     try {
       duplexApi.duplexCall(
-          TranslationRecognizerParamWithStream.FromTranslationRecognizerParam(param, audioFrames, preRequestId),
+          TranslationRecognizerParamWithStream.FromTranslationRecognizerParam(
+              param, audioFrames, preRequestId),
           new ResultCallback<DashScopeResult>() {
             @Override
             public void onEvent(DashScopeResult message) {
