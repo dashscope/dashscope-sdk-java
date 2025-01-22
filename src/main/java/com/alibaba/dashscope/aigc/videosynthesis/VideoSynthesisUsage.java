@@ -10,5 +10,5 @@ public class VideoSynthesisUsage {
   @SerializedName("video_duration")
   private Integer videoDuration;
   @SerializedName("video_ratio")
-  private Integer videoRatio;
+  private String videoRatio;
 }
