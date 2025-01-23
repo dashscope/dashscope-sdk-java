@@ -75,6 +75,8 @@ public final class Constants {
               String.format("wss://dashscope.aliyuncs.com/api-ws/%s/inference/", apiVersion));
   public static ConnectionConfigurations connectionConfigurations = null;
 
+  public static final int MAX_PROMPT_LENGTH = 500;
+
   public static void init() {}
 
   static {

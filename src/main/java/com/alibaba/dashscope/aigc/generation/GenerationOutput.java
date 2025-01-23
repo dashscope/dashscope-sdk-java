@@ -25,4 +25,8 @@ public final class GenerationOutput {
   private String finishReason;
 
   private List<Choice> choices;
+
+  /** 联网搜索到的信息，在设置search_options参数后会返回该参数。 */
+  @SerializedName("search_info")
+  private SearchInfo searchInfo;
 }

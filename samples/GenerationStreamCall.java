@@ -4,6 +4,7 @@ import java.util.concurrent.Semaphore;
 import com.alibaba.dashscope.aigc.generation.Generation;
 import com.alibaba.dashscope.aigc.generation.GenerationParam;
 import com.alibaba.dashscope.aigc.generation.GenerationResult;
+import com.alibaba.dashscope.aigc.generation.SearchOptions;
 import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
@@ -46,22 +47,53 @@ public class GenerationStreamCall {
         System.out.println("Completed");
         semaphore.release();
       }
-      
+
     });
     semaphore.acquire();
 
   }
+
+  public static void streamCallWithSearchOptions()
+          throws NoApiKeyException, ApiException, InputRequiredException {
+    Generation gen = new Generation();
+    GenerationParam param = GenerationParam.builder()
+            .model(Generation.Models.QWEN_PLUS)
+            .prompt("联网搜索明天杭州天气如何？")
+            .enableSearch(true)
+            .resultFormat("message")
+            .searchOptions(SearchOptions.builder()
+                    .enableSource(true)
+                    .enableCitation(true)
+                    .citationFormat("[ref_<number>]")
+                    .searchStrategy("pro_max")
+                    .forcedSearch(true)
+                    .build())
+            .build();
+    Flowable<GenerationResult> result = gen.streamCall(param);
+    result.blockingForEach(message -> {
+      System.out.println(JsonUtils.toJson(message));
+    });
+  }
+
   public static void main(String[] args) {
     try {
       streamCall();
     } catch (ApiException | NoApiKeyException | InputRequiredException e) {
       System.out.println(e.getMessage());
     }
+
     try {
       streamCallWithCallback();
     } catch (ApiException | NoApiKeyException | InputRequiredException | InterruptedException e) {
       System.out.println(e.getMessage());
     }
+
+    try {
+      streamCallWithSearchOptions();
+    } catch (ApiException | NoApiKeyException | InputRequiredException e) {
+      System.out.println(e.getMessage());
+    }
+
     System.exit(0);
   }
 }

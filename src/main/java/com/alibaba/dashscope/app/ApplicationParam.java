@@ -2,10 +2,13 @@
 package com.alibaba.dashscope.app;
 
 import static com.alibaba.dashscope.utils.ApiKeywords.HISTORY;
+import static com.alibaba.dashscope.utils.ApiKeywords.MESSAGES;
 import static com.alibaba.dashscope.utils.ApiKeywords.PROMPT;
 
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.History;
+import com.alibaba.dashscope.common.Message;
+import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.JsonUtils;
@@ -41,6 +44,9 @@ public class ApplicationParam extends HalfDuplexParamBase {
 
   /** chat history */
   private List<History> history;
+
+  /** chat message */
+  private List<Message> messages;
 
   /** Session id for storing chat history note: this will be ignored if history passed */
   private String sessionId;
@@ -164,13 +170,27 @@ public class ApplicationParam extends HalfDuplexParamBase {
   public JsonObject getInput() {
     JsonObject input = new JsonObject();
 
-    input.addProperty(PROMPT, getPrompt());
     input.addProperty(AppKeywords.SESSION_ID, getSessionId());
     input.addProperty(AppKeywords.MEMORY_ID, memoryId);
 
-    if (history != null && !history.isEmpty()) {
-      JsonArray historyJson = JsonUtils.toJsonElement(history).getAsJsonArray();
+    if (getMessages() != null && !getMessages().isEmpty()) {
+      JsonArray messagesJson = new JsonArray();
+      messagesJson.addAll(JsonUtils.toJsonArray(getMessages()));
+      if (getPrompt() != null) {
+        Message msg = Message.builder().role(Role.USER.getValue()).content(getPrompt()).build();
+        messagesJson.add(JsonUtils.toJsonElement(msg));
+      }
+      input.add(MESSAGES, messagesJson);
+    } else if (getHistory() != null && !getHistory().isEmpty()) {
+      JsonArray historyJson = JsonUtils.toJsonElement(getHistory()).getAsJsonArray();
       input.add(HISTORY, historyJson);
+      if (getPrompt() != null) {
+        input.addProperty(PROMPT, getPrompt());
+      }
+    } else {
+      if (getPrompt() != null) {
+        input.addProperty(PROMPT, getPrompt());
+      }
     }
 
     if (bizParams != null) {
@@ -197,8 +217,8 @@ public class ApplicationParam extends HalfDuplexParamBase {
 
   @Override
   public void validate() throws InputRequiredException {
-    if (getPrompt() == null) {
-      throw new InputRequiredException("prompt must not be null");
+    if (getPrompt() == null && (getMessages() == null || getMessages().isEmpty())) {
+      throw new InputRequiredException("prompt or messages must not be null");
     }
   }
 }

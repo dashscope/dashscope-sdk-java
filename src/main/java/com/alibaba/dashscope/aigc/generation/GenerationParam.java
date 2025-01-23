@@ -10,6 +10,7 @@ import static com.alibaba.dashscope.utils.ApiKeywords.REPETITION_PENALTY;
 import static com.alibaba.dashscope.utils.ApiKeywords.STOP;
 
 import com.alibaba.dashscope.common.Message;
+import com.alibaba.dashscope.common.ResponseFormat;
 import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.tools.ToolBase;
@@ -94,33 +95,29 @@ public class GenerationParam extends GenerationParamBase {
    */
   @Builder.Default private Boolean incrementalOutput = false;
 
-  /*
-   * Maximum tokens to generate.
-   */
+  /** Maximum tokens to generate. */
   private Integer maxTokens;
-  /*
-   * repetition penalty
-   */
+  /** repetition penalty */
   private Float repetitionPenalty;
 
-  /*
-   * stopString and token are mutually exclusive.
-   */
+  /** stopString and token are mutually exclusive. */
   @Singular("stopString")
   private List<String> stopStrings;
 
   @Singular private List<List<Integer>> stopTokens;
 
-  /*
-   * Specify which tools the model can use.
-   */
+  /** Specify which tools the model can use. */
   private List<ToolBase> tools;
 
-  /*
-   * Specify tool choice
-   */
+  /** Specify tool choice */
   @SerializedName("tool_choice")
   protected Object toolChoice;
+
+  /** 联网搜索的策略。仅当enable_search为true时生效。 */
+  private SearchOptions searchOptions;
+
+  /** 返回内容的格式。 */
+  private ResponseFormat responseFormat;
 
   @Override
   public JsonObject getInput() {
@@ -196,6 +193,15 @@ public class GenerationParam extends GenerationParamBase {
         params.put("tool_choice", JsonUtils.toJsonObject(toolChoice));
       }
     }
+
+    if (searchOptions != null) {
+      params.put("search_options", searchOptions);
+    }
+
+    if (responseFormat != null) {
+      params.put("response_format", responseFormat);
+    }
+
     params.putAll(parameters);
     return params;
   }

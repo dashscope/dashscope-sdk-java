@@ -1,25 +1,27 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 
-package com.alibaba.dashscope.audio.asr.recognition;
+package com.alibaba.dashscope.audio.asr.translation;
 
 import com.alibaba.dashscope.api.SynchronizeFullDuplexApi;
-import com.alibaba.dashscope.audio.asr.recognition.timestamp.Sentence;
+import com.alibaba.dashscope.audio.asr.translation.results.TranslationRecognizerResult;
+import com.alibaba.dashscope.audio.asr.translation.results.TranslationRecognizerResultPack;
 import com.alibaba.dashscope.common.*;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
+import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -31,8 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 @Slf4j
-public final class Recognition {
-  @Getter SynchronizeFullDuplexApi<RecognitionParamWithStream> duplexApi;
+public final class TranslationRecognizerRealtime {
+  @Getter SynchronizeFullDuplexApi<TranslationRecognizerParamWithStream> duplexApi;
 
   private ApiServiceOption serviceOption;
 
@@ -46,7 +48,7 @@ public final class Recognition {
 
   private final Queue<AsyncCmdBuffer> cmdBuffer = new LinkedList<>();
 
-  private RecognitionState state = RecognitionState.IDLE;
+  private TranslationRecognizerState state = TranslationRecognizerState.IDLE;
 
   private AtomicReference<CountDownLatch> stopLatch = new AtomicReference<>(null);
 
@@ -54,12 +56,10 @@ public final class Recognition {
   private long firstPackageTimeStamp = -1;
   private long stopStreamTimeStamp = -1;
   private long onCompleteTimeStamp = -1;
-  private AtomicReference<String> lastRequestId = new AtomicReference<>(null);
-
   private String preRequestId = null;
 
   @SuperBuilder
-  private static class RecognitionParamWithStream extends RecognitionParam {
+  private static class TranslationRecognizerParamWithStream extends TranslationRecognizerParam {
 
     @NonNull private Flowable<ByteBuffer> audioStream;
 
@@ -68,10 +68,10 @@ public final class Recognition {
       return audioStream.cast(Object.class);
     }
 
-    public static RecognitionParamWithStream FromRecognitionParam(
-        RecognitionParam param, Flowable<ByteBuffer> audioStream, String preRequestId) {
-      RecognitionParamWithStream recognitionParamWithStream =
-          RecognitionParamWithStream.builder()
+    public static TranslationRecognizerParamWithStream FromTranslationRecognizerParam(
+        TranslationRecognizerParam param, Flowable<ByteBuffer> audioStream, String preRequestId) {
+      TranslationRecognizerParamWithStream translationRecognizerParamWithStream =
+          TranslationRecognizerParamWithStream.builder()
               .parameters((param.getParameters()))
               .parameter("pre_task_id", preRequestId)
               .headers(param.getHeaders())
@@ -83,14 +83,14 @@ public final class Recognition {
               .apiKey(param.getApiKey())
               .build();
       if (param.getPhraseId() != null && !param.getPhraseId().isEmpty()) {
-        recognitionParamWithStream.setPhraseId(param.getPhraseId());
+        translationRecognizerParamWithStream.setPhraseId(param.getPhraseId());
       }
-
-      return recognitionParamWithStream;
+      return translationRecognizerParamWithStream;
     }
   }
 
-  public Recognition() {
+  /** Gummy Translation and Recognition real-time SDK. */
+  public TranslationRecognizerRealtime() {
     serviceOption =
         ApiServiceOption.builder()
             .protocol(Protocol.WEBSOCKET)
@@ -98,19 +98,66 @@ public final class Recognition {
             .outputMode(OutputMode.ACCUMULATE)
             .taskGroup(TaskGroup.AUDIO.getValue())
             .task(Task.ASR.getValue())
-            .function(Function.RECOGNITION.getValue())
+            .function(Function.SPEECH_TRANSLATION.getValue())
             .build();
     duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
   }
 
-  public Flowable<RecognitionResult> streamCall(
-      RecognitionParam param, Flowable<ByteBuffer> audioFrame)
+  /**
+   * Gummy Translation and Recognition real-time SDK.
+   *
+   * @param baseUrl Base URL
+   */
+  public TranslationRecognizerRealtime(String baseUrl) {
+    serviceOption =
+        ApiServiceOption.builder()
+            .protocol(Protocol.WEBSOCKET)
+            .streamingMode(StreamingMode.DUPLEX)
+            .outputMode(OutputMode.ACCUMULATE)
+            .taskGroup(TaskGroup.AUDIO.getValue())
+            .task(Task.ASR.getValue())
+            .function(Function.SPEECH_TRANSLATION.getValue())
+            .baseWebSocketUrl(baseUrl)
+            .build();
+    duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
+  }
+
+  /**
+   * Gummy Translation and Recognition real-time SDK.
+   *
+   * @param baseUrl Base URL
+   * @param connectionOptions Connection options
+   */
+  public TranslationRecognizerRealtime(String baseUrl, ConnectionOptions connectionOptions) {
+    serviceOption =
+        ApiServiceOption.builder()
+            .protocol(Protocol.WEBSOCKET)
+            .streamingMode(StreamingMode.DUPLEX)
+            .outputMode(OutputMode.ACCUMULATE)
+            .taskGroup(TaskGroup.AUDIO.getValue())
+            .task(Task.ASR.getValue())
+            .function(Function.SPEECH_TRANSLATION.getValue())
+            .baseWebSocketUrl(baseUrl)
+            .build();
+    duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
+  }
+
+  /**
+   * Speech Translation and Recognition real-time using Flowable features
+   *
+   * @param param Configuration for speech translation and recognition, including audio format,
+   *     source language, target languages, etc.
+   * @param audioFrame The audio stream to be recognized
+   * @return The output event stream, including real-time asr and translation results and timestamps
+   */
+  public Flowable<TranslationRecognizerResult> streamCall(
+      TranslationRecognizerParam param, Flowable<ByteBuffer> audioFrame)
       throws ApiException, NoApiKeyException {
     this.reset();
     preRequestId = UUID.randomUUID().toString();
     return duplexApi
         .duplexCall(
-            RecognitionParamWithStream.FromRecognitionParam(
+            TranslationRecognizerParamWithStream.FromTranslationRecognizerParam(
                 param,
                 audioFrame.doOnNext(
                     buffer -> {
@@ -126,23 +173,25 @@ public final class Recognition {
             })
         .map(
             item -> {
-              return RecognitionResult.fromDashScopeResult(item);
+              return TranslationRecognizerResult.fromDashScopeResult(item);
             })
-        .filter(item -> item != null && item.getSentence() != null && !item.isCompleteResult())
+        .filter(
+            item ->
+                item != null
+                    && (item.getTranslationResult() != null
+                        || item.getTranscriptionResult() != null)
+                    && !item.isCompleteResult())
         .doOnNext(
             result -> {
-              if (lastRequestId.get() == null && result.getRequestId() != null) {
-                lastRequestId.set(result.getRequestId());
-              }
               if (firstPackageTimeStamp < 0) {
                 firstPackageTimeStamp = System.currentTimeMillis();
                 log.debug("first package delay: " + getFirstPackageDelay());
               }
               log.debug(
-                  "Recv Result: "
-                      + result.getSentence().getText()
-                      + ", isEnd: "
-                      + result.isSentenceEnd());
+                  "[Recv Result] transcription: "
+                      + result.getTranslationResult()
+                      + " translation: "
+                      + result.getTranscriptionResult());
             })
         .doOnComplete(
             () -> {
@@ -151,11 +200,20 @@ public final class Recognition {
             });
   }
 
-  public void call(RecognitionParam param, ResultCallback<RecognitionResult> callback) {
+  /**
+   * Start Speech Translation and Recognition real-time via sendAudioFrame API. The correct order of
+   * calls is: first call, then repeatedly sendAudioFrame, and finally stop.
+   *
+   * @param param Configuration for speech translation and recognition, including audio format,
+   *     source language, target languages, etc.
+   * @param callback ResultCallback
+   */
+  public void call(
+      TranslationRecognizerParam param, ResultCallback<TranslationRecognizerResult> callback) {
     this.reset();
     if (param == null) {
       throw new ApiException(
-          new InputRequiredException("Parameter invalid: RecognitionParam is null"));
+          new InputRequiredException("Parameter invalid: TranslationRecognizerParam is null"));
     }
 
     if (callback == null) {
@@ -166,7 +224,7 @@ public final class Recognition {
     Flowable<ByteBuffer> audioFrames =
         Flowable.create(
             emitter -> {
-              synchronized (Recognition.this) {
+              synchronized (TranslationRecognizerRealtime.this) {
                 if (cmdBuffer.size() > 0) {
                   for (AsyncCmdBuffer buffer : cmdBuffer) {
                     if (buffer.isStop) {
@@ -183,7 +241,7 @@ public final class Recognition {
             },
             BackpressureStrategy.BUFFER);
     synchronized (this) {
-      state = RecognitionState.RECOGNITION_STARTED;
+      state = TranslationRecognizerState.SPEECH_TRANSLATION_STARTED;
       cmdBuffer.clear();
     }
     stopLatch = new AtomicReference<>(new CountDownLatch(1));
@@ -191,25 +249,24 @@ public final class Recognition {
     preRequestId = UUID.randomUUID().toString();
     try {
       duplexApi.duplexCall(
-          RecognitionParamWithStream.FromRecognitionParam(param, audioFrames, preRequestId),
+          TranslationRecognizerParamWithStream.FromTranslationRecognizerParam(
+              param, audioFrames, preRequestId),
           new ResultCallback<DashScopeResult>() {
             @Override
             public void onEvent(DashScopeResult message) {
-              RecognitionResult recognitionResult = RecognitionResult.fromDashScopeResult(message);
-              if (lastRequestId.get() == null && recognitionResult.getRequestId() != null) {
-                lastRequestId.set(recognitionResult.getRequestId());
-              }
-              if (!recognitionResult.isCompleteResult()) {
+              TranslationRecognizerResult translationRecognizerResult =
+                  TranslationRecognizerResult.fromDashScopeResult(message);
+              if (!translationRecognizerResult.isCompleteResult()) {
                 if (firstPackageTimeStamp < 0) {
                   firstPackageTimeStamp = System.currentTimeMillis();
                   log.debug("first package delay: " + getFirstPackageDelay());
                 }
                 log.debug(
-                    "Recv Result: "
-                        + recognitionResult.getSentence().getText()
-                        + ", isEnd: "
-                        + recognitionResult.isSentenceEnd());
-                callback.onEvent(recognitionResult);
+                    "[Recv Result] transcription: "
+                        + translationRecognizerResult.getTranslationResult()
+                        + " translation: "
+                        + translationRecognizerResult.getTranscriptionResult());
+                callback.onEvent(translationRecognizerResult);
               }
             }
 
@@ -217,8 +274,8 @@ public final class Recognition {
             public void onComplete() {
               onCompleteTimeStamp = System.currentTimeMillis();
               log.debug("last package delay: " + getLastPackageDelay());
-              synchronized (Recognition.this) {
-                state = RecognitionState.IDLE;
+              synchronized (TranslationRecognizerRealtime.this) {
+                state = TranslationRecognizerState.IDLE;
               }
               callback.onComplete();
               if (stopLatch.get() != null) {
@@ -228,8 +285,8 @@ public final class Recognition {
 
             @Override
             public void onError(Exception e) {
-              synchronized (Recognition.this) {
-                state = RecognitionState.IDLE;
+              synchronized (TranslationRecognizerRealtime.this) {
+                state = TranslationRecognizerState.IDLE;
               }
               ApiException apiException = new ApiException(e);
               apiException.setStackTrace(e.getStackTrace());
@@ -247,14 +304,21 @@ public final class Recognition {
         stopLatch.get().countDown();
       }
     }
-    log.debug("Recognition started");
+    log.debug("TranslationRecognizerRealtime started");
   }
 
-  public String call(RecognitionParam param, File file) {
+  /**
+   * Speech Translation and Recognition real-time from local file.
+   *
+   * @param param Configuration for speech translation and recognition, including audio format,
+   *     source language, target languages, etc.
+   * @param file Local audio file
+   */
+  public TranslationRecognizerResultPack call(TranslationRecognizerParam param, File file) {
     this.reset();
     if (param == null) {
       throw new ApiException(
-          new InputRequiredException("Parameter invalid: RecognitionParam is null"));
+          new InputRequiredException("Parameter invalid: TranslationRecognizerParam is null"));
     }
     if (file == null || !file.canRead()) {
       throw new ApiException(
@@ -264,9 +328,7 @@ public final class Recognition {
     startStreamTimeStamp = System.currentTimeMillis();
 
     AtomicBoolean cancel = new AtomicBoolean(false);
-    AtomicReference<String> finalResult = new AtomicReference<>(null);
-    AtomicReference<Throwable> finalError = new AtomicReference<>(null);
-    List<Sentence> sentenceList = new ArrayList<>();
+    TranslationRecognizerResultPack results = new TranslationRecognizerResultPack();
     Flowable<ByteBuffer> audioFrames =
         Flowable.create(
             emitter -> {
@@ -295,7 +357,8 @@ public final class Recognition {
     try {
       duplexApi
           .duplexCall(
-              RecognitionParamWithStream.FromRecognitionParam(param, audioFrames, preRequestId))
+              TranslationRecognizerParamWithStream.FromTranslationRecognizerParam(
+                  param, audioFrames, preRequestId))
           .doOnComplete(
               () -> {
                 onCompleteTimeStamp = System.currentTimeMillis();
@@ -303,43 +366,51 @@ public final class Recognition {
               })
           .blockingSubscribe(
               res -> {
-                RecognitionResult recognitionResult = RecognitionResult.fromDashScopeResult(res);
-                if (lastRequestId.get() == null && recognitionResult.getRequestId() != null) {
-                  lastRequestId.set(recognitionResult.getRequestId());
-                }
-                if (!recognitionResult.isCompleteResult() && recognitionResult.isSentenceEnd()) {
+                TranslationRecognizerResult translationRecognizerResult =
+                    TranslationRecognizerResult.fromDashScopeResult(res);
+                if (!translationRecognizerResult.isCompleteResult()
+                    && translationRecognizerResult.isSentenceEnd()) {
                   if (firstPackageTimeStamp < 0) {
                     firstPackageTimeStamp = System.currentTimeMillis();
                     log.debug("first package delay: " + getFirstPackageDelay());
                   }
                   log.debug(
-                      "Recv Result: "
-                          + recognitionResult.getSentence().getText()
-                          + ", isEnd: "
-                          + recognitionResult.isSentenceEnd());
-                  sentenceList.add(recognitionResult.getSentence());
+                      "[Recv SentenceEnd]: transcription"
+                          + translationRecognizerResult.getTranslationResult()
+                          + ", translation: "
+                          + translationRecognizerResult.getTranscriptionResult());
+                  results.setRequestId(translationRecognizerResult.getRequestId());
+                  results
+                      .getTranslationResultList()
+                      .add(translationRecognizerResult.getTranslationResult());
+                  results
+                      .getTranscriptionResultList()
+                      .add(translationRecognizerResult.getTranscriptionResult());
+                  results.getUsageList().add(translationRecognizerResult.getUsage());
                 }
               },
               e -> {
-                finalError.set(e);
+                results.setError(e);
                 cancel.set(true);
               },
-              () -> {
-                JsonObject jsonObject = new JsonObject();
-                jsonObject.add("sentences", new Gson().toJsonTree(sentenceList).getAsJsonArray());
-                finalResult.set(jsonObject.toString());
-              });
+              () -> {});
     } catch (NoApiKeyException e) {
       throw new ApiException(e);
     }
-    if (finalError.get() != null) {
-      ApiException apiException = new ApiException(finalError.get());
-      apiException.setStackTrace(finalError.get().getStackTrace());
+    if (results.getError() != null) {
+      ApiException apiException = new ApiException(results.getError());
+      apiException.setStackTrace(results.getError().getStackTrace());
       throw apiException;
     }
-    return finalResult.get();
+    return results;
   }
 
+  /**
+   * Send one frame audio
+   *
+   * @param audioFrame One frame of binary audio The correct order of calls is: first call, then
+   *     repeatedly sendAudioFrame, and finally stop.
+   */
   public void sendAudioFrame(ByteBuffer audioFrame) {
     if (audioFrame == null) {
       throw new ApiException(new InputRequiredException("Parameter invalid: audioFrame is null"));
@@ -349,7 +420,7 @@ public final class Recognition {
     }
     log.debug("send audio frame: " + audioFrame.remaining());
     synchronized (this) {
-      if (state != RecognitionState.RECOGNITION_STARTED) {
+      if (state != TranslationRecognizerState.SPEECH_TRANSLATION_STARTED) {
         throw new ApiException(
             new InputRequiredException(
                 "State invalid: expect recognition state is started but " + state.getValue()));
@@ -362,10 +433,14 @@ public final class Recognition {
     }
   }
 
+  /**
+   * Stop Speech Translation and Recognition real-time via call and sendAudioFrame API. The correct
+   * order of calls is: first call, then repeatedly sendAudioFrame, and finally stop.
+   */
   public void stop() {
     this.stopStreamTimeStamp = System.currentTimeMillis();
     synchronized (this) {
-      if (state != RecognitionState.RECOGNITION_STARTED) {
+      if (state != TranslationRecognizerState.SPEECH_TRANSLATION_STARTED) {
         throw new ApiException(
             new RuntimeException(
                 "State invalid: expect recognition state is started but " + state.getValue()));
@@ -385,14 +460,17 @@ public final class Recognition {
     }
   }
 
+  /** Reset SDK, should be called before reuse SDK object. */
   private void reset() {
     this.audioEmitter = null;
     this.cmdBuffer.clear();
-    this.state = RecognitionState.IDLE;
+    this.state = TranslationRecognizerState.IDLE;
     this.stopLatch = new AtomicReference<>(null);
     this.startStreamTimeStamp = -1;
     this.firstPackageTimeStamp = -1;
-    this.lastRequestId.set(null);
+    this.stopStreamTimeStamp = -1;
+    this.onCompleteTimeStamp = -1;
+    preRequestId = null;
   }
 
   /** First Package Delay is the time between start sending audio and receive first words package */

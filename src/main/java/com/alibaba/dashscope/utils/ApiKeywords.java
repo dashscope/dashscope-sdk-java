@@ -39,6 +39,7 @@ public class ApiKeywords {
 
   public static final String PROMPT = "prompt";
   public static final String NEGATIVE_PROMPT = "negative_prompt";
+  public static final String TEMPLATE = "template";
 
   public static final String SKETCH_IMAGE_URL = "sketch_image_url";
   public static final String SKETCH_WEIGHT = "sketch_weight";
@@ -124,4 +125,10 @@ public class ApiKeywords {
   public static final String TOOL_CALL_ID = "tool_call_id";
 
   public static final String NAME = "name";
+
+  public static final String DURATION = "duration";
+
+  public static final String EXTEND_PROMPT = "extend_prompt";
+
+  public static final String IMG_URL = "img_url";
 }

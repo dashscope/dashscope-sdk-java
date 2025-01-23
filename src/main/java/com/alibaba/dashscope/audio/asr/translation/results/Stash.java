@@ -1,6 +1,6 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 
-package com.alibaba.dashscope.audio.asr.recognition.timestamp;
+package com.alibaba.dashscope.audio.asr.translation.results;
 
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;

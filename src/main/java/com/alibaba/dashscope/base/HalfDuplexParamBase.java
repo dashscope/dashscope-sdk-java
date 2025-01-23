@@ -26,14 +26,6 @@ public abstract class HalfDuplexParamBase {
 
   @GsonExclude @Builder.Default private Boolean enableEncrypt = false;
 
-  public String getWorkspace() {
-    return workspace;
-  }
-
-  public String getApiKey() {
-    return apiKey;
-  }
-
   /** The extra parameters. */
   @GsonExclude @Singular protected Map<String, Object> parameters;
 
