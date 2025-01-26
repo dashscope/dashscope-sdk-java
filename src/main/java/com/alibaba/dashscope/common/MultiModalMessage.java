@@ -16,5 +16,7 @@ public class MultiModalMessage {
   private String role;
 
   /** The conversation content. */
+  // TODO maybe a abstract or interface for content instead of map, now not user friendly for
+  // developers
   private List<Map<String, Object>> content;
 }

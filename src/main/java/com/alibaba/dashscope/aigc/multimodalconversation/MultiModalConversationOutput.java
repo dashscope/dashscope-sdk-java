@@ -9,7 +9,7 @@ import lombok.Data;
 public class MultiModalConversationOutput {
   // output message.
   @Data
-  public class Choice {
+  public static class Choice {
     @SerializedName("finish_reason")
     private String finishReason;
 

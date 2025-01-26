@@ -21,21 +21,36 @@ import lombok.experimental.SuperBuilder;
 public class MultiModalConversationParam extends HalfDuplexServiceParam {
 
   @Singular private List<Object> messages;
-  /* The maximum length of tokens to generate.
-  The token count of your prompt plus max_length
-  cannot exceed the model's context length. Most models
-  have a context length of 2000 tokens */
-  private Integer maxLength;
-  /* A sampling strategy, called nucleus
-  sampling, where the model considers the results of the
-  tokens with top_p probability mass. So 0.1 means only
-  the tokens comprising the top 10% probability mass are
-  considered */
+
+  /**
+   * The maximum length of tokens to generate. The token count of your prompt plus max_length cannot
+   * exceed the model's context length. Most models have a context length of 2000 tokens
+   */
+  @Deprecated private Integer maxLength;
+  /**
+   * A sampling strategy, called nucleus sampling, where the model considers the results of the
+   * tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10%
+   * probability mass are considered
+   */
   private Double topP;
 
-  /* A sampling strategy, the k largest elements of the
-  given mass are  considered */
+  /** A sampling strategy, the k largest elements of the given mass are considered */
   private Integer topK;
+
+  /**
+   * Used to control the repetitiveness of the model when generating text. Increasing the
+   * repetition_penalty can reduce the repetitiveness of the model's output. A value of 1.0
+   * indicates no penalty. Default value: 1.0
+   */
+  private Float repetitionPenalty;
+
+  /**
+   * A parameter that controls the repetitiveness of words. It reduces the probability of the same
+   * word appearing repeatedly by penalizing words that have already been generated, thus increasing
+   * the diversity of the generated text. A value of 0 indicates no penalty. Default value: 0.0
+   */
+  private Float presencePenalty;
+
   /* Whether to enable web search(quark).
   Currently works best only on the first round of conversation.
   Default to False */
@@ -55,9 +70,15 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
    * distribution, allowing more low-probability words to be selected, and the generated results
    * will be more diverse; while a lower temperature value will enhance the peak value of the
    * probability distribution, making it easier for high-probability words to be selected, the
-   * generated results are more deterministic, range(0, 2).
+   * generated results are more deterministic, range(0, 2). Default value: 1.0
    */
   private Float temperature;
+
+  /**
+   * The maximum length of tokens to generate. The token count of your prompt plus max_length cannot
+   * exceed the model's context length.
+   */
+  private Integer maxTokens;
 
   /**
    * Used to control the streaming output mode. If true, the subsequent output will include the
@@ -75,6 +96,12 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
    * </pre>
    */
   @Builder.Default private Boolean incrementalOutput = false;
+
+  /** Output format of the model including "text" and "audio". Default value: ["text"] */
+  private List<String> modalities;
+
+  /** audio output parameters */
+  private AudioParameters audio;
 
   @Override
   public JsonObject getHttpBody() {
@@ -99,24 +126,51 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
   public Map<String, Object> getParameters() {
     Map<String, Object> params = new HashMap<>();
     if (maxLength != null) {
-      params.put("max_length", maxLength);
+      params.put(ApiKeywords.MAX_LENGTH, maxLength);
     }
+
+    if (maxTokens != null) {
+      params.put(ApiKeywords.MAX_TOKENS, maxTokens);
+    }
+
     if (topP != null) {
-      params.put("top_p", topP);
+      params.put(ApiKeywords.TOP_P, topP);
     }
+
     if (topK != null) {
-      params.put("top_k", topK);
+      params.put(ApiKeywords.TOP_K, topK);
     }
+
     params.put("enable_search", enableSearch);
+
     if (seed != null) {
-      params.put("seed", seed);
+      params.put(ApiKeywords.SEED, seed);
     }
+
     if (temperature != null) {
-      params.put("temperature", temperature);
+      params.put(ApiKeywords.TEMPERATURE, temperature);
     }
+
+    if (repetitionPenalty != null) {
+      params.put(ApiKeywords.REPETITION_PENALTY, repetitionPenalty);
+    }
+
+    if (presencePenalty != null) {
+      params.put(ApiKeywords.PRESENCE_PENALTY, presencePenalty);
+    }
+
     if (incrementalOutput) {
-      params.put("incremental_output", incrementalOutput);
+      params.put(ApiKeywords.INCREMENTAL_OUTPUT, incrementalOutput);
     }
+
+    if (modalities != null) {
+      params.put(ApiKeywords.MODALITIES, modalities);
+    }
+
+    if (audio != null) {
+      params.put(ApiKeywords.AUDIO, audio);
+    }
+
     params.putAll(parameters);
     return params;
   }
