@@ -94,10 +94,11 @@ public class MultiModalConversationUsage {
                         String text = String.valueOf(content.get(0).get("text"));
                         System.out.print(text);
                     } else if (map.containsKey("audio")) {
-                        Map<String, String> audio = (Map<String, String>) map.get("audio");
-                        byte[] data = Base64.getDecoder().decode(audio.get("data"));
+                        Map<String, Object> audio = (Map<String, Object>) map.get("audio");
+                        byte[] data = Base64.getDecoder().decode((String) audio.get("data"));
+                        Long expiresAt = (Long) audio.get("expires_at");
 
-                        System.out.printf("write [%d] audio data to file\n", data.length);
+                        System.out.printf("write [%d] audio data to file, expires at: %d\n", data.length, expiresAt);
                         os.write(data);
                     }
                 }
@@ -131,10 +132,11 @@ public class MultiModalConversationUsage {
                         String text = String.valueOf(content.get(0).get("text"));
                         System.out.print(text);
                     } else if (map.containsKey("audio")) {
-                        Map<String, String> audio = (Map<String, String>) map.get("audio");
-                        byte[] data = Base64.getDecoder().decode(audio.get("data"));
+                        Map<String, Object> audio = (Map<String, Object>) map.get("audio");
+                        byte[] data = Base64.getDecoder().decode((String) audio.get("data"));
+                        Long expiresAt = (Long) audio.get("expires_at");
 
-                        System.out.printf("write [%d] audio data to file\n", data.length);
+                        System.out.printf("write [%d] audio data to file, expires at: %d\n", data.length, expiresAt);
                         os.write(data);
                     }
                 }
@@ -168,10 +170,11 @@ public class MultiModalConversationUsage {
                         String text = String.valueOf(content.get(0).get("text"));
                         System.out.print(text);
                     } else if (map.containsKey("audio")) {
-                        Map<String, String> audio = (Map<String, String>) map.get("audio");
-                        byte[] data = Base64.getDecoder().decode(audio.get("data"));
+                        Map<String, Object> audio = (Map<String, Object>) map.get("audio");
+                        byte[] data = Base64.getDecoder().decode((String) audio.get("data"));
+                        Long expiresAt = (Long) audio.get("expires_at");
 
-                        System.out.printf("write [%d] audio data to file\n", data.length);
+                        System.out.printf("write [%d] audio data to file, expires at: %d\n", data.length, expiresAt);
                         os.write(data);
                     }
                 }
@@ -206,10 +209,11 @@ public class MultiModalConversationUsage {
                         String text = String.valueOf(content.get(0).get("text"));
                         System.out.print(text);
                     } else if (map.containsKey("audio")) {
-                        Map<String, String> audio = (Map<String, String>) map.get("audio");
-                        byte[] data = Base64.getDecoder().decode(audio.get("data"));
+                        Map<String, Object> audio = (Map<String, Object>) map.get("audio");
+                        byte[] data = Base64.getDecoder().decode((String) audio.get("data"));
+                        Long expiresAt = (Long) audio.get("expires_at");
 
-                        System.out.printf("write [%d] audio data to file\n", data.length);
+                        System.out.printf("write [%d] audio data to file, expires at: %d\n", data.length, expiresAt);
                         os.write(data);
                     }
                 }
