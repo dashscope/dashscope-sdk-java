@@ -1,6 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 
 import com.alibaba.dashscope.aigc.videosynthesis.VideoSynthesis;
+import com.alibaba.dashscope.aigc.videosynthesis.VideoSynthesisListResult;
 import com.alibaba.dashscope.aigc.videosynthesis.VideoSynthesisParam;
 import com.alibaba.dashscope.aigc.videosynthesis.VideoSynthesisResult;
 import com.alibaba.dashscope.exception.ApiException;
@@ -16,8 +17,9 @@ public class VideoSynthesisUsage {
         VideoSynthesis vs = new VideoSynthesis();
         VideoSynthesisParam param =
                 VideoSynthesisParam.builder()
-                        .model(VideoSynthesis.Models.WANX_TXT_TO_VIDEO_PRO)
+                        .model(VideoSynthesis.Models.WANX_IMG_TO_VIDEO_PRO)
                         .prompt("一只戴着绿色眼镜的小狗")
+                        .imgUrl("https://modelscope.oss-cn-beijing.aliyuncs.com/resource/dog.jpeg")
                         .build();
         VideoSynthesisResult result = vs.call(param);
         System.out.println(result);
@@ -29,7 +31,7 @@ public class VideoSynthesisUsage {
     public static void listTask() throws ApiException, NoApiKeyException {
         VideoSynthesis is = new VideoSynthesis();
         AsyncTaskListParam param = AsyncTaskListParam.builder().build();
-        VideoSynthesisResult result = is.list(param);
+        VideoSynthesisListResult result = is.list(param);
         System.out.println(result);
     }
 
@@ -48,7 +50,7 @@ public class VideoSynthesisUsage {
         try {
             basicCall();
             // listTask();
-            // fetchTask("xxx-xxx-xxx-xxx-xxx-xxx");
+            // fetchTask("b451725d-c48f-4f08-9d26-xxx-xxx");
         } catch (ApiException | NoApiKeyException | InputRequiredException e) {
             System.out.println(e.getMessage());
         }

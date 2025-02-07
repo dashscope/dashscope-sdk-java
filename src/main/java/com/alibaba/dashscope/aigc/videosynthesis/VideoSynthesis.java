@@ -118,9 +118,9 @@ public final class VideoSynthesis {
    * @throws NoApiKeyException Can not find api key.
    * @throws ApiException The request failed, possibly due to a network or data error.
    */
-  public VideoSynthesisResult list(AsyncTaskListParam param)
+  public VideoSynthesisListResult list(AsyncTaskListParam param)
       throws ApiException, NoApiKeyException {
-    return VideoSynthesisResult.fromDashScopeResult(asyncApi.list(param, baseUrl));
+    return VideoSynthesisListResult.fromDashScopeResult(asyncApi.list(param, baseUrl));
   }
 
   /**
@@ -136,7 +136,7 @@ public final class VideoSynthesis {
    * @throws NoApiKeyException Can not find api key.
    * @throws ApiException The request failed, possibly due to a network or data error.
    */
-  public VideoSynthesisResult list(
+  public VideoSynthesisListResult list(
       String startTime,
       String endTime,
       String modelName,
@@ -146,7 +146,7 @@ public final class VideoSynthesis {
       Integer pageNo,
       Integer pageSize)
       throws ApiException, NoApiKeyException {
-    return VideoSynthesisResult.fromDashScopeResult(
+    return VideoSynthesisListResult.fromDashScopeResult(
         asyncApi.list(
             startTime, endTime, modelName, apiKeyId, region, status, pageNo, pageSize, baseUrl));
   }
