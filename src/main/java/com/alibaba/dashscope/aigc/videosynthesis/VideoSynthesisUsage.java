@@ -7,8 +7,10 @@ import lombok.Data;
 public class VideoSynthesisUsage {
   @SerializedName("video_count")
   private Integer videoCount;
+
   @SerializedName("video_duration")
   private Integer videoDuration;
+
   @SerializedName("video_ratio")
   private String videoRatio;
 }

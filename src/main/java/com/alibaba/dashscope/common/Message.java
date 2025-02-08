@@ -34,4 +34,8 @@ public class Message {
 
   /** for multi modal message type: [text|image_url] image_url: url detail */
   private List<MessageContentBase> contents;
+
+  /** chain of thought content */
+  @SerializedName("reasoning_content")
+  String reasoningContent;
 }
