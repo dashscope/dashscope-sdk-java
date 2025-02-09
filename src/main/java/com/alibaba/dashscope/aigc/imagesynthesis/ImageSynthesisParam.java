@@ -75,7 +75,7 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
       params.put(SCALE, scale);
     }
     if (seed != null) {
-      params.put(SEED, seed);
+      params.put(SEED, Integer.toUnsignedLong(seed));
     }
     if (style != null) {
       params.put(STYLE, style);
