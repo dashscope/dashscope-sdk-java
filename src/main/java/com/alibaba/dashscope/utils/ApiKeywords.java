@@ -47,6 +47,8 @@ public class ApiKeywords {
 
   public static final String TOP_P = "top_p";
 
+  public static final String TOP_K = "top_k";
+
   public static final String MAX_LENGTH = "max_length";
 
   public static final String M6_SEARCH_IN_FIRST_QUERY = "M6_SEARCH_IN_FIRST_QUERY";
@@ -62,6 +64,10 @@ public class ApiKeywords {
   public static final String SCALE = "scale";
 
   public static final String SEED = "seed";
+
+  public static final String TEMPERATURE = "temperature";
+
+  public static final String INCREMENTAL_OUTPUT = "incremental_output";
 
   public static final String STYLE = "style";
 
@@ -117,7 +123,11 @@ public class ApiKeywords {
   public static final String FILE_PATH_SCHEMA = "file://";
 
   public static final String STOP = "stop";
+
   public static final String REPETITION_PENALTY = "repetition_penalty";
+
+  public static final String PRESENCE_PENALTY = "presence_penalty";
+
   public static final String MAX_TOKENS = "max_tokens";
 
   public static final String TOOL_CALLS = "tool_calls";
@@ -131,4 +141,8 @@ public class ApiKeywords {
   public static final String EXTEND_PROMPT = "extend_prompt";
 
   public static final String IMG_URL = "img_url";
+
+  public static final String MODALITIES = "modalities";
+
+  public static final String AUDIO = "audio";
 }

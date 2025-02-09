@@ -25,6 +25,7 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.ToNumberPolicy;
 import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -49,6 +50,7 @@ public class JsonUtils {
           .registerTypeAdapter(StepDetailBase.class, new StepDetailDeserializer())
           .registerTypeAdapter(ToolCallBase.class, new ToolCallGsonDeserializer())
           .addSerializationExclusionStrategy(new AnnotationExclusionStrategy())
+          .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
           .disableHtmlEscaping()
           .create();
 
