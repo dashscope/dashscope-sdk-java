@@ -58,6 +58,10 @@ public class MessageAdapter extends TypeAdapter<Message> {
       }
       out.endArray();
     }
+    if (value.getReasoningContent() != null) {
+      out.name(ApiKeywords.REASONING_CONTENT);
+      out.value(value.getReasoningContent());
+    }
     if (value.getToolCalls() != null) {
       out.name(ApiKeywords.TOOL_CALLS).beginArray();
       for (ToolCallBase toolCall : value.getToolCalls()) {
@@ -120,14 +124,22 @@ public class MessageAdapter extends TypeAdapter<Message> {
   public Message read(JsonReader in) throws IOException {
     Map<String, Object> objectMap = JsonUtils.gson.fromJson(in, Map.class);
     Message msg = new Message();
+
     if (objectMap.containsKey(ApiKeywords.ROLE)) {
       msg.setRole((String) objectMap.get(ApiKeywords.ROLE));
       objectMap.remove(ApiKeywords.ROLE);
     }
+
     if (objectMap.containsKey(ApiKeywords.CONTENT)) {
       msg.setContent((String) objectMap.get(ApiKeywords.CONTENT));
       objectMap.remove(ApiKeywords.CONTENT);
     }
+
+    if (objectMap.containsKey(ApiKeywords.REASONING_CONTENT)) {
+      msg.setReasoningContent((String) objectMap.get(ApiKeywords.REASONING_CONTENT));
+      objectMap.remove(ApiKeywords.REASONING_CONTENT);
+    }
+
     if (objectMap.containsKey(ApiKeywords.TOOL_CALLS)) {
       msg.toolCalls = new ArrayList<ToolCallBase>();
       List<LinkedTreeMap> toolCalls = (List<LinkedTreeMap>) objectMap.get(ApiKeywords.TOOL_CALLS);

@@ -104,7 +104,11 @@ public class ApiKeywords {
   public static final String ROLE = "role";
 
   public static final String CONTENT = "content";
+
+  public static final String REASONING_CONTENT = "reasoning_content";
+
   public static final String CONTENT_TYPE_TEXT = "text";
+
   public static final String CONTENT_TYPE_IMAGE_URL = "image_url";
 
   public static final String RESOURCE_ID = "resource_id";
