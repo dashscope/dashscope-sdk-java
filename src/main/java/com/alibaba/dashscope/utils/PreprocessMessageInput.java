@@ -9,6 +9,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -76,41 +78,66 @@ public final class PreprocessMessageInput {
     return hasUpload;
   }
 
+  public static String checkAndUploadOneMultiModalMessage(
+      String model, String apiKey, String key, String value)
+      throws NoApiKeyException, UploadFileException {
+    String dstValue = value;
+    if (value.startsWith(ApiKeywords.FILE_PATH_SCHEMA)) {
+      try {
+        URI fileURI = new URI(value);
+        File f = new File(fileURI);
+        if (f.exists()) {
+          String fileUrl = OSSUtils.upload(model, f.getAbsolutePath(), apiKey);
+          if (fileUrl == null) {
+            throw new UploadFileException(String.format("Uploading file: %s failed", value));
+          }
+          dstValue = fileUrl;
+        } else {
+          throw new UploadFileException(String.format("Local file: %s not exists.", value));
+        }
+      } catch (URISyntaxException e) {
+        throw new UploadFileException(e.getMessage());
+      }
+    } else if (!key.equals("text") && !value.startsWith("http")) {
+      if (isValidPath(value)) {
+        File f = new File(value);
+        if (f.exists()) {
+          String fileUrl = OSSUtils.upload(model, f.getAbsolutePath(), apiKey);
+          if (fileUrl == null) {
+            throw new UploadFileException(String.format("Uploading file: %s failed", value));
+          }
+          dstValue = fileUrl;
+        }
+      }
+    }
+
+    return dstValue;
+  }
+
   public static boolean checkAndUploadMultiModalMessage(
       String model, Map.Entry<String, Object> entry, String apiKey)
       throws NoApiKeyException, UploadFileException {
     boolean isUpload = false;
-    if (entry.getValue() instanceof String) {
-      String v = (String) entry.getValue();
-      if (v.startsWith(ApiKeywords.FILE_PATH_SCHEMA)) {
-        try {
-          URI fileURI = new URI(v);
-          File f = new File(fileURI);
-          if (f.exists()) {
-            String fileUrl = OSSUtils.upload(model, f.getAbsolutePath(), apiKey);
-            if (fileUrl == null) {
-              throw new UploadFileException(String.format("Uploading file: %s failed", v));
-            }
-            entry.setValue(fileUrl);
+    String key = entry.getKey();
+    Object value = entry.getValue();
+    if (value instanceof List) {
+      List<?> dstValue = (List<?>)value;
+      for (int i = 0; i < dstValue.size(); i++) {
+        Object v = dstValue.get(i);
+        if (v instanceof String) {
+          String dstV = checkAndUploadOneMultiModalMessage(model, apiKey, key, (String)v);
+          if (!dstV.equals(v)) {
             isUpload = true;
-          } else {
-            throw new UploadFileException(String.format("Local file: %s not exists.", v));
-          }
-        } catch (URISyntaxException e) {
-          throw new UploadFileException(e.getMessage());
-        }
-      } else if (!entry.getKey().equals("text") && !v.startsWith("http")) {
-        if (isValidPath(v)) {
-          File f = new File(v);
-          if (f.exists()) {
-            String fileUrl = OSSUtils.upload(model, f.getAbsolutePath(), apiKey);
-            if (fileUrl == null) {
-              throw new UploadFileException(String.format("Uploading file: %s failed", v));
-            }
-            entry.setValue(fileUrl);
-            isUpload = true;
+            ((List<Object>)dstValue).set(i, dstV);
           }
         }
+      }
+      entry.setValue(dstValue);
+    } else if (value instanceof String) {
+      String dstValue = checkAndUploadOneMultiModalMessage(model, apiKey, key, (String)value);
+      if (!dstValue.equals(value)) {
+        isUpload = true;
+        entry.setValue(dstValue);
       }
     }
     return isUpload;
@@ -120,7 +147,11 @@ public final class PreprocessMessageInput {
       String model, MultiModalMessage messages, String apiKey)
       throws NoApiKeyException, UploadFileException {
     boolean hasUpload = false;
+    List<Map<String, Object>> content = new ArrayList<>();
     for (Map<String, Object> item : messages.getContent()) {
+      content.add(new HashMap<>(item));
+    }
+    for (Map<String, Object> item : content) {
       for (Map.Entry<String, Object> entry : item.entrySet()) {
         boolean isUpload = checkAndUploadMultiModalMessage(model, entry, apiKey);
         if (isUpload && !hasUpload) {
@@ -128,6 +159,7 @@ public final class PreprocessMessageInput {
         }
       }
     }
+    messages.setContent(content);
     return hasUpload;
   }
 }
