@@ -12,4 +12,12 @@ public class MultiModalEmbeddingUsage {
   private Integer imageCount;
 
   private Double duration;
+
+  // forward compatible with multimodal-embedding-one-peace-v1
+  @SerializedName("total_usage")
+  private Integer totalUsage;
+
+  private MultiModalEmbeddingsUsageInfo image;
+  private MultiModalEmbeddingsUsageInfo audio;
+  private MultiModalEmbeddingsUsageInfo text;
 }
