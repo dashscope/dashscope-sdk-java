@@ -5,5 +5,5 @@ import lombok.Data;
 
 @Data
 public class MultiModalEmbeddingOutput {
-  private List<Double> embedding;
+  private List<MultiModalEmbeddingResultItem> embeddings;
 }
