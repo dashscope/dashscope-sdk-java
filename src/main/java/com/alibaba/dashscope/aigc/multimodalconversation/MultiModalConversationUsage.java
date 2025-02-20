@@ -22,4 +22,10 @@ public class MultiModalConversationUsage {
 
   @SerializedName("audio_tokens")
   private Integer audioTokens;
+
+  @SerializedName("input_tokens_details")
+  private MultiModalConversationTokensDetails inputTokensDetails;
+
+  @SerializedName("output_tokens_details")
+  private MultiModalConversationTokensDetails outputTokensDetails;
 }
