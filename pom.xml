@@ -40,7 +40,7 @@
     <name>DashScope Java SDK</name>
     <groupId>com.alibaba</groupId>
     <artifactId>dashscope-sdk-java</artifactId>
-    <version>2.18.2</version>
+    <version>2.18.3</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
