@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MultiModalConversationQwenVLOcr {
-    private static final String modelName = "qwen-vl-ocr";
+    private static final String modelName = "qwen-vl-ocr-2025-02-18";
     public static void videoImageListSample() throws ApiException, NoApiKeyException, UploadFileException {
         MultiModalConversation conv = new MultiModalConversation();
         MultiModalMessage systemMessage = MultiModalMessage.builder()
