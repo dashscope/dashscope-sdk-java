@@ -25,8 +25,7 @@ public class MultiModalEmbedding {
   public static class Models {
     public static final String MULTIMODAL_EMBEDDING_ONE_PEACE_V1 =
         "multimodal-embedding-one-peace-v1";
-      public static final String MULTIMODAL_EMBEDDING_V1 =
-        "multimodal-embedding-v1";
+    public static final String MULTIMODAL_EMBEDDING_V1 = "multimodal-embedding-v1";
   }
 
   private ApiServiceOption defaulApiServiceOption() {

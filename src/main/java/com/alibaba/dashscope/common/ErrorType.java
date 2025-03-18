@@ -18,7 +18,7 @@ public enum ErrorType {
   /** An unknown error. */
   UNKNOWN_ERROR("unknown_error"),
 
-  NETORK_ERROR("network error"),
+  NETWORK_ERROR("network error"),
   ;
 
   private final String value;

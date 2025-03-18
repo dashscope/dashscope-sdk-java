@@ -19,7 +19,7 @@ public class ApiException extends RuntimeException {
       this.status =
           Status.builder()
               .statusCode(-1)
-              .code(ErrorType.NETORK_ERROR.getValue())
+              .code(ErrorType.NETWORK_ERROR.getValue())
               .message(String.format("%s: %s", e.getClass().getSimpleName(), e.getMessage()))
               .build();
     }
@@ -28,6 +28,11 @@ public class ApiException extends RuntimeException {
 
   public ApiException(Status status) {
     super();
+    this.status = status;
+  }
+
+  public ApiException(Status status, Throwable th) {
+    super(status.getMessage(), th);
     this.status = status;
   }
 

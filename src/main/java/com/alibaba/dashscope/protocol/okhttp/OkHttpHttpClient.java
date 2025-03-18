@@ -38,6 +38,7 @@ import okhttp3.ResponseBody;
 import okhttp3.sse.EventSource;
 import okhttp3.sse.EventSourceListener;
 import okhttp3.sse.EventSources;
+import org.jetbrains.annotations.NotNull;
 
 @Slf4j
 public final class OkHttpHttpClient implements HalfDuplexClient {
@@ -109,12 +110,14 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
     }
   }
 
-  private Status parseFailed(Response response) {
+  private Status parseFailed(Response response, Throwable th) {
     if (response == null) {
+      String message = th == null ? "Get response failed!" : th.getMessage();
+
       return Status.builder()
           .statusCode(-1)
-          .code(ErrorType.NETORK_ERROR.getValue())
-          .message("Get response failed!")
+          .code(ErrorType.NETWORK_ERROR.getValue())
+          .message(message)
           .isJson(false)
           .build();
     }
@@ -232,7 +235,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       Request request = buildRequest(req.getHttpRequest());
       Response response = client.newCall(request).execute();
       if (!response.isSuccessful()) {
-        Status status = parseFailed(response);
+        Status status = parseFailed(response, null);
         throw new ApiException(status);
       }
       return new DashScopeResult()
@@ -266,7 +269,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
               public void onResponse(Call call, Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
                   if (!response.isSuccessful()) {
-                    Status status = parseFailed(response);
+                    Status status = parseFailed(response, null);
                     callback.onError(new ApiException(status));
                   } else {
                     callback.onEvent(
@@ -367,21 +370,24 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                         }
 
                         @java.lang.Override
-                        public void onOpen(EventSource eventSource, Response response) {
+                        public void onOpen(
+                            @NotNull EventSource eventSource, @NotNull Response response) {
                           this.response = response;
                           super.onOpen(eventSource, response);
                         }
 
                         @java.lang.Override
                         public void onFailure(
-                            EventSource eventSource, java.lang.Throwable t, Response response) {
+                            @NotNull EventSource eventSource,
+                            java.lang.Throwable t,
+                            Response response) {
                           this.response = response;
                           super.onFailure(eventSource, t, response);
-                          emitter.onError(new ApiException(parseFailed(response)));
+                          emitter.onError(new ApiException(parseFailed(response, t), t));
                         }
 
                         @java.lang.Override
-                        public void onClosed(EventSource eventSource) {
+                        public void onClosed(@NotNull EventSource eventSource) {
                           super.onClosed(eventSource);
                           emitter.onComplete();
                         }
@@ -457,16 +463,16 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
               }
 
               @java.lang.Override
-              public void onOpen(EventSource eventSource, Response response) {
+              public void onOpen(@NotNull EventSource eventSource, @NotNull Response response) {
                 this.response = response;
                 callback.onOpen(null);
               }
 
               @java.lang.Override
               public void onFailure(
-                  EventSource eventSource, java.lang.Throwable t, Response response) {
+                  @NotNull EventSource eventSource, java.lang.Throwable t, Response response) {
                 this.response = response;
-                callback.onError(new ApiException(parseFailed(response)));
+                callback.onError(new ApiException(parseFailed(response, t), t));
               }
 
               @java.lang.Override

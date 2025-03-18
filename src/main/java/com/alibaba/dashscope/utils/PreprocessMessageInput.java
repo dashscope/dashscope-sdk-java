@@ -121,20 +121,20 @@ public final class PreprocessMessageInput {
     String key = entry.getKey();
     Object value = entry.getValue();
     if (value instanceof List) {
-      List<?> dstValue = (List<?>)value;
+      List<?> dstValue = (List<?>) value;
       for (int i = 0; i < dstValue.size(); i++) {
         Object v = dstValue.get(i);
         if (v instanceof String) {
-          String dstV = checkAndUploadOneMultiModalMessage(model, apiKey, key, (String)v);
+          String dstV = checkAndUploadOneMultiModalMessage(model, apiKey, key, (String) v);
           if (!dstV.equals(v)) {
             isUpload = true;
-            ((List<Object>)dstValue).set(i, dstV);
+            ((List<Object>) dstValue).set(i, dstV);
           }
         }
       }
       entry.setValue(dstValue);
     } else if (value instanceof String) {
-      String dstValue = checkAndUploadOneMultiModalMessage(model, apiKey, key, (String)value);
+      String dstValue = checkAndUploadOneMultiModalMessage(model, apiKey, key, (String) value);
       if (!dstValue.equals(value)) {
         isUpload = true;
         entry.setValue(dstValue);

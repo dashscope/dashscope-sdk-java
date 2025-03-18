@@ -2,14 +2,14 @@
 
 package com.alibaba.dashscope.embeddings;
 
-import lombok.Data;
 import java.util.List;
+import lombok.Data;
 
 @Data
 public class MultiModalEmbeddingResultItem {
-    private Integer index;
+  private Integer index;
 
-    private String type;
+  private String type;
 
-    private List<Double> embedding;
+  private List<Double> embedding;
 }
