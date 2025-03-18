@@ -30,6 +30,8 @@ public final class VideoSynthesis {
     public static final String WANX_IMG_TO_VIDEO_PRO = "wanx-img2video-pro";
     public static final String WANX_2_1_T2V_PLUS = "wanx2.1-t2v-plus";
     public static final String WANX_2_1_T2V_TURBO = "wanx2.1-t2v-turbo";
+    public static final String WANX_2_1_I2V_PLUS = "wanx2.1-i2v-plus";
+    public static final String WANX_2_1_I2V_TURBO = "wanx2.1-i2v-turbo";
   }
 
   /** Video synthesis size */

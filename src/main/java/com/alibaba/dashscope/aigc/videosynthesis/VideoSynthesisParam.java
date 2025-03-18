@@ -29,7 +29,7 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
 
   @Builder.Default private Integer seed = null;
 
-  @lombok.NonNull private String prompt;
+  @Builder.Default private String prompt = null;
 
   /** The negative prompt is the opposite of the prompt meaning. */
   @Builder.Default private String negative_prompt = null;
@@ -53,13 +53,10 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
   @Override
   public JsonObject getInput() {
     JsonObject jsonObject = new JsonObject();
-    prompt = prompt.trim();
-    int maxLength = Constants.MAX_PROMPT_LENGTH;
-    if (prompt.length() > maxLength) {
-      prompt = prompt.substring(0, maxLength);
+    if (prompt != null && !prompt.isEmpty()) {
+      jsonObject.addProperty(PROMPT, prompt);
     }
 
-    jsonObject.addProperty(PROMPT, prompt);
     jsonObject.addProperty(EXTEND_PROMPT, extendPrompt);
 
     if (negative_prompt != null && !negative_prompt.isEmpty()) {
