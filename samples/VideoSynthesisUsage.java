@@ -17,8 +17,9 @@ public class VideoSynthesisUsage {
         VideoSynthesis vs = new VideoSynthesis();
         VideoSynthesisParam param =
                 VideoSynthesisParam.builder()
-                        .model(VideoSynthesis.Models.WANX_IMG_TO_VIDEO_PRO)
-                        .prompt("一只戴着绿色眼镜的小狗")
+                        .model(VideoSynthesis.Models.WANX_2_1_I2V_TURBO)
+                        // prompt not required
+                        // .prompt("一只戴着绿色眼镜的小狗")
                         .imgUrl("https://modelscope.oss-cn-beijing.aliyuncs.com/resource/dog.jpeg")
                         .build();
         VideoSynthesisResult result = vs.call(param);
