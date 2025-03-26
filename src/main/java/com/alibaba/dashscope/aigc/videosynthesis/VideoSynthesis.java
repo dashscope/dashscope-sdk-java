@@ -26,10 +26,8 @@ public final class VideoSynthesis {
 
   // Model name
   public static class Models {
-    @Deprecated
-    public static final String WANX_TXT_TO_VIDEO_PRO = "wanx-txt2video-pro";
-    @Deprecated
-    public static final String WANX_IMG_TO_VIDEO_PRO = "wanx-img2video-pro";
+    @Deprecated public static final String WANX_TXT_TO_VIDEO_PRO = "wanx-txt2video-pro";
+    @Deprecated public static final String WANX_IMG_TO_VIDEO_PRO = "wanx-img2video-pro";
 
     public static final String WANX_2_1_T2V_PLUS = "wanx2.1-t2v-plus";
     public static final String WANX_2_1_T2V_TURBO = "wanx2.1-t2v-turbo";

@@ -17,4 +17,10 @@ public class MultiModalConversationOutput {
   }
 
   private List<Choice> choices;
+
+  @SerializedName("audio")
+  private AudioResult audio;
+
+  @SerializedName("finish_reason")
+  private String finishReason;
 }

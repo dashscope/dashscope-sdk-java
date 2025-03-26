@@ -27,7 +27,7 @@ import lombok.experimental.SuperBuilder;
  * Description audio parameters.<br>
  *
  * @author yuanci.ytb
- * @since 1.0.0-M2
+ * @since 2.18.0
  */
 @Data
 @SuperBuilder
@@ -39,15 +39,21 @@ public class AudioParameters implements Serializable {
   @Getter
   public enum Voice {
     @SerializedName("Cherry")
-    CHERRY,
+    CHERRY("Cherry"),
 
     @SerializedName("Serena")
-    SERENA,
+    SERENA("Serena"),
 
     @SerializedName("Ethan")
-    ETHAN,
+    ETHAN("Ethan"),
 
     @SerializedName("Chelsie")
-    CHELSIE;
+    CHELSIE("Chelsie");
+
+    private final String value;
+
+    Voice(String value) {
+      this.value = value;
+    }
   }
 }

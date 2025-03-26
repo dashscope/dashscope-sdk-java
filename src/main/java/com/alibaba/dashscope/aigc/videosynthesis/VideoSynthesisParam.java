@@ -5,7 +5,6 @@ import static com.alibaba.dashscope.utils.ApiKeywords.*;
 
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
 import com.alibaba.dashscope.exception.InputRequiredException;
-import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.GsonExclude;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;

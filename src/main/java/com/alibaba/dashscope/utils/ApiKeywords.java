@@ -27,6 +27,8 @@ public class ApiKeywords {
 
   public static final String TEXT = "text";
 
+  public static final String VOICE = "voice";
+
   public static final String TEXTS = "texts";
 
   public static final String MODEL = "model";

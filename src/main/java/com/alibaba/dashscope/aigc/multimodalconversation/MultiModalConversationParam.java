@@ -106,6 +106,12 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
   /** ocr options */
   private OcrOptions ocrOptions;
 
+  /** text input */
+  private String text;
+
+  /** voice of tts */
+  private AudioParameters.Voice voice;
+
   @Override
   public JsonObject getHttpBody() {
     JsonObject requestObject = new JsonObject();
@@ -122,6 +128,15 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
   public JsonObject getInput() {
     JsonObject jsonObject = new JsonObject();
     jsonObject.add(ApiKeywords.MESSAGES, JsonUtils.toJsonArray(messages));
+
+    if (text != null) {
+      jsonObject.addProperty(ApiKeywords.TEXT, text);
+    }
+
+    if (voice != null) {
+      jsonObject.addProperty(ApiKeywords.VOICE, voice.getValue());
+    }
+
     return jsonObject;
   }
 
