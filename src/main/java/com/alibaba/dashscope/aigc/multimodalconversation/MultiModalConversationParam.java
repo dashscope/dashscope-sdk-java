@@ -204,8 +204,8 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
 
   @Override
   public void validate() throws InputRequiredException {
-    if (messages == null || messages.isEmpty()) {
-      throw new InputRequiredException("Message must not null or empty!");
+    if (messages == null || messages.isEmpty() && (text == null || text.isEmpty())) {
+      throw new InputRequiredException("Message or text must not null or empty!");
     }
   }
 }

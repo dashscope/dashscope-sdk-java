@@ -18,10 +18,15 @@ import com.alibaba.dashscope.aigc.multimodalconversation.AudioParameters;
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversation;
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationParam;
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationResult;
+import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.exception.ApiException;
+import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.exception.UploadFileException;
+import com.alibaba.dashscope.utils.JsonUtils;
 import io.reactivex.Flowable;
+
+import java.util.concurrent.Semaphore;
 
 /**
  * Title qwen tts generation.<br>
@@ -32,10 +37,12 @@ import io.reactivex.Flowable;
  */
 
 public class MultiModelConversationQwenTts {
+    private static final String MODEL = "qwen-tts";
+
     public static void textToAudio() throws ApiException, NoApiKeyException, UploadFileException {
         MultiModalConversation conv = new MultiModalConversation();
         MultiModalConversationParam param = MultiModalConversationParam.builder()
-                .model("qwen-tts")
+                .model(MODEL)
                 .text("Today is a wonderful day to build something people love!")
                 .voice(AudioParameters.Voice.CHERRY)
                 .build();
@@ -46,7 +53,7 @@ public class MultiModelConversationQwenTts {
     public static void textToAudioWithStream() throws ApiException, NoApiKeyException, UploadFileException {
         MultiModalConversation conv = new MultiModalConversation();
         MultiModalConversationParam param = MultiModalConversationParam.builder()
-                .model("qwen-tts")
+                .model(MODEL)
                 .text("Today is a wonderful day to build something people love!")
                 .voice(AudioParameters.Voice.CHERRY)
                 .build();
@@ -54,10 +61,46 @@ public class MultiModelConversationQwenTts {
         result.blockingForEach(System.out::println);
     }
 
+    public static void textToAudioWithCallback() throws ApiException, NoApiKeyException, UploadFileException, InputRequiredException {
+        MultiModalConversation conv = new MultiModalConversation();
+        MultiModalConversationParam param = MultiModalConversationParam.builder()
+                .model(MODEL)
+                .text("Today is a wonderful day to build something people love!")
+                .voice(AudioParameters.Voice.CHERRY)
+                .build();
+
+        Semaphore semaphore = new Semaphore(0);
+        conv.streamCall(param, new ResultCallback<MultiModalConversationResult>() {
+            @Override
+            public void onEvent(MultiModalConversationResult message) {
+                System.out.printf("%s", JsonUtils.toJson(message));
+            }
+
+            @Override
+            public void onComplete() {
+                semaphore.release();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                System.out.printf("error: %s", e.getMessage());
+                semaphore.release();
+            }
+        });
+
+        try {
+            semaphore.acquire();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
     public static void main(String[] args) {
         try {
-            textToAudio();
-//            textToAudioWithStream();
+//            textToAudio();
+            textToAudioWithStream();
+//            textToAudioWithCallback();
         } catch (ApiException | NoApiKeyException | UploadFileException e) {
             System.out.println(e.getMessage());
         }
