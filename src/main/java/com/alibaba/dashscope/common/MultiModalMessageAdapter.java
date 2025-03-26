@@ -63,12 +63,19 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
     out.beginObject();
     out.name(ApiKeywords.ROLE);
     out.value(value.getRole());
+
     out.name(ApiKeywords.CONTENT);
     out.beginArray();
     for (Map<String, Object> item : value.getContent()) {
       writeMapObject(out, item);
     }
     out.endArray();
+
+    if (value.getReasoningContent() != null) {
+      out.name(ApiKeywords.REASONING_CONTENT);
+      out.value(value.getReasoningContent());
+    }
+
     out.endObject();
   }
 
@@ -76,10 +83,12 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
   public MultiModalMessage read(JsonReader in) throws IOException {
     Map<String, Object> objectMap = JsonUtils.gson.fromJson(in, Map.class);
     MultiModalMessage msg = new MultiModalMessage();
+
     if (objectMap.containsKey(ApiKeywords.ROLE)) {
       msg.setRole((String) objectMap.get(ApiKeywords.ROLE));
       objectMap.remove(ApiKeywords.ROLE);
     }
+
     if (objectMap.containsKey(ApiKeywords.CONTENT)) {
       Object content = objectMap.get(ApiKeywords.CONTENT);
       if (content instanceof String) {
@@ -89,6 +98,13 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
       }
       objectMap.remove(ApiKeywords.CONTENT);
     }
+
+    if (objectMap.containsKey(ApiKeywords.REASONING_CONTENT)) {
+      String reasoningContent = (String) objectMap.get(ApiKeywords.REASONING_CONTENT);
+      msg.setReasoningContent(reasoningContent);
+      objectMap.remove(ApiKeywords.REASONING_CONTENT);
+    }
+
     return msg;
   }
 }

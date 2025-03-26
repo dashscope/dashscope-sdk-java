@@ -3,6 +3,8 @@ package com.alibaba.dashscope.common;
 
 import java.util.List;
 import java.util.Map;
+
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -19,4 +21,7 @@ public class MultiModalMessage {
   // TODO maybe a abstract or interface for content instead of map, now not user friendly for
   // developers
   private List<Map<String, Object>> content;
+
+  /** chain of thought content */
+  String reasoningContent;
 }
