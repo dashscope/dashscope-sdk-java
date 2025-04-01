@@ -32,12 +32,12 @@ public class TranslationRecognizerParam extends FullDuplexServiceParam {
 
   private String vocabularyId;
 
-  private boolean transcriptionEnabled = true;
-  private String sourceLanguage = null;
-  private boolean translationEnabled = false;
-  private String[] translationLanguages = null;
-  private boolean semanticPunctationEnabled = false;
-  private Integer maxEndSilence = null;
+  @Builder.Default private boolean transcriptionEnabled = true;
+  @Builder.Default private String sourceLanguage = null;
+  @Builder.Default private boolean translationEnabled = false;
+  @Builder.Default private String[] translationLanguages = null;
+  @Builder.Default private boolean semanticPunctationEnabled = false;
+  @Builder.Default private Integer maxEndSilence = null;
 
   @Override
   public Map<String, Object> getParameters() {
