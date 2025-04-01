@@ -6,7 +6,11 @@ import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
+
+import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.SuperBuilder;
 
 @Data
 public class Sentence {
@@ -29,6 +33,8 @@ public class Sentence {
 
   @SerializedName("emo_confidence")
   Double emoConfidence;
+
+  boolean heartbeat = false;
 
   @SerializedName("sentence_id")
   private Long sentenceId;

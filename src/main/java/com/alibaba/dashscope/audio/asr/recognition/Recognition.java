@@ -128,7 +128,7 @@ public final class Recognition {
             item -> {
               return RecognitionResult.fromDashScopeResult(item);
             })
-        .filter(item -> item != null && item.getSentence() != null && !item.isCompleteResult())
+        .filter(item -> item != null && item.getSentence() != null && !item.isCompleteResult() && !item.getSentence().isHeartbeat())
         .doOnNext(
             result -> {
               if (lastRequestId.get() == null && result.getRequestId() != null) {
@@ -196,6 +196,10 @@ public final class Recognition {
             @Override
             public void onEvent(DashScopeResult message) {
               RecognitionResult recognitionResult = RecognitionResult.fromDashScopeResult(message);
+              if (recognitionResult.getSentence().isHeartbeat()) {
+                log.debug("recv heartbeat");
+                return;
+              }
               if (lastRequestId.get() == null && recognitionResult.getRequestId() != null) {
                 lastRequestId.set(recognitionResult.getRequestId());
               }
@@ -304,6 +308,10 @@ public final class Recognition {
           .blockingSubscribe(
               res -> {
                 RecognitionResult recognitionResult = RecognitionResult.fromDashScopeResult(res);
+                if (recognitionResult.getSentence().isHeartbeat()) {
+                  log.debug("recv heartbeat");
+                  return;
+                }
                 if (lastRequestId.get() == null && recognitionResult.getRequestId() != null) {
                   lastRequestId.set(recognitionResult.getRequestId());
                 }
