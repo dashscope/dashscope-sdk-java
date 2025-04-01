@@ -78,7 +78,7 @@ public class VocabularyService {
   public Vocabulary[] listVocabulary(String prefix)
       throws NoApiKeyException, InputRequiredException {
     return listVocabulary(
-        prefix, 0, 10, VocabularyParam.builder().model(VOCABULARY_MODEL_NAME).build());
+        prefix, 0, 10, VocabularyParam.builder().model(this.model).build());
   }
 
   /**
@@ -97,7 +97,7 @@ public class VocabularyService {
         prefix,
         pageIndex,
         pageSize,
-        VocabularyParam.builder().model(VOCABULARY_MODEL_NAME).build());
+        VocabularyParam.builder().model(this.model).build());
   }
 
   /**
@@ -111,7 +111,7 @@ public class VocabularyService {
   public Vocabulary queryVocabulary(String vocabularyId)
       throws NoApiKeyException, InputRequiredException {
     return queryVocabulary(
-        vocabularyId, VocabularyParam.builder().model(VOCABULARY_MODEL_NAME).build());
+        vocabularyId, VocabularyParam.builder().model(this.model).build());
   }
 
   /**
@@ -125,7 +125,7 @@ public class VocabularyService {
   public void updateVocabulary(String vocabularyId, JsonArray vocabulary)
       throws NoApiKeyException, InputRequiredException {
     updateVocabulary(
-        vocabularyId, vocabulary, VocabularyParam.builder().model(VOCABULARY_MODEL_NAME).build());
+        vocabularyId, vocabulary, VocabularyParam.builder().model(this.model).build());
   }
 
   /**
@@ -137,7 +137,7 @@ public class VocabularyService {
    */
   public void deleteVocabulary(String vocabularyId)
       throws NoApiKeyException, InputRequiredException {
-    deleteVocabulary(vocabularyId, VocabularyParam.builder().model(VOCABULARY_MODEL_NAME).build());
+    deleteVocabulary(vocabularyId, VocabularyParam.builder().model(this.model).build());
   }
 
   public Vocabulary createVocabulary(
@@ -146,7 +146,7 @@ public class VocabularyService {
     VocabularyParam param =
         VocabularyParam.builder()
             .operationType(VocabularyOperationType.CREATE)
-            .model(VOCABULARY_MODEL_NAME)
+            .model(this.model)
             .targetModel(targetModel)
             .prefix(prefix)
             .vocabulary(vocabulary)
@@ -168,7 +168,7 @@ public class VocabularyService {
     VocabularyParam param =
         VocabularyParam.builder()
             .operationType(VocabularyOperationType.LIST)
-            .model(VOCABULARY_MODEL_NAME)
+            .model(this.model)
             .prefix(prefix)
             .pageSize(pageSize)
             .pageIndex(pageIndex)
@@ -189,7 +189,7 @@ public class VocabularyService {
     VocabularyParam param =
         VocabularyParam.builder()
             .operationType(VocabularyOperationType.QUERY)
-            .model(VOCABULARY_MODEL_NAME)
+            .model(this.model)
             .vocabularyId(vocabularyId)
             .apiKey(apikey)
             .headers(customParam.getHeaders())
@@ -209,7 +209,7 @@ public class VocabularyService {
     VocabularyParam param =
         VocabularyParam.builder()
             .operationType(VocabularyOperationType.UPDATE)
-            .model(VOCABULARY_MODEL_NAME)
+            .model(this.model)
             .vocabularyId(vocabularyId)
             .vocabulary(vocabulary)
             .apiKey(apikey)
@@ -228,7 +228,7 @@ public class VocabularyService {
     VocabularyParam param =
         VocabularyParam.builder()
             .operationType(VocabularyOperationType.DELETE)
-            .model(VOCABULARY_MODEL_NAME)
+            .model(this.model)
             .vocabularyId(vocabularyId)
             .apiKey(apikey)
             .headers(customParam.getHeaders())

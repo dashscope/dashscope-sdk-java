@@ -75,7 +75,7 @@ public class VoiceEnrollmentService {
    */
   public Voice[] listVoice(String prefix) throws NoApiKeyException, InputRequiredException {
     return listVoice(
-        prefix, 0, 10, VoiceEnrollmentParam.builder().model(VOICE_ENROLLMENT_MODEL_NAME).build());
+        prefix, 0, 10, VoiceEnrollmentParam.builder().model(this.model).build());
   }
 
   /**
@@ -94,7 +94,7 @@ public class VoiceEnrollmentService {
         prefix,
         pageIndex,
         pageSize,
-        VoiceEnrollmentParam.builder().model(VOICE_ENROLLMENT_MODEL_NAME).build());
+        VoiceEnrollmentParam.builder().model(this.model).build());
   }
 
   /**
@@ -107,7 +107,7 @@ public class VoiceEnrollmentService {
    */
   public Voice queryVoice(String voiceId) throws NoApiKeyException, InputRequiredException {
     return queryVoice(
-        voiceId, VoiceEnrollmentParam.builder().model(VOICE_ENROLLMENT_MODEL_NAME).build());
+        voiceId, VoiceEnrollmentParam.builder().model(this.model).build());
   }
 
   /**
@@ -121,7 +121,7 @@ public class VoiceEnrollmentService {
   public void updateVoice(String voiceId, String url)
       throws NoApiKeyException, InputRequiredException {
     updateVoice(
-        voiceId, url, VoiceEnrollmentParam.builder().model(VOICE_ENROLLMENT_MODEL_NAME).build());
+        voiceId, url, VoiceEnrollmentParam.builder().model(this.model).build());
   }
 
   /**
@@ -132,7 +132,7 @@ public class VoiceEnrollmentService {
    * @throws InputRequiredException 如果必须参数为空
    */
   public void deleteVoice(String voiceId) throws NoApiKeyException, InputRequiredException {
-    deleteVoice(voiceId, VoiceEnrollmentParam.builder().model(VOICE_ENROLLMENT_MODEL_NAME).build());
+    deleteVoice(voiceId, VoiceEnrollmentParam.builder().model(this.model).build());
   }
 
   public Voice createVoice(
@@ -142,7 +142,7 @@ public class VoiceEnrollmentService {
     VoiceEnrollmentParam param =
         VoiceEnrollmentParam.builder()
             .operationType(VoiceEnrollmentOperationType.CREATE)
-            .model(VOICE_ENROLLMENT_MODEL_NAME)
+            .model(this.model)
             .targetModel(targetModel)
             .prefix(prefix)
             .url(url)
@@ -164,7 +164,7 @@ public class VoiceEnrollmentService {
     VoiceEnrollmentParam param =
         VoiceEnrollmentParam.builder()
             .operationType(VoiceEnrollmentOperationType.LIST)
-            .model(VOICE_ENROLLMENT_MODEL_NAME)
+            .model(this.model)
             .prefix(prefix)
             .pageSize(pageSize)
             .pageIndex(pageIndex)
@@ -185,7 +185,7 @@ public class VoiceEnrollmentService {
     VoiceEnrollmentParam param =
         VoiceEnrollmentParam.builder()
             .operationType(VoiceEnrollmentOperationType.QUERY)
-            .model(VOICE_ENROLLMENT_MODEL_NAME)
+            .model(this.model)
             .voiceId(voiceId)
             .apiKey(apikey)
             .headers(customParam.getHeaders())
@@ -204,7 +204,7 @@ public class VoiceEnrollmentService {
     VoiceEnrollmentParam param =
         VoiceEnrollmentParam.builder()
             .operationType(VoiceEnrollmentOperationType.UPDATE)
-            .model(VOICE_ENROLLMENT_MODEL_NAME)
+            .model(this.model)
             .voiceId(voiceId)
             .url(url)
             .apiKey(apikey)
@@ -223,7 +223,7 @@ public class VoiceEnrollmentService {
     VoiceEnrollmentParam param =
         VoiceEnrollmentParam.builder()
             .operationType(VoiceEnrollmentOperationType.DELETE)
-            .model(VOICE_ENROLLMENT_MODEL_NAME)
+            .model(this.model)
             .voiceId(voiceId)
             .apiKey(apikey)
             .headers(customParam.getHeaders())
