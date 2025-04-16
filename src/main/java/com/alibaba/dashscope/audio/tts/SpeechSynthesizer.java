@@ -11,17 +11,16 @@ import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import io.reactivex.Flowable;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public final class SpeechSynthesizer {
@@ -63,7 +62,9 @@ public final class SpeechSynthesizer {
     recvAudioLength = 0;
     firstPackageTimeStamp = -1;
     preRequestId = UUID.randomUUID().toString();
-    param.getParameters().put("pre_task_id", preRequestId);
+    Map<String, Object> parameters = new HashMap<>();
+    parameters.put("pre_task_id", preRequestId);
+    param.setParameters(parameters);
     timestamps.clear();
     audioData = null;
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -154,7 +155,9 @@ public final class SpeechSynthesizer {
     recvAudioLength = 0;
     firstPackageTimeStamp = -1;
     preRequestId = UUID.randomUUID().toString();
-    param.getParameters().put("pre_task_id", preRequestId);
+    Map<String, Object> parameters = new HashMap<>();
+    parameters.put("pre_task_id", preRequestId);
+    param.setParameters(parameters);
     audioData = null;
     timestamps.clear();
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
