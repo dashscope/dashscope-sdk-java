@@ -119,6 +119,12 @@ public class GenerationParam extends GenerationParamBase {
   /** 返回内容的格式。 */
   private ResponseFormat responseFormat;
 
+  /** 是否开启推理 **/
+  private Boolean enableThinking;
+
+  /** 推理生成的最大tokens数 **/
+  private Integer thinkingBudget;
+
   @Override
   public JsonObject getInput() {
     JsonObject jsonObject = new JsonObject();
@@ -200,6 +206,14 @@ public class GenerationParam extends GenerationParamBase {
 
     if (responseFormat != null) {
       params.put("response_format", responseFormat);
+    }
+
+    if (enableThinking != null) {
+      params.put("enable_thinking", enableThinking);
+    }
+
+    if (thinkingBudget != null) {
+      params.put("thinking_budget", thinkingBudget);
     }
 
     params.putAll(parameters);

@@ -38,4 +38,8 @@ public class Message {
   /** chain of thought content */
   @SerializedName("reasoning_content")
   String reasoningContent;
+
+  /** partial mode */
+  @SerializedName("partial")
+  Boolean partial;
 }

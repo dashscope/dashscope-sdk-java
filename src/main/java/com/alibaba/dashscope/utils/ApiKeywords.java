@@ -153,4 +153,6 @@ public class ApiKeywords {
   public static final String AUDIO = "audio";
 
   public static final String OCR_OPTIONS = "ocr_options";
+
+  public static final String PARTIAL = "partial";
 }

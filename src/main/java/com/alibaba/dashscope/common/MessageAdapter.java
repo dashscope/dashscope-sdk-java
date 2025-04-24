@@ -87,6 +87,10 @@ public class MessageAdapter extends TypeAdapter<Message> {
       out.name(ApiKeywords.NAME);
       out.value(value.getName());
     }
+    if (value.getPartial() != null) {
+      out.name(ApiKeywords.PARTIAL);
+      out.value(value.getPartial());
+    }
     out.endObject();
   }
 
