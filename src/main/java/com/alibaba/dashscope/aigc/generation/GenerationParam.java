@@ -113,17 +113,26 @@ public class GenerationParam extends GenerationParamBase {
   @SerializedName("tool_choice")
   protected Object toolChoice;
 
+  /** enable parallel tool calls */
+  protected Boolean parallelToolCalls;
+
   /** 联网搜索的策略。仅当enable_search为true时生效。 */
   private SearchOptions searchOptions;
 
   /** 返回内容的格式。 */
   private ResponseFormat responseFormat;
 
-  /** 是否开启推理 **/
+  /** 是否开启推理 */
   private Boolean enableThinking;
 
-  /** 推理生成的最大tokens数 **/
+  /** 推理生成的最大tokens数 */
   private Integer thinkingBudget;
+
+  /** 返回每个输出token的对数概率 */
+  Boolean logprobs;
+
+  /** 指定在每个token位置返回的最可能token的数量 */
+  Integer topLogprobs;
 
   @Override
   public JsonObject getInput() {
@@ -214,6 +223,14 @@ public class GenerationParam extends GenerationParamBase {
 
     if (thinkingBudget != null) {
       params.put("thinking_budget", thinkingBudget);
+    }
+
+    if (logprobs != null) {
+      params.put("logprobs", logprobs);
+    }
+
+    if (topLogprobs != null) {
+      params.put("top_logprobs", topLogprobs);
     }
 
     params.putAll(parameters);

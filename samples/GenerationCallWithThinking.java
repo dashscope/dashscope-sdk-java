@@ -30,7 +30,9 @@ public class GenerationCallWithThinking {
         Message userMsg = Message.builder().role(Role.USER.getValue()).content("9.9和9.11谁大").build();
         GenerationParam param = GenerationParam.builder().model(MODE_NAME)
                 .enableThinking(true)
-                .thinkingBudget(1000)
+                .thinkingBudget(10000)
+                .logprobs(true)
+                .topLogprobs(1)
                 .messages(Arrays.asList(systemMsg, userMsg))
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
                 .incrementalOutput(true)
@@ -114,9 +116,9 @@ public class GenerationCallWithThinking {
 
     public static void main(String[] args){
         try {
-//            streamCallWithThinking();
+            streamCallWithThinking();
 //            streamCallWithToolChoice();
-            streamCallWithPartial();
+//            streamCallWithPartial();
         } catch (ApiException | NoApiKeyException | InputRequiredException e) {
             System.out.println(e.getMessage());
         }
