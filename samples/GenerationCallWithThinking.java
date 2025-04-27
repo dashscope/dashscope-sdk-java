@@ -33,6 +33,7 @@ public class GenerationCallWithThinking {
                 .thinkingBudget(10000)
                 .logprobs(true)
                 .topLogprobs(1)
+                .n(2)
                 .messages(Arrays.asList(systemMsg, userMsg))
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
                 .incrementalOutput(true)

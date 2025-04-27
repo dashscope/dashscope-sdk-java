@@ -173,10 +173,92 @@ public class GenerationToolChoice {
     System.out.println(JsonUtils.toJson(result));
   }
 
+  public static void parallelToolCalls()
+          throws NoApiKeyException, ApiException, InputRequiredException {
+    // create jsonschema generator
+    SchemaGeneratorConfigBuilder configBuilder =
+            new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON);
+    SchemaGeneratorConfig config = configBuilder.with(Option.EXTRA_OPEN_API_FORMAT_VALUES)
+            .without(Option.FLATTENED_ENUMS_FROM_TOSTRING).build();
+    SchemaGenerator generator = new SchemaGenerator(config);
+
+    // generate jsonSchema of function.
+    ObjectNode jsonSchema = generator.generateSchema(AddFunctionTool.class);
+
+    // call with tools of function call, jsonSchema.toString() is jsonschema String.
+    FunctionDefinition fd = FunctionDefinition.builder().name("add").description("add two number")
+            .parameters(JsonUtils.parseString(jsonSchema.toString()).getAsJsonObject()).build();
+
+    // build system message
+    Message systemMsg = Message.builder().role(Role.SYSTEM.getValue())
+            .content("You are a helpful assistant. When asked a question, use tools wherever possible.")
+            .build();
+
+    // user message to call function.
+    Message userMsg =
+            Message.builder().role(Role.USER.getValue()).content("Add 1234 and 4321, Add 2345 and 5432").build();
+
+    // messages to store message request and response.
+    List<Message> messages = new ArrayList<>();
+    messages.addAll(Arrays.asList(systemMsg, userMsg));
+
+    ToolFunction toolFunction =
+            ToolFunction.builder().function(FunctionDefinition.builder().name("add").build()).build();
+    // create generation call parameter
+    GenerationParam param = GenerationParam.builder().model(Generation.Models.QWEN_MAX)
+            .messages(messages).resultFormat(ResultFormat.MESSAGE).toolChoice(toolFunction)
+            .tools(Arrays.asList(ToolFunction.builder().function(fd).build()))
+            .parallelToolCalls(true)
+            .build();
+
+    // call the Generation
+    Generation gen = new Generation();
+    GenerationResult result = gen.call(param);
+    // print the result.
+    System.out.println(JsonUtils.toJson(result));
+
+    // process the response
+    for (Choice choice : result.getOutput().getChoices()) {
+      // add the assistant message to list for next Generation call.
+      messages.add(choice.getMessage());
+      // check if we need call tool.
+      if (result.getOutput().getChoices().get(0).getMessage().getToolCalls() != null) {
+        // iterator the tool calls
+        for (ToolCallBase toolCall : result.getOutput().getChoices().get(0).getMessage()
+                .getToolCalls()) {
+          // get function call.
+          if (toolCall.getType().equals("function")) {
+            // get function call name and argument, both String.
+            String functionName = ((ToolCallFunction) toolCall).getFunction().getName();
+            String functionArgument = ((ToolCallFunction) toolCall).getFunction().getArguments();
+            if (functionName.equals("add")) {
+              // Create the function object.
+              AddFunctionTool addFunction =
+                      JsonUtils.fromJson(functionArgument, AddFunctionTool.class);
+              // call function.
+              int sum = addFunction.call();
+              // create the tool message
+              Message toolResultMessage = Message.builder().role("tool")
+                      .content(String.valueOf(sum)).toolCallId(toolCall.getId()).build();
+              // add the tool message to messages list.
+              messages.add(toolResultMessage);
+              System.out.println(sum);
+            }
+          }
+        }
+      }
+    }
+    // new Generation call with messages include tool result.
+    param.setMessages(messages);
+    result = gen.call(param);
+    System.out.println(JsonUtils.toJson(result));
+  }
+
   public static void main(String[] args) {
     try {
-      disableToolCall();
-      forceCallFunctionAdd();
+//      disableToolCall();
+//      forceCallFunctionAdd();
+      parallelToolCalls();
     } catch (ApiException | NoApiKeyException | InputRequiredException e) {
       System.out.println(String.format("Exception %s", e.getMessage()));
     }
