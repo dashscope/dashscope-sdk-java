@@ -2,6 +2,7 @@ package com.alibaba.dashscope.aigc.multimodalconversation;
 
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
 import com.alibaba.dashscope.exception.InputRequiredException;
+import com.alibaba.dashscope.tools.ToolBase;
 import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
@@ -112,6 +113,15 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
   /** voice of tts */
   private AudioParameters.Voice voice;
 
+  /** Specify which tools the model can use. */
+  private List<ToolBase> tools;
+
+  /** Specify tool choice */
+  protected Object toolChoice;
+
+  /** enable parallel tool calls */
+  protected Boolean parallelToolCalls;
+
   @Override
   public JsonObject getHttpBody() {
     JsonObject requestObject = new JsonObject();
@@ -191,6 +201,22 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
 
     if (ocrOptions != null) {
       params.put(ApiKeywords.OCR_OPTIONS, ocrOptions);
+    }
+
+    if (tools != null && !tools.isEmpty()) {
+      params.put("tools", tools);
+    }
+
+    if (toolChoice != null) {
+      if (toolChoice instanceof String) {
+        params.put("tool_choice", (String) toolChoice);
+      } else {
+        params.put("tool_choice", JsonUtils.toJsonObject(toolChoice));
+      }
+    }
+
+    if (parallelToolCalls != null) {
+      params.put("parallel_tool_calls", parallelToolCalls);
     }
 
     params.putAll(parameters);

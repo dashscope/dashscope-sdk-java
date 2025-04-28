@@ -2,6 +2,10 @@
 
 package com.alibaba.dashscope.common;
 
+import com.alibaba.dashscope.tools.ToolCallBase;
+import com.alibaba.dashscope.tools.ToolCallFunction;
+import com.alibaba.dashscope.tools.codeinterpretertool.ToolCallCodeInterpreter;
+import com.alibaba.dashscope.tools.search.ToolCallQuarkSearch;
 import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.TypeAdapter;
@@ -57,6 +61,44 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
       out.value((Character) value);
     }
   }
+  private void writeToolCallBase(JsonWriter writer, ToolCallBase toolCallBase) throws IOException {
+    writer.beginObject();
+
+    // Write common fields
+    writer.name("id").value(toolCallBase.getId());
+    writer.name("type").value(toolCallBase.getType());
+    if (toolCallBase.getIndex() != null) {
+      writer.name("index").value(toolCallBase.getIndex());
+    }
+
+    // Handle specific subclass serialization
+    if (toolCallBase instanceof ToolCallFunction) {
+      ToolCallFunction functionCall = (ToolCallFunction) toolCallBase;
+      ToolCallFunction.CallFunction callFunction = functionCall.getFunction();
+      writer.name("function").beginObject();
+      if (callFunction != null) {
+        writer.name("name").value(callFunction.getName());
+        writer.name("arguments").value(callFunction.getArguments());
+        writer.name("output").value(callFunction.getOutput());
+      }
+      writer.endObject();
+    } else if (toolCallBase instanceof ToolCallQuarkSearch) {
+      ToolCallQuarkSearch quarkSearchCall = (ToolCallQuarkSearch) toolCallBase;
+      writer.name("quark_search").beginObject();
+      if (quarkSearchCall.getQuarkSearch() != null) {
+        for (Map.Entry<String, String> entry : quarkSearchCall.getQuarkSearch().entrySet()) {
+          writer.name(entry.getKey()).value(entry.getValue());
+        }
+      }
+      writer.endObject();
+    } else if (toolCallBase instanceof ToolCallCodeInterpreter) {
+      // For ToolCallCodeInterpreter no extra fields besides id and type
+      // Any additional fields specific to this should be written here.
+    }
+
+    writer.endObject();
+  }
+
 
   @Override
   public void write(JsonWriter out, MultiModalMessage value) throws IOException {
@@ -74,6 +116,16 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
     if (value.getReasoningContent() != null) {
       out.name(ApiKeywords.REASONING_CONTENT);
       out.value(value.getReasoningContent());
+    }
+
+    if (value.getToolCalls() != null) {
+      out.name(ApiKeywords.TOOL_CALLS);
+      out.beginArray();
+      List<ToolCallBase> toolCalls = value.getToolCalls();
+      for (ToolCallBase tc : JsonUtils.fromJson(JsonUtils.toJson(toolCalls), ToolCallBase[].class)) {
+        writeToolCallBase(out, tc);
+      }
+      out.endArray();
     }
 
     out.endObject();
@@ -103,6 +155,12 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
       String reasoningContent = (String) objectMap.get(ApiKeywords.REASONING_CONTENT);
       msg.setReasoningContent(reasoningContent);
       objectMap.remove(ApiKeywords.REASONING_CONTENT);
+    }
+
+    if (objectMap.containsKey(ApiKeywords.TOOL_CALLS)) {
+      Object toolCalls = objectMap.get(ApiKeywords.TOOL_CALLS);
+      msg.setToolCalls((List<ToolCallBase>) toolCalls);
+      objectMap.remove(ApiKeywords.TOOL_CALLS);
     }
 
     return msg;

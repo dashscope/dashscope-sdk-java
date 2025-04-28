@@ -212,6 +212,10 @@ public class GenerationParam extends GenerationParamBase {
       }
     }
 
+    if (parallelToolCalls != null) {
+      params.put("parallel_tool_calls", parallelToolCalls);
+    }
+
     if (searchOptions != null) {
       params.put("search_options", searchOptions);
     }

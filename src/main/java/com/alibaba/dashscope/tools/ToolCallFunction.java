@@ -17,6 +17,7 @@ public class ToolCallFunction extends ToolCallBase {
     private String output;
   }
 
+  private Integer index;
   private String id;
   private String type = "function";
 
