@@ -35,4 +35,18 @@ public interface AppKeywords {
   String HAS_THOUGHTS = "has_thoughts";
 
   String IMAGES = "image_list";
+
+  String MCP_SERVERS = "mcp_servers";
+
+  String ENABLE_WEB_SEARCH = "enable_web_search";
+
+  String ENABLE_SYSTEM_TIME = "enable_system_time";
+
+  String ENABLE_PREMIUM = "enable_premium";
+
+  String DIALOG_ROUND = "dialog_round";
+
+  String MODEL_ID = "model_id";
+
+  String FLOW_STREAM_MODE = "flow_stream_mode";
 }

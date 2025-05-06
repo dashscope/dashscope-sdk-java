@@ -104,6 +104,42 @@ public class ApplicationParam extends HalfDuplexParamBase {
   /** rag options */
   private RagOptions ragOptions;
 
+  /**
+   * mcp server list
+   */
+  private List<String> mcpServers;
+
+  /**
+   * enable web search
+   */
+  private Boolean enableWebSearch;
+
+  /**
+   * enable system time
+   */
+  private Boolean enableSystemTime;
+
+  /**
+   * enable prem model calling
+   */
+  private Boolean enablePremium;
+
+  /**
+   * dialog round number
+   */
+  private Integer dialogRound;
+
+  /**
+   * model ID
+   */
+  private String modelId;
+
+  /**
+   * stream mode for flow agent
+   */
+  private FlowStreamMode flowStreamMode;
+
+
   @Override
   public String getModel() {
     return null;
@@ -132,6 +168,27 @@ public class ApplicationParam extends HalfDuplexParamBase {
     }
     if (ragOptions != null) {
       params.put("rag_options", ragOptions);
+    }
+    if (mcpServers != null) {
+      params.put(AppKeywords.MCP_SERVERS, mcpServers);
+    }
+    if (enableWebSearch != null) {
+      params.put(AppKeywords.ENABLE_WEB_SEARCH, enableWebSearch);
+    }
+    if (enableSystemTime != null) {
+      params.put(AppKeywords.ENABLE_SYSTEM_TIME, enableSystemTime);
+    }
+    if (enablePremium != null) {
+      params.put(AppKeywords.ENABLE_PREMIUM, enablePremium);
+    }
+    if (dialogRound != null) {
+      params.put(AppKeywords.DIALOG_ROUND, dialogRound);
+    }
+    if (modelId != null) {
+      params.put(AppKeywords.MODEL_ID, modelId);
+    }
+    if (flowStreamMode != null) {
+      params.put(AppKeywords.FLOW_STREAM_MODE, flowStreamMode.getValue());
     }
 
     params.putAll(parameters);

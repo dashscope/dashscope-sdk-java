@@ -285,6 +285,28 @@ public class ApplicationCalls {
         }
     }
 
+    public static void callWithMoreParameters() throws NoApiKeyException, InputRequiredException {
+        ApplicationParam param = ApplicationParam.builder()
+                .appId(APP_ID)
+//                .enablePremium(true)
+                .enableSystemTime(true)
+                .enableWebSearch(true)
+                .mcpServers(Arrays.asList("amap-maps", "Meitu"))
+                .dialogRound(2)
+                .modelId("qwen-plus")
+                .prompt("从杭州西湖到杭州东站，打车多少钱?")
+                .topP(0.8)
+                .incrementalOutput(true)
+                .build();
+
+        Application application = new Application();
+        Flowable<ApplicationResult> result = application.streamCall(param);
+        result.blockingForEach(data -> System.out.printf("result: %s%n", data));
+//        result.blockingForEach(data -> System.out.printf(data.getOutput().getText()));
+        System.out.print("\n");
+    }
+
+
     public static void main(String[] args) {
         try {
 //        ragCall();
@@ -295,7 +317,8 @@ public class ApplicationCalls {
 //        callWithWorkspace();
 //            callWithMemory();
 //            callWithAssistantServing();
-            ragCallWithDocReference();
+//            ragCallWithDocReference();
+            callWithMoreParameters();
         } catch (ApiException | NoApiKeyException | InputRequiredException e) {
             System.out.printf("Exception: %s", e.getMessage());
         }

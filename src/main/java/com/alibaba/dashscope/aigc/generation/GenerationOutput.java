@@ -17,6 +17,8 @@ public final class GenerationOutput {
     private Integer index;
 
     private Message message;
+
+    private GenerationLogprobs logprobs;
   }
   // output text
   private String text;

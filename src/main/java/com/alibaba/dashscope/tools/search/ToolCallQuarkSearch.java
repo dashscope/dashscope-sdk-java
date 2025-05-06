@@ -22,6 +22,7 @@ import lombok.EqualsAndHashCode;
 public class ToolCallQuarkSearch extends ToolCallBase {
   private String type = "quark_search";
   private String id;
+  private Integer index;
 
   @SerializedName("quark_search")
   private Map<String, String> quarkSearch;
