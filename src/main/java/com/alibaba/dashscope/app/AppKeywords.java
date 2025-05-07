@@ -49,4 +49,6 @@ public interface AppKeywords {
   String MODEL_ID = "model_id";
 
   String FLOW_STREAM_MODE = "flow_stream_mode";
+
+  String ENABLE_THINKING = "enable_thinking";
 }

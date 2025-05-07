@@ -139,6 +139,11 @@ public class ApplicationParam extends HalfDuplexParamBase {
    */
   private FlowStreamMode flowStreamMode;
 
+  /**
+   * enable thinking mode
+   */
+  private Boolean enableThinking;
+
 
   @Override
   public String getModel() {
@@ -189,6 +194,9 @@ public class ApplicationParam extends HalfDuplexParamBase {
     }
     if (flowStreamMode != null) {
       params.put(AppKeywords.FLOW_STREAM_MODE, flowStreamMode.getValue());
+    }
+    if (enableThinking != null) {
+      params.put(AppKeywords.ENABLE_THINKING, enableThinking);
     }
 
     params.putAll(parameters);
