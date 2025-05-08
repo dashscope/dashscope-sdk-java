@@ -6,8 +6,11 @@ import static com.alibaba.dashscope.utils.ApiKeywords.*;
 
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
 import com.alibaba.dashscope.exception.InputRequiredException;
+import com.alibaba.dashscope.exception.NoApiKeyException;
+import com.alibaba.dashscope.exception.UploadFileException;
 import com.alibaba.dashscope.utils.GsonExclude;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.utils.PreprocessInputImage;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -44,10 +47,10 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
       jsonObject.addProperty(NEGATIVE_PROMPT, negativePrompt);
     }
     if (refImage != null && !refImage.isEmpty()) {
-      jsonObject.addProperty("ref_img", refImage);
+      jsonObject.addProperty(REF_IMG, refImage);
     }
     if (sketchImageUrl != null && !sketchImageUrl.isEmpty()) {
-      jsonObject.addProperty("sketch_image_url", sketchImageUrl);
+      jsonObject.addProperty(SKETCH_IMAGE_URL, sketchImageUrl);
     }
     if (extraInputs != null && !extraInputs.isEmpty()) {
       JsonObject extraInputsJsonObject = JsonUtils.parametersToJsonObject(extraInputs);
@@ -104,5 +107,20 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
   @Override
   public void validate() throws InputRequiredException {
     //
+  }
+
+  public void checkAndUpload() throws NoApiKeyException, UploadFileException {
+    Map<String, String> inputChecks = new HashMap<>();
+    inputChecks.put(REF_IMG, this.refImage);
+    inputChecks.put(SKETCH_IMAGE_URL, this.sketchImageUrl);
+
+    boolean isUpload = PreprocessInputImage.checkAndUploadImage(getModel(), inputChecks, getApiKey());
+
+    if (isUpload) {
+      this.putHeader("X-DashScope-OssResourceResolve", "enable");
+
+      this.refImage = inputChecks.get(REF_IMG);
+      this.sketchImageUrl = inputChecks.get(SKETCH_IMAGE_URL);
+    }
   }
 }

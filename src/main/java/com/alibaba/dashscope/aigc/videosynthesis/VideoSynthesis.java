@@ -7,6 +7,7 @@ import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
+import com.alibaba.dashscope.exception.UploadFileException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
 import com.alibaba.dashscope.protocol.Protocol;
@@ -44,6 +45,23 @@ public final class VideoSynthesis {
   /** Video synthesis duration */
   public static class Duration {
     public static final int DEFAULT = 5;
+  }
+
+  /** Image edit function */
+  public static class ImageEditFunction {
+    public static final String STYLIZATION_ALL = "stylization_all";
+    public static final String STYLIZATION_LOCAL = "stylization_local";
+    public static final String DESCRIPTION_EDIT = "description_edit";
+    public static final String DESCRIPTION_EDIT_WITH_MASK = "description_edit_with_mask";
+    public static final String DOODLE = "doodle";
+    public static final String REMOVE_WATERMAKER = "remove_watermaker";
+    public static final String EXPAND = "expand";
+    public static final String SUPER_RESOLUTION = "super_resolution";
+    public static final String COLORIZATION = "colorization";
+  }
+
+  public static class Resolution {
+    public static final String DEFAULT = "720P";
   }
 
   /**
@@ -93,8 +111,14 @@ public final class VideoSynthesis {
    * @throws InputRequiredException Check the input param.
    */
   public VideoSynthesisResult asyncCall(VideoSynthesisParam param)
-      throws ApiException, NoApiKeyException, InputRequiredException {
+          throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
+    // add local file support
+    try {
+      param.checkAndUpload();
+    }catch (UploadFileException e){
+      throw new InputRequiredException(e.getMessage());
+    }
     return VideoSynthesisResult.fromDashScopeResult(
         asyncApi.asyncCall(param, createServiceOptions));
   }
@@ -109,8 +133,14 @@ public final class VideoSynthesis {
    * @throws InputRequiredException Check the input param.
    */
   public VideoSynthesisResult call(VideoSynthesisParam param)
-      throws ApiException, NoApiKeyException, InputRequiredException {
+          throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
+    // add local file support
+    try {
+      param.checkAndUpload();
+    }catch (UploadFileException e){
+      throw new InputRequiredException(e.getMessage());
+    }
     return VideoSynthesisResult.fromDashScopeResult(asyncApi.call(param, createServiceOptions));
   }
 
