@@ -20,7 +20,8 @@ public class VideoSynthesisUsage {
                         .model(VideoSynthesis.Models.WANX_2_1_I2V_TURBO)
                         // prompt not required
                         // .prompt("一只戴着绿色眼镜的小狗")
-                        .imgUrl("https://modelscope.oss-cn-beijing.aliyuncs.com/resource/dog.jpeg")
+//                        .imgUrl("https://modelscope.oss-cn-beijing.aliyuncs.com/resource/dog.jpeg")
+                        .imgUrl("file:///Users/xxx/Documents/source/dog.jpeg")
                         .build();
         VideoSynthesisResult result = vs.call(param);
         System.out.println(result);

@@ -148,6 +148,8 @@ public class ApiKeywords {
 
   public static final String IMG_URL = "img_url";
 
+  public static final String REF_IMG = "ref_img";
+
   public static final String MODALITIES = "modalities";
 
   public static final String AUDIO = "audio";
@@ -155,4 +157,20 @@ public class ApiKeywords {
   public static final String OCR_OPTIONS = "ocr_options";
 
   public static final String PARTIAL = "partial";
+
+  public static final String BASE_IMAGE_URL = "base_image_url";
+
+  public static final String MASK_IMAGE_URL = "mask_image_url";
+
+   public static final String FIRST_FRAME_URL = "first_frame_url";
+
+   public static final String LAST_FRAME_URL = "last_frame_url";
+
+   public static final String HEAD_FRAME = "head_frame";
+
+   public static final String TAIL_FRAME = "tail_frame";
+
+   public static final String RESOLUTION = "resolution";
+
+   public static final String WITH_AUDIO = "with_audio";
 }
