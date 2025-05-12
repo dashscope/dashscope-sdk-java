@@ -138,12 +138,10 @@ public final class VideoSynthesis {
     }catch (UploadFileException e){
       throw new InputRequiredException(e.getMessage());
     }
-    String task = this.task;
-    if (param.getModel().contains("kf2v")) {
-      task = "image2video";
-    }
     ApiServiceOption serviceOption = createServiceOptions;
-    serviceOption.setTask(task);
+    if (param.getModel().contains("kf2v")) {
+      serviceOption.setTask("image2video");
+    }
     return VideoSynthesisResult.fromDashScopeResult(
         asyncApi.asyncCall(param, serviceOption));
   }
@@ -166,12 +164,10 @@ public final class VideoSynthesis {
     }catch (UploadFileException e){
       throw new InputRequiredException(e.getMessage());
     }
-    String task = this.task;
-    if (param.getModel().contains("kf2v")) {
-      task = "image2video";
-    }
     ApiServiceOption serviceOption = createServiceOptions;
-    serviceOption.setTask(task);
+    if (param.getModel().contains("kf2v")) {
+      serviceOption.setTask("image2video");
+    }
     return VideoSynthesisResult.fromDashScopeResult(
             asyncApi.call(param, serviceOption));
   }
