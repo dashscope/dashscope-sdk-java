@@ -113,12 +113,10 @@ public final class ImageSynthesis {
     }catch (UploadFileException e){
       throw new ApiException(e);
     }
-    String task = this.task;
-    if (param.getModel().contains("imageedit")) {
-      task = "image2image";
-    }
     ApiServiceOption serviceOption = createServiceOptions;
-    serviceOption.setTask(task);
+    if (param.getModel().contains("imageedit")) {
+      serviceOption.setTask("image2image");
+    }
     return ImageSynthesisResult.fromDashScopeResult(
         asyncApi.asyncCall(param, serviceOption));
   }
@@ -139,12 +137,10 @@ public final class ImageSynthesis {
     }catch (UploadFileException e){
       throw new ApiException(e);
     }
-    String task = this.task;
-    if (param.getModel().contains("imageedit")) {
-      task = "image2image";
-    }
     ApiServiceOption serviceOption = createServiceOptions;
-    serviceOption.setTask(task);
+    if (param.getModel().contains("imageedit")) {
+      serviceOption.setTask("image2image");
+    }
     return ImageSynthesisResult.fromDashScopeResult(
             asyncApi.call(param, serviceOption));
   }
