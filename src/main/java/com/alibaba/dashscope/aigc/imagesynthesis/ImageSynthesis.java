@@ -6,6 +6,7 @@ import com.alibaba.dashscope.base.HalfDuplexServiceParam;
 import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
+import com.alibaba.dashscope.exception.UploadFileException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
 import com.alibaba.dashscope.protocol.Protocol;
@@ -13,6 +14,12 @@ import com.alibaba.dashscope.protocol.StreamingMode;
 import com.alibaba.dashscope.task.AsyncTaskListParam;
 
 public final class ImageSynthesis {
+  /** default task, function & taskGroup */
+  private String task = "text2image";
+
+  private final String function = "image-synthesis";
+  private final String taskGroup = "aigc";
+
   private final AsynchronousApi<HalfDuplexServiceParam> asyncApi;
   private final ApiServiceOption createServiceOptions;
   private final String baseUrl;
@@ -20,6 +27,21 @@ public final class ImageSynthesis {
   public static class Models {
     public static final String WANX_V1 = "wanx-v1";
     public static final String WANX_SKETCH_TO_IMAGE_V1 = "wanx-sketch-to-image-v1";
+
+    public static final String WANX_2_1_IMAGEEDIT = "wanx2.1-imageedit";
+  }
+
+  /** Image edit function */
+  public static class ImageEditFunction {
+    public static final String STYLIZATION_ALL = "stylization_all";
+    public static final String STYLIZATION_LOCAL = "stylization_local";
+    public static final String DESCRIPTION_EDIT = "description_edit";
+    public static final String DESCRIPTION_EDIT_WITH_MASK = "description_edit_with_mask";
+    public static final String DOODLE = "doodle";
+    public static final String REMOVE_WATERMAKER = "remove_watermaker";
+    public static final String EXPAND = "expand";
+    public static final String SUPER_RESOLUTION = "super_resolution";
+    public static final String COLORIZATION = "colorization";
   }
 
   /** Default test2image */
@@ -31,9 +53,9 @@ public final class ImageSynthesis {
             .protocol(Protocol.HTTP)
             .httpMethod(HttpMethod.POST)
             .streamingMode(StreamingMode.NONE)
-            .taskGroup("aigc")
-            .task("text2image")
-            .function("image-synthesis")
+            .taskGroup(taskGroup)
+            .task(task)
+            .function(function)
             .isAsyncTask(true)
             .build();
     this.baseUrl = null;
@@ -52,9 +74,9 @@ public final class ImageSynthesis {
             .protocol(Protocol.HTTP)
             .httpMethod(HttpMethod.POST)
             .streamingMode(StreamingMode.NONE)
-            .taskGroup("aigc")
+            .taskGroup(taskGroup)
             .task(task)
-            .function("image-synthesis")
+            .function(function)
             .isAsyncTask(true)
             .build();
     this.baseUrl = null;
@@ -75,9 +97,9 @@ public final class ImageSynthesis {
             .httpMethod(HttpMethod.POST)
             .baseHttpUrl(baseUrl)
             .streamingMode(StreamingMode.NONE)
-            .taskGroup("aigc")
+            .taskGroup(taskGroup)
             .task(task)
-            .function("image-synthesis")
+            .function(function)
             .isAsyncTask(true)
             .build();
     this.baseUrl = baseUrl;
@@ -85,8 +107,20 @@ public final class ImageSynthesis {
 
   public ImageSynthesisResult asyncCall(ImageSynthesisParam param)
       throws ApiException, NoApiKeyException {
+    // add local file support
+    try {
+      param.checkAndUpload();
+    }catch (UploadFileException e){
+      throw new ApiException(e);
+    }
+    String task = this.task;
+    if (param.getModel().contains("imageedit")) {
+      task = "image2image";
+    }
+    ApiServiceOption serviceOption = createServiceOptions;
+    serviceOption.setTask(task);
     return ImageSynthesisResult.fromDashScopeResult(
-        asyncApi.asyncCall(param, createServiceOptions));
+        asyncApi.asyncCall(param, serviceOption));
   }
 
   /**
@@ -99,7 +133,20 @@ public final class ImageSynthesis {
    */
   public ImageSynthesisResult call(ImageSynthesisParam param)
       throws ApiException, NoApiKeyException {
-    return ImageSynthesisResult.fromDashScopeResult(asyncApi.call(param, createServiceOptions));
+    // add local file support
+    try {
+      param.checkAndUpload();
+    }catch (UploadFileException e){
+      throw new ApiException(e);
+    }
+    String task = this.task;
+    if (param.getModel().contains("imageedit")) {
+      task = "image2image";
+    }
+    ApiServiceOption serviceOption = createServiceOptions;
+    serviceOption.setTask(task);
+    return ImageSynthesisResult.fromDashScopeResult(
+            asyncApi.call(param, serviceOption));
   }
 
   /**

@@ -16,7 +16,7 @@ import com.alibaba.dashscope.task.AsyncTaskListParam;
 
 public final class VideoSynthesis {
   /** default task, function & taskGroup */
-  private final String task = "video-generation";
+  private String task = "video-generation";
 
   private final String function = "video-synthesis";
   private final String taskGroup = "aigc";
@@ -35,6 +35,9 @@ public final class VideoSynthesis {
 
     public static final String WANX_2_1_I2V_PLUS = "wanx2.1-i2v-plus";
     public static final String WANX_2_1_I2V_TURBO = "wanx2.1-i2v-turbo";
+
+    public static final String WANX_2_1_KF2V_PLUS = "wanx2.1-kf2v-plus";
+    public static final String WANX_KF2V = "wanx-kf2v";
   }
 
   /** Video synthesis size */
@@ -45,19 +48,6 @@ public final class VideoSynthesis {
   /** Video synthesis duration */
   public static class Duration {
     public static final int DEFAULT = 5;
-  }
-
-  /** Image edit function */
-  public static class ImageEditFunction {
-    public static final String STYLIZATION_ALL = "stylization_all";
-    public static final String STYLIZATION_LOCAL = "stylization_local";
-    public static final String DESCRIPTION_EDIT = "description_edit";
-    public static final String DESCRIPTION_EDIT_WITH_MASK = "description_edit_with_mask";
-    public static final String DOODLE = "doodle";
-    public static final String REMOVE_WATERMAKER = "remove_watermaker";
-    public static final String EXPAND = "expand";
-    public static final String SUPER_RESOLUTION = "super_resolution";
-    public static final String COLORIZATION = "colorization";
   }
 
   public static class Resolution {
@@ -81,6 +71,23 @@ public final class VideoSynthesis {
         .build();
   }
 
+  /**
+   * Create ApiServiceOption
+   *
+   * @return ApiServiceOption
+   */
+  private ApiServiceOption getApiServiceOption(String task) {
+    return ApiServiceOption.builder()
+            .protocol(Protocol.HTTP)
+            .httpMethod(HttpMethod.POST)
+            .streamingMode(StreamingMode.NONE)
+            .taskGroup(taskGroup)
+            .task(task)
+            .function(function)
+            .isAsyncTask(true)
+            .build();
+  }
+
   /** default VideoSynthesis constructor */
   public VideoSynthesis() {
     // only support http
@@ -102,6 +109,18 @@ public final class VideoSynthesis {
   }
 
   /**
+   * Create with custom baseUrl
+   *
+   * @param baseUrl The service base url.
+   */
+  public VideoSynthesis(String baseUrl, String task) {
+    // only support http
+    asyncApi = new AsynchronousApi<>();
+    createServiceOptions = getApiServiceOption(task);
+    this.baseUrl = baseUrl;
+  }
+
+  /**
    * Async call
    *
    * @param param The input param of class VideoSynthesisParam
@@ -119,8 +138,14 @@ public final class VideoSynthesis {
     }catch (UploadFileException e){
       throw new InputRequiredException(e.getMessage());
     }
+    String task = this.task;
+    if (param.getModel().contains("kf2v")) {
+      task = "image2video";
+    }
+    ApiServiceOption serviceOption = createServiceOptions;
+    serviceOption.setTask(task);
     return VideoSynthesisResult.fromDashScopeResult(
-        asyncApi.asyncCall(param, createServiceOptions));
+        asyncApi.asyncCall(param, serviceOption));
   }
 
   /**
@@ -141,7 +166,14 @@ public final class VideoSynthesis {
     }catch (UploadFileException e){
       throw new InputRequiredException(e.getMessage());
     }
-    return VideoSynthesisResult.fromDashScopeResult(asyncApi.call(param, createServiceOptions));
+    String task = this.task;
+    if (param.getModel().contains("kf2v")) {
+      task = "image2video";
+    }
+    ApiServiceOption serviceOption = createServiceOptions;
+    serviceOption.setTask(task);
+    return VideoSynthesisResult.fromDashScopeResult(
+            asyncApi.call(param, serviceOption));
   }
 
   /**

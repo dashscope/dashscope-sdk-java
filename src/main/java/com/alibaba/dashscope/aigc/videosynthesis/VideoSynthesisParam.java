@@ -59,16 +59,6 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
   /** Duration of video generation. The default value is 5, in seconds */
   @Builder.Default private Integer duration = VideoSynthesis.Duration.DEFAULT;
 
-  /** The specific functions to be achieved , see class ImageEditFunction */
-  @Builder.Default private String function = null;
-
-  /** Enter the URL address of the target edited image. */
-  @Builder.Default private String baseImageUrl = null;
-
-  /** Provide the URL address of the image of the marked area by the user.
-   * It should be consistent with the image resolution of the base_image_url. */
-  @Builder.Default private String maskImageUrl = null;
-
   /** The URL of the first frame image for generating the video. */
   @Builder.Default private String firstFrameUrl = null;
 
@@ -105,18 +95,6 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
     }
     if (imgUrl != null && !imgUrl.isEmpty()) {
       jsonObject.addProperty(IMG_URL, imgUrl);
-    }
-
-    if (function != null && !function.isEmpty()) {
-      jsonObject.addProperty(FUNCTION, function);
-    }
-
-    if (baseImageUrl != null && !baseImageUrl.isEmpty()) {
-      jsonObject.addProperty(BASE_IMAGE_URL, baseImageUrl);
-    }
-
-    if (maskImageUrl != null && !maskImageUrl.isEmpty()) {
-      jsonObject.addProperty(MASK_IMAGE_URL, maskImageUrl);
     }
 
     if (firstFrameUrl != null && !firstFrameUrl.isEmpty()) {
@@ -191,8 +169,6 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
   public void checkAndUpload() throws NoApiKeyException, UploadFileException {
     Map<String, String> inputChecks = new HashMap<>();
     inputChecks.put(IMG_URL, this.imgUrl);
-    inputChecks.put(BASE_IMAGE_URL, this.baseImageUrl);
-    inputChecks.put(MASK_IMAGE_URL, this.maskImageUrl);
     inputChecks.put(FIRST_FRAME_URL, this.firstFrameUrl);
     inputChecks.put(LAST_FRAME_URL, this.lastFrameUrl);
     inputChecks.put(HEAD_FRAME, this.headFrame);
@@ -204,8 +180,6 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
       this.putHeader("X-DashScope-OssResourceResolve", "enable");
 
       this.imgUrl = inputChecks.get(IMG_URL);
-      this.baseImageUrl = inputChecks.get(BASE_IMAGE_URL);
-      this.maskImageUrl = inputChecks.get(MASK_IMAGE_URL);
       this.firstFrameUrl = inputChecks.get(FIRST_FRAME_URL);
       this.lastFrameUrl = inputChecks.get(LAST_FRAME_URL);
       this.headFrame = inputChecks.get(HEAD_FRAME);
