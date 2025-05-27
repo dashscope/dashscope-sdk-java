@@ -185,6 +185,10 @@ public final class OSSUtils {
           mimeType = "audio/mp3";
         } else if (imagePath.endsWith("flac")) {
           mimeType = "audio/flac";
+        } else if (imagePath.endsWith("png")) {
+          mimeType = "image/png";
+        } else if (imagePath.endsWith("jpeg") || imagePath.endsWith("jpg")) {
+          mimeType = "image/jpeg";
         } else {
           log.error("Can not determine MIMEType, use default application/octet-stream");
           mimeType = "application/octet-stream";
