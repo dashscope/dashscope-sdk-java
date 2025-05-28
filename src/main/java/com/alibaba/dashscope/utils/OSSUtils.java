@@ -185,10 +185,20 @@ public final class OSSUtils {
           mimeType = "audio/mp3";
         } else if (imagePath.endsWith("flac")) {
           mimeType = "audio/flac";
+        } else if (imagePath.endsWith("wav")) {
+          mimeType = "audio/wav";
+        } else if (imagePath.endsWith("m4a")) {
+          mimeType = "audio/mp4";
         } else if (imagePath.endsWith("png")) {
           mimeType = "image/png";
         } else if (imagePath.endsWith("jpeg") || imagePath.endsWith("jpg")) {
           mimeType = "image/jpeg";
+        } else if (imagePath.endsWith("bmp")) {
+          mimeType = "image/bmp";
+        } else if (imagePath.endsWith("gif")) {
+          mimeType = "image/gif";
+        } else if (imagePath.endsWith("tiff")) {
+          mimeType = "image/tiff";
         } else {
           log.error("Can not determine MIMEType, use default application/octet-stream");
           mimeType = "application/octet-stream";
