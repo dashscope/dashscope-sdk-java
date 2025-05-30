@@ -16,6 +16,12 @@ import com.google.gson.JsonObject;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -29,11 +35,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.experimental.SuperBuilder;
-import lombok.extern.slf4j.Slf4j;
 
 /** @author lengjiayi */
 @Slf4j
@@ -226,7 +227,7 @@ public final class SpeechSynthesizer {
     return duplexApi
         .duplexCall(
             StreamInputTtsParamWithStream.fromStreamInputTtsParam(
-                this.parameters, textStream, preRequestId))
+                this.parameters, textStream, preRequestId, false))
         .map(SpeechSynthesisResult::fromDashScopeResult)
         .filter(item -> !canceled.get())
         .doOnNext(
@@ -277,7 +278,8 @@ public final class SpeechSynthesizer {
                           .start();
                     },
                     BackpressureStrategy.BUFFER),
-                preRequestId))
+                preRequestId,
+                    true))
         .map(SpeechSynthesisResult::fromDashScopeResult)
         .doOnNext(
             result -> {
@@ -306,7 +308,7 @@ public final class SpeechSynthesizer {
    * Start voice transcription: Establish a connection with the server, send a voice transcription
    * request, and synchronously receive confirmation from the server.
    */
-  private void startStream() {
+  private void startStream(boolean enableSsml) {
 
     startStreamTimeStamp = System.currentTimeMillis();
     recvAudioLength = 0;
@@ -350,7 +352,7 @@ public final class SpeechSynthesizer {
     try {
       duplexApi.duplexCall(
           SpeechSynthesizer.StreamInputTtsParamWithStream.fromStreamInputTtsParam(
-              this.parameters, textFrames, preRequestId),
+              this.parameters, textFrames, preRequestId, enableSsml),
           new ResultCallback<DashScopeResult>() {
             //                        private Sentence lastSentence = null;
 
@@ -408,6 +410,9 @@ public final class SpeechSynthesizer {
               } catch (Exception e) {
                 log.error("Failed to parse response: {}", message, e);
                 callback.onError(e);
+              }
+              if (speechSynthesisResult.getRequestId() == null) {
+                speechSynthesisResult.setRequestId(preRequestId);
               }
               callback.onEvent(speechSynthesisResult);
             }
@@ -583,7 +588,7 @@ public final class SpeechSynthesizer {
   public void streamingCall(String text) {
     if (isFirst) {
       isFirst = false;
-      this.startStream();
+      this.startStream(false);
     }
     this.submitText(text);
   }
@@ -614,7 +619,7 @@ public final class SpeechSynthesizer {
             public void onError(Exception e) {}
           };
     }
-    this.startStream();
+    this.startStream(true);
     this.submitText(text);
     if (this.asyncCall) {
       this.asyncStreamingComplete();
@@ -650,11 +655,12 @@ public final class SpeechSynthesizer {
     @NonNull private Flowable<String> textStream;
 
     public static StreamInputTtsParamWithStream fromStreamInputTtsParam(
-        SpeechSynthesisParam param, Flowable<String> textStream, String preRequestId) {
+        SpeechSynthesisParam param, Flowable<String> textStream, String preRequestId, boolean enableSsml) {
       return StreamInputTtsParamWithStream.builder()
           .headers(param.getHeaders())
           .parameters(param.getParameters())
           .parameter("pre_task_id", preRequestId)
+          .parameter("enable_ssml", enableSsml)
           .format(param.getFormat())
           .textStream(textStream)
           .model(param.getModel())
