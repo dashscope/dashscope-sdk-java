@@ -7,6 +7,7 @@ import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
+import com.alibaba.dashscope.exception.UploadFileException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
 import com.alibaba.dashscope.protocol.Protocol;
@@ -15,7 +16,7 @@ import com.alibaba.dashscope.task.AsyncTaskListParam;
 
 public final class VideoSynthesis {
   /** default task, function & taskGroup */
-  private final String task = "video-generation";
+  private String task = "video-generation";
 
   private final String function = "video-synthesis";
   private final String taskGroup = "aigc";
@@ -34,6 +35,9 @@ public final class VideoSynthesis {
 
     public static final String WANX_2_1_I2V_PLUS = "wanx2.1-i2v-plus";
     public static final String WANX_2_1_I2V_TURBO = "wanx2.1-i2v-turbo";
+
+    public static final String WANX_2_1_KF2V_PLUS = "wanx2.1-kf2v-plus";
+    public static final String WANX_KF2V = "wanx-kf2v";
   }
 
   /** Video synthesis size */
@@ -44,6 +48,10 @@ public final class VideoSynthesis {
   /** Video synthesis duration */
   public static class Duration {
     public static final int DEFAULT = 5;
+  }
+
+  public static class Resolution {
+    public static final String DEFAULT = "720P";
   }
 
   /**
@@ -61,6 +69,23 @@ public final class VideoSynthesis {
         .function(function)
         .isAsyncTask(true)
         .build();
+  }
+
+  /**
+   * Create ApiServiceOption
+   *
+   * @return ApiServiceOption
+   */
+  private ApiServiceOption getApiServiceOption(String task) {
+    return ApiServiceOption.builder()
+            .protocol(Protocol.HTTP)
+            .httpMethod(HttpMethod.POST)
+            .streamingMode(StreamingMode.NONE)
+            .taskGroup(taskGroup)
+            .task(task)
+            .function(function)
+            .isAsyncTask(true)
+            .build();
   }
 
   /** default VideoSynthesis constructor */
@@ -84,6 +109,18 @@ public final class VideoSynthesis {
   }
 
   /**
+   * Create with custom baseUrl
+   *
+   * @param baseUrl The service base url.
+   */
+  public VideoSynthesis(String baseUrl, String task) {
+    // only support http
+    asyncApi = new AsynchronousApi<>();
+    createServiceOptions = getApiServiceOption(task);
+    this.baseUrl = baseUrl;
+  }
+
+  /**
    * Async call
    *
    * @param param The input param of class VideoSynthesisParam
@@ -93,10 +130,20 @@ public final class VideoSynthesis {
    * @throws InputRequiredException Check the input param.
    */
   public VideoSynthesisResult asyncCall(VideoSynthesisParam param)
-      throws ApiException, NoApiKeyException, InputRequiredException {
+          throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
+    // add local file support
+    try {
+      param.checkAndUpload();
+    }catch (UploadFileException e){
+      throw new InputRequiredException(e.getMessage());
+    }
+    ApiServiceOption serviceOption = createServiceOptions;
+    if (param.getModel().contains("kf2v")) {
+      serviceOption.setTask("image2video");
+    }
     return VideoSynthesisResult.fromDashScopeResult(
-        asyncApi.asyncCall(param, createServiceOptions));
+        asyncApi.asyncCall(param, serviceOption));
   }
 
   /**
@@ -109,9 +156,20 @@ public final class VideoSynthesis {
    * @throws InputRequiredException Check the input param.
    */
   public VideoSynthesisResult call(VideoSynthesisParam param)
-      throws ApiException, NoApiKeyException, InputRequiredException {
+          throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
-    return VideoSynthesisResult.fromDashScopeResult(asyncApi.call(param, createServiceOptions));
+    // add local file support
+    try {
+      param.checkAndUpload();
+    }catch (UploadFileException e){
+      throw new InputRequiredException(e.getMessage());
+    }
+    ApiServiceOption serviceOption = createServiceOptions;
+    if (param.getModel().contains("kf2v")) {
+      serviceOption.setTask("image2video");
+    }
+    return VideoSynthesisResult.fromDashScopeResult(
+            asyncApi.call(param, serviceOption));
   }
 
   /**

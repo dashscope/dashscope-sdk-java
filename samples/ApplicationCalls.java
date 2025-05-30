@@ -306,6 +306,22 @@ public class ApplicationCalls {
         System.out.print("\n");
     }
 
+    public static void callWithThinking() throws NoApiKeyException, InputRequiredException {
+        ApplicationParam param = ApplicationParam.builder()
+                .appId(APP_ID)
+                .prompt("1.1和0.9哪个大?")
+                .enableThinking(true)
+                .hasThoughts(true)
+                .incrementalOutput(true)
+                .build();
+
+        Application application = new Application();
+        Flowable<ApplicationResult> result = application.streamCall(param);
+        result.blockingForEach(data -> System.out.printf("result: %s%n", data));
+//        result.blockingForEach(data -> System.out.printf(data.getOutput().getText()));
+        System.out.print("\n");
+    }
+
 
     public static void main(String[] args) {
         try {
@@ -318,7 +334,8 @@ public class ApplicationCalls {
 //            callWithMemory();
 //            callWithAssistantServing();
 //            ragCallWithDocReference();
-            callWithMoreParameters();
+//            callWithMoreParameters();
+            callWithThinking();
         } catch (ApiException | NoApiKeyException | InputRequiredException e) {
             System.out.printf("Exception: %s", e.getMessage());
         }
