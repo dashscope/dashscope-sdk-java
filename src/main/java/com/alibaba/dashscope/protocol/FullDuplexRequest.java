@@ -56,6 +56,9 @@ public class FullDuplexRequest {
     if (param.getParameters() != null) {
       request.add(ApiKeywords.PARAMETERS, JsonUtils.parametersToJsonObject(param.getParameters()));
     }
+    if (param.getInputs() != null) {
+      request.add(ApiKeywords.INPUT, JsonUtils.parametersToJsonObject(param.getInputs()));
+    }
     if (param.getResources() != null) {
       request.add(ApiKeywords.RESOURCES, (JsonElement) param.getResources());
     }
@@ -168,7 +171,11 @@ public class FullDuplexRequest {
     JsonObject wsMessage = new JsonObject();
     wsMessage.add(ApiKeywords.HEADER, header);
     JsonObject payload = new JsonObject();
-    payload.add("input", new JsonObject());
+    JsonObject input = new JsonObject();
+    if (serviceOption.getTask().equals("multimodal-generation")) {
+      input.addProperty("directive","Stop");
+    }
+    payload.add("input", input);
     wsMessage.add(ApiKeywords.PAYLOAD, payload);
     return wsMessage;
   }
