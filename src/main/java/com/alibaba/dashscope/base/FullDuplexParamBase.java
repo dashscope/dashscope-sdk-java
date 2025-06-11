@@ -69,6 +69,15 @@ public abstract class FullDuplexParamBase {
    */
   public abstract Flowable<Object> getStreamingData();
 
+  /**
+   * Custom payload.inputs
+   *
+   * @return The key/value parameters
+   */
+  public Map<String, Object> getInputs() {
+    return null;
+  }
+
   public void setModel(String model) {
     this.model = model;
     parameters.put("model", model);
