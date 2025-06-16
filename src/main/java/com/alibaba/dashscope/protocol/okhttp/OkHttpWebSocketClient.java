@@ -7,15 +7,8 @@ import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
-import com.alibaba.dashscope.protocol.DashScopeHeaders;
-import com.alibaba.dashscope.protocol.FullDuplexClient;
-import com.alibaba.dashscope.protocol.FullDuplexRequest;
-import com.alibaba.dashscope.protocol.HalfDuplexClient;
-import com.alibaba.dashscope.protocol.HalfDuplexRequest;
-import com.alibaba.dashscope.protocol.NetworkResponse;
+import com.alibaba.dashscope.protocol.*;
 import com.alibaba.dashscope.protocol.Protocol;
-import com.alibaba.dashscope.protocol.StreamingMode;
-import com.alibaba.dashscope.protocol.WebSocketResponse;
 import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
@@ -33,13 +26,8 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.Headers;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
+import okhttp3.*;
 import okhttp3.Request.Builder;
-import okhttp3.Response;
-import okhttp3.WebSocket;
-import okhttp3.WebSocketListener;
 import okio.ByteString;
 
 @Slf4j
@@ -59,8 +47,11 @@ public class OkHttpWebSocketClient extends WebSocketListener
   private boolean isFlattenResult;
   private FlowableEmitter<DashScopeResult> connectionEmitter;
 
-  public OkHttpWebSocketClient(OkHttpClient client) {
+  private AtomicBoolean passTaskStarted = new AtomicBoolean(false);
+
+  public OkHttpWebSocketClient(OkHttpClient client, boolean passTaskStarted) {
     this.client = client;
+    this.passTaskStarted.set(passTaskStarted);
   }
 
   private Request buildConnectionRequest(
@@ -249,6 +240,15 @@ public class OkHttpWebSocketClient extends WebSocketListener
                         Protocol.WEBSOCKET,
                         NetworkResponse.builder().message(text).build(),
                         isFlattenResult));
+          } else if (passTaskStarted.get()) {
+            DashScopeResult start_message =
+                new DashScopeResult()
+                    .fromResponse(
+                        Protocol.WEBSOCKET,
+                        NetworkResponse.builder().message(text).build(),
+                        isFlattenResult);
+            start_message.setEvent(WebSocketEventType.TASK_STARTED.getValue());
+            responseEmitter.onNext(start_message);
           }
           break;
         case TASK_FAILED:
@@ -351,6 +351,15 @@ public class OkHttpWebSocketClient extends WebSocketListener
       establishWebSocketClient(apiKey, isSecurityCheck, workspace, customHeaders, baseWebSocketUrl);
     }
     int maxRetries = 3;
+    if (passTaskStarted.get()) {
+      // when pass througn task started, no need to retry.
+      log.info("Sending message: " + message);
+      Boolean isOk = webSocketClient.send(message);
+      if (!isOk) {
+        log.warn("Send request failed, return without retry.");
+      }
+      return;
+    }
     int retryCount = 0;
     while (retryCount < maxRetries) {
       log.debug("Sending message: " + message);

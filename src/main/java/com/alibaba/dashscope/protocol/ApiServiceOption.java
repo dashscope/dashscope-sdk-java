@@ -37,6 +37,7 @@ public final class ApiServiceOption implements ServiceOption {
   @Default private String baseHttpUrl = null;
 
   @Default private String baseWebSocketUrl = null;
+  @Default private boolean passTaskStarted = false;
 
   @Override
   public String httpUrl() {
