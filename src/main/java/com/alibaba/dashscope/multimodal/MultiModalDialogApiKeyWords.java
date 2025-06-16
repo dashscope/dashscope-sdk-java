@@ -48,6 +48,7 @@ public class MultiModalDialogApiKeyWords {
   public static String CONST_NAME_BIZ_PARAMS_USER_PROMPT_PARAMS = "user_prompt_params";
   public static String CONST_NAME_BIZ_PARAMS_USER_QUERY_PARAMS = "user_query_params";
   public static String CONST_NAME_BIZ_PARAMS_TOOL_PROMPTS = "tool_prompts";
+  public static String CONST_NAME_BIZ_PARAMS_VIDEOS = "videos";
 
   public static String CONST_NAME_APP_ID = "app_id";
   public static String CONST_NAME_DIRECTIVE = "directive";
