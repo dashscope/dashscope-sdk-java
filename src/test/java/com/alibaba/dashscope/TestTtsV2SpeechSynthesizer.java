@@ -9,7 +9,6 @@ import com.alibaba.dashscope.audio.ttsv2.SpeechSynthesisAudioFormat;
 import com.alibaba.dashscope.audio.ttsv2.SpeechSynthesisParam;
 import com.alibaba.dashscope.audio.ttsv2.SpeechSynthesizer;
 import com.alibaba.dashscope.common.ResultCallback;
-import com.alibaba.dashscope.exception.DashscopeTimeoutException;
 import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
@@ -123,7 +122,7 @@ public class TestTtsV2SpeechSynthesizer {
   }
 
   @Test
-  public void testStreamingCall() throws DashscopeTimeoutException {
+  public void testStreamingCall() {
     System.out.println("############ Start Test Streaming Call ############");
     int port = mockServer.getPort();
     Constants.baseWebsocketApiUrl = String.format("http://127.0.0.1:%s", port);

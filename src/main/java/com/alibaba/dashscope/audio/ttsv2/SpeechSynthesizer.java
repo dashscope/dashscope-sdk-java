@@ -6,10 +6,10 @@ import com.alibaba.dashscope.api.SynchronizeFullDuplexApi;
 import com.alibaba.dashscope.audio.tts.SpeechSynthesisResult;
 import com.alibaba.dashscope.common.*;
 import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.exception.DashscopeTimeoutException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.*;
+import com.alibaba.dashscope.threads.runs.Run;
 import com.google.gson.JsonObject;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Emitter;
@@ -524,7 +524,7 @@ public final class SpeechSynthesizer {
    *     greater than zero, it will wait for the corresponding number of milliseconds; otherwise, it
    *     will wait indefinitely. Throws TimeoutError exception if it times out.
    */
-  public void streamingComplete(long completeTimeoutMillis) throws DashscopeTimeoutException {
+  public void streamingComplete(long completeTimeoutMillis) {
     log.debug("streamingComplete with timeout: " + completeTimeoutMillis);
     synchronized (this) {
       if (state != SpeechSynthesisState.TTS_STARTED) {
@@ -546,7 +546,7 @@ public final class SpeechSynthesizer {
         if (completeTimeoutMillis > 0) {
           log.debug("start waiting for stopLatch");
           if (!stopLatch.get().await(completeTimeoutMillis, TimeUnit.MILLISECONDS)) {
-            throw new DashscopeTimeoutException("TimeoutError: waiting for streaming complete");
+            throw new RuntimeException("TimeoutError: waiting for streaming complete");
           }
         } else {
           log.debug("start waiting for stopLatch");
@@ -564,7 +564,7 @@ public final class SpeechSynthesizer {
    * synthesized audio before returning. If it does not complete within 600 seconds, a timeout
    * occurs and a TimeoutError exception is thrown.
    */
-  public void streamingComplete() throws DashscopeTimeoutException {
+  public void streamingComplete() {
     streamingComplete(600000);
   }
 
@@ -612,7 +612,7 @@ public final class SpeechSynthesizer {
    *
    * @param text utf-8 encoded text
    */
-  public void streamingCall(String text) throws DashscopeTimeoutException {
+  public void streamingCall(String text) {
     if (isFirst) {
       isFirst = false;
       try {
@@ -623,7 +623,7 @@ public final class SpeechSynthesizer {
             synchronized (SpeechSynthesizer.this) {
               state = SpeechSynthesisState.IDLE;
             }
-            throw new DashscopeTimeoutException(
+            throw new RuntimeException(
                 "TimeoutError: waiting for task started more than " + this.startedTimeout + " ms.");
           }
           log.debug(
@@ -641,7 +641,7 @@ public final class SpeechSynthesizer {
             synchronized (SpeechSynthesizer.this) {
               state = SpeechSynthesisState.IDLE;
             }
-            throw new DashscopeTimeoutException(
+            throw new RuntimeException(
                 "TimeoutError: waiting for first audio more than "
                     + this.firstAudioTimeout
                     + " ms.");
@@ -674,7 +674,7 @@ public final class SpeechSynthesizer {
    *     function's return value. Otherwise, the return value is null.
    */
   public ByteBuffer call(String text, long timeoutMillis)
-      throws RuntimeException, DashscopeTimeoutException {
+      throws RuntimeException {
     if (this.callback == null) {
       this.callback =
           new ResultCallback<SpeechSynthesisResult>() {
@@ -696,7 +696,7 @@ public final class SpeechSynthesizer {
           synchronized (SpeechSynthesizer.this) {
             state = SpeechSynthesisState.IDLE;
           }
-          throw new DashscopeTimeoutException(
+          throw new RuntimeException(
               "TimeoutError: waiting for task started more than " + this.startedTimeout + " ms.");
         }
         log.debug(
@@ -714,7 +714,7 @@ public final class SpeechSynthesizer {
           synchronized (SpeechSynthesizer.this) {
             state = SpeechSynthesisState.IDLE;
           }
-          throw new DashscopeTimeoutException(
+          throw new RuntimeException(
               "TimeoutError: waiting for first audio more than " + this.firstAudioTimeout + " ms.");
         }
         log.debug(
@@ -745,7 +745,7 @@ public final class SpeechSynthesizer {
    * @return If a callback is not set during initialization, the complete audio is returned as the
    *     function's return value. Otherwise, the return value is null.
    */
-  public ByteBuffer call(String text) throws DashscopeTimeoutException {
+  public ByteBuffer call(String text) {
     return call(text, 0);
   }
 
