@@ -113,6 +113,7 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
     private Object toolPrompts;
     private Object userQueryParams;
     private Object userPromptParams;
+    private Object videos;
   }
 
   public void clearParameters() {
@@ -191,6 +192,7 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
       bizParamsParams.put(CONST_NAME_BIZ_PARAMS_TOOL_PROMPTS, bizParams.toolPrompts);
       bizParamsParams.put(CONST_NAME_BIZ_PARAMS_USER_QUERY_PARAMS, bizParams.userQueryParams);
       bizParamsParams.put(CONST_NAME_BIZ_PARAMS_USER_PROMPT_PARAMS, bizParams.userPromptParams);
+      bizParamsParams.put(CONST_NAME_BIZ_PARAMS_VIDEOS, bizParams.videos);
       params.put(CONST_NAME_BIZ_PARAMS, bizParamsParams);
     }
 

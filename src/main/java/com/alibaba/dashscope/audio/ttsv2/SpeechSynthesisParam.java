@@ -40,6 +40,9 @@ public class SpeechSynthesisParam extends FullDuplexServiceParam {
   /** enable phoneme level timestamp. */
   @Builder.Default private boolean enablePhonemeTimestamp = false;
 
+  @Builder.Default private long connectionTimeout = -1;
+  @Builder.Default private long firstPackageTimeout = -1;
+
   @Override
   public Map<String, Object> getParameters() {
     Map<String, Object> params = new HashMap<>();

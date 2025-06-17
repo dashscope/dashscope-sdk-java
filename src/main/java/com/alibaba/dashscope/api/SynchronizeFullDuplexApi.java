@@ -25,7 +25,7 @@ public final class SynchronizeFullDuplexApi<ParamT extends FullDuplexServicePara
    * @param serviceOptions The service option.
    */
   public SynchronizeFullDuplexApi(ApiServiceOption serviceOptions) {
-    this.client = ClientProviders.getFullDuplexClient(null);
+    this.client = ClientProviders.getFullDuplexClient(null, serviceOptions.isPassTaskStarted());
     this.connectionOptions = null;
     this.serviceOptions = serviceOptions;
   }
@@ -52,7 +52,8 @@ public final class SynchronizeFullDuplexApi<ParamT extends FullDuplexServicePara
    */
   public SynchronizeFullDuplexApi(
       ConnectionOptions connectionOptions, ApiServiceOption serviceOptions) {
-    this.client = ClientProviders.getFullDuplexClient(connectionOptions);
+    this.client =
+        ClientProviders.getFullDuplexClient(connectionOptions, serviceOptions.isPassTaskStarted());
     this.connectionOptions = connectionOptions;
     this.serviceOptions = serviceOptions;
   }

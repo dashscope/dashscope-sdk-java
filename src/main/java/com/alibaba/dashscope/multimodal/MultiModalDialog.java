@@ -348,6 +348,11 @@ public class MultiModalDialog {
 //    sendTextFrame("RequestToSpeak");
 //  }
 
+  /** send heart beat request ,will respond heart beat*/
+  public void sendHeartBeat(){
+    sendTextFrame("HeartBeat");
+  }
+
   /**
    * Requests response.
    *

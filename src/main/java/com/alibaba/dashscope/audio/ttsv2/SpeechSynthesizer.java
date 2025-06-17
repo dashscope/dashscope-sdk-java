@@ -8,20 +8,12 @@ import com.alibaba.dashscope.common.*;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
-import com.alibaba.dashscope.protocol.ApiServiceOption;
-import com.alibaba.dashscope.protocol.ConnectionOptions;
-import com.alibaba.dashscope.protocol.Protocol;
-import com.alibaba.dashscope.protocol.StreamingMode;
+import com.alibaba.dashscope.protocol.*;
+import com.alibaba.dashscope.threads.runs.Run;
 import com.google.gson.JsonObject;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.experimental.SuperBuilder;
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -35,6 +27,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
 
 /** @author lengjiayi */
 @Slf4j
@@ -64,6 +62,10 @@ public final class SpeechSynthesizer {
   private long startStreamTimeStamp = -1;
   private long firstPackageTimeStamp = -1;
   private double recvAudioLength = 0;
+  @Getter @Setter private long startedTimeout = -1;
+  @Getter @Setter private long firstAudioTimeout = -1;
+  private AtomicReference<CountDownLatch> startLatch = new AtomicReference<>(null);
+  private AtomicReference<CountDownLatch> firstAudioLatch = new AtomicReference<>(null);
 
   /**
    * CosyVoice Speech Synthesis SDK
@@ -93,6 +95,7 @@ public final class SpeechSynthesizer {
             .task(Task.TEXT_TO_SPEECH.getValue())
             .function(Function.SPEECH_SYNTHESIZER.getValue())
             .baseWebSocketUrl(baseUrl)
+            .passTaskStarted(true)
             .build();
     duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
     this.callback = callback;
@@ -116,6 +119,7 @@ public final class SpeechSynthesizer {
             .task(Task.TEXT_TO_SPEECH.getValue())
             .function(Function.SPEECH_SYNTHESIZER.getValue())
             .baseWebSocketUrl(baseUrl)
+            .passTaskStarted(true)
             .build();
     duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
     this.callback = null;
@@ -132,6 +136,7 @@ public final class SpeechSynthesizer {
             .taskGroup(TaskGroup.AUDIO.getValue())
             .task(Task.TEXT_TO_SPEECH.getValue())
             .function(Function.SPEECH_SYNTHESIZER.getValue())
+            .passTaskStarted(true)
             .build();
     duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
     this.callback = null;
@@ -141,9 +146,14 @@ public final class SpeechSynthesizer {
       SpeechSynthesisParam param, ResultCallback<SpeechSynthesisResult> callback) {
     this.parameters = param;
     this.callback = callback;
+    this.canceled.set(false);
 
     // reset inner params
     this.stopLatch = new AtomicReference<>(null);
+    this.startLatch = new AtomicReference<>(null);
+    this.startedTimeout = -1;
+    this.firstAudioLatch = new AtomicReference<>(null);
+    this.firstAudioTimeout = -1;
     this.cmdBuffer.clear();
     this.textEmitter = null;
     this.isFirst = true;
@@ -175,6 +185,7 @@ public final class SpeechSynthesizer {
             .task(Task.TEXT_TO_SPEECH.getValue())
             .function(Function.SPEECH_SYNTHESIZER.getValue())
             .baseWebSocketUrl(baseUrl)
+            .passTaskStarted(true)
             .build();
     duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
     this.callback = callback;
@@ -203,6 +214,7 @@ public final class SpeechSynthesizer {
             .taskGroup(TaskGroup.AUDIO.getValue())
             .task(Task.TEXT_TO_SPEECH.getValue())
             .function(Function.SPEECH_SYNTHESIZER.getValue())
+            .passTaskStarted(true)
             .build();
     duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
     this.callback = callback;
@@ -228,6 +240,7 @@ public final class SpeechSynthesizer {
         .duplexCall(
             StreamInputTtsParamWithStream.fromStreamInputTtsParam(
                 this.parameters, textStream, preRequestId, false))
+        .filter(item -> item.getEvent() != WebSocketEventType.TASK_STARTED.getValue())
         .map(SpeechSynthesisResult::fromDashScopeResult)
         .filter(item -> !canceled.get())
         .doOnNext(
@@ -279,7 +292,8 @@ public final class SpeechSynthesizer {
                     },
                     BackpressureStrategy.BUFFER),
                 preRequestId,
-                    true))
+                true))
+        .filter(item -> item.getEvent() != WebSocketEventType.TASK_STARTED.getValue())
         .map(SpeechSynthesisResult::fromDashScopeResult)
         .doOnNext(
             result -> {
@@ -348,6 +362,8 @@ public final class SpeechSynthesizer {
       cmdBuffer.clear();
     }
     stopLatch = new AtomicReference<>(new CountDownLatch(1));
+    startLatch = new AtomicReference<>(new CountDownLatch(1));
+    firstAudioLatch = new AtomicReference<>(new CountDownLatch(1));
     preRequestId = UUID.randomUUID().toString();
     try {
       duplexApi.duplexCall(
@@ -358,6 +374,10 @@ public final class SpeechSynthesizer {
 
             @Override
             public void onEvent(DashScopeResult message) {
+              if (message.getEvent() == WebSocketEventType.TASK_STARTED.getValue()) {
+                startLatch.get().countDown();
+                return;
+              }
               if (canceled.get()) {
                 return;
               }
@@ -383,6 +403,7 @@ public final class SpeechSynthesizer {
                  */
                 if (speechSynthesisResult.getAudioFrame() != null) {
                   if (recvAudioLength == 0) {
+                    firstAudioLatch.get().countDown();
                     firstPackageTimeStamp = System.currentTimeMillis();
                     log.debug("[TtsV2] first package delay: " + getFirstPackageDelay() + " ms");
                   }
@@ -461,6 +482,12 @@ public final class SpeechSynthesizer {
       if (stopLatch.get() != null) {
         stopLatch.get().countDown();
       }
+      if (startLatch.get() != null) {
+        startLatch.get().countDown();
+      }
+      if (firstAudioLatch.get() != null) {
+        firstAudioLatch.get().countDown();
+      }
     }
   }
 
@@ -497,7 +524,7 @@ public final class SpeechSynthesizer {
    *     greater than zero, it will wait for the corresponding number of milliseconds; otherwise, it
    *     will wait indefinitely. Throws TimeoutError exception if it times out.
    */
-  public void streamingComplete(long completeTimeoutMillis) throws RuntimeException {
+  public void streamingComplete(long completeTimeoutMillis) {
     log.debug("streamingComplete with timeout: " + completeTimeoutMillis);
     synchronized (this) {
       if (state != SpeechSynthesisState.TTS_STARTED) {
@@ -537,7 +564,7 @@ public final class SpeechSynthesizer {
    * synthesized audio before returning. If it does not complete within 600 seconds, a timeout
    * occurs and a TimeoutError exception is thrown.
    */
-  public void streamingComplete() throws RuntimeException {
+  public void streamingComplete() {
     streamingComplete(600000);
   }
 
@@ -588,9 +615,50 @@ public final class SpeechSynthesizer {
   public void streamingCall(String text) {
     if (isFirst) {
       isFirst = false;
-      this.startStream(false);
+      try {
+        this.startStream(false);
+        long startTime = System.currentTimeMillis();
+        if (this.startedTimeout > 0) {
+          if (!this.startLatch.get().await(this.startedTimeout, TimeUnit.MILLISECONDS)) {
+            synchronized (SpeechSynthesizer.this) {
+              state = SpeechSynthesisState.IDLE;
+            }
+            throw new RuntimeException(
+                "TimeoutError: waiting for task started more than " + this.startedTimeout + " ms.");
+          }
+          log.debug(
+              "get started within "
+                  + this.startedTimeout
+                  + " ms, cost: "
+                  + (System.currentTimeMillis() - startTime)
+                  + " ms");
+        }
+        this.submitText(text);
+        if (this.firstAudioTimeout > 0 && this.firstAudioTimeout - this.startedTimeout > 0) {
+          if (!this.firstAudioLatch
+              .get()
+              .await(this.firstAudioTimeout - this.startedTimeout, TimeUnit.MILLISECONDS)) {
+            synchronized (SpeechSynthesizer.this) {
+              state = SpeechSynthesisState.IDLE;
+            }
+            throw new RuntimeException(
+                "TimeoutError: waiting for first audio more than "
+                    + this.firstAudioTimeout
+                    + " ms.");
+          }
+          log.debug(
+              "get first audio within "
+                  + this.firstAudioTimeout
+                  + " ms, cost: "
+                  + (System.currentTimeMillis() - startTime)
+                  + " ms");
+        }
+      } catch (InterruptedException ignored) {
+        log.error("Interrupted while waiting for streaming complete");
+      }
+    } else {
+      this.submitText(text);
     }
-    this.submitText(text);
   }
 
   /**
@@ -605,7 +673,8 @@ public final class SpeechSynthesizer {
    * @return If a callback is not set during initialization, the complete audio is returned as the
    *     function's return value. Otherwise, the return value is null.
    */
-  public ByteBuffer call(String text, long timeoutMillis) throws RuntimeException {
+  public ByteBuffer call(String text, long timeoutMillis)
+      throws RuntimeException {
     if (this.callback == null) {
       this.callback =
           new ResultCallback<SpeechSynthesisResult>() {
@@ -619,8 +688,45 @@ public final class SpeechSynthesizer {
             public void onError(Exception e) {}
           };
     }
-    this.startStream(true);
-    this.submitText(text);
+    try {
+      this.startStream(true);
+      long startTime = System.currentTimeMillis();
+      if (this.startedTimeout > 0) {
+        if (!this.startLatch.get().await(this.startedTimeout, TimeUnit.MILLISECONDS)) {
+          synchronized (SpeechSynthesizer.this) {
+            state = SpeechSynthesisState.IDLE;
+          }
+          throw new RuntimeException(
+              "TimeoutError: waiting for task started more than " + this.startedTimeout + " ms.");
+        }
+        log.debug(
+            "get started within "
+                + this.startedTimeout
+                + " ms, cost: "
+                + (System.currentTimeMillis() - startTime)
+                + " ms");
+      }
+      this.submitText(text);
+      if (this.firstAudioTimeout > 0 && this.firstAudioTimeout - this.startedTimeout > 0) {
+        if (!this.firstAudioLatch
+            .get()
+            .await(this.firstAudioTimeout - this.startedTimeout, TimeUnit.MILLISECONDS)) {
+          synchronized (SpeechSynthesizer.this) {
+            state = SpeechSynthesisState.IDLE;
+          }
+          throw new RuntimeException(
+              "TimeoutError: waiting for first audio more than " + this.firstAudioTimeout + " ms.");
+        }
+        log.debug(
+            "get first audio within "
+                + this.firstAudioTimeout
+                + " ms, cost: "
+                + (System.currentTimeMillis() - startTime)
+                + " ms");
+      }
+    } catch (InterruptedException ignored) {
+      log.error("Interrupted while waiting for streaming complete");
+    }
     if (this.asyncCall) {
       this.asyncStreamingComplete();
       return null;
@@ -639,7 +745,7 @@ public final class SpeechSynthesizer {
    * @return If a callback is not set during initialization, the complete audio is returned as the
    *     function's return value. Otherwise, the return value is null.
    */
-  public ByteBuffer call(String text) throws RuntimeException {
+  public ByteBuffer call(String text) {
     return call(text, 0);
   }
 
@@ -655,7 +761,10 @@ public final class SpeechSynthesizer {
     @NonNull private Flowable<String> textStream;
 
     public static StreamInputTtsParamWithStream fromStreamInputTtsParam(
-        SpeechSynthesisParam param, Flowable<String> textStream, String preRequestId, boolean enableSsml) {
+        SpeechSynthesisParam param,
+        Flowable<String> textStream,
+        String preRequestId,
+        boolean enableSsml) {
       return StreamInputTtsParamWithStream.builder()
           .headers(param.getHeaders())
           .parameters(param.getParameters())
