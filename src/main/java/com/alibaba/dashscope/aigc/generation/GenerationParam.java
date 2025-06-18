@@ -137,6 +137,9 @@ public class GenerationParam extends GenerationParamBase {
   /** 生成响应的个数 */
   private Integer n;
 
+  /** 翻译参数 */
+  private TranslationOptions translationOptions;
+
   @Override
   public JsonObject getInput() {
     JsonObject jsonObject = new JsonObject();
@@ -242,6 +245,10 @@ public class GenerationParam extends GenerationParamBase {
 
     if (n != null) {
       params.put("n", n);
+    }
+
+    if (translationOptions != null) {
+      params.put("translation_options", translationOptions);
     }
 
     params.putAll(parameters);
