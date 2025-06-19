@@ -31,4 +31,7 @@ public final class GenerationOutput {
   /** 联网搜索到的信息，在设置search_options参数后会返回该参数。 */
   @SerializedName("search_info")
   private SearchInfo searchInfo;
+
+  @SerializedName("model_name")
+  private String modelName;
 }
