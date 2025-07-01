@@ -37,14 +37,14 @@ import java.util.concurrent.Semaphore;
  */
 
 public class MultiModelConversationQwenTts {
-    private static final String MODEL = "qwen-tts";
+    private static final String MODEL = "qwen-tts-latest";
 
     public static void call() throws ApiException, NoApiKeyException, UploadFileException {
         MultiModalConversation conv = new MultiModalConversation();
         MultiModalConversationParam param = MultiModalConversationParam.builder()
                 .model(MODEL)
                 .text("Today is a wonderful day to build something people love!")
-                .voice(AudioParameters.Voice.CHERRY)
+                .voice(AudioParameters.Voice.DYLAN)
                 .build();
         MultiModalConversationResult result = conv.call(param);
         System.out.print(result);
@@ -55,7 +55,7 @@ public class MultiModelConversationQwenTts {
         MultiModalConversationParam param = MultiModalConversationParam.builder()
                 .model(MODEL)
                 .text("Today is a wonderful day to build something people love!")
-                .voice(AudioParameters.Voice.CHERRY)
+                .voice(AudioParameters.Voice.DYLAN)
                 .build();
         Flowable<MultiModalConversationResult> result = conv.streamCall(param);
         result.blockingForEach(System.out::println);

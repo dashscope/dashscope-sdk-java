@@ -48,7 +48,16 @@ public class AudioParameters implements Serializable {
     ETHAN("Ethan"),
 
     @SerializedName("Chelsie")
-    CHELSIE("Chelsie");
+    CHELSIE("Chelsie"),
+
+    @SerializedName("Dylan")
+    DYLAN("Dylan"),
+
+    @SerializedName("Jada")
+    JADA("Jada"),
+
+    @SerializedName("Sunny")
+    SUNNY("Sunny");
 
     private final String value;
 
