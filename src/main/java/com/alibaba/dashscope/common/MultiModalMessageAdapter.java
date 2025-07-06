@@ -24,32 +24,16 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
       out.beginObject();
       for (Map.Entry<String, Object> entry : mapObject.entrySet()) {
         out.name(entry.getKey());
-        if (entry.getValue() instanceof String) {
-          out.value((String) entry.getValue());
-        } else if (entry.getValue() instanceof Integer) {
-          out.value((Integer) (entry.getValue()));
-        } else if (entry.getValue() instanceof Double) {
-          out.value((Double) (entry.getValue()));
-        } else if (entry.getValue() instanceof Boolean) {
-          out.value((Boolean) (entry.getValue()));
-        } else if (entry.getValue() instanceof Character) {
-          out.value((Character) (entry.getValue()));
-        } else if (entry.getValue() instanceof List) {
-          out.beginArray();
-          for (Object v : (List) entry.getValue()) {
-            writePrimitiveType(out, v);
-          }
-          out.endArray();
-        } else {
-          writeMapObject(out, (Map<String, Object>) entry.getValue());
-        }
+        writeValue(out, entry.getValue());
       }
       out.endObject();
     }
   }
 
-  private void writePrimitiveType(JsonWriter out, Object value) throws IOException {
-    if (value instanceof String) {
+  private void writeValue(JsonWriter out, Object value) throws IOException {
+    if (value == null) {
+      out.nullValue();
+    } else if (value instanceof String) {
       out.value((String) value);
     } else if (value instanceof Integer) {
       out.value((Integer) value);
@@ -59,6 +43,18 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
       out.value((Boolean) value);
     } else if (value instanceof Character) {
       out.value((Character) value);
+    } else if (value instanceof List) {
+      out.beginArray();
+      List<?> list = (List<?>) value;
+      for (Object item : list) {
+        writeValue(out, item);
+      }
+      out.endArray();
+    } else if (value instanceof Map) {
+      writeMapObject(out, (Map<String, Object>) value);
+    } else {
+      // Fallback for other types
+      out.value(value.toString());
     }
   }
   private void writeToolCallBase(JsonWriter writer, ToolCallBase toolCallBase) throws IOException {
@@ -128,6 +124,16 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
       out.endArray();
     }
 
+    if (value.getToolCallId() != null) {
+      out.name(ApiKeywords.TOOL_CALL_ID);
+      out.value(value.getToolCallId());
+    }
+
+    if (value.getName() != null) {
+      out.name(ApiKeywords.NAME);
+      out.value(value.getName());
+    }
+
     out.endObject();
   }
 
@@ -161,6 +167,18 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
       Object toolCalls = objectMap.get(ApiKeywords.TOOL_CALLS);
       msg.setToolCalls((List<ToolCallBase>) toolCalls);
       objectMap.remove(ApiKeywords.TOOL_CALLS);
+    }
+
+    if (objectMap.containsKey(ApiKeywords.TOOL_CALL_ID)) {
+      String toolCallId = (String) objectMap.get(ApiKeywords.TOOL_CALL_ID);
+      msg.setToolCallId(toolCallId);
+      objectMap.remove(ApiKeywords.TOOL_CALL_ID);
+    }
+
+    if (objectMap.containsKey(ApiKeywords.NAME)) {
+      String name = (String) objectMap.get(ApiKeywords.NAME);
+      msg.setName(name);
+      objectMap.remove(ApiKeywords.NAME);
     }
 
     return msg;

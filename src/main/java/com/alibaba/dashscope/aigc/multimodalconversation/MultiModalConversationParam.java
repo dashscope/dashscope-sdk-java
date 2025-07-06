@@ -122,6 +122,12 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
   /** enable parallel tool calls */
   protected Boolean parallelToolCalls;
 
+  /** enable vl_high_resolution_images */
+  protected Boolean vlHighResolutionImages;
+
+  /** enable vl_enable_image_hw_output */
+  protected Boolean vlEnableImageHwOutput;
+
   @Override
   public JsonObject getHttpBody() {
     JsonObject requestObject = new JsonObject();
@@ -217,6 +223,14 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
 
     if (parallelToolCalls != null) {
       params.put("parallel_tool_calls", parallelToolCalls);
+    }
+
+    if (vlHighResolutionImages != null) {
+      params.put("vl_high_resolution_images", vlHighResolutionImages);
+    }
+
+    if (vlEnableImageHwOutput != null) {
+      params.put("vl_enable_image_hw_output", vlEnableImageHwOutput);
     }
 
     params.putAll(parameters);
