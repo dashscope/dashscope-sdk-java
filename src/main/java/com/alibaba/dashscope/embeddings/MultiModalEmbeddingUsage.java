@@ -8,6 +8,9 @@ public class MultiModalEmbeddingUsage {
   @SerializedName("input_tokens")
   private Integer inputTokens;
 
+  @SerializedName("image_tokens")
+  private Integer imageTokens;
+
   @SerializedName("image_count")
   private Integer imageCount;
 

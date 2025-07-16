@@ -55,6 +55,7 @@ public class AssistantCallSearch {
                 Thread.sleep(1000);
             }
             run = runs.retrieve(assistantThread.getId(), run.getId());
+            System.out.println(run);
         }  
 
         GeneralListParam listParam = GeneralListParam.builder().limit(100l).build();
