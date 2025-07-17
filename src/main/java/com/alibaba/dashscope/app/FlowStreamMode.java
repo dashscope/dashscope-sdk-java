@@ -11,7 +11,12 @@ public enum FlowStreamMode {
     /**
      * Use the same output pattern as the agent application.
      */
-    AGENT_FORMAT("agent_format");
+    AGENT_FORMAT("agent_format"),
+
+    /**
+     * Use the output node and end node to perform the output.
+     */
+    MESSAGE_FORMAT("message_format");
 
     private final String value;
 
