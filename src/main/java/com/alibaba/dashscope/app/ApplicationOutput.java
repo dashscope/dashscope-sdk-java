@@ -1,6 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.app;
 
+import com.alibaba.dashscope.common.Message;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
@@ -38,6 +39,10 @@ public class ApplicationOutput {
   /** Doc references for retrieval result */
   @SerializedName("doc_references")
   private List<DocReference> docReferences;
+
+  /** node result message */
+  @SerializedName("message")
+  private Message message;
 
   @SuperBuilder
   @Data
