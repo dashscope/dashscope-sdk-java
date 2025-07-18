@@ -22,7 +22,7 @@ public class WorkflowMessage {
     private Boolean nodeIsCompleted;
 
     @SerializedName("node_msg_seq_id")
-    private Boolean nodeMsgSeqId;
+    private Integer nodeMsgSeqId;
 
     @SerializedName("message")
     private Message message;
