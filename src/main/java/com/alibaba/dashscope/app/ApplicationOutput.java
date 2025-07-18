@@ -39,6 +39,10 @@ public class ApplicationOutput {
   @SerializedName("doc_references")
   private List<DocReference> docReferences;
 
+  /** workflow output message */
+  @SerializedName("workflow_message")
+  private WorkflowMessage workflowMessage;
+
   @SuperBuilder
   @Data
   @ToString
