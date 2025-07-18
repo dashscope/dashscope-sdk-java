@@ -60,6 +60,7 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
     private String mode;
     //    private int sampleRate;
     @Builder.Default private String audioFormat = CONST_AUDIO_FORMAT_PCM; //support pcm/opus
+    private Map<String, Object> passThroughParams;
   }
 
   @Builder
@@ -73,6 +74,7 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
     @Builder.Default private int pitchRate = 100; //50~200
     @Builder.Default private int speechRate = 100; //50~200
     @Builder.Default private String audioFormat = "pcm"; //support pcm/mp3
+    private Map<String, Object> passThroughParams;
   }
 
   @Builder
@@ -114,6 +116,7 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
     private Object userQueryParams;
     private Object userPromptParams;
     private Object videos;
+    private Map<String, Object> passThroughParams;
   }
 
   public void clearParameters() {
@@ -141,6 +144,9 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
       upStreamParams.put(CONST_NAME_UP_STREAM_TYPE, upStream.type);
       upStreamParams.put(CONST_NAME_UP_STREAM_MODE, upStream.mode);
       upStreamParams.put(CONST_NAME_UP_STREAM_AUDIO_FORMAT, upStream.audioFormat);
+      if (upStream.passThroughParams != null) {
+        upStreamParams.putAll(upStream.passThroughParams);
+      }
       params.put(CONST_NAME_UP_STREAM, upStreamParams);
     }
 
@@ -155,6 +161,9 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
       downStreamParams.put(CONST_NAME_DOWN_STREAM_VOLUME, downStream.volume);
       downStreamParams.put(CONST_NAME_DOWN_STREAM_PITCH_RATE, downStream.pitchRate);
       downStreamParams.put(CONST_NAME_DOWN_STREAM_SPEECH_RATE, downStream.speechRate);
+      if (downStream.passThroughParams != null) {
+        downStreamParams.putAll(downStream.passThroughParams);
+      }
       params.put(CONST_NAME_DOWN_STREAM, downStreamParams);
     }
 
@@ -193,6 +202,9 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
       bizParamsParams.put(CONST_NAME_BIZ_PARAMS_USER_QUERY_PARAMS, bizParams.userQueryParams);
       bizParamsParams.put(CONST_NAME_BIZ_PARAMS_USER_PROMPT_PARAMS, bizParams.userPromptParams);
       bizParamsParams.put(CONST_NAME_BIZ_PARAMS_VIDEOS, bizParams.videos);
+      if (bizParams.passThroughParams != null) {
+        bizParamsParams.putAll(bizParams.passThroughParams);
+      }
       params.put(CONST_NAME_BIZ_PARAMS, bizParamsParams);
     }
 
