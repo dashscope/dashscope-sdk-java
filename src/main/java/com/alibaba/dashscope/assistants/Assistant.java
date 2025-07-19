@@ -68,4 +68,30 @@ public final class Assistant extends FlattenResultBase {
    */
   @SerializedName("tools")
   private List<ToolBase> tools;
+
+  /**
+   * Top P
+   */
+  @SerializedName("top_p")
+  private Double topP;
+
+  /**
+   * Top K
+   */
+  @SerializedName("top_k")
+  private Integer topK;
+
+  /**
+   * Temperature
+   *
+   * <p>(Required)
+   */
+  @SerializedName("temperature")
+  private Double temperature;
+
+  /**
+   * Max Tokens
+   */
+  @SerializedName("max_tokens")
+  private Integer maxTokens;
 }

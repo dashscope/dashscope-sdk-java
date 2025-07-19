@@ -16,6 +16,8 @@ import com.alibaba.dashscope.threads.messages.ThreadMessage;
 import com.alibaba.dashscope.threads.runs.Run;
 import com.alibaba.dashscope.threads.runs.RunParam;
 import com.alibaba.dashscope.threads.runs.Runs;
+import com.alibaba.dashscope.tools.search.ToolQuarkSearch;
+import java.util.Collections;
 
 public class AssistantSimple {
     public static void assistantUsage() throws ApiException, NoApiKeyException, InputRequiredException, InvalidateParameter, InterruptedException {
@@ -27,8 +29,29 @@ public class AssistantSimple {
                 .name("intelligent guide")
                 .description("a smart guide")
                 .instructions("You are a helpful assistant.")
+                .tool(ToolQuarkSearch.builder().build())
+                .topP(0.8)
+                .topK(10)
+                .temperature(0.8)
+                .maxTokens(2048)
                 .build();
         Assistant assistant = assistants.create(param);
+        System.out.println(assistant);
+
+        // update assistant parameters
+//        param = AssistantParam.builder()
+//                // 此处以qwen-max为例，可按需更换模型名称。模型列表：https://help.aliyun.com/zh/model-studio/getting-started/models
+//                .model("qwen-plus")
+//                .name("intelligent guide")
+//                .description("a smart guide")
+//                .instructions("You are a helpful assistant.")
+//                .topP(0.7)
+//                .topK(9)
+//                .temperature(0.7)
+//                .maxTokens(1024)
+//                .build();
+//        assistant = assistants.update(assistant.getId(), param);
+//        System.out.println(assistant);
 
         // create a thread
         Threads threads = new Threads();

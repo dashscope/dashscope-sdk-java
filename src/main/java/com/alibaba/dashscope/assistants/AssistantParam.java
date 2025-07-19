@@ -42,6 +42,32 @@ public class AssistantParam extends FlattenHalfDuplexParamBase {
   @Default
   private Map<String, String> metadata = null;
 
+  /**
+   * Top P
+   */
+  @SerializedName("top_p")
+  private Double topP;
+
+  /**
+   * Top K
+   */
+  @SerializedName("top_k")
+  private Integer topK;
+
+  /**
+   * Temperature
+   *
+   * <p>(Required)
+   */
+  @SerializedName("temperature")
+  private Double temperature;
+
+  /**
+   * Max Tokens
+   */
+  @SerializedName("max_tokens")
+  private Integer maxTokens;
+
   @Override
   public JsonObject getHttpBody() {
     JsonObject requestObject = new JsonObject();
@@ -63,6 +89,18 @@ public class AssistantParam extends FlattenHalfDuplexParamBase {
     }
     if (metadata != null && !metadata.isEmpty()) {
       requestObject.add("metadata", JsonUtils.toJsonObject(metadata));
+    }
+    if (topP != null) {
+      requestObject.addProperty("top_p", topP);
+    }
+    if (topK != null) {
+      requestObject.addProperty("top_k", topK);
+    }
+    if (temperature != null) {
+      requestObject.addProperty("temperature", temperature);
+    }
+    if (maxTokens != null) {
+      requestObject.addProperty("max_tokens", maxTokens);
     }
     addExtraBody(requestObject);
     return requestObject;
