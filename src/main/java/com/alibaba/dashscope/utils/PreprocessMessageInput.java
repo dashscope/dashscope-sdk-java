@@ -49,6 +49,8 @@ public final class PreprocessMessageInput {
       } catch (URISyntaxException e) {
         throw new UploadFileException(e.getMessage());
       }
+    } else if (!message.getModal().equals("text") && message.getContent().startsWith("oss://")) {
+      isUpload = true;
     } else if (!message.getModal().equals("text") && !message.getContent().startsWith("http")) {
       if (isValidPath(message.getContent())) {
         File f = new File(message.getContent());
