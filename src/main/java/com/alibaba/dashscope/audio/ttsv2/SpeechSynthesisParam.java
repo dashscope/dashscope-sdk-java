@@ -4,12 +4,13 @@ import com.alibaba.dashscope.audio.tts.SpeechSynthesisApiKeywords;
 import com.alibaba.dashscope.audio.tts.SpeechSynthesisTextType;
 import com.alibaba.dashscope.base.FullDuplexServiceParam;
 import io.reactivex.Flowable;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /** @author lengjiayi */
 @EqualsAndHashCode(callSuper = true)
@@ -55,6 +56,9 @@ public class SpeechSynthesisParam extends FullDuplexServiceParam {
     params.put(SpeechSynthesisApiKeywords.PITCH_RATE, getPitchRate());
     params.put(SpeechSynthesisApiKeywords.WORD_TIMESTAMP, isEnableWordTimestamp());
     params.put(SpeechSynthesisApiKeywords.PHONEME_TIMESTAMP, isEnablePhonemeTimestamp());
+    if (getFormat().getFormat() == "opus") {
+      params.put(SpeechSynthesisApiKeywords.BIT_RATE, getFormat().getBitRate());
+    }
     params.putAll(parameters);
     return params;
   }

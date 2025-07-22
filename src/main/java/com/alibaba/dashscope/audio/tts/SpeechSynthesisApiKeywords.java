@@ -6,6 +6,7 @@ public class SpeechSynthesisApiKeywords {
   public static final String TEXT_TYPE = "text_type";
 
   public static final String FORMAT = "format";
+  public static final String BIT_RATE = "bit_rate";
   public static final String VOICE = "voice";
 
   public static final String SAMPLE_RATE = "sample_rate";
