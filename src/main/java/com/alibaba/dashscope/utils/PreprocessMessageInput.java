@@ -127,19 +127,27 @@ public final class PreprocessMessageInput {
       for (int i = 0; i < dstValue.size(); i++) {
         Object v = dstValue.get(i);
         if (v instanceof String) {
-          String dstV = checkAndUploadOneMultiModalMessage(model, apiKey, key, (String) v);
-          if (!dstV.equals(v)) {
+          if (!key.equals("text") && ((String)v).startsWith("oss://")) {
             isUpload = true;
-            ((List<Object>) dstValue).set(i, dstV);
+          } else {
+            String dstV = checkAndUploadOneMultiModalMessage(model, apiKey, key, (String) v);
+            if (!dstV.equals(v)) {
+              isUpload = true;
+              ((List<Object>) dstValue).set(i, dstV);
+            }
           }
         }
       }
       entry.setValue(dstValue);
     } else if (value instanceof String) {
-      String dstValue = checkAndUploadOneMultiModalMessage(model, apiKey, key, (String) value);
-      if (!dstValue.equals(value)) {
+      if (!key.equals("text") && ((String)value).startsWith("oss://")) {
         isUpload = true;
-        entry.setValue(dstValue);
+      } else {
+        String dstValue = checkAndUploadOneMultiModalMessage(model, apiKey, key, (String) value);
+        if (!dstValue.equals(value)) {
+          isUpload = true;
+          entry.setValue(dstValue);
+        }
       }
     }
     return isUpload;
