@@ -122,6 +122,15 @@ public class Run extends FlattenResultBase {
   @SerializedName("temperature")
   private Float temperature = null;
 
+  @SerializedName("top_p")
+  private Float topP;
+
+  @SerializedName("top_k")
+  private Integer topK;
+
+  @SerializedName("max_tokens")
+  private Integer maxTokens;
+
   @SerializedName("max_prompt_tokens")
   private Integer maxPromptTokens;
 

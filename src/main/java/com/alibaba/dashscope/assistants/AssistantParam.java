@@ -46,7 +46,7 @@ public class AssistantParam extends FlattenHalfDuplexParamBase {
    * Top P
    */
   @SerializedName("top_p")
-  private Double topP;
+  private Float topP;
 
   /**
    * Top K
@@ -60,7 +60,7 @@ public class AssistantParam extends FlattenHalfDuplexParamBase {
    * <p>(Required)
    */
   @SerializedName("temperature")
-  private Double temperature;
+  private Float temperature;
 
   /**
    * Max Tokens

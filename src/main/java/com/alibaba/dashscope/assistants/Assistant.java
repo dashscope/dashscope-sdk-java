@@ -73,7 +73,7 @@ public final class Assistant extends FlattenResultBase {
    * Top P
    */
   @SerializedName("top_p")
-  private Double topP;
+  private Float topP;
 
   /**
    * Top K
@@ -87,7 +87,7 @@ public final class Assistant extends FlattenResultBase {
    * <p>(Required)
    */
   @SerializedName("temperature")
-  private Double temperature;
+  private Float temperature;
 
   /**
    * Max Tokens

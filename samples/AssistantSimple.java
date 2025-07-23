@@ -30,9 +30,9 @@ public class AssistantSimple {
                 .description("a smart guide")
                 .instructions("You are a helpful assistant.")
                 .tool(ToolQuarkSearch.builder().build())
-                .topP(0.8)
-                .topK(10)
-                .temperature(0.8)
+                .topP(0.8f)
+                .topK(8)
+                .temperature(0.8f)
                 .maxTokens(2048)
                 .build();
         Assistant assistant = assistants.create(param);
@@ -63,7 +63,13 @@ public class AssistantSimple {
 
         // create run
         Runs runs = new Runs();
-        RunParam runParam = RunParam.builder().assistantId(assistant.getId()).build();
+        RunParam runParam = RunParam.builder()
+                .assistantId(assistant.getId())
+                .topP(0.7f)
+                .topK(7)
+                .temperature(0.7f)
+                .maxTokens(1024)
+                .build();
         Run run = runs.create(assistantThread.getId(), runParam);
         System.out.println(run);
 
