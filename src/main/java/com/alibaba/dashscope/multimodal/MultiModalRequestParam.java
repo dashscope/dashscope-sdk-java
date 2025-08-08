@@ -172,7 +172,7 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
       clientInfoParams.put(CONST_NAME_CLIENT_INFO_USER_ID, clientInfo.userId);
       if (clientInfo.device != null) {
         val deviceParams = new HashMap<String, Object>();
-        deviceParams.put(CONST_NAME_CLIENT_INFO_DEVICE_UUID, clientInfo.device);
+        deviceParams.put(CONST_NAME_CLIENT_INFO_DEVICE_UUID, clientInfo.device.uuid);
         clientInfoParams.put(CONST_NAME_CLIENT_INFO_DEVICE, deviceParams);
       }
       if (clientInfo.network != null) {
