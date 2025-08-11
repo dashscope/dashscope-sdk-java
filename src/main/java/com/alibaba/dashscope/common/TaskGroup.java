@@ -6,6 +6,7 @@ public enum TaskGroup {
   EMBEDDINGS("embeddings"),
   AUDIO("audio"),
   NLP("nlp"),
+  RERANK("rerank"),
   ;
 
   private final String value;
