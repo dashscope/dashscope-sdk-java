@@ -42,6 +42,7 @@ public class MultiModalDialogApiKeyWords {
   public static String CONST_NAME_CLIENT_INFO_LOCATION_LATITUDE = "latitude";
   public static String CONST_NAME_CLIENT_INFO_LOCATION_LONGITUDE = "longitude";
   public static String CONST_NAME_CLIENT_INFO_LOCATION_CITY_NAME = "city_name";
+  public static String CONST_NAME_CLIENT_INFO_ACTIVE_FOREGROUND_APP = "active_foreground_app";
 
   public static String CONST_NAME_BIZ_PARAMS_USER_DEFINED_PARAMS = "user_defined_params";
   public static String CONST_NAME_BIZ_PARAMS_USER_DEFINED_TOKENS = "user_defined_tokens";

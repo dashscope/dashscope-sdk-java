@@ -89,6 +89,8 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
     private Network network;
     private Locations location;
     private Object status;
+    private String activeForegroundApp;
+    private Map<String, Object> passThroughParams;
 
     @Builder
     public static class Network {
@@ -190,6 +192,12 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
       }
       if (clientInfo.status != null) {
         clientInfoParams.put(CONST_NAME_CLIENT_INFO_STATUS, clientInfo.status);
+      }
+      if (clientInfo.activeForegroundApp != null){
+        clientInfoParams.put(CONST_NAME_CLIENT_INFO_ACTIVE_FOREGROUND_APP, clientInfo.activeForegroundApp);
+      }
+      if (clientInfo.passThroughParams != null) {
+        clientInfoParams.putAll(clientInfo.passThroughParams);
       }
       params.put(CONST_NAME_CLIENT_INFO, clientInfoParams);
     }
