@@ -113,6 +113,8 @@ public class ApiKeywords {
 
   public static final String CONTENT_TYPE_IMAGE_URL = "image_url";
 
+  public static final String CONTENT_TYPE_CACHE_CONTROL = "cache_control";
+
   public static final String RESOURCE_ID = "resource_id";
 
   public static final String RESOURCE_TYPE = "resource_type";

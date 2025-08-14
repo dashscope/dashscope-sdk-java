@@ -32,11 +32,24 @@ public class MessageAdapter extends TypeAdapter<Message> {
       for (MessageContentBase content : value.getContents()) {
         if (content.getType().equals(ApiKeywords.CONTENT_TYPE_TEXT)) {
           // text content
+          MessageContentText textContent = (MessageContentText) content;
           out.beginObject();
           out.name("type");
           out.value(ApiKeywords.CONTENT_TYPE_TEXT);
           out.name(ApiKeywords.CONTENT_TYPE_TEXT);
-          out.value(((MessageContentText) content).getText());
+          out.value(textContent.getText());
+
+          // Write cache_control field if present
+          if (textContent.getCacheControl() != null) {
+            out.name(ApiKeywords.CONTENT_TYPE_CACHE_CONTROL);
+            out.beginObject();
+            out.name("type");
+            out.value(textContent.getCacheControl().getType());
+            out.name("ttl");
+            out.value(textContent.getCacheControl().getTtl());
+            out.endObject();
+          }
+
           out.endObject();
         } else if (content.getType().equals(ApiKeywords.CONTENT_TYPE_IMAGE_URL)) {
           out.beginObject();
