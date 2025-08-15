@@ -1,6 +1,7 @@
 package com.alibaba.dashscope.aigc.multimodalconversation;
 
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
+import com.alibaba.dashscope.common.ResponseFormat;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.tools.ToolBase;
 import com.alibaba.dashscope.utils.ApiKeywords;
@@ -128,6 +129,9 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
   /** enable vl_enable_image_hw_output */
   protected Boolean vlEnableImageHwOutput;
 
+  /** response format */
+  private ResponseFormat responseFormat;
+
   @Override
   public JsonObject getHttpBody() {
     JsonObject requestObject = new JsonObject();
@@ -231,6 +235,10 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
 
     if (vlEnableImageHwOutput != null) {
       params.put("vl_enable_image_hw_output", vlEnableImageHwOutput);
+    }
+
+    if (responseFormat != null) {
+      params.put("response_format", responseFormat);
     }
 
     params.putAll(parameters);

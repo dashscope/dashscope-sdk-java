@@ -8,6 +8,7 @@ import java.util.*;
 import com.alibaba.dashscope.aigc.multimodalconversation.*;
 import com.alibaba.dashscope.common.Message;
 import com.alibaba.dashscope.common.MultiModalMessage;
+import com.alibaba.dashscope.common.ResponseFormat;
 import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
@@ -37,6 +38,7 @@ public class MultiModalConversationUsage {
                 .model(MultiModalConversationUsage.modelName).message(systemMessage)
                 .vlHighResolutionImages(true)
                 .vlEnableImageHwOutput(true)
+                .responseFormat(ResponseFormat.from(ResponseFormat.TEXT))
 //                .incrementalOutput(true)
                 .message(userMessage).build();
         MultiModalConversationResult result = conv.call(param);
