@@ -132,6 +132,21 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
   /** response format */
   private ResponseFormat responseFormat;
 
+  /** negative prompt */
+  private String negativePrompt;
+
+  /** prompt extend */
+  private Boolean promptExtend;
+
+  /** watermark */
+  private Boolean watermark;
+
+  /** picture size */
+  private String size;
+
+  /** number of images */
+  private Integer n;
+
   @Override
   public JsonObject getHttpBody() {
     JsonObject requestObject = new JsonObject();
@@ -239,6 +254,26 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
 
     if (responseFormat != null) {
       params.put("response_format", responseFormat);
+    }
+
+    if (negativePrompt != null) {
+      params.put("negative_prompt", negativePrompt);
+    }
+
+    if (promptExtend != null) {
+      params.put("prompt_extend", promptExtend);
+    }
+
+    if (watermark != null) {
+      params.put("watermark", watermark);
+    }
+
+    if (size != null) {
+      params.put("size", size);
+    }
+
+    if (n != null) {
+      params.put("n", n);
     }
 
     params.putAll(parameters);

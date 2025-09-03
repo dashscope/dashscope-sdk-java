@@ -23,6 +23,15 @@ public class MultiModalConversationUsage {
   @SerializedName("audio_tokens")
   private Integer audioTokens;
 
+  @SerializedName("image_count")
+  private Integer imageCount;
+
+  @SerializedName("width")
+  private Integer width;
+
+  @SerializedName("height")
+  private Integer height;
+
   @SerializedName("input_tokens_details")
   private MultiModalConversationTokensDetails inputTokensDetails;
 
