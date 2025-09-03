@@ -37,4 +37,7 @@ public class MultiModalMessage {
 
   /** chain of thought content */
   String reasoningContent;
+
+  /** annotations result for message */
+  private List<Map<String, Object>> annotations;
 }

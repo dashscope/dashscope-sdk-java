@@ -175,4 +175,6 @@ public class ApiKeywords {
    public static final String RESOLUTION = "resolution";
 
    public static final String WITH_AUDIO = "with_audio";
+
+  public static final String ANNOTATIONS = "annotations";
 }
