@@ -10,7 +10,6 @@ import com.alibaba.dashscope.exception.UploadFileException;
 import com.alibaba.dashscope.utils.GsonExclude;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.alibaba.dashscope.utils.PreprocessInputImage;
-import com.alibaba.dashscope.utils.PreprocessMessageInput;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -28,7 +27,7 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
 
   @Builder.Default private Map<String, String> inputChecks = new HashMap<>();
 
-  @Builder.Default private String size = VideoSynthesis.Size.DEFAULT;
+  @Builder.Default private String size = null;
 
   @Builder.Default private Integer steps = null;
 
@@ -57,7 +56,7 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
   @GsonExclude @Singular protected Map<String, Object> extraInputs;
 
   /** Duration of video generation. The default value is 5, in seconds */
-  @Builder.Default private Integer duration = VideoSynthesis.Duration.DEFAULT;
+  @Builder.Default private Integer duration = null;
 
   /** The URL of the first frame image for generating the video. */
   @Builder.Default private String firstFrameUrl = null;
@@ -72,7 +71,7 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
   @Builder.Default private Boolean withAudio = Boolean.FALSE;
 
   /** The resolution of the generated video */
-  @Builder.Default private String resolution = VideoSynthesis.Resolution.DEFAULT;
+  @Builder.Default private String resolution = null;
 
   /** The inputs of the model. */
   @Override
@@ -124,11 +123,17 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
   @Override
   public Map<String, Object> getParameters() {
     Map<String, Object> params = new HashMap<>();
-    params.put(DURATION, duration);
+    if (duration != null) {
+      params.put(DURATION, duration);
+    }
 
-    params.put(SIZE, size);
+    if (size != null) {
+      params.put(SIZE, size);
+    }
 
-    params.put(RESOLUTION, resolution);
+    if (resolution != null) {
+      params.put(RESOLUTION, resolution);
+    }
 
     params.put(WITH_AUDIO, withAudio);
 

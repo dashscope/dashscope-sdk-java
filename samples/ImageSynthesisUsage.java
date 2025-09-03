@@ -28,6 +28,21 @@ public class ImageSynthesisUsage {
     System.out.println(result);
   }
 
+  public static void synCall() throws ApiException, NoApiKeyException {
+    ImageSynthesis is = new ImageSynthesis();
+    ImageSynthesisParam param =
+            ImageSynthesisParam.builder()
+                    .model("wan2.2-t2i-flash")
+                    .prompt("一直森林中的白色的猫")
+                    .n(1)
+                    .parameter("prompt_extend", false)
+                    .parameter("watermark", true)
+                    .build();
+
+    ImageSynthesisResult result = is.syncCall(param);
+    System.out.println(result);
+  }
+
   public static void listTask() throws ApiException, NoApiKeyException {
     ImageSynthesis is = new ImageSynthesis();
     AsyncTaskListParam param = AsyncTaskListParam.builder().build();
@@ -46,7 +61,8 @@ public class ImageSynthesisUsage {
 
   public static void main(String[] args){
     try{
-      basicCall();
+      // basicCall();
+      synCall();
       //listTask();
     }catch(ApiException|NoApiKeyException e){
       System.out.println(e.getMessage());

@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.aigc.imagesynthesis;
 
 import com.alibaba.dashscope.api.AsynchronousApi;
+import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
 import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.exception.ApiException;
@@ -21,6 +22,7 @@ public final class ImageSynthesis {
   private final String taskGroup = "aigc";
 
   private final AsynchronousApi<HalfDuplexServiceParam> asyncApi;
+  private final GeneralApi<HalfDuplexServiceParam> syncApi;
   private final ApiServiceOption createServiceOptions;
   private final String baseUrl;
 
@@ -48,6 +50,7 @@ public final class ImageSynthesis {
   public ImageSynthesis() {
     // only support http
     asyncApi = new AsynchronousApi<HalfDuplexServiceParam>();
+    syncApi = new GeneralApi<HalfDuplexServiceParam>();
     createServiceOptions =
         ApiServiceOption.builder()
             .protocol(Protocol.HTTP)
@@ -69,6 +72,7 @@ public final class ImageSynthesis {
   public ImageSynthesis(String task) {
     // only support http
     asyncApi = new AsynchronousApi<HalfDuplexServiceParam>();
+    syncApi = new GeneralApi<HalfDuplexServiceParam>();
     createServiceOptions =
         ApiServiceOption.builder()
             .protocol(Protocol.HTTP)
@@ -91,6 +95,7 @@ public final class ImageSynthesis {
   public ImageSynthesis(String task, String baseUrl) {
     // only support http
     asyncApi = new AsynchronousApi<HalfDuplexServiceParam>();
+    syncApi = new GeneralApi<HalfDuplexServiceParam>();
     createServiceOptions =
         ApiServiceOption.builder()
             .protocol(Protocol.HTTP)
@@ -119,6 +124,24 @@ public final class ImageSynthesis {
     }
     return ImageSynthesisResult.fromDashScopeResult(
         asyncApi.asyncCall(param, serviceOption));
+  }
+
+  /**
+   *  Note: This method currently now only supports wan2.2-t2i-flash and wan2.2-t2i-plus.
+   *    Using other models will result in an error，More raw image models may be added for use later
+   */
+  public ImageSynthesisResult syncCall(ImageSynthesisParam param)
+          throws ApiException, NoApiKeyException {
+    // add local file support
+    try {
+      param.checkAndUpload();
+    }catch (UploadFileException e){
+      throw new ApiException(e);
+    }
+    ApiServiceOption serviceOption = createServiceOptions;
+    serviceOption.setIsAsyncTask(false);
+    return ImageSynthesisResult.fromDashScopeResult(
+            syncApi.call(param, serviceOption));
   }
 
   /**
