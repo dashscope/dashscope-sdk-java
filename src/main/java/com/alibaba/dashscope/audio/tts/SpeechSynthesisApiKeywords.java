@@ -34,4 +34,12 @@ public class SpeechSynthesisApiKeywords {
   public static final String TIMESTAMP_TEXT = "text";
 
   public static final String TONE = "tone";
+
+  public static final String INSTRUCTION = "instruction";
+
+  public static final String SEED = "seed";
+
+  public static final String LANGUAGE_HINTS = "language_hints";
+
+  public static final String STYLE = "style";
 }

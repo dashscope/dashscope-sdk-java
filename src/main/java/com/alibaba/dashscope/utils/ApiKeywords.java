@@ -179,4 +179,6 @@ public class ApiKeywords {
    public static final String PROMPT_EXTEND = "prompt_extend";
 
    public static final String WATERMARK = "watermark";
+
+  public static final String ANNOTATIONS = "annotations";
 }

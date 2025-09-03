@@ -32,6 +32,9 @@ public class MultiModalConversationUsage {
   @SerializedName("height")
   private Integer height;
 
+  @SerializedName("seconds")
+  private Integer seconds;
+
   @SerializedName("input_tokens_details")
   private MultiModalConversationTokensDetails inputTokensDetails;
 
