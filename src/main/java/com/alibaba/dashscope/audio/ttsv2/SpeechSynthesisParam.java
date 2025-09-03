@@ -10,6 +10,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /** @author lengjiayi */
@@ -44,6 +45,19 @@ public class SpeechSynthesisParam extends FullDuplexServiceParam {
   @Builder.Default private long connectionTimeout = -1;
   @Builder.Default private long firstPackageTimeout = -1;
 
+  /**
+   * the following parameters take effect
+   * only in CosyVoice V3 and later versions.
+   * instruction for synthesis. */
+  @Builder.Default private String instruction = null;
+  /** random seed. */
+  @Builder.Default private int seed = 0;
+  /** language hints. */
+  @Builder.Default private List<String> languageHints = null;
+  /** synthesis style */
+  @Builder.Default private int style = 0;
+
+
   @Override
   public Map<String, Object> getParameters() {
     Map<String, Object> params = new HashMap<>();
@@ -58,6 +72,18 @@ public class SpeechSynthesisParam extends FullDuplexServiceParam {
     params.put(SpeechSynthesisApiKeywords.PHONEME_TIMESTAMP, isEnablePhonemeTimestamp());
     if (getFormat().getFormat() == "opus") {
       params.put(SpeechSynthesisApiKeywords.BIT_RATE, getFormat().getBitRate());
+    }
+    if (getInstruction() != null) {
+      params.put(SpeechSynthesisApiKeywords.INSTRUCTION, getInstruction());
+    }
+    if (getSeed() != 0) {
+      params.put(SpeechSynthesisApiKeywords.SEED, getSeed());
+    }
+    if (getLanguageHints() != null) {
+      params.put(SpeechSynthesisApiKeywords.LANGUAGE_HINTS, getLanguageHints());
+    }
+    if (getStyle() != 0) {
+      params.put(SpeechSynthesisApiKeywords.STYLE, getStyle());
     }
     params.putAll(parameters);
     return params;
