@@ -35,8 +35,8 @@ public class ImageSynthesisUsage {
                     .model("wan2.2-t2i-flash")
                     .prompt("一直森林中的白色的猫")
                     .n(1)
-                    .parameter("prompt_extend", false)
-                    .parameter("watermark", true)
+                    .promptExtend(false)
+                    .watermark(true)
                     .build();
 
     ImageSynthesisResult result = is.syncCall(param);

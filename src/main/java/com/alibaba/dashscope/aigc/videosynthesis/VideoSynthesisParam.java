@@ -73,6 +73,10 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
   /** The resolution of the generated video */
   @Builder.Default private String resolution = null;
 
+  @Builder.Default private Boolean promptExtend = null;
+
+  @Builder.Default private Boolean watermark = null;
+
   /** The inputs of the model. */
   @Override
   public JsonObject getInput() {
@@ -142,6 +146,12 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
     }
     if (seed != null) {
       params.put(SEED, seed);
+    }
+    if (promptExtend != null) {
+      params.put(PROMPT_EXTEND, promptExtend);
+    }
+    if (watermark != null) {
+      params.put(WATERMARK, watermark);
     }
     params.putAll(super.getParameters());
     return params;

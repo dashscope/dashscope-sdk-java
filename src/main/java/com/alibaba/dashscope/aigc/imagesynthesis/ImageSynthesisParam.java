@@ -49,6 +49,10 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
   /** The extra parameters. */
   @GsonExclude @Singular protected Map<String, Object> extraInputs;
 
+  @Builder.Default private Boolean promptExtend = null;
+
+  @Builder.Default private Boolean watermark = null;
+
   @Override
   public JsonObject getInput() {
     JsonObject jsonObject = new JsonObject();
@@ -104,6 +108,12 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
     }
     if (style != null) {
       params.put(STYLE, style);
+    }
+    if (promptExtend != null) {
+      params.put(PROMPT_EXTEND, promptExtend);
+    }
+    if (watermark != null) {
+      params.put(WATERMARK, watermark);
     }
 
     params.putAll(super.getParameters());
