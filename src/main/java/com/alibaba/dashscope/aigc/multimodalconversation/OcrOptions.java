@@ -34,7 +34,10 @@ public class OcrOptions implements Serializable {
     FORMULA_RECOGNITION,
 
     @SerializedName("multi_lan")
-    MULTI_LAN
+    MULTI_LAN,
+
+    @SerializedName("advanced_recognition")
+    ADVANCED_RECOGNITION
   }
 
   @Data

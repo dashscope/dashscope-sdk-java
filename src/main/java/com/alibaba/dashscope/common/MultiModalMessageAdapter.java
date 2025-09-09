@@ -37,8 +37,12 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
       out.value((String) value);
     } else if (value instanceof Integer) {
       out.value((Integer) value);
+    } else if (value instanceof Long) {
+      out.value((Long) value);
     } else if (value instanceof Double) {
       out.value((Double) value);
+    } else if (value instanceof Float) {
+      out.value((Float) value);
     } else if (value instanceof Boolean) {
       out.value((Boolean) value);
     } else if (value instanceof Character) {
