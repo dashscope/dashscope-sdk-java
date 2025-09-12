@@ -24,7 +24,7 @@ public final class DashScopeHeaders {
       String apiKey, boolean isSecurityCheck, String workspace, Map<String, String> customHeaders)
       throws NoApiKeyException {
     Map<String, String> headers = new HashMap<>();
-    headers.put("Authorization", "bearer " + ApiKey.getApiKey(apiKey));
+    headers.put("Authorization", "Bearer " + ApiKey.getApiKey(apiKey));
     headers.put("user-agent", userAgent());
     if (workspace != null && !workspace.isEmpty()) {
       headers.put("X-DashScope-WorkSpace", workspace);
