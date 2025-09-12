@@ -39,6 +39,11 @@ public class TextReRankParam extends HalfDuplexServiceParam {
    */
   private Boolean returnDocuments;
 
+  /**
+   * The instruction for reranking.
+   */
+  private String instruct;
+
   @Override
   public JsonObject getHttpBody() {
     JsonObject requestObject = new JsonObject();
@@ -70,7 +75,11 @@ public class TextReRankParam extends HalfDuplexServiceParam {
     if (returnDocuments != null) {
       params.put("return_documents", returnDocuments);
     }
-    
+
+    if (instruct != null) {
+      params.put("instruct", instruct);
+    }
+
     params.putAll(parameters);
     return params;
   }

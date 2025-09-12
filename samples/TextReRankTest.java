@@ -12,6 +12,8 @@ import java.util.Arrays;
 
 public class TextReRankTest {
 
+  private static final String MODEL_NAME = System.getenv("MODEL_NAME");
+
   public static void main(String[] args) {
     try {
       // Create TextReRank instance
@@ -19,7 +21,7 @@ public class TextReRankTest {
 
       // Create parameters
       TextReRankParam param = TextReRankParam.builder()
-          .model(TextReRank.Models.GTE_RERANK_V2)
+          .model(MODEL_NAME)
           .query("什么是文本排序模型")
           .documents(Arrays.asList(
               "文本排序模型广泛用于搜索引擎和推荐系统中，它们根据文本相关性对候选文本进行排序",
@@ -28,6 +30,7 @@ public class TextReRankTest {
           ))
           .topN(10)
           .returnDocuments(true)
+          .instruct("Retrieval document that can answer users query.")
           .build();
 
       // Call the API
