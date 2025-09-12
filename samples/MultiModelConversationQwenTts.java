@@ -47,7 +47,10 @@ public class MultiModelConversationQwenTts {
                 .voice(AudioParameters.Voice.DYLAN)
                 .build();
         MultiModalConversationResult result = conv.call(param);
-        System.out.print(result);
+        System.out.println(result);
+        if (result.getUsage()!=null) {
+            System.out.println("usage:"+ JsonUtils.toJson(result.getUsage()));
+        }
     }
 
     public static void streamCall() throws ApiException, NoApiKeyException, UploadFileException {
