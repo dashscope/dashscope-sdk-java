@@ -59,77 +59,11 @@ public class AudioParameters implements Serializable {
     @SerializedName("Sunny")
     SUNNY("Sunny"),
 
-    @SerializedName("Momo")
-    MOMO("Momo"),
-
-    @SerializedName("Rhodes")
-    RHODES("Rhodes"),
-
-    @SerializedName("Vivian")
-    VIVIAN("Vivian"),
-
-    @SerializedName("Moon")
-    MOON("Moon"),
-
-    @SerializedName("Maia")
-    MAIA("Maia"),
-
-    @SerializedName("Kai")
-    KAI("Kai"),
-
     @SerializedName("Nofish")
     NOFISH("Nofish"),
 
-    @SerializedName("Bella")
-    BELLA("Bella"),
-
     @SerializedName("Jennifer")
     JENNIFER("Jennifer"),
-
-    @SerializedName("Aiden")
-    AIDEN("Aiden"),
-
-    @SerializedName("Bodega")
-    BODEGA("Bodega"),
-
-    @SerializedName("Sonrisa")
-    SONRISA("Sonrisa"),
-
-    @SerializedName("Alek")
-    ALEK("Alek"),
-
-    @SerializedName("Dolce")
-    DOLCE("Dolce"),
-
-    @SerializedName("Ivan")
-    IVAN("Ivan"),
-
-    @SerializedName("Sohee")
-    SOHEE("Sohee"),
-
-    @SerializedName("Ono Anna")
-    ONO_ANNA("Ono Anna"),
-
-    @SerializedName("Lenn")
-    LENN("Lenn"),
-
-    @SerializedName("Inna")
-    INNA("Inna"),
-
-    @SerializedName("Najm")
-    NAJM("Najm"),
-
-    @SerializedName("Lamia")
-    LAMIA("Lamia"),
-
-    @SerializedName("Emilien")
-    EMILIEN("Emilien"),
-
-    @SerializedName("Andre")
-    ANDRE("Andre"),
-
-    @SerializedName("Radio Gol")
-    RADIO_GOL("Radio Gol"),
 
     @SerializedName("Li")
     LI("Li"),
@@ -143,8 +77,8 @@ public class AudioParameters implements Serializable {
     @SerializedName("Peter")
     PETER("Peter"),
 
-    @SerializedName("Christy")
-    CHRISTY("Christy"),
+    @SerializedName("Eric")
+    ERIC("Eric"),
 
     @SerializedName("Rocky")
     ROCKY("Rocky"),
@@ -152,50 +86,14 @@ public class AudioParameters implements Serializable {
     @SerializedName("Kiki")
     KIKI("Kiki"),
 
-    @SerializedName("Eric")
-    ERIC("Eric"),
+    @SerializedName("Ryan")
+    RYAN("Ryan"),
 
-    @SerializedName("Eldric Sage")
-    ELDRIC_SAGE("Eldric Sage"),
-
-    @SerializedName("Mia")
-    MIA("Mia"),
-
-    @SerializedName("Mochi")
-    MOCHI("Mochi"),
-
-    @SerializedName("Bellona")
-    BELLONA("Bellona"),
-
-    @SerializedName("Vincent")
-    VINCENT("Vincent"),
-
-    @SerializedName("Bunny")
-    BUNNY("Bunny"),
-
-    @SerializedName("Neil")
-    NEIL("Neil"),
+    @SerializedName("Katerina")
+    KATERINA("Katerina"),
 
     @SerializedName("Elias")
-    ELIAS("Elias"),
-
-    @SerializedName("Arthur")
-    ARTHUR("Arthur"),
-
-    @SerializedName("Nini")
-    NINI("Nini"),
-
-    @SerializedName("Ebona")
-    EBONA("Ebona"),
-
-    @SerializedName("Seren")
-    SEREN("Seren"),
-
-    @SerializedName("Pip")
-    PIP("Pip"),
-
-    @SerializedName("Stella")
-    STELLA("Stella");
+    ELIAS("Elias");
 
     private final String value;
 
