@@ -181,4 +181,6 @@ public class ApiKeywords {
    public static final String WATERMARK = "watermark";
 
   public static final String ANNOTATIONS = "annotations";
+
+  public static final String LANGUAGE_TYPE = "language_type";
 }

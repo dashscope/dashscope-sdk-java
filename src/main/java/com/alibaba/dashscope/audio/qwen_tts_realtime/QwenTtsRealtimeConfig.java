@@ -23,6 +23,8 @@ public class QwenTtsRealtimeConfig {
   QwenTtsRealtimeAudioFormat responseFormat = QwenTtsRealtimeAudioFormat.PCM_24000HZ_MONO_16BIT;
   /** mode */
   @Builder.Default String mode = "server_commit";
+  /** languageType for tts */
+  @Builder.Default String languageType = null;
   /** The extra parameters. */
   @Builder.Default Map<String, Object> parameters = null;
 
@@ -32,6 +34,9 @@ public class QwenTtsRealtimeConfig {
     config.put(QwenTtsRealtimeConstants.MODE, mode);
     config.put(QwenTtsRealtimeConstants.RESPONSE_FORMAT, responseFormat.getFormat());
     config.put(QwenTtsRealtimeConstants.SAMPLE_RATE, responseFormat.getSampleRate());
+    if (languageType != null) {
+      config.put(QwenTtsRealtimeConstants.LANGUAGE_TYPE,languageType);
+    }
     if (parameters != null) {
       for (Map.Entry<String, Object> entry : parameters.entrySet()) {
         config.put(entry.getKey(), entry.getValue());

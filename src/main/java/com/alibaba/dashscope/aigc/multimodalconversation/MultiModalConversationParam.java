@@ -147,6 +147,9 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
   /** number of images */
   private Integer n;
 
+  /** language type for tts */
+  private String languageType;
+
   @Override
   public JsonObject getHttpBody() {
     JsonObject requestObject = new JsonObject();
@@ -170,6 +173,10 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
 
     if (voice != null) {
       jsonObject.addProperty(ApiKeywords.VOICE, voice.getValue());
+    }
+
+    if (languageType != null) {
+      jsonObject.addProperty(ApiKeywords.LANGUAGE_TYPE, languageType);
     }
 
     return jsonObject;
