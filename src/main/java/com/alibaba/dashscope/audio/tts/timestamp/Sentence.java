@@ -18,7 +18,10 @@ public class Sentence {
   @SerializedName("end_time")
   int endTime;
 
+  @SerializedName("index")
+  int index;
   /** Sentence words. */
+  @SerializedName("words")
   List<Word> words;
 
   public static Sentence from(String message) {

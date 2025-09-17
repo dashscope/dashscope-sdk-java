@@ -132,6 +132,7 @@ public class TestQwenTtsRealtime {
                 QwenTtsRealtimeConfig.builder()
                         .voice("Chelsie")
                         .mode("commit")
+                        .languageType("zh")
                         .build();
         ttsRealtime.updateSession(config);
         ttsRealtime.appendText("你好");

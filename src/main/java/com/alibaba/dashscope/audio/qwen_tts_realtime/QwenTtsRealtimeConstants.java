@@ -9,6 +9,7 @@ public class QwenTtsRealtimeConstants {
   public static final String MODE = "mode";
   public static final String RESPONSE_FORMAT = "response_format";
   public static final String SAMPLE_RATE = "sample_rate";
+  public static final String LANGUAGE_TYPE = "language_type";
   public static final String PROTOCOL_EVENT_ID = "event_id";
   public static final String PROTOCOL_TYPE = "type";
   public static final String PROTOCOL_SESSION = "session";
