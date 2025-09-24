@@ -17,7 +17,8 @@ import com.alibaba.dashscope.threads.runs.Run;
 import com.alibaba.dashscope.threads.runs.RunParam;
 import com.alibaba.dashscope.threads.runs.Runs;
 import com.alibaba.dashscope.tools.search.ToolQuarkSearch;
-import java.util.Collections;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class AssistantSimple {
     public static void assistantUsage() throws ApiException, NoApiKeyException, InputRequiredException, InvalidateParameter, InterruptedException {
@@ -35,8 +36,36 @@ public class AssistantSimple {
                 .temperature(0.8f)
                 .maxTokens(2048)
                 .build();
+        // Log before creating assistant with millisecond precision
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        long startTime = System.currentTimeMillis();
+        System.out.println(sdf.format(new Date(startTime)) + 
+                " - Starting assistant creation");
         Assistant assistant = assistants.create(param);
+
+        // Log after creating assistant with duration
+        long endTime = System.currentTimeMillis();
+        System.out.println(sdf.format(new Date(endTime)) + 
+                " - Assistant creation completed, duration: " + 
+                (endTime - startTime) + "ms");
         System.out.println(assistant);
+
+        // sleep for 1 second
+
+        // Log before creating assistant with millisecond precision
+        startTime = System.currentTimeMillis();
+        System.out.println(sdf.format(new Date(startTime)) +
+                " - Starting assistant creation");
+
+        assistant = assistants.create(param);
+
+        // Log after creating assistant with duration
+        endTime = System.currentTimeMillis();
+        System.out.println(sdf.format(new Date(endTime)) +
+                " - Assistant creation completed, duration: " +
+                (endTime - startTime) + "ms");
+        System.out.println(assistant);
+
 
         // update assistant parameters
 //        param = AssistantParam.builder()
