@@ -36,6 +36,7 @@ public class MultiModalMessage {
   String name;
 
   /** chain of thought content */
+  @SerializedName("reasoning_content")
   String reasoningContent;
 
   /** annotations result for message */

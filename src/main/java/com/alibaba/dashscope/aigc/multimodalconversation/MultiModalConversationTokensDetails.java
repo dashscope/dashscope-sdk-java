@@ -16,4 +16,7 @@ public class MultiModalConversationTokensDetails {
 
   @SerializedName("video_tokens")
   private Integer videoTokens;
+
+  @SerializedName("reasoning_tokens")
+  private Integer reasoningTokens;
 }

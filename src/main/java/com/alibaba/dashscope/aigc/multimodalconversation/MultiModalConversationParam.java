@@ -150,6 +150,12 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
   /** language type for tts */
   private String languageType;
 
+  /** enable thinking */
+  private Boolean enableThinking;
+
+  /** thinking budget */
+  private Integer thinkingBudget;
+
   @Override
   public JsonObject getHttpBody() {
     JsonObject requestObject = new JsonObject();
@@ -281,6 +287,14 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
 
     if (n != null) {
       params.put("n", n);
+    }
+
+    if (enableThinking != null) {
+      params.put("enable_thinking", enableThinking);
+    }
+
+    if (thinkingBudget != null) {
+      params.put("thinking_budget", thinkingBudget);
     }
 
     params.putAll(parameters);

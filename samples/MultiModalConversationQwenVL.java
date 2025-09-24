@@ -10,9 +10,11 @@ import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.exception.UploadFileException;
+import com.alibaba.dashscope.utils.JsonUtils;
+import io.reactivex.Flowable;
 
 public class MultiModalConversationQwenVL {
-    private static final String modelName = "qwen-vl-max-latest";
+    private static final String modelName = System.getenv("MODEL_NAME");
     public static void videoImageListSample() throws ApiException, NoApiKeyException, UploadFileException {
         MultiModalConversation conv = new MultiModalConversation();
         MultiModalMessage systemMessage = MultiModalMessage.builder().role(Role.SYSTEM.getValue())
@@ -25,10 +27,18 @@ public class MultiModalConversationQwenVL {
         Collections.singletonMap("text", "描述这个视频的具体过程"))).build();
 
         MultiModalConversationParam param = MultiModalConversationParam.builder()
-                .model(MultiModalConversationQwenVL.modelName).message(systemMessage)
+                .model(MultiModalConversationQwenVL.modelName)
+                .enableThinking(true)
+                .thinkingBudget(20)
+                .message(systemMessage)
                 .message(userMessage).build();
-        MultiModalConversationResult result = conv.call(param);
-        System.out.print(result);
+//        MultiModalConversationResult result = conv.call(param);
+//        System.out.print(result);
+
+        Flowable<MultiModalConversationResult> results = conv.streamCall(param);
+        results.blockingForEach(result -> {
+            System.out.println(JsonUtils.toJson(result));
+        });
     }
 
     public static void main(String[] args) {
