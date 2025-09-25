@@ -16,8 +16,12 @@ public class GenerationStreamCall {
   public static void streamCall()
       throws NoApiKeyException, ApiException, InputRequiredException {
     Generation gen = new Generation();
-    GenerationParam param = GenerationParam.builder().model(Generation.Models.QWEN_PLUS)
-        .prompt("就当前的海洋污染的情况，写一份限塑的倡议书提纲，需要有理有据地号召大家克制地使用塑料制品").topP(0.8).build();
+    GenerationParam param = GenerationParam.builder()
+            .model("qwen3-max")
+            .prompt("就当前的海洋污染的情况，写一份限塑的倡议书提纲，需要有理有据地号召大家克制地使用塑料制品")
+            .topP(0.8)
+            .incrementalOutput(false)
+            .build();
     Flowable<GenerationResult> result = gen.streamCall(param);
     result.blockingForEach(message -> {
       System.out.println(JsonUtils.toJson(message));
