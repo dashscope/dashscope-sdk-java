@@ -7,12 +7,11 @@ package com.alibaba.dashscope.multimodal;
 
 import com.alibaba.dashscope.base.FullDuplexServiceParam;
 import io.reactivex.Flowable;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
-import lombok.val;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,9 +57,25 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
   public static class UpStream {
     private String type = "AudioOnly";
     private String mode;
-    //    private int sampleRate;
+    private AsrPostProcessing asrPostProcessing;
+    @Builder.Default private Integer sampleRate = 16000;
+    private String vocabularyId = null;
     @Builder.Default private String audioFormat = CONST_AUDIO_FORMAT_PCM; //support pcm/opus
     private Map<String, Object> passThroughParams;
+
+    @Builder
+    @Setter
+    public static class AsrPostProcessing {
+      private List<ReplaceWord> replaceWords;
+
+      @Builder
+      @Setter
+      public static class ReplaceWord {
+        private String source;
+        private String target;
+        private String matchMode;
+      }
+    }
   }
 
   @Builder
@@ -83,6 +98,7 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
   }
 
   @Builder
+  @Setter
   public static class ClientInfo {
     private String userId;
     private Device device;
@@ -91,6 +107,7 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
     private Object status;
     private String activeForegroundApp;
     private Map<String, Object> passThroughParams;
+    private String sdk;
 
     @Builder
     public static class Network {
@@ -133,6 +150,8 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
 
   @Builder
   public static class UpdateParams {
+    UpStream upStream;
+    DownStream downStream;
     List<Object> images;
     BizParams bizParams;
     ClientInfo clientInfo;
@@ -146,6 +165,16 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
       upStreamParams.put(CONST_NAME_UP_STREAM_TYPE, upStream.type);
       upStreamParams.put(CONST_NAME_UP_STREAM_MODE, upStream.mode);
       upStreamParams.put(CONST_NAME_UP_STREAM_AUDIO_FORMAT, upStream.audioFormat);
+      if (upStream.asrPostProcessing != null){
+        final var asrPostProcessingParams = getUpstreamAsrPostProcessing();
+        if (!asrPostProcessingParams.isEmpty()) {
+          upStreamParams.put(CONST_NAME_ASR_POST_PROCESSING, asrPostProcessingParams);
+        }
+      }
+      upStreamParams.put(CONST_NAME_DOWN_STREAM_SAMPLE_RATE, upStream.sampleRate);
+      if (upStream.vocabularyId != null) {
+        upStreamParams.put(CONST_NAME_VOCABULARY_ID, upStream.vocabularyId);
+      }
       if (upStream.passThroughParams != null) {
         upStreamParams.putAll(upStream.passThroughParams);
       }
@@ -199,17 +228,32 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
       if (clientInfo.passThroughParams != null) {
         clientInfoParams.putAll(clientInfo.passThroughParams);
       }
+      if (clientInfo.sdk != null){
+        clientInfoParams.put(CONST_NAME_CLIENT_INFO_SDK, clientInfo.sdk);
+      }
       params.put(CONST_NAME_CLIENT_INFO, clientInfoParams);
     }
 
     if (bizParams != null) {
       val bizParamsParams = new HashMap<String, Object>();
-      bizParamsParams.put(CONST_NAME_BIZ_PARAMS_USER_DEFINED_PARAMS, bizParams.userDefinedParams);
-      bizParamsParams.put(CONST_NAME_BIZ_PARAMS_USER_DEFINED_TOKENS, bizParams.userDefinedTokens);
-      bizParamsParams.put(CONST_NAME_BIZ_PARAMS_TOOL_PROMPTS, bizParams.toolPrompts);
-      bizParamsParams.put(CONST_NAME_BIZ_PARAMS_USER_QUERY_PARAMS, bizParams.userQueryParams);
-      bizParamsParams.put(CONST_NAME_BIZ_PARAMS_USER_PROMPT_PARAMS, bizParams.userPromptParams);
-      bizParamsParams.put(CONST_NAME_BIZ_PARAMS_VIDEOS, bizParams.videos);
+      if (bizParams.userDefinedParams != null) {
+        bizParamsParams.put(CONST_NAME_BIZ_PARAMS_USER_DEFINED_PARAMS, bizParams.userDefinedParams);
+      }
+      if (bizParams.userDefinedTokens != null) {
+        bizParamsParams.put(CONST_NAME_BIZ_PARAMS_USER_DEFINED_TOKENS, bizParams.userDefinedTokens);
+      }
+      if (bizParams.toolPrompts != null) {
+        bizParamsParams.put(CONST_NAME_BIZ_PARAMS_TOOL_PROMPTS, bizParams.toolPrompts);
+      }
+      if (bizParams.userQueryParams != null) {
+        bizParamsParams.put(CONST_NAME_BIZ_PARAMS_USER_QUERY_PARAMS, bizParams.userQueryParams);
+      }
+      if (bizParams.userPromptParams != null) {
+        bizParamsParams.put(CONST_NAME_BIZ_PARAMS_USER_PROMPT_PARAMS, bizParams.userPromptParams);
+      }
+      if (bizParams.videos != null) {
+        bizParamsParams.put(CONST_NAME_BIZ_PARAMS_VIDEOS, bizParams.videos);
+      }
       if (bizParams.passThroughParams != null) {
         bizParamsParams.putAll(bizParams.passThroughParams);
       }
@@ -220,6 +264,22 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
       params.put(CONST_NAME_IMAGES, images);
     }
     return params;
+  }
+
+  private @NotNull HashMap<String, Object> getUpstreamAsrPostProcessing() {
+    val asrPostProcessingParams = new HashMap<String, Object>();
+    if (upStream.asrPostProcessing.replaceWords != null) {
+      val replaceWords = new ArrayList<Map<String, Object>>();
+      for (val replaceWord : upStream.asrPostProcessing.replaceWords) {
+        val replaceWordObj= new HashMap<String, Object>();
+        replaceWordObj.put(CONST_NAME_REPLACE_WORD_SOURCE, replaceWord.source);
+        replaceWordObj.put(CONST_NAME_REPLACE_WORD_TARGET, replaceWord.target);
+        replaceWordObj.put(CONST_NAME_REPLACE_WORD_MATCH_MODE, replaceWord.matchMode);
+        replaceWords.add(replaceWordObj);
+      }
+      asrPostProcessingParams.put(CONST_NAME_REPLACE_WORDS, replaceWords);
+    }
+    return asrPostProcessingParams;
   }
 
   @Override

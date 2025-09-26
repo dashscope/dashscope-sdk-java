@@ -1,5 +1,6 @@
 package com.alibaba.dashscope.multimodal;
 
+import com.alibaba.dashscope.Version;
 import com.alibaba.dashscope.api.SynchronizeFullDuplexApi;
 import com.alibaba.dashscope.common.*;
 import com.alibaba.dashscope.exception.ApiException;
@@ -8,6 +9,7 @@ import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
+import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import io.reactivex.BackpressureStrategy;
@@ -95,7 +97,8 @@ public class MultiModalDialog {
 
     public static MultiModalRequestParamWithStream FromMultiModalParam(
             MultiModalRequestParam param, Flowable<Object> dataStream, String preRequestId) {
-
+      ClientInfo clientInfo = param.getClientInfo();
+      clientInfo.setSdk("dashscope-sdk-java "+ Version.version);
       return MultiModalRequestParamWithStream.builder()
           .parameter("pre_task_id", preRequestId)
           .headers(param.getHeaders())
@@ -103,7 +106,7 @@ public class MultiModalDialog {
           .customInput(param.getCustomInput())
           .bizParams(param.getBizParams())
           .downStream(param.getDownStream())
-          .clientInfo(param.getClientInfo())
+          .clientInfo(clientInfo)
           .dialogAttributes(param.getDialogAttributes())
           .images(param.getImages())
           .dataStream(dataStream)
@@ -401,6 +404,12 @@ public class MultiModalDialog {
     }
     if (updateParams != null && updateParams.images != null) {
       requestParamWithStream.setImages(updateParams.images);
+    }
+    if (updateParams != null && updateParams.upStream != null) {
+      requestParamWithStream.setUpStream(updateParams.upStream);
+    }
+    if (updateParams != null && updateParams.downStream != null) {
+      requestParamWithStream.setDownStream(updateParams.downStream);
     }
     sendTextFrame("UpdateInfo");
   }

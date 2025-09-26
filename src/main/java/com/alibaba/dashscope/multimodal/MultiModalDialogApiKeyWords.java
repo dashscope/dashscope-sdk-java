@@ -17,6 +17,12 @@ public class MultiModalDialogApiKeyWords {
   public static String CONST_NAME_UP_STREAM_AUDIO_FORMAT = "audio_format";
   public static String CONST_NAME_UP_STREAM_TYPE = "type";
   public static String CONST_NAME_UP_STREAM_MODE = "mode";
+  public static String CONST_NAME_REPLACE_WORD_SOURCE = "source";
+  public static String CONST_NAME_REPLACE_WORD_TARGET = "target";
+  public static String CONST_NAME_REPLACE_WORD_MATCH_MODE = "match_mode";
+  public static String CONST_NAME_REPLACE_WORDS = "replace_words";
+  public static String CONST_NAME_ASR_POST_PROCESSING = "asr_post_processing";
+  public static String CONST_NAME_VOCABULARY_ID = "vocabulary_id";
 
   public static String CONST_NAME_DOWN_STREAM_VOICE = "voice";
   public static String CONST_NAME_DOWN_STREAM_SAMPLE_RATE = "sample_rate";
@@ -43,6 +49,7 @@ public class MultiModalDialogApiKeyWords {
   public static String CONST_NAME_CLIENT_INFO_LOCATION_LONGITUDE = "longitude";
   public static String CONST_NAME_CLIENT_INFO_LOCATION_CITY_NAME = "city_name";
   public static String CONST_NAME_CLIENT_INFO_ACTIVE_FOREGROUND_APP = "active_foreground_app";
+  public static String CONST_NAME_CLIENT_INFO_SDK = "sdk";
 
   public static String CONST_NAME_BIZ_PARAMS_USER_DEFINED_PARAMS = "user_defined_params";
   public static String CONST_NAME_BIZ_PARAMS_USER_DEFINED_TOKENS = "user_defined_tokens";
