@@ -17,13 +17,23 @@ import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.HttpMethod;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
+import com.alibaba.dashscope.utils.ParamUtils;
 import io.reactivex.Flowable;
 import lombok.extern.slf4j.Slf4j;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
+import com.alibaba.dashscope.tools.ToolCallBase;
+import com.alibaba.dashscope.tools.ToolCallFunction;
 
 @Slf4j
 public final class Generation {
   private final SynchronizeHalfDuplexApi<HalfDuplexServiceParam> syncApi;
   private final ApiServiceOption serviceOption;
+
+  private final ThreadLocal<Map<Integer, AccumulatedData>> accumulatedDataMap =
+      ThreadLocal.withInitial(HashMap::new);
 
   public static class Models {
     /** @deprecated use QWEN_TURBO instead */
@@ -148,14 +158,34 @@ public final class Generation {
   public Flowable<GenerationResult> streamCall(HalfDuplexServiceParam param)
       throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
+
+    // Intercept and modify incrementalOutput parameter if needed
+    boolean toMergeResponse = modifyIncrementalOutput(param);
+
     serviceOption.setIsSSE(true);
     serviceOption.setStreamingMode(StreamingMode.OUT);
-    return syncApi.streamCall(param).map(item -> GenerationResult.fromDashScopeResult(item));
+    return syncApi.streamCall(param)
+        .map(GenerationResult::fromDashScopeResult)
+        .map(result -> mergeSingleResponse(result, toMergeResponse))
+        .doOnComplete(() -> {
+          if (toMergeResponse) {
+            clearAccumulatedData();
+          }
+        })
+        .doOnError(throwable -> {
+          if (toMergeResponse) {
+            clearAccumulatedData();
+          }
+        });
   }
 
   public void streamCall(HalfDuplexServiceParam param, ResultCallback<GenerationResult> callback)
       throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
+
+    // Intercept and modify incrementalOutput parameter if needed
+    boolean toMergeResponse = modifyIncrementalOutput(param);
+
     serviceOption.setIsSSE(true);
     serviceOption.setStreamingMode(StreamingMode.OUT);
     syncApi.streamCall(
@@ -163,18 +193,219 @@ public final class Generation {
         new ResultCallback<DashScopeResult>() {
           @Override
           public void onEvent(DashScopeResult msg) {
-            callback.onEvent(GenerationResult.fromDashScopeResult(msg));
+            GenerationResult result = GenerationResult.fromDashScopeResult(msg);
+            GenerationResult mergedResult = mergeSingleResponse(result, toMergeResponse);
+            callback.onEvent(mergedResult);
           }
 
           @Override
           public void onComplete() {
+            if (toMergeResponse) {
+              clearAccumulatedData();
+            }
             callback.onComplete();
           }
 
           @Override
           public void onError(Exception e) {
+            if (toMergeResponse) {
+              clearAccumulatedData();
+            }
             callback.onError(e);
           }
         });
+  }
+
+  /**
+   * Modifies the parameters for internal streaming optimization.
+   * If incrementalOutput is false, modifies the GenerationParam object to set
+   * incrementalOutput to true for internal streaming optimization.
+   *
+   * @param param The parameter object to modify
+   * @return true if the parameter was modified, false otherwise
+   */
+  private boolean modifyIncrementalOutput(HalfDuplexServiceParam param) {
+    // Check if the parameter is a GenerationParam and has incrementalOutput set to false
+    if (param instanceof GenerationParam) {
+      GenerationParam generationParam = (GenerationParam) param;
+      Boolean incrementalOutput = generationParam.getIncrementalOutput();
+      if (ParamUtils.shouldModifyIncrementalOutput(param.getModel()) &&
+              Boolean.FALSE.equals(incrementalOutput)) {
+        // Modify the GenerationParam object to enable incremental output
+        generationParam.setIncrementalOutput(true);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Merges a single GenerationResult with accumulated data for non-incremental output simulation.
+   * This method accumulates content and tool_calls from streaming responses.
+   * Supports both legacy format (output.text) and new format (output.choices[].message.content).
+   *
+   * @param result The GenerationResult to merge
+   * @param toMergeResponse Whether to perform merging (based on original incrementalOutput setting)
+   * @return The merged GenerationResult
+   */
+  private GenerationResult mergeSingleResponse(GenerationResult result, boolean toMergeResponse) {
+    if (!toMergeResponse || result == null || result.getOutput() == null) {
+      return result;
+    }
+
+    Map<Integer, AccumulatedData> accumulatedData = accumulatedDataMap.get();
+
+    // Handle new format: output.choices[].message.content
+    if (result.getOutput().getChoices() != null) {
+      List<GenerationOutput.Choice> choices = result.getOutput().getChoices();
+      for (int choiceIdx = 0; choiceIdx < choices.size(); choiceIdx++) {
+        GenerationOutput.Choice choice = choices.get(choiceIdx);
+
+        // Initialize accumulated data for this choice if not exists
+        AccumulatedData accumulated = accumulatedData.computeIfAbsent(
+                choiceIdx, k -> new AccumulatedData());
+
+        if (choice.getMessage() != null) {
+          // Handle content accumulation
+          String currentContent = choice.getMessage().getContent();
+          if (currentContent != null && !currentContent.isEmpty()) {
+            accumulated.content.append(currentContent);
+            choice.getMessage().setContent(accumulated.content.toString());
+          }
+
+          // Handle tool_calls accumulation
+          List<ToolCallBase> currentToolCalls = choice.getMessage().getToolCalls();
+          if (currentToolCalls != null && !currentToolCalls.isEmpty()) {
+            mergeToolCalls(currentToolCalls, accumulated.toolCalls);
+            choice.getMessage().setToolCalls(accumulated.toolCalls);
+          }
+        }
+      }
+    }
+    // Handle legacy format: output.text
+    else {
+      // Use choice index 0 for legacy format
+      AccumulatedData accumulated = accumulatedData.computeIfAbsent(0, k -> new AccumulatedData());
+
+      String currentText = result.getOutput().getText();
+      if (currentText != null && !currentText.isEmpty()) {
+        accumulated.content.append(currentText);
+        result.getOutput().setText(accumulated.content.toString());
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Merges tool calls from current response with accumulated tool calls.
+   */
+  private void mergeToolCalls(List<ToolCallBase> currentToolCalls, List<ToolCallBase> accumulatedToolCalls) {
+    for (ToolCallBase currentCall : currentToolCalls) {
+      if (currentCall == null || currentCall.getIndex() == null) {
+        continue;
+      }
+
+      int index = currentCall.getIndex();
+
+      // Find existing accumulated call with same index
+      ToolCallBase existingCall = null;
+      for (ToolCallBase accCall : accumulatedToolCalls) {
+        if (accCall != null && accCall.getIndex() != null && 
+            accCall.getIndex().equals(index)) {
+          existingCall = accCall;
+          break;
+        }
+      }
+
+      if (existingCall instanceof ToolCallFunction &&
+              currentCall instanceof ToolCallFunction) {
+        // Merge function calls
+        ToolCallFunction existingFunctionCall = (ToolCallFunction) existingCall;
+        ToolCallFunction currentFunctionCall = (ToolCallFunction) currentCall;
+
+        if (currentFunctionCall.getFunction() != null) {
+          // Ensure existing function call has a function object
+          if (existingFunctionCall.getFunction() == null) {
+            existingFunctionCall.setFunction(existingFunctionCall.new CallFunction());
+          }
+
+          // Accumulate arguments if present
+          if (currentFunctionCall.getFunction().getArguments() != null) {
+            String existingArguments = existingFunctionCall.getFunction().getArguments();
+            if (existingArguments == null) {
+              existingArguments = "";
+            }
+            String currentArguments = currentFunctionCall.getFunction().getArguments();
+            existingFunctionCall.getFunction().setArguments(existingArguments + currentArguments);
+          }
+
+          // Accumulate function name if present
+          if (currentFunctionCall.getFunction().getName() != null) {
+            String existingName = existingFunctionCall.getFunction().getName();
+            if (existingName == null) {
+              existingName = "";
+            }
+            String currentName = currentFunctionCall.getFunction().getName();
+            existingFunctionCall.getFunction().setName(existingName + currentName);
+          }
+
+          // Update function output if present
+          if (currentFunctionCall.getFunction().getOutput() != null) {
+            existingFunctionCall.getFunction().setOutput(currentFunctionCall.getFunction().getOutput());
+          }
+        }
+
+        // Update other fields with latest non-empty values
+        if (currentFunctionCall.getIndex() != null) {
+          existingFunctionCall.setIndex(currentFunctionCall.getIndex());
+        }
+        if (currentFunctionCall.getId() != null && !currentFunctionCall.getId().isEmpty()) {
+          existingFunctionCall.setId(currentFunctionCall.getId());
+        }
+        if (currentFunctionCall.getType() != null) {
+          existingFunctionCall.setType(currentFunctionCall.getType());
+        }
+      } else {
+        // Add new tool call (create a copy)
+        if (currentCall instanceof ToolCallFunction) {
+          ToolCallFunction currentFunctionCall = (ToolCallFunction) currentCall;
+          ToolCallFunction newFunctionCall = new ToolCallFunction();
+          newFunctionCall.setIndex(currentFunctionCall.getIndex());
+          newFunctionCall.setId(currentFunctionCall.getId());
+          newFunctionCall.setType(currentFunctionCall.getType());
+
+          if (currentFunctionCall.getFunction() != null) {
+            ToolCallFunction.CallFunction newCallFunction = newFunctionCall.new CallFunction();
+            newCallFunction.setName(currentFunctionCall.getFunction().getName());
+            newCallFunction.setArguments(currentFunctionCall.getFunction().getArguments());
+            newCallFunction.setOutput(currentFunctionCall.getFunction().getOutput());
+            newFunctionCall.setFunction(newCallFunction);
+          }
+
+          accumulatedToolCalls.add(newFunctionCall);
+        } else {
+          // For other types of tool calls, add directly (assuming they are immutable or don't need merging)
+          accumulatedToolCalls.add(currentCall);
+        }
+      }
+    }
+  }
+
+  /**
+   * Clears accumulated data for the current thread.
+   * Should be called when streaming is complete or encounters error.
+   */
+  private void clearAccumulatedData() {
+    accumulatedDataMap.get().clear();
+    accumulatedDataMap.remove();
+  }
+
+  /**
+   * Inner class to store accumulated data for response merging.
+   */
+  private static class AccumulatedData {
+    StringBuilder content = new StringBuilder();
+    List<ToolCallBase> toolCalls = new ArrayList<>();
   }
 }

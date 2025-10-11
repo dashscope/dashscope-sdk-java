@@ -47,4 +47,29 @@ public class ParamUtils {
 
         return false;
     }
+
+    /**
+     * Check if the increment_output parameter should be modified for the given
+     * model
+     * 
+     * @param modelName the model name to check
+     * @return false if model contains "tts", "omni", or "qwen-deep-research",
+     *         true otherwise
+     */
+    public static boolean shouldModifyIncrementalOutput(String modelName) {
+        if (modelName == null) {
+            return true;
+        }
+
+        String lowerModelName = modelName.toLowerCase();
+
+        // Return false if model contains any of the specified strings
+        if (lowerModelName.contains("tts") ||
+            lowerModelName.contains("omni") ||
+            lowerModelName.contains("qwen-deep-research")) {
+            return false;
+        }
+
+        return true;
+    }
 }
