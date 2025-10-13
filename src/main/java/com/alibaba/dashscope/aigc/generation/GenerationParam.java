@@ -94,7 +94,7 @@ public class GenerationParam extends GenerationParamBase {
    * apple
    * </pre>
    */
-  @Builder.Default private Boolean incrementalOutput = false;
+  @Builder.Default private Boolean incrementalOutput;
 
   /** Maximum tokens to generate. */
   private Integer maxTokens;
@@ -192,11 +192,14 @@ public class GenerationParam extends GenerationParamBase {
       params.put("temperature", temperature);
     }
     // Apply different logic based on model version
-    if (ParamUtils.isQwenVersionThreeOrHigher(getModel())) {
+     if (ParamUtils.isQwenVersionThreeOrHigher(getModel())) {
       if (incrementalOutput != null) {
         params.put("incremental_output", incrementalOutput);
       }
     } else {
+      if (incrementalOutput == null) {
+        incrementalOutput = false;
+      }
       if (incrementalOutput) {
         params.put("incremental_output", incrementalOutput);
       }
