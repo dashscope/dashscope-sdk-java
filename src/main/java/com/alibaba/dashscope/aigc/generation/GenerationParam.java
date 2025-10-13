@@ -15,6 +15,7 @@ import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.tools.ToolBase;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.utils.ParamUtils;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
@@ -190,32 +191,8 @@ public class GenerationParam extends GenerationParamBase {
     if (temperature != null) {
       params.put("temperature", temperature);
     }
-    // Check if model is qwen{n} where n >= 3
-    String modelName = getModel();
-    boolean isQwenVersionThreeOrHigher = false;
-    if (modelName.toLowerCase().startsWith("qwen")) {
-      String remaining = modelName.toLowerCase().substring(4);
-      try {
-        // Extract the number after "qwen"
-        StringBuilder numberStr = new StringBuilder();
-        for (char c : remaining.toCharArray()) {
-          if (Character.isDigit(c)) {
-            numberStr.append(c);
-          } else {
-            break;
-          }
-        }
-        if (numberStr.length() > 0) {
-          int version = Integer.parseInt(numberStr.toString());
-          isQwenVersionThreeOrHigher = version >= 3;
-        }
-      } catch (NumberFormatException e) {
-        // If parsing fails, use default behavior
-      }
-    }
-
     // Apply different logic based on model version
-    if (isQwenVersionThreeOrHigher) {
+    if (ParamUtils.isQwenVersionThreeOrHigher(getModel())) {
       if (incrementalOutput != null) {
         params.put("incremental_output", incrementalOutput);
       }

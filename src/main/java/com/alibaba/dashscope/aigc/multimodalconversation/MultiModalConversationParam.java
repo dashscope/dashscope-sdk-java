@@ -6,6 +6,7 @@ import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.tools.ToolBase;
 import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.utils.ParamUtils;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -225,8 +226,15 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
       params.put(ApiKeywords.PRESENCE_PENALTY, presencePenalty);
     }
 
-    if (incrementalOutput) {
-      params.put(ApiKeywords.INCREMENTAL_OUTPUT, incrementalOutput);
+    // Apply different logic based on model version
+    if (ParamUtils.isQwenVersionThreeOrHigher(getModel())) {
+      if (incrementalOutput != null) {
+        params.put(ApiKeywords.INCREMENTAL_OUTPUT, incrementalOutput);
+      }
+    } else {
+      if (incrementalOutput) {
+        params.put(ApiKeywords.INCREMENTAL_OUTPUT, incrementalOutput);
+      }
     }
 
     if (modalities != null) {
