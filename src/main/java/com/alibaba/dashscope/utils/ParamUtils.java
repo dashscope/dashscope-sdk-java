@@ -1,12 +1,20 @@
 package com.alibaba.dashscope.utils;
 
 public class ParamUtils {
-    
+
     /**
-     * Check if the model is qwen{n} where n >= 3
+     * Private constructor to prevent instantiation of utility class
+     */
+    private ParamUtils() {
+        // Utility class should not be instantiated
+    }
+
+    /**
+     * Check if the model is qwen{n} where n is greater than or equal to 3
      * 
      * @param modelName the model name to check
-     * @return true if model is qwen{n} where n >= 3, false otherwise
+     * @return true if model is qwen{n} where n is greater than or equal to 3,
+     *         false otherwise
      */
     public static boolean isQwenVersionThreeOrHigher(String modelName) {
         if (modelName == null) {
