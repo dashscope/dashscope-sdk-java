@@ -258,12 +258,16 @@ public final class Generation {
     // Handle new format: output.choices[].message.content
     if (result.getOutput().getChoices() != null) {
       List<GenerationOutput.Choice> choices = result.getOutput().getChoices();
-      for (int choiceIdx = 0; choiceIdx < choices.size(); choiceIdx++) {
-        GenerationOutput.Choice choice = choices.get(choiceIdx);
+      for (GenerationOutput.Choice choice : choices) {
+        // Use the choice's index field for accumulation, fallback to 0 if null
+        Integer choiceIndex = choice.getIndex();
+        if (choiceIndex == null) {
+          choiceIndex = 0;
+        }
 
-        // Initialize accumulated data for this choice if not exists
+        // Initialize accumulated data for this choice index if not exists
         AccumulatedData accumulated = accumulatedData.computeIfAbsent(
-                choiceIdx, k -> new AccumulatedData());
+                choiceIndex, k -> new AccumulatedData());
 
         if (choice.getMessage() != null) {
           // Handle content accumulation
@@ -278,6 +282,15 @@ public final class Generation {
           if (currentToolCalls != null && !currentToolCalls.isEmpty()) {
             mergeToolCalls(currentToolCalls, accumulated.toolCalls);
             choice.getMessage().setToolCalls(accumulated.toolCalls);
+          }
+        }
+
+        // Handle logprobs accumulation
+        if (choice.getLogprobs() != null && choice.getLogprobs().getContent() != null) {
+          List<GenerationLogprobs.Content> currentLogprobsContent = choice.getLogprobs().getContent();
+          if (!currentLogprobsContent.isEmpty()) {
+            accumulated.logprobsContent.addAll(currentLogprobsContent);
+            choice.getLogprobs().setContent(accumulated.logprobsContent);
           }
         }
       }
@@ -407,5 +420,6 @@ public final class Generation {
   private static class AccumulatedData {
     StringBuilder content = new StringBuilder();
     List<ToolCallBase> toolCalls = new ArrayList<>();
+    List<GenerationLogprobs.Content> logprobsContent = new ArrayList<>();
   }
 }

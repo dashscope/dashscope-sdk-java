@@ -34,10 +34,14 @@ public class GenerationStreamCall {
       throws NoApiKeyException, ApiException, InputRequiredException {
     Generation gen = new Generation();
     GenerationParam param = GenerationParam.builder()
-            .model("qwen3-max")
+            .model("qwen-plus")
             .prompt("你好")
             .topP(0.8)
+            .n(4)
+            .logprobs(true)
+            .topLogprobs(5)
             .incrementalOutput(false)
+            .resultFormat("message")
             .build();
     Flowable<GenerationResult> result = gen.streamCall(param);
     result.blockingForEach(message -> {
@@ -184,11 +188,11 @@ public class GenerationStreamCall {
   }
 
   public static void main(String[] args) {
-//    try {
-//      streamCall();
-//    } catch (ApiException | NoApiKeyException | InputRequiredException e) {
-//      System.out.println(e.getMessage());
-//    }
+    try {
+      streamCall();
+    } catch (ApiException | NoApiKeyException | InputRequiredException e) {
+      System.out.println(e.getMessage());
+    }
 
 //    try {
 //      streamCallWithCallback();
@@ -196,11 +200,11 @@ public class GenerationStreamCall {
 //      System.out.println(e.getMessage());
 //    }
 
-    try {
-      streamCallWithToolCalls();
-    } catch (ApiException | NoApiKeyException | InputRequiredException e) {
-      System.out.println(e.getMessage());
-    }
+//    try {
+//      streamCallWithToolCalls();
+//    } catch (ApiException | NoApiKeyException | InputRequiredException e) {
+//      System.out.println(e.getMessage());
+//    }
 //
 //    try {
 //      streamCallWithSearchOptions();
