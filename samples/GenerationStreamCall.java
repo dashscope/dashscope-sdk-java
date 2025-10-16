@@ -34,13 +34,14 @@ public class GenerationStreamCall {
       throws NoApiKeyException, ApiException, InputRequiredException {
     Generation gen = new Generation();
     GenerationParam param = GenerationParam.builder()
-            .model("qwen-plus")
+            .model("qwen3-max")
             .prompt("你好")
             .topP(0.8)
             .n(4)
             .logprobs(true)
             .topLogprobs(5)
             .incrementalOutput(false)
+            .enableThinking(true)
             .resultFormat("message")
             .build();
     Flowable<GenerationResult> result = gen.streamCall(param);
@@ -81,6 +82,24 @@ public class GenerationStreamCall {
     semaphore.acquire();
 
   }
+
+  public static void streamCallWithReasoningContent()
+          throws NoApiKeyException, ApiException, InputRequiredException {
+    Generation gen = new Generation();
+    GenerationParam param = GenerationParam.builder()
+            .model("qwen-plus")
+            .prompt("1.1和0.9哪个大")
+            .topP(0.8)
+            .incrementalOutput(false)
+            .enableThinking(true)
+            .resultFormat("message")
+            .build();
+    Flowable<GenerationResult> result = gen.streamCall(param);
+    result.blockingForEach(message -> {
+      System.out.println(JsonUtils.toJson(message));
+    });
+  }
+
 
   public static void streamCallWithSearchOptions()
           throws NoApiKeyException, ApiException, InputRequiredException {
@@ -188,11 +207,11 @@ public class GenerationStreamCall {
   }
 
   public static void main(String[] args) {
-    try {
-      streamCall();
-    } catch (ApiException | NoApiKeyException | InputRequiredException e) {
-      System.out.println(e.getMessage());
-    }
+//    try {
+//      streamCall();
+//    } catch (ApiException | NoApiKeyException | InputRequiredException e) {
+//      System.out.println(e.getMessage());
+//    }
 
 //    try {
 //      streamCallWithCallback();
@@ -205,7 +224,13 @@ public class GenerationStreamCall {
 //    } catch (ApiException | NoApiKeyException | InputRequiredException e) {
 //      System.out.println(e.getMessage());
 //    }
-//
+
+    try {
+      streamCallWithReasoningContent();
+    } catch (ApiException | NoApiKeyException | InputRequiredException e) {
+      System.out.println(e.getMessage());
+    }
+
 //    try {
 //      streamCallWithSearchOptions();
 //    } catch (ApiException | NoApiKeyException | InputRequiredException e) {

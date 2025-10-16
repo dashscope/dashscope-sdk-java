@@ -290,6 +290,16 @@ public final class MultiModalConversation {
             choice.getMessage().setContent(accumulated.content);
           }
 
+          // Handle reasoning_content accumulation
+          String currentReasoningContent = choice.getMessage().getReasoningContent();
+          if (currentReasoningContent != null && !currentReasoningContent.isEmpty()) {
+            accumulated.reasoningContent.append(currentReasoningContent);
+          }
+          // Always set the accumulated reasoning_content if we have any
+          if (accumulated.reasoningContent.length() > 0) {
+            choice.getMessage().setReasoningContent(accumulated.reasoningContent.toString());
+          }
+
           // Handle tool_calls accumulation
           List<ToolCallBase> currentToolCalls = choice.getMessage().getToolCalls();
           if (currentToolCalls != null && !currentToolCalls.isEmpty()) {
@@ -449,5 +459,6 @@ public final class MultiModalConversation {
   private static class AccumulatedData {
     List<Map<String, Object>> content = new ArrayList<>();
     List<ToolCallBase> toolCalls = new ArrayList<>();
+    StringBuilder reasoningContent = new StringBuilder();
   }
 }

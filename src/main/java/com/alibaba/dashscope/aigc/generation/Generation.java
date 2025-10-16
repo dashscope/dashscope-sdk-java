@@ -277,6 +277,16 @@ public final class Generation {
             choice.getMessage().setContent(accumulated.content.toString());
           }
 
+          // Handle reasoning_content accumulation
+          String currentReasoningContent = choice.getMessage().getReasoningContent();
+          if (currentReasoningContent != null && !currentReasoningContent.isEmpty()) {
+            accumulated.reasoningContent.append(currentReasoningContent);
+          }
+          // Always set the accumulated reasoning_content if we have any
+          if (accumulated.reasoningContent.length() > 0) {
+            choice.getMessage().setReasoningContent(accumulated.reasoningContent.toString());
+          }
+
           // Handle tool_calls accumulation
           List<ToolCallBase> currentToolCalls = choice.getMessage().getToolCalls();
           if (currentToolCalls != null && !currentToolCalls.isEmpty()) {
@@ -419,6 +429,7 @@ public final class Generation {
    */
   private static class AccumulatedData {
     StringBuilder content = new StringBuilder();
+    StringBuilder reasoningContent = new StringBuilder();
     List<ToolCallBase> toolCalls = new ArrayList<>();
     List<GenerationLogprobs.Content> logprobsContent = new ArrayList<>();
   }

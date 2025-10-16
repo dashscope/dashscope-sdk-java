@@ -66,7 +66,7 @@ public class MultiModalConversationQwenVL {
 
         MultiModalConversationParam param = MultiModalConversationParam.builder()
                 .model(MultiModalConversationQwenVL.modelName != null ? 
-                       MultiModalConversationQwenVL.modelName : "qwen-vl-max-latest")
+                       MultiModalConversationQwenVL.modelName : "qwen3-vl-30b-a3b-thinking")
 //                .enableThinking(true)
 //                .thinkingBudget(20)
                 .incrementalOutput(false)
