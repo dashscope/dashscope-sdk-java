@@ -274,6 +274,9 @@ public final class Generation {
           String currentContent = choice.getMessage().getContent();
           if (currentContent != null && !currentContent.isEmpty()) {
             accumulated.content.append(currentContent);
+          }
+          // Always set the accumulated content if we have any
+          if (accumulated.content.length() > 0) {
             choice.getMessage().setContent(accumulated.content.toString());
           }
 
@@ -313,6 +316,9 @@ public final class Generation {
       String currentText = result.getOutput().getText();
       if (currentText != null && !currentText.isEmpty()) {
         accumulated.content.append(currentText);
+      }
+      // Always set the accumulated content if we have any
+      if (accumulated.content.length() > 0) {
         result.getOutput().setText(accumulated.content.toString());
       }
     }

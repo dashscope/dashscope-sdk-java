@@ -287,6 +287,9 @@ public final class MultiModalConversation {
           List<Map<String, Object>> currentContent = choice.getMessage().getContent();
           if (currentContent != null && !currentContent.isEmpty()) {
             mergeTextContent(currentContent, accumulated);
+          }
+          // Always set the accumulated content if we have any
+          if (!accumulated.content.isEmpty()) {
             choice.getMessage().setContent(accumulated.content);
           }
 
