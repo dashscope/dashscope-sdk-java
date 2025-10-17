@@ -84,6 +84,8 @@ public class MessageAdapter extends TypeAdapter<Message> {
         out.value(type);
         out.name("id");
         out.value(toolCall.getId());
+        out.name("index");
+        out.value(toolCall.getIndex());
         out.name("function");
         if (type.equals("function")) {
           writeCallFunction(out, (ToolCallFunction) toolCall);
@@ -133,6 +135,13 @@ public class MessageAdapter extends TypeAdapter<Message> {
     functionCall.setType(toolCall.get("type").toString());
     if (toolCall.containsKey("id")) {
       functionCall.setId(toolCall.get("id").toString());
+    }
+    // Fix: Set index field if it exists in the JSON
+    if (toolCall.containsKey("index")) {
+      Object indexObj = toolCall.get("index");
+      if (indexObj instanceof Number) {
+        functionCall.setIndex(((Number) indexObj).intValue());
+      }
     }
     return functionCall;
   }
