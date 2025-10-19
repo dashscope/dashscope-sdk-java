@@ -36,6 +36,8 @@ public interface AppKeywords {
 
   String IMAGES = "image_list";
 
+  String FILE_LIST = "file_list";
+
   String MCP_SERVERS = "mcp_servers";
 
   String ENABLE_WEB_SEARCH = "enable_web_search";

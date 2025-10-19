@@ -31,6 +31,10 @@ public class ApplicationOutput {
   @SerializedName("session_id")
   private String sessionId;
 
+  /** Reject status indicates whether the response was rejected */
+  @SerializedName("reject_status")
+  private Boolean rejectStatus;
+
   /** Thoughts of model planning for app */
   @SerializedName("thoughts")
   private List<Thought> thoughts;

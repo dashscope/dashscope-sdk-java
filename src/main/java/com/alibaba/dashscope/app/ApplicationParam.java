@@ -101,6 +101,9 @@ public class ApplicationParam extends HalfDuplexParamBase {
   /** image list */
   private List<String> images;
 
+  /** file list */
+  private List<String> files;
+
   /** rag options */
   private RagOptions ragOptions;
 
@@ -265,6 +268,11 @@ public class ApplicationParam extends HalfDuplexParamBase {
     if (images != null && !images.isEmpty()) {
       JsonArray imagesJson = JsonUtils.toJsonElement(images).getAsJsonArray();
       input.add(AppKeywords.IMAGES, imagesJson);
+    }
+
+    if (files != null && !files.isEmpty()) {
+      JsonArray fileListJson = JsonUtils.toJsonElement(files).getAsJsonArray();
+      input.add(AppKeywords.FILE_LIST, fileListJson);
     }
 
     return input;

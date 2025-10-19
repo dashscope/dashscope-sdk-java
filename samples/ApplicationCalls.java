@@ -318,8 +318,51 @@ public class ApplicationCalls {
         Application application = new Application();
         Flowable<ApplicationResult> result = application.streamCall(param);
         result.blockingForEach(data -> System.out.printf("result: %s%n", data));
-//        result.blockingForEach(data -> System.out.printf(data.getOutput().getText()));
         System.out.print("\n");
+    }
+
+    /**
+     * Call with file list sample
+     *
+     * @throws NoApiKeyException      Can not find api key
+     * @throws ApiException           The request failed, possibly
+     *                                due to a network or data error.
+     * @throws InputRequiredException Missing inputs.
+     */
+    public static void callWithFileList()
+            throws ApiException, NoApiKeyException, InputRequiredException {
+        ApplicationParam param = ApplicationParam.builder()
+                .appId(APP_ID)
+                .prompt("总结文件内容")
+                .files(Collections.singletonList(
+                    "https://dashscope.oss-cn-beijing.aliyuncs.com/audios/welcome.mp3"))
+                .build();
+
+        Application application = new Application();
+        ApplicationResult result = application.call(param);
+
+        System.out.println(JsonUtils.toJson(result));
+    }
+
+    /**
+     * Stream call with file list sample
+     *
+     * @throws NoApiKeyException      Can not find api key
+     * @throws InputRequiredException Missing inputs.
+     */
+    public static void streamCallWithFileList()
+            throws NoApiKeyException, InputRequiredException {
+        ApplicationParam param = ApplicationParam.builder()
+                .appId(APP_ID)
+                .prompt("总结文件内容")
+                .files(Collections.singletonList(
+                    "https://dashscope.oss-cn-beijing.aliyuncs.com/audios/welcome.mp3"))
+                .incrementalOutput(true)
+                .build();
+
+        Application application = new Application();
+        Flowable<ApplicationResult> result = application.streamCall(param);
+        result.blockingForEach(data -> System.out.println(JsonUtils.toJson(data)));
     }
 
 
@@ -335,7 +378,9 @@ public class ApplicationCalls {
 //            callWithAssistantServing();
 //            ragCallWithDocReference();
 //            callWithMoreParameters();
-            callWithThinking();
+//            callWithThinking();
+            callWithFileList();
+//            streamCallWithFileList();
         } catch (ApiException | NoApiKeyException | InputRequiredException e) {
             System.out.printf("Exception: %s", e.getMessage());
         }
