@@ -9,16 +9,17 @@ import com.alibaba.dashscope.tools.search.ToolCallQuarkSearch;
 import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.TypeAdapter;
+import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
-  @SuppressWarnings({"rawtypes", "unchecked"})
   private void writeMapObject(JsonWriter out, Map<String, Object> mapObject) throws IOException {
     if (mapObject != null) {
       out.beginObject();
@@ -30,6 +31,7 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
     }
   }
 
+  @SuppressWarnings("unchecked")
   private void writeValue(JsonWriter out, Object value) throws IOException {
     if (value == null) {
       out.nullValue();
@@ -99,6 +101,40 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
     writer.endObject();
   }
 
+  // Convert LinkedTreeMap to ToolCallFunction
+  @SuppressWarnings("unchecked")
+  private ToolCallFunction convertToCallFunction(
+      LinkedTreeMap<String, Object> toolCall) {
+    ToolCallFunction functionCall = new ToolCallFunction();
+    if (toolCall.containsKey("function")) {
+      ToolCallFunction.CallFunction callFunction =
+          functionCall.new CallFunction();
+      LinkedTreeMap<String, Object> fc =
+          (LinkedTreeMap<String, Object>) toolCall.get("function");
+      if (fc.containsKey("name")) {
+        callFunction.setName(fc.get("name").toString());
+      }
+      if (fc.containsKey("arguments")) {
+        callFunction.setArguments(fc.get("arguments").toString());
+      }
+      if (fc.containsKey("output")) {
+        callFunction.setOutput(fc.get("output").toString());
+      }
+      functionCall.setFunction(callFunction);
+    }
+    functionCall.setType(toolCall.get("type").toString());
+    if (toolCall.containsKey("id")) {
+      functionCall.setId(toolCall.get("id").toString());
+    }
+    if (toolCall.containsKey("index")) {
+      Object indexObj = toolCall.get("index");
+      if (indexObj instanceof Number) {
+        functionCall.setIndex(((Number) indexObj).intValue());
+      }
+    }
+    return functionCall;
+  }
+
 
   @Override
   public void write(JsonWriter out, MultiModalMessage value) throws IOException {
@@ -151,6 +187,7 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
   }
 
   @Override
+  @SuppressWarnings({"unchecked", "rawtypes"})
   public MultiModalMessage read(JsonReader in) throws IOException {
     Map<String, Object> objectMap = JsonUtils.gson.fromJson(in, Map.class);
     MultiModalMessage msg = new MultiModalMessage();
@@ -182,8 +219,35 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
     }
 
     if (objectMap.containsKey(ApiKeywords.TOOL_CALLS)) {
-      Object toolCalls = objectMap.get(ApiKeywords.TOOL_CALLS);
-      msg.setToolCalls((List<ToolCallBase>) toolCalls);
+      Object toolCallsObj = objectMap.get(ApiKeywords.TOOL_CALLS);
+      if (toolCallsObj instanceof List) {
+        List<?> toolCallsList = (List<?>) toolCallsObj;
+        // Check if need conversion for function type
+        boolean needConversion = false;
+        if (!toolCallsList.isEmpty() &&
+            toolCallsList.get(0) instanceof LinkedTreeMap) {
+          LinkedTreeMap<String, Object> firstToolCall =
+              (LinkedTreeMap<String, Object>) toolCallsList.get(0);
+          if (firstToolCall.containsKey("type")) {
+            String type = firstToolCall.get("type").toString();
+            if (type.equals("function")) {
+              needConversion = true;
+            }
+          }
+        }
+
+        if (needConversion) {
+          // Convert LinkedTreeMap to ToolCallFunction
+          msg.toolCalls = new ArrayList<ToolCallBase>();
+          List<LinkedTreeMap> toolCalls = (List<LinkedTreeMap>) toolCallsObj;
+          for (LinkedTreeMap<String, Object> toolCall : toolCalls) {
+            msg.toolCalls.add(convertToCallFunction(toolCall));
+          }
+        } else {
+          // Use original method for non-function types
+          msg.setToolCalls((List<ToolCallBase>) toolCallsObj);
+        }
+      }
       objectMap.remove(ApiKeywords.TOOL_CALLS);
     }
 
