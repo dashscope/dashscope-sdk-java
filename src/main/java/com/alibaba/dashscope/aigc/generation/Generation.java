@@ -166,7 +166,14 @@ public final class Generation {
     serviceOption.setStreamingMode(StreamingMode.OUT);
     return syncApi.streamCall(param)
         .map(GenerationResult::fromDashScopeResult)
-        .map(result -> mergeSingleResponse(result, toMergeResponse))
+        .flatMap(result -> {
+          GenerationResult merged =
+              mergeSingleResponse(result, toMergeResponse, param);
+          if (merged == null) {
+            return Flowable.empty();
+          }
+          return Flowable.just(merged);
+        })
         .doOnComplete(() -> {
           if (toMergeResponse) {
             clearAccumulatedData();
@@ -194,8 +201,10 @@ public final class Generation {
           @Override
           public void onEvent(DashScopeResult msg) {
             GenerationResult result = GenerationResult.fromDashScopeResult(msg);
-            GenerationResult mergedResult = mergeSingleResponse(result, toMergeResponse);
-            callback.onEvent(mergedResult);
+            GenerationResult mergedResult = mergeSingleResponse(result, toMergeResponse, param);
+            if (mergedResult != null) {
+              callback.onEvent(mergedResult);
+            }
           }
 
           @Override
@@ -240,26 +249,56 @@ public final class Generation {
   }
 
   /**
-   * Merges a single GenerationResult with accumulated data for non-incremental output simulation.
+   * Merges a single GenerationResult with accumulated data for
+   * non-incremental output simulation.
    * This method accumulates content and tool_calls from streaming responses.
-   * Supports both legacy format (output.text) and new format (output.choices[].message.content).
+   * Supports both legacy format (output.text) and new format
+   * (output.choices[].message.content).
    *
    * @param result The GenerationResult to merge
-   * @param toMergeResponse Whether to perform merging (based on original incrementalOutput setting)
-   * @return The merged GenerationResult
+   * @param toMergeResponse Whether to perform merging (based on original
+   *                        incrementalOutput setting)
+   * @param param The HalfDuplexServiceParam to get n parameter
+   * @return The merged GenerationResult, or null if should be filtered out
    */
-  private GenerationResult mergeSingleResponse(GenerationResult result, boolean toMergeResponse) {
+  private GenerationResult mergeSingleResponse(GenerationResult result,
+      boolean toMergeResponse, HalfDuplexServiceParam param) {
     if (!toMergeResponse || result == null || result.getOutput() == null) {
       return result;
     }
 
     Map<Integer, AccumulatedData> accumulatedData = accumulatedDataMap.get();
 
+    // Get n parameter
+    Integer n = null;
+    if (param instanceof GenerationParam) {
+      n = ((GenerationParam) param).getN();
+    }
+    // Default n to 1 if not set
+    if (n == null) {
+      n = 1;
+    }
+
+    // Check if all choices have been sent (for n > 1 case)
+    if (n > 1 && !accumulatedData.isEmpty()) {
+      boolean allSent = accumulatedData.values().stream()
+          .anyMatch(data -> data.allChoicesSent);
+      if (allSent) {
+        return null;
+      }
+    }
+
     // Handle new format: output.choices[].message.content
     if (result.getOutput().getChoices() != null) {
       List<GenerationOutput.Choice> choices = result.getOutput().getChoices();
+
+      // Filter out empty choices array
+      if (choices.isEmpty()) {
+        return null;
+      }
+
       for (GenerationOutput.Choice choice : choices) {
-        // Use the choice's index field for accumulation, fallback to 0 if null
+        // Use the choice's index field for accumulation, fallback to 0
         Integer choiceIndex = choice.getIndex();
         if (choiceIndex == null) {
           choiceIndex = 0;
@@ -270,6 +309,12 @@ public final class Generation {
                 choiceIndex, k -> new AccumulatedData());
 
         if (choice.getMessage() != null) {
+          // Save role if present
+          if (choice.getMessage().getRole() != null &&
+              !choice.getMessage().getRole().isEmpty()) {
+            accumulated.role = choice.getMessage().getRole();
+          }
+
           // Handle content accumulation
           String currentContent = choice.getMessage().getContent();
           if (currentContent != null && !currentContent.isEmpty()) {
@@ -296,6 +341,13 @@ public final class Generation {
             mergeToolCalls(currentToolCalls, accumulated.toolCalls);
             choice.getMessage().setToolCalls(accumulated.toolCalls);
           }
+
+          // Restore role if we have it
+          if (accumulated.role != null &&
+              (choice.getMessage().getRole() == null ||
+               choice.getMessage().getRole().isEmpty())) {
+            choice.getMessage().setRole(accumulated.role);
+          }
         }
 
         // Handle logprobs accumulation
@@ -303,8 +355,80 @@ public final class Generation {
           List<GenerationLogprobs.Content> currentLogprobsContent = choice.getLogprobs().getContent();
           if (!currentLogprobsContent.isEmpty()) {
             accumulated.logprobsContent.addAll(currentLogprobsContent);
-            choice.getLogprobs().setContent(accumulated.logprobsContent);
           }
+        }
+        // Always set accumulated logprobs if we have any
+        if (!accumulated.logprobsContent.isEmpty() && choice.getLogprobs() != null) {
+          choice.getLogprobs().setContent(accumulated.logprobsContent);
+        }
+
+        // Handle finish_reason for n > 1 case
+        if (n > 1 && choice.getFinishReason() != null &&
+            !choice.getFinishReason().equals("null")) {
+          accumulated.finishReason = choice.getFinishReason();
+          accumulated.finished = true;
+        }
+      }
+
+      // Check if all choices are finished when n > 1
+      if (n > 1) {
+        int finishedCount = 0;
+        for (AccumulatedData data : accumulatedData.values()) {
+          if (data.finished) {
+            finishedCount++;
+          }
+        }
+
+        // If not all choices finished, hide finish_reason
+        if (finishedCount < n) {
+          for (GenerationOutput.Choice choice : choices) {
+            if (choice.getFinishReason() != null &&
+                !choice.getFinishReason().equals("null")) {
+              choice.setFinishReason("null");
+            }
+          }
+        } else {
+          // All choices finished, mark as sent first
+          for (AccumulatedData data : accumulatedData.values()) {
+            data.allChoicesSent = true;
+          }
+
+          // Return final result with all choices
+          GenerationOutput output = result.getOutput();
+          List<GenerationOutput.Choice> allChoices = new ArrayList<>();
+          for (Map.Entry<Integer, AccumulatedData> entry :
+              accumulatedData.entrySet()) {
+            Integer index = entry.getKey();
+            AccumulatedData data = entry.getValue();
+
+            GenerationOutput.Choice finalChoice = output.new Choice();
+            finalChoice.setIndex(index);
+            finalChoice.setFinishReason(data.finishReason);
+
+            com.alibaba.dashscope.common.Message message =
+                new com.alibaba.dashscope.common.Message();
+            message.setRole("assistant");
+            if (data.content.length() > 0) {
+              message.setContent(data.content.toString());
+            }
+            if (data.reasoningContent.length() > 0) {
+              message.setReasoningContent(
+                  data.reasoningContent.toString());
+            }
+            if (!data.toolCalls.isEmpty()) {
+              message.setToolCalls(data.toolCalls);
+            }
+            finalChoice.setMessage(message);
+
+            if (!data.logprobsContent.isEmpty()) {
+              GenerationLogprobs logprobs = new GenerationLogprobs();
+              logprobs.setContent(new ArrayList<>(data.logprobsContent));
+              finalChoice.setLogprobs(logprobs);
+            }
+
+            allChoices.add(finalChoice);
+          }
+          output.setChoices(allChoices);
         }
       }
     }
@@ -438,5 +562,9 @@ public final class Generation {
     StringBuilder reasoningContent = new StringBuilder();
     List<ToolCallBase> toolCalls = new ArrayList<>();
     List<GenerationLogprobs.Content> logprobsContent = new ArrayList<>();
+    boolean finished = false;
+    String finishReason = null;
+    boolean allChoicesSent = false;
+    String role = null;
   }
 }

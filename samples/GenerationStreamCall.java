@@ -34,14 +34,14 @@ public class GenerationStreamCall {
       throws NoApiKeyException, ApiException, InputRequiredException {
     Generation gen = new Generation();
     GenerationParam param = GenerationParam.builder()
-            .model("qwen3-max")
-            .prompt("你好")
-            .topP(0.8)
+            .model("qwen-plus")
+            .prompt("从1到1000选择一个数字")
             .n(4)
             .logprobs(true)
             .topLogprobs(5)
+            .temperature(1.0F)
+            .topP(1.0)
             .incrementalOutput(false)
-            .enableThinking(true)
             .resultFormat("message")
             .build();
     Flowable<GenerationResult> result = gen.streamCall(param);
@@ -207,11 +207,11 @@ public class GenerationStreamCall {
   }
 
   public static void main(String[] args) {
-//    try {
-//      streamCall();
-//    } catch (ApiException | NoApiKeyException | InputRequiredException e) {
-//      System.out.println(e.getMessage());
-//    }
+    try {
+      streamCall();
+    } catch (ApiException | NoApiKeyException | InputRequiredException e) {
+      System.out.println(e.getMessage());
+    }
 
 //    try {
 //      streamCallWithCallback();
@@ -225,11 +225,11 @@ public class GenerationStreamCall {
 //      System.out.println(e.getMessage());
 //    }
 
-    try {
-      streamCallWithReasoningContent();
-    } catch (ApiException | NoApiKeyException | InputRequiredException e) {
-      System.out.println(e.getMessage());
-    }
+//    try {
+//      streamCallWithReasoningContent();
+//    } catch (ApiException | NoApiKeyException | InputRequiredException e) {
+//      System.out.println(e.getMessage());
+//    }
 
 //    try {
 //      streamCallWithSearchOptions();
