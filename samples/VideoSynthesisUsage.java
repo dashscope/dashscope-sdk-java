@@ -17,11 +17,9 @@ public class VideoSynthesisUsage {
         VideoSynthesis vs = new VideoSynthesis();
         VideoSynthesisParam param =
                 VideoSynthesisParam.builder()
-                        .model(VideoSynthesis.Models.WANX_2_1_I2V_TURBO)
-                        // prompt not required
-                        // .prompt("一只戴着绿色眼镜的小狗")
-//                        .imgUrl("https://modelscope.oss-cn-beijing.aliyuncs.com/resource/dog.jpeg")
-                        .imgUrl("file:///Users/xxx/Documents/source/dog.jpeg")
+                        .model("wan2.5-t2v-preview")
+                        .prompt("一只戴着绿色眼镜的小狗在唱rap")
+                        .audioUrl("https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20250925/ozwpvi/rap.mp3")
                         .build();
         VideoSynthesisResult result = vs.call(param);
         System.out.println(result);

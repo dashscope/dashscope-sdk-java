@@ -150,6 +150,8 @@ public class ApiKeywords {
 
   public static final String IMG_URL = "img_url";
 
+  public static final String AUDIO_URL = "audio_url";
+
   public static final String REF_IMG = "ref_img";
 
   public static final String MODALITIES = "modalities";

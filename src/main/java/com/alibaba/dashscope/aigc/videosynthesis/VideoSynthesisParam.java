@@ -52,6 +52,9 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
   /** The input image url, Generate the URL of the image referenced by the video */
   @Builder.Default private String imgUrl = null;
 
+  /** The input audio url. */
+  @Builder.Default private String audioUrl = null;
+
   /** The extra parameters. */
   @GsonExclude @Singular protected Map<String, Object> extraInputs;
 
@@ -77,6 +80,8 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
 
   @Builder.Default private Boolean watermark = null;
 
+  @Builder.Default private Boolean audio = null;
+
   /** The inputs of the model. */
   @Override
   public JsonObject getInput() {
@@ -98,6 +103,9 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
     }
     if (imgUrl != null && !imgUrl.isEmpty()) {
       jsonObject.addProperty(IMG_URL, imgUrl);
+    }
+    if (audioUrl != null && !audioUrl.isEmpty()) {
+      jsonObject.addProperty(AUDIO_URL, audioUrl);
     }
 
     if (firstFrameUrl != null && !firstFrameUrl.isEmpty()) {
@@ -153,6 +161,9 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
     if (watermark != null) {
       params.put(WATERMARK, watermark);
     }
+    if (audio != null) {
+      params.put(AUDIO, audio);
+    }
     params.putAll(super.getParameters());
     return params;
   }
@@ -184,6 +195,7 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
   public void checkAndUpload() throws NoApiKeyException, UploadFileException {
     Map<String, String> inputChecks = new HashMap<>();
     inputChecks.put(IMG_URL, this.imgUrl);
+    inputChecks.put(AUDIO_URL, this.audioUrl);
     inputChecks.put(FIRST_FRAME_URL, this.firstFrameUrl);
     inputChecks.put(LAST_FRAME_URL, this.lastFrameUrl);
     inputChecks.put(HEAD_FRAME, this.headFrame);
@@ -195,6 +207,7 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
       this.putHeader("X-DashScope-OssResourceResolve", "enable");
 
       this.imgUrl = inputChecks.get(IMG_URL);
+      this.audioUrl = inputChecks.get(AUDIO_URL);
       this.firstFrameUrl = inputChecks.get(FIRST_FRAME_URL);
       this.lastFrameUrl = inputChecks.get(LAST_FRAME_URL);
       this.headFrame = inputChecks.get(HEAD_FRAME);
