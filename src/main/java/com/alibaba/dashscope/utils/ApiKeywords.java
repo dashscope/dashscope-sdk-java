@@ -185,4 +185,6 @@ public class ApiKeywords {
   public static final String ANNOTATIONS = "annotations";
 
   public static final String LANGUAGE_TYPE = "language_type";
+
+  public static final String IMAGES = "images";
 }

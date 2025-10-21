@@ -119,7 +119,7 @@ public final class ImageSynthesis {
       throw new ApiException(e);
     }
     ApiServiceOption serviceOption = createServiceOptions;
-    if (param.getModel().contains("imageedit")) {
+    if (param.getModel().contains("imageedit") || param.getModel().contains("wan2.5-i2i")) {
       serviceOption.setTask("image2image");
     }
     return ImageSynthesisResult.fromDashScopeResult(
@@ -161,7 +161,7 @@ public final class ImageSynthesis {
       throw new ApiException(e);
     }
     ApiServiceOption serviceOption = createServiceOptions;
-    if (param.getModel().contains("imageedit")) {
+    if (param.getModel().contains("imageedit") || param.getModel().contains("wan2.5-i2i")) {
       serviceOption.setTask("image2image");
     }
     return ImageSynthesisResult.fromDashScopeResult(

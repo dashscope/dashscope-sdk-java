@@ -13,7 +13,9 @@ import com.alibaba.dashscope.utils.JsonUtils;
 import com.alibaba.dashscope.utils.PreprocessInputImage;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
@@ -35,6 +37,7 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
   private String negativePrompt;
   private String refImage;
   private String sketchImageUrl;
+  private List<String> images;
 
   /** The specific functions to be achieved , see class ImageEditFunction */
   @Builder.Default private String function = null;
@@ -77,6 +80,9 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
 
     if (maskImageUrl != null && !maskImageUrl.isEmpty()) {
       jsonObject.addProperty(MASK_IMAGE_URL, maskImageUrl);
+    }
+    if (images != null && !images.isEmpty()) {
+      jsonObject.add(IMAGES, JsonUtils.toJsonArray(images));
     }
     if (extraInputs != null && !extraInputs.isEmpty()) {
       JsonObject extraInputsJsonObject = JsonUtils.parametersToJsonObject(extraInputs);
@@ -147,6 +153,10 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
     inputChecks.put(SKETCH_IMAGE_URL, this.sketchImageUrl);
     inputChecks.put(BASE_IMAGE_URL, this.baseImageUrl);
     inputChecks.put(MASK_IMAGE_URL, this.maskImageUrl);
+    int imagesSize = this.images.size();
+    for (int i = 0; i < imagesSize; i++) {
+      inputChecks.put(IMAGES + "[" + i + "]", this.images.get(i));
+    }
 
     boolean isUpload = PreprocessInputImage.checkAndUploadImage(getModel(), inputChecks, getApiKey());
 
@@ -157,6 +167,13 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
       this.sketchImageUrl = inputChecks.get(SKETCH_IMAGE_URL);
       this.baseImageUrl = inputChecks.get(BASE_IMAGE_URL);
       this.maskImageUrl = inputChecks.get(MASK_IMAGE_URL);
+      List<String> newImages = new ArrayList<>();
+      for (int i = 0; i < imagesSize; i++) {
+        newImages.add(inputChecks.get(IMAGES + "[" + i + "]"));
+      }
+      if (!newImages.isEmpty()) {
+        this.images = newImages;
+      }
     }
   }
 }
