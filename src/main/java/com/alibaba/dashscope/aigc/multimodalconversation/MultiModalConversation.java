@@ -307,6 +307,9 @@ public final class MultiModalConversation {
           List<ToolCallBase> currentToolCalls = choice.getMessage().getToolCalls();
           if (currentToolCalls != null && !currentToolCalls.isEmpty()) {
             mergeToolCalls(currentToolCalls, accumulated.toolCalls);
+          }
+          // Always set accumulated tool_calls if we have any
+          if (!accumulated.toolCalls.isEmpty()) {
             choice.getMessage().setToolCalls(accumulated.toolCalls);
           }
         }
