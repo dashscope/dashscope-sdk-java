@@ -153,9 +153,12 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
     inputChecks.put(SKETCH_IMAGE_URL, this.sketchImageUrl);
     inputChecks.put(BASE_IMAGE_URL, this.baseImageUrl);
     inputChecks.put(MASK_IMAGE_URL, this.maskImageUrl);
-    int imagesSize = this.images.size();
-    for (int i = 0; i < imagesSize; i++) {
-      inputChecks.put(IMAGES + "[" + i + "]", this.images.get(i));
+    int imagesSize = 0;
+    if (this.images != null) {
+      imagesSize = this.images.size();
+      for (int i = 0; i < imagesSize; i++) {
+        inputChecks.put(IMAGES + "[" + i + "]", this.images.get(i));
+      }
     }
 
     boolean isUpload = PreprocessInputImage.checkAndUploadImage(getModel(), inputChecks, getApiKey());
@@ -167,12 +170,10 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
       this.sketchImageUrl = inputChecks.get(SKETCH_IMAGE_URL);
       this.baseImageUrl = inputChecks.get(BASE_IMAGE_URL);
       this.maskImageUrl = inputChecks.get(MASK_IMAGE_URL);
-      List<String> newImages = new ArrayList<>();
-      for (int i = 0; i < imagesSize; i++) {
-        newImages.add(inputChecks.get(IMAGES + "[" + i + "]"));
-      }
-      if (!newImages.isEmpty()) {
-        this.images = newImages;
+      if (imagesSize > 0) {
+        for (int i = 0; i < imagesSize; i++) {
+          this.images.add(inputChecks.get(IMAGES + "[" + i + "]"));
+        }
       }
     }
   }
