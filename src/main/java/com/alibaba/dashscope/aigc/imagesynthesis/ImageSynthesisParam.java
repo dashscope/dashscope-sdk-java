@@ -171,9 +171,11 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
       this.baseImageUrl = inputChecks.get(BASE_IMAGE_URL);
       this.maskImageUrl = inputChecks.get(MASK_IMAGE_URL);
       if (imagesSize > 0) {
+        List<String> newImages = new ArrayList<>();
         for (int i = 0; i < imagesSize; i++) {
-          this.images.add(inputChecks.get(IMAGES + "[" + i + "]"));
+          newImages.add(inputChecks.get(IMAGES + "[" + i + "]"));
         }
+        this.images = newImages;
       }
     }
   }
