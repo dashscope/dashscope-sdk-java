@@ -19,8 +19,8 @@ public class OmniRealtimeConfig {
   /** omni output modalities to be used in session */
   @NonNull List<OmniRealtimeModality> modalities;
 
-  /** voice to be used in session */
-  @NonNull String voice;
+  /** voice to be used in session ,not need in qwen-asr-realtime*/
+  @Builder.Default String voice = null;
 
   /** input audio format */
   @Builder.Default
@@ -50,6 +50,12 @@ public class OmniRealtimeConfig {
   @Builder.Default Map<String, Object> turnDetectionParam = null;
   /** The extra parameters. */
   @Builder.Default Map<String, Object> parameters = null;
+  /** translation configuration */
+  @Builder.Default
+  OmniRealtimeTranslationParam translationConfig = null;
+  /** transcription configuration */
+  @Builder.Default
+  OmniRealtimeTranscriptionParam transcriptionConfig = null;
 
   public JsonObject getConfig() {
     Map<String, Object> config = new HashMap<>();
@@ -81,6 +87,31 @@ public class OmniRealtimeConfig {
       config.put(OmniRealtimeConstants.TURN_DETECTION, turnDetectionConfig);
     } else {
       config.put(OmniRealtimeConstants.TURN_DETECTION, null);
+    }
+    // Add translation configuration to the config
+    if (translationConfig != null) {
+      Map<String, Object> translationConfig = new HashMap<>();
+      translationConfig.put(OmniRealtimeConstants.LANGUAGE, this.translationConfig.getLanguage());
+      config.put(OmniRealtimeConstants.TRANSLATION, translationConfig);
+    } else {
+      config.put(OmniRealtimeConstants.TRANSLATION, null);
+    }
+    // Add transcription configuration for qwen-asr-realtime
+    if (transcriptionConfig != null) {
+      Map<String, Object> transcriptionConfig = new HashMap<>();
+      if (this.transcriptionConfig.getInputSampleRate() != null) {
+        config.put(OmniRealtimeConstants.SAMPLE_RATE, this.transcriptionConfig.getInputSampleRate());
+      }
+      if (this.transcriptionConfig.getInputAudioFormat() != null) {
+        config.put(OmniRealtimeConstants.INPUT_AUDIO_FORMAT, this.transcriptionConfig.getInputAudioFormat());
+      }
+      if (this.transcriptionConfig.getLanguage() != null) {
+        transcriptionConfig.put(OmniRealtimeConstants.LANGUAGE, this.transcriptionConfig.getLanguage());
+      }
+      if (this.transcriptionConfig.getCorpus() != null) {
+        transcriptionConfig.put(OmniRealtimeConstants.INPUT_AUDIO_TRANSCRIPTION_CORPUS, this.transcriptionConfig.getCorpus());
+      }
+      config.put(OmniRealtimeConstants.INPUT_AUDIO_TRANSCRIPTION, transcriptionConfig);
     }
     if (parameters != null) {
       for (Map.Entry<String, Object> entry : parameters.entrySet()) {

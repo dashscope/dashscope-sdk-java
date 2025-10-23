@@ -10,11 +10,17 @@ public class OmniRealtimeConstants {
   public static final String OUTPUT_AUDIO_FORMAT = "output_audio_format";
   public static final String INPUT_AUDIO_TRANSCRIPTION = "input_audio_transcription";
   public static final String INPUT_AUDIO_TRANSCRIPTION_MODEL = "model";
+  public static final String INPUT_AUDIO_TRANSCRIPTION_CORPUS = "corpus";
   public static final String TURN_DETECTION = "turn_detection";
   public static final String TURN_DETECTION_TYPE = "type";
   public static final String TURN_DETECTION_THRESHOLD = "threshold";
   public static final String PREFIX_PADDING_MS = "prefix_padding_ms";
   public static final String SILENCE_DURATION_MS = "silence_duration_ms";
+
+  // Translation constants
+  public static final String TRANSLATION = "translation";
+  public static final String LANGUAGE = "language";
+  public static final String SAMPLE_RATE = "sample_rate";
 
   public static final String PROTOCOL_EVENT_ID = "event_id";
   public static final String PROTOCOL_TYPE = "type";
