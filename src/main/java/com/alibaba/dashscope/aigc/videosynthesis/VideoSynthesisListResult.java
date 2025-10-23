@@ -27,12 +27,22 @@ public class VideoSynthesisListResult {
   @SerializedName("page_size")
   private Integer pageSize;
 
+  @SerializedName("status_code")
+  private Integer statusCode;
+
+  private String code;
+
+  private String message;
+
   public static VideoSynthesisListResult fromDashScopeResult(DashScopeResult dashScopeResult) {
     if (dashScopeResult.getOutput() != null) {
       VideoSynthesisListResult rs =
           (JsonUtils.fromJsonObject(
               (JsonObject) dashScopeResult.getOutput(), VideoSynthesisListResult.class));
       rs.requestId = dashScopeResult.getRequestId();
+      rs.statusCode = dashScopeResult.getStatusCode();
+      rs.code = dashScopeResult.getCode();
+      rs.message = dashScopeResult.getMessage();
       return rs;
     } else {
       log.error("Result no output: {}", dashScopeResult);

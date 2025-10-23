@@ -27,12 +27,22 @@ public class ImageSynthesisListResult {
   @SerializedName("page_size")
   private Integer pageSize;
 
+  @SerializedName("status_code")
+  private Integer statusCode;
+
+  private String code;
+
+  private String message;
+
   public static ImageSynthesisListResult fromDashScopeResult(DashScopeResult dashScopeResult) {
     if (dashScopeResult.getOutput() != null) {
       ImageSynthesisListResult rs =
           (JsonUtils.fromJsonObject(
               (JsonObject) dashScopeResult.getOutput(), ImageSynthesisListResult.class));
       rs.requestId = dashScopeResult.getRequestId();
+      rs.statusCode = dashScopeResult.getStatusCode();
+      rs.code = dashScopeResult.getCode();
+      rs.message = dashScopeResult.getMessage();
       return rs;
     } else {
       log.error(String.format("Result no output: %s", dashScopeResult));

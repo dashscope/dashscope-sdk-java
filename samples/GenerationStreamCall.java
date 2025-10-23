@@ -18,13 +18,15 @@ public class GenerationStreamCall {
     Generation gen = new Generation();
     GenerationParam param = GenerationParam.builder()
             .model("qwen3-max")
-            .prompt("就当前的海洋污染的情况，写一份限塑的倡议书提纲，需要有理有据地号召大家克制地使用塑料制品")
+            .prompt("你好")
             .topP(0.8)
             .incrementalOutput(false)
             .build();
     Flowable<GenerationResult> result = gen.streamCall(param);
     result.blockingForEach(message -> {
-      System.out.println(JsonUtils.toJson(message));
+      System.out.println("generation_result:");
+      System.out.println(message);
+      System.out.println(JsonUtils.toJson(message) + "\n");
     });
   }
 
@@ -32,7 +34,7 @@ public class GenerationStreamCall {
       throws NoApiKeyException, ApiException, InputRequiredException,InterruptedException {
     Generation gen = new Generation();
     GenerationParam param = GenerationParam.builder().model(Generation.Models.QWEN_PLUS)
-        .prompt("就当前的海洋污染的情况，写一份限塑的倡议书提纲，需要有理有据地号召大家克制地使用塑料制品").topP(0.8).build();
+        .prompt("你好").topP(0.8).build();
     Semaphore semaphore = new Semaphore(0);
     gen.streamCall(param, new ResultCallback<GenerationResult>() {
 
@@ -86,17 +88,17 @@ public class GenerationStreamCall {
       System.out.println(e.getMessage());
     }
 
-    try {
-      streamCallWithCallback();
-    } catch (ApiException | NoApiKeyException | InputRequiredException | InterruptedException e) {
-      System.out.println(e.getMessage());
-    }
-
-    try {
-      streamCallWithSearchOptions();
-    } catch (ApiException | NoApiKeyException | InputRequiredException e) {
-      System.out.println(e.getMessage());
-    }
+//    try {
+//      streamCallWithCallback();
+//    } catch (ApiException | NoApiKeyException | InputRequiredException | InterruptedException e) {
+//      System.out.println(e.getMessage());
+//    }
+//
+//    try {
+//      streamCallWithSearchOptions();
+//    } catch (ApiException | NoApiKeyException | InputRequiredException e) {
+//      System.out.println(e.getMessage());
+//    }
 
     System.exit(0);
   }

@@ -17,11 +17,21 @@ public class ImageSynthesisResult {
   private ImageSynthesisOutput output;
   private ImageSynthesisUsage usage;
 
+  @SerializedName("status_code")
+  private Integer statusCode;
+
+  private String code;
+
+  private String message;
+
   private ImageSynthesisResult() {}
 
   public static ImageSynthesisResult fromDashScopeResult(DashScopeResult dashScopeResult) {
     ImageSynthesisResult result = new ImageSynthesisResult();
     result.requestId = dashScopeResult.getRequestId();
+    result.statusCode = dashScopeResult.getStatusCode();
+    result.code = dashScopeResult.getCode();
+    result.message = dashScopeResult.getMessage();
     if (dashScopeResult.getUsage() != null) {
       result.setUsage(
           JsonUtils.fromJsonObject(

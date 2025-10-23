@@ -17,11 +17,21 @@ public class VideoSynthesisResult {
   private VideoSynthesisOutput output;
   private VideoSynthesisUsage usage;
 
+  @SerializedName("status_code")
+  private Integer statusCode;
+
+  private String code;
+
+  private String message;
+
   private VideoSynthesisResult() {}
 
   public static VideoSynthesisResult fromDashScopeResult(DashScopeResult dashScopeResult) {
     VideoSynthesisResult result = new VideoSynthesisResult();
     result.requestId = dashScopeResult.getRequestId();
+    result.statusCode = dashScopeResult.getStatusCode();
+    result.code = dashScopeResult.getCode();
+    result.message = dashScopeResult.getMessage();
     if (dashScopeResult.getUsage() != null) {
       result.setUsage(
           JsonUtils.fromJsonObject(

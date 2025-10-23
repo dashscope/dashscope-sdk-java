@@ -18,11 +18,21 @@ public class TextReRankResult {
 
   private TextReRankOutput output;
 
+  @SerializedName("status_code")
+  private Integer statusCode;
+
+  private String code;
+
+  private String message;
+
   private TextReRankResult() {}
 
   public static TextReRankResult fromDashScopeResult(DashScopeResult dashScopeResult) {
     TextReRankResult result = new TextReRankResult();
     result.setRequestId(dashScopeResult.getRequestId());
+    result.setStatusCode(dashScopeResult.getStatusCode());
+    result.setCode(dashScopeResult.getCode());
+    result.setMessage(dashScopeResult.getMessage());
     if (dashScopeResult.getUsage() != null) {
       result.setUsage(
           JsonUtils.fromJsonObject(

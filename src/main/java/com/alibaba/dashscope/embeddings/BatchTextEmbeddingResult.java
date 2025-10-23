@@ -16,6 +16,13 @@ public class BatchTextEmbeddingResult {
   private BatchTextEmbeddingOutput output;
   private BatchTextEmbeddingUsage usage;
 
+  @SerializedName("status_code")
+  private Integer statusCode;
+
+  private String code;
+
+  private String message;
+
   private BatchTextEmbeddingResult() {}
 
   public static BatchTextEmbeddingResult fromDashScopeResult(DashScopeResult dashScopeResult) {
@@ -25,6 +32,9 @@ public class BatchTextEmbeddingResult {
             (JsonObject) dashScopeResult.getOutput(), BatchTextEmbeddingOutput.class);
     res.usage = JsonUtils.fromJson(dashScopeResult.getUsage(), BatchTextEmbeddingUsage.class);
     res.requestId = dashScopeResult.getRequestId();
+    res.statusCode = dashScopeResult.getStatusCode();
+    res.code = dashScopeResult.getCode();
+    res.message = dashScopeResult.getMessage();
     return res;
   }
 }

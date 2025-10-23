@@ -32,9 +32,24 @@ public class ApplicationResult {
   @SerializedName("usage")
   private ApplicationUsage usage;
 
+  /** HTTP status code from server response */
+  @SerializedName("status_code")
+  private Integer statusCode;
+
+  /** Error code from server response */
+  @SerializedName("code")
+  private String code;
+
+  /** Message from server response */
+  @SerializedName("message")
+  private String message;
+
   public static ApplicationResult fromDashScopeResult(DashScopeResult dashScopeResult) {
     ApplicationResult result = new ApplicationResult();
     result.setRequestId(dashScopeResult.getRequestId());
+    result.setStatusCode(dashScopeResult.getStatusCode());
+    result.setCode(dashScopeResult.getCode());
+    result.setMessage(dashScopeResult.getMessage());
     if (dashScopeResult.getUsage() != null) {
       result.setUsage(
           JsonUtils.fromJsonObject(

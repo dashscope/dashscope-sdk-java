@@ -244,6 +244,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
               NetworkResponse.builder()
                   .headers(response.headers().toMultimap())
                   .message(response.body().string())
+                  .httpStatusCode(response.code())
                   .build(),
               req.getIsFlatten(),
               req);
@@ -279,6 +280,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                                 NetworkResponse.builder()
                                     .headers(response.headers().toMultimap())
                                     .message(response.body().string())
+                                    .httpStatusCode(response.code())
                                     .build(),
                                 req.getIsFlatten(),
                                 req));
@@ -310,6 +312,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                       .headers(response.headers().toMultimap())
                       .message(data)
                       .event(eventType)
+                      .httpStatusCode(response.code())
                       .build(),
                   isFlattenResult,
                   req));
@@ -325,6 +328,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                       .headers(response.headers().toMultimap())
                       .message(data)
                       .event(eventType)
+                      .httpStatusCode(response.code())
                       .build(),
                   isFlattenResult,
                   req));
@@ -340,6 +344,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                   NetworkResponse.builder()
                       .headers(response.headers().toMultimap())
                       .message(data)
+                      .httpStatusCode(response.code())
                       .build(),
                   isFlattenResult,
                   req));
@@ -433,6 +438,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                                   .headers(response.headers().toMultimap())
                                   .message(data)
                                   .event(type)
+                                  .httpStatusCode(response.code())
                                   .build(),
                               req.getIsFlatten(),
                               req));
@@ -445,6 +451,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                                   .headers(response.headers().toMultimap())
                                   .message(data)
                                   .event(type)
+                                  .httpStatusCode(response.code())
                                   .build(),
                               req.getIsFlatten(),
                               req));
@@ -456,6 +463,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                               NetworkResponse.builder()
                                   .headers(response.headers().toMultimap())
                                   .message(data)
+                                  .httpStatusCode(response.code())
                                   .build(),
                               req.getIsFlatten(),
                               req));
