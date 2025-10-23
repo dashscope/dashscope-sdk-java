@@ -142,11 +142,12 @@ public class VoiceEnrollmentService {
     VoiceEnrollmentParam param =
         VoiceEnrollmentParam.builder()
             .operationType(VoiceEnrollmentOperationType.CREATE)
-            .model(this.model)
+            .model(customParam.getModel().isEmpty() ? this.model : customParam.getModel())
             .targetModel(targetModel)
             .prefix(prefix)
             .url(url)
             .apiKey(apikey)
+            .languageHints(customParam.getLanguageHints())
             .headers(customParam.getHeaders())
             .resources(customParam.getResources())
             .parameters(customParam.getParameters())

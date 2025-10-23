@@ -107,7 +107,7 @@ public class OmniRealtimeConversation extends WebSocketListener {
         OmniRealtimeConstants.PROTOCOL_TYPE,
         OmniRealtimeConstants.PROTOCOL_EVENT_TYPE_APPEND_AUDIO);
     append_request.put(OmniRealtimeConstants.PROTOCOL_AUDIO, audioBase64);
-    log.info("append audio with eid: {}, length: {}", event_id, audioBase64.length());
+    log.debug("append audio with eid: {}, length: {}", event_id, audioBase64.length());
     GsonBuilder builder = new GsonBuilder();
     builder.serializeNulls();
     Gson gson = builder.create();
