@@ -36,6 +36,34 @@ public class DashScopeResult extends Result {
           if (headers.has(ApiKeywords.TASKID)) {
             this.setRequestId(headers.get(ApiKeywords.TASKID).getAsString());
           }
+          // Extract status_code, code and message from header
+          if (headers.has(ApiKeywords.STATUS_CODE)) {
+            this.setStatusCode(
+                headers.get(ApiKeywords.STATUS_CODE).isJsonNull()
+                    ? null
+                    : headers.get(ApiKeywords.STATUS_CODE).getAsInt());
+          } else {
+            // Set default status code
+            this.setStatusCode(200);
+          }
+          if (headers.has(ApiKeywords.ERROR_CODE)) {
+            this.setCode(
+                headers.get(ApiKeywords.ERROR_CODE).isJsonNull()
+                    ? ""
+                    : headers.get(ApiKeywords.ERROR_CODE).getAsString());
+          } else {
+            // Set default empty string for successful responses
+            this.setCode("");
+          }
+          if (headers.has(ApiKeywords.ERROR_MESSAGE)) {
+            this.setMessage(
+                headers.get(ApiKeywords.ERROR_MESSAGE).isJsonNull()
+                    ? ""
+                    : headers.get(ApiKeywords.ERROR_MESSAGE).getAsString());
+          } else {
+            // Set default empty string for successful responses
+            this.setMessage("");
+          }
         }
         if (jsonObject.has(ApiKeywords.PAYLOAD)) {
           JsonObject payload = jsonObject.getAsJsonObject(ApiKeywords.PAYLOAD);

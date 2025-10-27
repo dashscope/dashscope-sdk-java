@@ -99,6 +99,8 @@ public class ApiKeywords {
 
   public static final String ERROR_NAME = "error_name";
 
+  public static final String ERROR_CODE = "error_code";
+
   public static final String ERROR_MESSAGE = "error_message";
 
   public static final String OUTPUT = "output";
