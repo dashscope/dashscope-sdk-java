@@ -373,6 +373,22 @@ public final class Generation {
         }
       }
 
+      // Store output_tokens for each choice when n > 1
+      // Each streaming packet contains usage info for one specific choice
+      if (n > 1 && result.getUsage() != null &&
+          result.getUsage().getOutputTokens() != null &&
+          !choices.isEmpty()) {
+        // Get the choice index from the first choice in this packet
+        Integer choiceIndex = choices.get(0).getIndex();
+        if (choiceIndex == null) {
+          choiceIndex = 0;
+        }
+        AccumulatedData accumulated = accumulatedData.get(choiceIndex);
+        if (accumulated != null) {
+          accumulated.outputTokens = result.getUsage().getOutputTokens();
+        }
+      }
+
       // Check if all choices are finished when n > 1
       if (n > 1) {
         int finishedCount = 0;
@@ -399,6 +415,7 @@ public final class Generation {
           // Return final result with all choices
           GenerationOutput output = result.getOutput();
           List<GenerationOutput.Choice> allChoices = new ArrayList<>();
+          int totalOutputTokens = 0;
           for (Map.Entry<Integer, AccumulatedData> entry :
               accumulatedData.entrySet()) {
             Integer index = entry.getKey();
@@ -430,8 +447,22 @@ public final class Generation {
             }
 
             allChoices.add(finalChoice);
+
+            // Sum up output tokens from all choices
+            if (data.outputTokens != null) {
+              totalOutputTokens += data.outputTokens;
+            }
           }
           output.setChoices(allChoices);
+
+          // Update usage with sum of all choices' output tokens
+          if (result.getUsage() != null && totalOutputTokens > 0) {
+            result.getUsage().setOutputTokens(totalOutputTokens);
+            if (result.getUsage().getInputTokens() != null) {
+              result.getUsage().setTotalTokens(
+                  result.getUsage().getInputTokens() + totalOutputTokens);
+            }
+          }
         }
       }
     }
@@ -569,5 +600,6 @@ public final class Generation {
     String finishReason = null;
     boolean allChoicesSent = false;
     String role = null;
+    Integer outputTokens = null;
   }
 }
