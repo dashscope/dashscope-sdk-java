@@ -282,7 +282,7 @@ public final class Generation {
     // Check if all choices have been sent (for n > 1 case)
     if (n > 1 && !accumulatedData.isEmpty()) {
       boolean allSent = accumulatedData.values().stream()
-          .anyMatch(data -> data.allChoicesSent);
+          .allMatch(data -> data.allChoicesSent);
       if (allSent) {
         return null;
       }
@@ -389,8 +389,10 @@ public final class Generation {
         }
       }
 
-      // Check if all choices are finished when n > 1
+      // Handle n > 1 case: different strategies for different
+      // finish_reason
       if (n > 1) {
+        // Count finished choices
         int finishedCount = 0;
         for (AccumulatedData data : accumulatedData.values()) {
           if (data.finished) {
@@ -398,69 +400,102 @@ public final class Generation {
           }
         }
 
-        // If not all choices finished, hide finish_reason
-        if (finishedCount < n) {
-          for (GenerationOutput.Choice choice : choices) {
-            if (choice.getFinishReason() != null &&
-                !choice.getFinishReason().equals("null")) {
-              choice.setFinishReason("null");
+        // Find current packet's finished choice (if any)
+        String currentFinishReason = null;
+        Integer currentChoiceIndex = null;
+        for (GenerationOutput.Choice choice : choices) {
+          if (choice.getFinishReason() != null &&
+              !choice.getFinishReason().equals("null")) {
+            currentFinishReason = choice.getFinishReason();
+            currentChoiceIndex =
+                choice.getIndex() != null ? choice.getIndex() : 0;
+            break;
+          }
+        }
+
+        // No finish_reason in current packet: return as is
+        if (currentFinishReason == null) {
+          return result;
+        }
+
+        // For stop: wait all choices, then merge into one result
+        if ("stop".equals(currentFinishReason)) {
+          if (finishedCount < n) {
+            // Hide finish_reason until all finished
+            for (GenerationOutput.Choice choice : choices) {
+              if (choice.getFinishReason() != null &&
+                  !choice.getFinishReason().equals("null")) {
+                choice.setFinishReason("null");
+              }
+            }
+          } else {
+            // All finished: merge all choices into one result
+            for (AccumulatedData data : accumulatedData.values()) {
+              data.allChoicesSent = true;
+            }
+            GenerationOutput output = result.getOutput();
+            List<GenerationOutput.Choice> allChoices = new ArrayList<>();
+            int totalOutputTokens = 0;
+            for (Map.Entry<Integer, AccumulatedData> entry :
+                accumulatedData.entrySet()) {
+              Integer index = entry.getKey();
+              AccumulatedData data = entry.getValue();
+              GenerationOutput.Choice finalChoice = output.new Choice();
+              finalChoice.setIndex(index);
+              finalChoice.setFinishReason(data.finishReason);
+              com.alibaba.dashscope.common.Message message =
+                  new com.alibaba.dashscope.common.Message();
+              message.setRole("assistant");
+              if (data.content.length() > 0) {
+                message.setContent(data.content.toString());
+              }
+              if (data.reasoningContent.length() > 0) {
+                message.setReasoningContent(data.reasoningContent.toString());
+              }
+              if (!data.toolCalls.isEmpty()) {
+                message.setToolCalls(data.toolCalls);
+              }
+              finalChoice.setMessage(message);
+              if (!data.logprobsContent.isEmpty()) {
+                GenerationLogprobs logprobs = new GenerationLogprobs();
+                logprobs.setContent(new ArrayList<>(data.logprobsContent));
+                finalChoice.setLogprobs(logprobs);
+              }
+              allChoices.add(finalChoice);
+              if (data.outputTokens != null) {
+                totalOutputTokens += data.outputTokens;
+              }
+            }
+            output.setChoices(allChoices);
+            if (result.getUsage() != null && totalOutputTokens > 0) {
+              result.getUsage().setOutputTokens(totalOutputTokens);
+              if (result.getUsage().getInputTokens() != null) {
+                result.getUsage().setTotalTokens(
+                    result.getUsage().getInputTokens() + totalOutputTokens);
+              }
             }
           }
         } else {
-          // All choices finished, mark as sent first
-          for (AccumulatedData data : accumulatedData.values()) {
-            data.allChoicesSent = true;
+          // For non-stop (e.g., tool_calls): output each choice separately
+          AccumulatedData currentData = accumulatedData.get(currentChoiceIndex);
+          if (currentData == null || currentData.allChoicesSent) {
+            return null;
           }
-
-          // Return final result with all choices
-          GenerationOutput output = result.getOutput();
-          List<GenerationOutput.Choice> allChoices = new ArrayList<>();
-          int totalOutputTokens = 0;
-          for (Map.Entry<Integer, AccumulatedData> entry :
-              accumulatedData.entrySet()) {
-            Integer index = entry.getKey();
-            AccumulatedData data = entry.getValue();
-
-            GenerationOutput.Choice finalChoice = output.new Choice();
-            finalChoice.setIndex(index);
-            finalChoice.setFinishReason(data.finishReason);
-
-            com.alibaba.dashscope.common.Message message =
-                new com.alibaba.dashscope.common.Message();
-            message.setRole("assistant");
-            if (data.content.length() > 0) {
-              message.setContent(data.content.toString());
-            }
-            if (data.reasoningContent.length() > 0) {
-              message.setReasoningContent(
-                  data.reasoningContent.toString());
-            }
-            if (!data.toolCalls.isEmpty()) {
-              message.setToolCalls(data.toolCalls);
-            }
-            finalChoice.setMessage(message);
-
-            if (!data.logprobsContent.isEmpty()) {
-              GenerationLogprobs logprobs = new GenerationLogprobs();
-              logprobs.setContent(new ArrayList<>(data.logprobsContent));
-              finalChoice.setLogprobs(logprobs);
-            }
-
-            allChoices.add(finalChoice);
-
-            // Sum up output tokens from all choices
-            if (data.outputTokens != null) {
-              totalOutputTokens += data.outputTokens;
-            }
-          }
-          output.setChoices(allChoices);
-
-          // Update usage with sum of all choices' output tokens
-          if (result.getUsage() != null && totalOutputTokens > 0) {
-            result.getUsage().setOutputTokens(totalOutputTokens);
-            if (result.getUsage().getInputTokens() != null) {
-              result.getUsage().setTotalTokens(
-                  result.getUsage().getInputTokens() + totalOutputTokens);
+          currentData.allChoicesSent = true;
+          // Reuse current choice in result, just update it
+          for (GenerationOutput.Choice choice : choices) {
+            if (choice.getIndex() != null &&
+                choice.getIndex().equals(currentChoiceIndex)) {
+              // Update usage with this choice's output tokens
+              if (result.getUsage() != null && currentData.outputTokens != null) {
+                result.getUsage().setOutputTokens(currentData.outputTokens);
+                if (result.getUsage().getInputTokens() != null) {
+                  result.getUsage().setTotalTokens(
+                      result.getUsage().getInputTokens() +
+                      currentData.outputTokens);
+                }
+              }
+              return result;
             }
           }
         }
