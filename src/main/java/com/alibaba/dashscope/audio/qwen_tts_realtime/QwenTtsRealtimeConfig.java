@@ -25,6 +25,25 @@ public class QwenTtsRealtimeConfig {
   @Builder.Default String mode = "server_commit";
   /** languageType for tts */
   @Builder.Default String languageType = null;
+
+  /** sampleRate for tts , range [8000,16000,22050,24000,44100,48000]. default is 24000 */
+  @Builder.Default Integer sampleRate = null;
+
+  /** speechRate for tts , range [0.5~2.0],default is 1.0 */
+  @Builder.Default Float speechRate = null;
+
+  /** volume for tts , range [0~100],default is 50 */
+  @Builder.Default Integer volume = null;
+
+  /** format for tts, support mp3,wav,pcm,opus,default is pcm */
+  @Builder.Default String format = null;
+
+  /** pitchRate for tts , range [0.5~2.0],default is 1.0 */
+  @Builder.Default Float pitchRate = null;
+
+  /** bitRate for tts , support 6~510,default is 128kbps. only work on format: opus/mp3 */
+  @Builder.Default Integer bitRate = null;
+
   /** The extra parameters. */
   @Builder.Default Map<String, Object> parameters = null;
 
@@ -32,8 +51,28 @@ public class QwenTtsRealtimeConfig {
     Map<String, Object> config = new HashMap<>();
     config.put(QwenTtsRealtimeConstants.VOICE, voice);
     config.put(QwenTtsRealtimeConstants.MODE, mode);
-    config.put(QwenTtsRealtimeConstants.RESPONSE_FORMAT, responseFormat.getFormat());
-    config.put(QwenTtsRealtimeConstants.SAMPLE_RATE, responseFormat.getSampleRate());
+    if (this.format != null) {
+      config.put(QwenTtsRealtimeConstants.RESPONSE_FORMAT, this.format);
+    } else {
+      config.put(QwenTtsRealtimeConstants.RESPONSE_FORMAT, responseFormat.getFormat());
+    }
+    if (this.sampleRate != null) {
+      config.put(QwenTtsRealtimeConstants.SAMPLE_RATE, this.sampleRate);
+    } else {
+      config.put(QwenTtsRealtimeConstants.SAMPLE_RATE, responseFormat.getSampleRate());
+    }
+    if (this.speechRate != null) {
+      config.put(QwenTtsRealtimeConstants.SPEECH_RATE, this.speechRate);
+    }
+    if (this.pitchRate != null) {
+      config.put(QwenTtsRealtimeConstants.PITCH_RATE, this.pitchRate);
+    }
+    if (this.volume != null) {
+      config.put(QwenTtsRealtimeConstants.VOLUME, this.volume);
+    }
+    if (this.bitRate != null) {
+      config.put(QwenTtsRealtimeConstants.BIT_RATE, this.bitRate);
+    }
     if (languageType != null) {
       config.put(QwenTtsRealtimeConstants.LANGUAGE_TYPE,languageType);
     }
