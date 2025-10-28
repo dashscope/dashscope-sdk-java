@@ -20,11 +20,10 @@ import io.reactivex.functions.Action;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import okhttp3.Request.Builder;
@@ -49,6 +48,15 @@ public class OkHttpWebSocketClient extends WebSocketListener
   private FlowableEmitter<DashScopeResult> connectionEmitter;
 
   private AtomicBoolean passTaskStarted = new AtomicBoolean(false);
+  private static final AtomicInteger STREAMING_REQUEST_THREAD_NUM = new AtomicInteger(0);
+
+  private static final ExecutorService STREAMING_REQUEST_EXECUTOR =
+          Executors.newCachedThreadPool(r -> {
+            Thread t = new Thread(r, "STEAMING-REQUEST-Worker-" + STREAMING_REQUEST_THREAD_NUM.getAndIncrement());
+            t.setDaemon(true);
+            return t;
+          });
+
 
   public OkHttpWebSocketClient(OkHttpClient client, boolean passTaskStarted) {
     this.client = client;
@@ -639,7 +647,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
                 log.error(String.format("sendStreamData exception: %s", ex.getMessage()));
                 responseEmitter.onError(ex);
               }
-            });
+            },STREAMING_REQUEST_EXECUTOR);
     return future;
   }
 
