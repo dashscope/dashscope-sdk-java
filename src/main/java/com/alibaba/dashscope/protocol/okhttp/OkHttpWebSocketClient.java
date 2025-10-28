@@ -20,11 +20,10 @@ import io.reactivex.functions.Action;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import okhttp3.Request.Builder;
@@ -49,11 +48,61 @@ public class OkHttpWebSocketClient extends WebSocketListener
   private FlowableEmitter<DashScopeResult> connectionEmitter;
 
   private AtomicBoolean passTaskStarted = new AtomicBoolean(false);
+  private static final AtomicInteger STREAMING_REQUEST_THREAD_NUM = new AtomicInteger(0);
+  private static final AtomicBoolean SHUTDOWN_INITIATED = new AtomicBoolean(false);
+
+  private static final ExecutorService STREAMING_REQUEST_EXECUTOR =
+          new ThreadPoolExecutor(1, 200, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(), r -> {
+            Thread t = new Thread(r, "WS-STREAMING-REQ-Worker-" + STREAMING_REQUEST_THREAD_NUM.updateAndGet(n -> n == Integer.MAX_VALUE ? 0 : n + 1));
+            t.setDaemon(true);
+            return t;
+          });
+
 
   public OkHttpWebSocketClient(OkHttpClient client, boolean passTaskStarted) {
     this.client = client;
     this.passTaskStarted.set(passTaskStarted);
   }
+
+  static {//auto close when jvm shutdown
+    Runtime.getRuntime().addShutdownHook(new Thread(OkHttpWebSocketClient::shutdownStreamingExecutor));
+  }
+  /**
+   * Shutdown the streaming request executor gracefully.
+   * This method should be called when the application is shutting down
+   * to ensure proper resource cleanup.
+   */
+  public static void shutdownStreamingExecutor() {
+    if (!SHUTDOWN_INITIATED.compareAndSet(false, true)) {
+      log.debug("Shutdown already in progress");
+      return;
+    }
+
+    if (STREAMING_REQUEST_EXECUTOR == null) return;
+
+    if (!STREAMING_REQUEST_EXECUTOR.isShutdown()) {
+      log.debug("Shutting down streaming request executor...");
+      STREAMING_REQUEST_EXECUTOR.shutdown();
+      try {
+        // Wait up to 60 seconds for existing tasks to terminate
+        if (!STREAMING_REQUEST_EXECUTOR.awaitTermination(60, TimeUnit.SECONDS)) {
+          log.warn("Streaming request executor did not terminate in 60 seconds, forcing shutdown...");
+          STREAMING_REQUEST_EXECUTOR.shutdownNow();
+          // Wait up to 60 seconds for tasks to respond to being cancelled
+          if (!STREAMING_REQUEST_EXECUTOR.awaitTermination(60, TimeUnit.SECONDS)) {
+            log.error("Streaming request executor did not terminate");
+          }
+        }
+      } catch (InterruptedException ie) {
+        // (Re-)Cancel if current thread also interrupted
+        STREAMING_REQUEST_EXECUTOR.shutdownNow();
+        // Preserve interrupt status
+        Thread.currentThread().interrupt();
+      }
+      log.info("Streaming request executor shut down completed");
+    }
+  }
+
 
   private Request buildConnectionRequest(
       String apiKey,
@@ -563,6 +612,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
                 isFirstMessage.set(false);
 
                 JsonObject startMessage = req.getStartTaskMessage();
+                log.debug("Thread {} sending start message: {}",Thread.currentThread().getName(), JsonUtils.toJson(startMessage));
                 String taskId =
                     startMessage.get("header").getAsJsonObject().get("task_id").getAsString();
                 // send start message out.
@@ -639,7 +689,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
                 log.error(String.format("sendStreamData exception: %s", ex.getMessage()));
                 responseEmitter.onError(ex);
               }
-            });
+            },STREAMING_REQUEST_EXECUTOR);
     return future;
   }
 
