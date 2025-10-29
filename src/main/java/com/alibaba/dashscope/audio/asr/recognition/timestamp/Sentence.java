@@ -6,11 +6,7 @@ import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
-
-import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.experimental.SuperBuilder;
 
 @Data
 public class Sentence {
@@ -38,6 +34,27 @@ public class Sentence {
 
   @SerializedName("sentence_id")
   private Long sentenceId;
+
+  @SerializedName("vad_pre_end")
+  boolean vadPreEnd;
+
+  @SerializedName("pre_end_failed")
+  boolean preEndFailed;
+
+  @SerializedName("pre_end_timemillis")
+  Long preEndTimemillis;
+
+  @SerializedName("pre_end_start_time")
+  Long preEndStartTime;
+
+  @SerializedName("pre_end_end_time")
+  Long preEndEndTime;
+
+  @SerializedName("sentence_begin")
+  boolean sentenceBegin;
+
+  @SerializedName("sentence_end")
+  boolean sentenceEnd;
 
   public static Sentence from(String message) {
     return JsonUtils.fromJson(message, Sentence.class);

@@ -24,7 +24,14 @@ public class RecognitionResult {
 
   private boolean isCompleteResult = false;
 
+  public boolean isSentenceBegin() {
+    return sentence.isSentenceBegin();
+  }
+
   public boolean isSentenceEnd() {
+    if (sentence.isSentenceEnd()) {
+      return true;
+    }
     return sentence.getEndTime() != null;
   }
 

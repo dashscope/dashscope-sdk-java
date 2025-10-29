@@ -128,7 +128,12 @@ public final class Recognition {
             item -> {
               return RecognitionResult.fromDashScopeResult(item);
             })
-        .filter(item -> item != null && item.getSentence() != null && !item.isCompleteResult() && !item.getSentence().isHeartbeat())
+        .filter(
+            item ->
+                item != null
+                    && item.getSentence() != null
+                    && !item.isCompleteResult()
+                    && !item.getSentence().isHeartbeat())
         .doOnNext(
             result -> {
               if (lastRequestId.get() == null && result.getRequestId() != null) {
