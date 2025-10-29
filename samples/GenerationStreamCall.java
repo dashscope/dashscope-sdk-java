@@ -32,21 +32,20 @@ import io.reactivex.Flowable;
 public class GenerationStreamCall {
   public static void streamCall()
       throws NoApiKeyException, ApiException, InputRequiredException {
-    Generation gen = new Generation();
-    GenerationParam param = GenerationParam.builder()
-            .model("qwen-plus")
-            .prompt("从1到1000选择一个数字")
-            .n(4)
-            .logprobs(true)
-            .topLogprobs(5)
-            .temperature(1.0F)
-            .topP(1.0)
-            .incrementalOutput(false)
-            .resultFormat("message")
-            .build();
-    Flowable<GenerationResult> result = gen.streamCall(param);
-    result.blockingForEach(message -> {
+    GenerationParam param =
+            GenerationParam.builder()
+                    .model("qwen-turbo")
+                    .prompt("如何做土豆炖猪脚?")
+                    .temperature((float) 1.0)
+                    .repetitionPenalty((float) 1.0)
+                    .topK(50)
+                    .build();
+    System.out.println(param.getHttpBody().toString());
+    Generation generation = new Generation();
+    Flowable<GenerationResult> flowable = generation.streamCall(param);
+    flowable.blockingForEach(message -> {
       System.out.println(JsonUtils.toJson(message));
+      Long time = System.currentTimeMillis();
     });
   }
 
