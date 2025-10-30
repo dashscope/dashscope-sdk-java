@@ -53,4 +53,6 @@ public interface AppKeywords {
   String FLOW_STREAM_MODE = "flow_stream_mode";
 
   String ENABLE_THINKING = "enable_thinking";
+
+  String CIP_SERVICE_CODES = "cip_service_codes";
 }

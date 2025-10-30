@@ -345,24 +345,45 @@ public class ApplicationCalls {
     }
 
     /**
-     * Stream call with file list sample
+     * Stream call with CIP (Content Integrity Protection) parameters
+     * sample
      *
      * @throws NoApiKeyException      Can not find api key
      * @throws InputRequiredException Missing inputs.
      */
-    public static void streamCallWithFileList()
+    public static void streamCallWithCIP()
             throws NoApiKeyException, InputRequiredException {
+        // Build CIP service codes for content security check
+        CipServiceCodes.Text textCheck =
+            CipServiceCodes.Text.builder()
+                .input("query_security_check")
+                .output("response_security_check")
+                .build();
+
+        CipServiceCodes.Image imageCheck =
+            CipServiceCodes.Image.builder()
+                .input("img_query_security_check")
+                .build();
+
+        CipServiceCodes cipServiceCodes = CipServiceCodes.builder()
+            .text(textCheck)
+            .image(imageCheck)
+            .build();
+
         ApplicationParam param = ApplicationParam.builder()
                 .appId(APP_ID)
-                .prompt("总结文件内容")
-                .files(Collections.singletonList(
-                    "https://dashscope.oss-cn-beijing.aliyuncs.com/audios/welcome.mp3"))
-                .incrementalOutput(true)
+                .prompt("图片里是什么内容")
+                .images(Collections.singletonList("https://yutai007.oss-cn-beijing.aliyuncs.com/documentsForTest/image/%E7%BE%BD%E7%BB%92%E6%9C%8D-wgggc.jpg"))
+                .cipServiceCodes(cipServiceCodes)
+//                .incrementalOutput(true)
                 .build();
 
         Application application = new Application();
-        Flowable<ApplicationResult> result = application.streamCall(param);
-        result.blockingForEach(data -> System.out.println(JsonUtils.toJson(data)));
+//        Flowable<ApplicationResult> result = application.streamCall(param);
+//        result.blockingForEach(data ->
+//            System.out.println(JsonUtils.toJson(data)));
+        ApplicationResult result = application.call(param);
+        System.out.println(JsonUtils.toJson(result));
     }
 
 
@@ -379,8 +400,9 @@ public class ApplicationCalls {
 //            ragCallWithDocReference();
 //            callWithMoreParameters();
 //            callWithThinking();
-            callWithFileList();
+//            callWithFileList();
 //            streamCallWithFileList();
+            streamCallWithCIP();
         } catch (ApiException | NoApiKeyException | InputRequiredException e) {
             System.out.printf("Exception: %s", e.getMessage());
         }

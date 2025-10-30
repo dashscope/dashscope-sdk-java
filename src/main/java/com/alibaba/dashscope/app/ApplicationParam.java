@@ -147,6 +147,10 @@ public class ApplicationParam extends HalfDuplexParamBase {
    */
   private Boolean enableThinking;
 
+  /**
+   * CIP service codes for content security check
+   */
+  private CipServiceCodes cipServiceCodes;
 
   @Override
   public String getModel() {
@@ -200,6 +204,9 @@ public class ApplicationParam extends HalfDuplexParamBase {
     }
     if (enableThinking != null) {
       params.put(AppKeywords.ENABLE_THINKING, enableThinking);
+    }
+    if (cipServiceCodes != null) {
+      params.put(AppKeywords.CIP_SERVICE_CODES, cipServiceCodes);
     }
 
     params.putAll(parameters);
