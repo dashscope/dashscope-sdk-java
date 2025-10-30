@@ -232,10 +232,7 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
         params.put(ApiKeywords.INCREMENTAL_OUTPUT, incrementalOutput);
       }
     } else {
-      if (incrementalOutput == null) {
-        incrementalOutput = false;
-      }
-      if (incrementalOutput) {
+      if (Boolean.TRUE.equals(incrementalOutput)) {
         params.put(ApiKeywords.INCREMENTAL_OUTPUT, incrementalOutput);
       }
     }

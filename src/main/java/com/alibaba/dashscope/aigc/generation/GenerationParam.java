@@ -14,6 +14,7 @@ import com.alibaba.dashscope.common.ResponseFormat;
 import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.tools.ToolBase;
+import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.alibaba.dashscope.utils.ParamUtils;
 import com.google.gson.JsonArray;
@@ -192,17 +193,14 @@ public class GenerationParam extends GenerationParamBase {
       params.put("temperature", temperature);
     }
     // Apply different logic based on model version
-     if (ParamUtils.isQwenVersionThreeOrHigher(getModel())) {
+    if (ParamUtils.isQwenVersionThreeOrHigher(getModel())) {
       if (incrementalOutput != null) {
         params.put("incremental_output", incrementalOutput);
       }
     } else {
-      if (incrementalOutput == null) {
-        incrementalOutput = false;
-      }
-      if (incrementalOutput) {
-        params.put("incremental_output", incrementalOutput);
-      }
+       if (Boolean.TRUE.equals(incrementalOutput)) {
+         params.put(ApiKeywords.INCREMENTAL_OUTPUT, incrementalOutput);
+       }
     }
 
     if (repetitionPenalty != null) {
