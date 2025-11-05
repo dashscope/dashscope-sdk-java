@@ -5,6 +5,7 @@ package com.alibaba.dashscope.protocol;
 import com.alibaba.dashscope.protocol.okhttp.OkHttpClientFactory;
 import com.alibaba.dashscope.protocol.okhttp.OkHttpHttpClient;
 import com.alibaba.dashscope.protocol.okhttp.OkHttpWebSocketClient;
+import com.alibaba.dashscope.protocol.okhttp.OkHttpWebSocketClientForAudio;
 
 public class ClientProviders {
   public static HalfDuplexClient getHalfDuplexClient(String protocol) {
@@ -54,8 +55,14 @@ public class ClientProviders {
       // create default config client, create default http client.
       return new OkHttpWebSocketClient(OkHttpClientFactory.getOkHttpClient(), passTaskStarted);
     } else {
-      return new OkHttpWebSocketClient(
-          OkHttpClientFactory.getNewOkHttpClient(connectionOptions), passTaskStarted);
+      if (connectionOptions.isUseDefaultClient()) {
+        return new OkHttpWebSocketClient(
+                OkHttpClientFactory.getNewOkHttpClient(connectionOptions), passTaskStarted);
+      }else {
+        // create custom client for audio models
+        return new OkHttpWebSocketClientForAudio(
+                OkHttpClientFactory.getNewOkHttpClient(connectionOptions), passTaskStarted);
+      }
     }
   }
 }

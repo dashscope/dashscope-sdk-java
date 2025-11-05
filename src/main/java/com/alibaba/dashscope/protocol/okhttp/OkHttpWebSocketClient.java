@@ -41,9 +41,9 @@ public class OkHttpWebSocketClient extends WebSocketListener
   private AtomicBoolean isOpen = new AtomicBoolean(false);
   private AtomicBoolean isClosed = new AtomicBoolean(false);
   // indicate the first response is received.
-  private AtomicBoolean isFirstMessage = new AtomicBoolean(false);
+  protected AtomicBoolean isFirstMessage = new AtomicBoolean(false);
   // used for get request response
-  private FlowableEmitter<DashScopeResult> responseEmitter;
+  protected FlowableEmitter<DashScopeResult> responseEmitter;
   // is the result is flatten format.
   private boolean isFlattenResult;
   private FlowableEmitter<DashScopeResult> connectionEmitter;
@@ -363,7 +363,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
     }
   }
 
-  private void sendTextWithRetry(
+  protected void sendTextWithRetry(
       String apiKey,
       boolean isSecurityCheck,
       String message,
@@ -402,7 +402,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
     }
   }
 
-  private void sendBinaryWithRetry(
+  protected void sendBinaryWithRetry(
       String apiKey,
       boolean isSecurityCheck,
       ByteString message,
@@ -555,7 +555,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
         });
   }
 
-  private CompletableFuture<Void> sendStreamRequest(FullDuplexRequest req) {
+  protected CompletableFuture<Void> sendStreamRequest(FullDuplexRequest req) {
     CompletableFuture<Void> future =
         CompletableFuture.runAsync(
             () -> {

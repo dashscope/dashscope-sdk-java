@@ -7,6 +7,7 @@ import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
+import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import com.alibaba.dashscope.utils.Constants;
@@ -43,6 +44,8 @@ public class MultiModalDialog {
   SynchronizeFullDuplexApi<MultiModalRequestParam> duplexApi; // Duplex communication API instance
 
   private ApiServiceOption serviceOption; // Service option configuration
+
+  private ConnectionOptions connectionOptions;
 
   private Emitter<Object> conversationEmitter; // Message emitter
 
@@ -137,7 +140,36 @@ public class MultiModalDialog {
 
     this.requestParam = param;
     this.callback = callback;
-    this.duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
+    connectionOptions = ConnectionOptions.builder().build();
+    this.connectionOptions.setUseDefaultClient(false);
+    this.duplexApi = new SynchronizeFullDuplexApi<>(this.connectionOptions,serviceOption);
+  }
+
+
+  /**
+   * Constructor initializes service options and creates a duplex communication API instance.
+   *
+   * param: param Request parameter
+   * param: callback Callback interface
+   * param: connectionOptions Connection options
+   */
+  public MultiModalDialog(
+          MultiModalRequestParam param, MultiModalDialogCallback callback, ConnectionOptions connectionOptions) {
+    this.serviceOption =
+            ApiServiceOption.builder()
+                    .protocol(Protocol.WEBSOCKET)
+                    .streamingMode(StreamingMode.DUPLEX)
+                    .outputMode(OutputMode.ACCUMULATE)
+                    .taskGroup(TaskGroup.AIGC.getValue())
+                    .task(Task.MULTIMODAL_GENERATION.getValue())
+                    .function(Function.GENERATION.getValue())
+                    .build();
+    this.connectionOptions = connectionOptions;
+    this.connectionOptions.setUseDefaultClient(false);
+
+    this.requestParam = param;
+    this.callback = callback;
+    this.duplexApi = new SynchronizeFullDuplexApi<>(this.connectionOptions,serviceOption);
   }
 
   /**
