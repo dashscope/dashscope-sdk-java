@@ -122,7 +122,7 @@ public class OkHttpWebSocketClientForAudio extends OkHttpWebSocketClient {
                                 log.error(String.format("sendStreamData exception: %s", ex.getMessage()));
                                 responseEmitter.onError(ex);
                             }
-                        });
+                        },STREAMING_REQUEST_EXECUTOR);
         return future;
     }
 
