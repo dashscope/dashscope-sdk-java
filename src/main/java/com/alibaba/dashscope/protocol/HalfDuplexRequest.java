@@ -88,6 +88,13 @@ public class HalfDuplexRequest {
   }
 
   public HttpRequest getHttpRequest() throws NoApiKeyException, ApiException {
+    // Extract and filter custom user agent from param headers
+    Map<String, String> paramHeaders = param.getHeaders();
+    String customUserAgent = paramHeaders != null ? paramHeaders.get("user-agent") : null;
+    Map<String, String> filteredHeaders = paramHeaders != null ?
+            new java.util.HashMap<>(paramHeaders) : new java.util.HashMap<>();
+    filteredHeaders.remove("user-agent");
+
     Map<String, String> requestHeaders =
         DashScopeHeaders.buildHttpHeaders(
             param.getApiKey(),
@@ -96,7 +103,8 @@ public class HalfDuplexRequest {
             serviceOption.getIsSSE(),
             serviceOption.getIsAsyncTask(),
             param.getWorkspace(),
-            param.getHeaders());
+            filteredHeaders,
+            customUserAgent);
 
     if (getHttpMethod() == HttpMethod.GET) {
       return HttpRequest.builder()

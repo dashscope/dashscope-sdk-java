@@ -144,6 +144,11 @@ public final class MultiModalConversation {
     // Intercept and modify incrementalOutput parameter if needed
     boolean toMergeResponse = modifyIncrementalOutput(param);
 
+    // Build custom user agent suffix with incremental_to_full flag
+    int flagValue = toMergeResponse ? 1 : 0;
+    String userAgentSuffix = String.format("incremental_to_full/%d", flagValue);
+    param.putHeader("user-agent", userAgentSuffix);
+
     serviceOption.setIsSSE(true);
     serviceOption.setStreamingMode(StreamingMode.OUT);
     preprocessInput(param);
@@ -180,6 +185,11 @@ public final class MultiModalConversation {
 
     // Intercept and modify incrementalOutput parameter if needed
     boolean toMergeResponse = modifyIncrementalOutput(param);
+
+    // Build custom user agent suffix with incremental_to_full flag
+    int flagValue = toMergeResponse ? 1 : 0;
+    String userAgentSuffix = String.format("incremental_to_full/%d", flagValue);
+    param.putHeader("user-agent", userAgentSuffix);
 
     serviceOption.setIsSSE(true);
     serviceOption.setStreamingMode(StreamingMode.OUT);

@@ -35,8 +35,9 @@ public class GenerationStreamCall {
         GenerationParam param =
                 GenerationParam.builder()
                         .model("qwen-turbo")
-                        .prompt("如何做土豆炖猪脚?")
+                        .prompt("你好")
                         .temperature((float) 1.0)
+                        .incrementalOutput(false)
                         .repetitionPenalty((float) 1.0)
                         .topK(50)
                         .build();

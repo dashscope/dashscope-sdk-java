@@ -62,12 +62,19 @@ public class OkHttpWebSocketClient extends WebSocketListener
       Map<String, String> customHeaders,
       String baseWebSocketUrl)
       throws NoApiKeyException {
+    // Extract and filter custom user agent from param headers
+    String customUserAgent = customHeaders != null ?
+        customHeaders.get("user-agent") : null;
+    Map<String, String> filteredHeaders = customHeaders != null ?
+        new java.util.HashMap<>(customHeaders) : new java.util.HashMap<>();
+    filteredHeaders.remove("user-agent");
+
     // build the request builder.
     Builder bd = new Request.Builder();
     bd.headers(
         Headers.of(
             DashScopeHeaders.buildWebSocketHeaders(
-                apiKey, isSecurityCheck, workspace, customHeaders)));
+                apiKey, isSecurityCheck, workspace, filteredHeaders, customUserAgent)));
     String url = Constants.baseWebsocketApiUrl;
     if (baseWebSocketUrl != null) {
       url = baseWebSocketUrl;
