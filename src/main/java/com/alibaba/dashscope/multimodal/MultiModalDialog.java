@@ -136,6 +136,7 @@ public class MultiModalDialog {
             .taskGroup(TaskGroup.AIGC.getValue())
             .task(Task.MULTIMODAL_GENERATION.getValue())
             .function(Function.GENERATION.getValue())
+            .passTaskStarted(true)
             .build();
 
     this.requestParam = param;
@@ -163,6 +164,7 @@ public class MultiModalDialog {
                     .taskGroup(TaskGroup.AIGC.getValue())
                     .task(Task.MULTIMODAL_GENERATION.getValue())
                     .function(Function.GENERATION.getValue())
+                    .passTaskStarted(true)
                     .build();
     this.connectionOptions = connectionOptions;
     this.connectionOptions.setUseDefaultClient(false);
@@ -309,6 +311,13 @@ public class MultiModalDialog {
                   default:
                     break;
                 }
+              }else if (message.getEvent() != null) {
+                if (message.getEvent().equals("task-started")){
+                  callback.onConnected();
+                  log.debug(
+                          "MultiModalDialog connected, state is {}",
+                          currentState.getValue()); // Logs connection status
+                }
               }
             }
 
@@ -347,10 +356,6 @@ public class MultiModalDialog {
         stopLatch.get().countDown(); // Counts down latch
       }
     }
-    log.debug(
-        "MultiModalDialog connected, state is {}",
-            currentState.getValue()); // Logs connection status
-    callback.onConnected(); // Connected successfully callback
   }
 
   /** Starts upload speech. */
