@@ -109,12 +109,14 @@ public class GenerationStreamCall {
                 .prompt("联网搜索明天杭州天气如何？")
                 .enableSearch(true)
                 .resultFormat("message")
+                .incrementalOutput(true)
                 .searchOptions(SearchOptions.builder()
                         .enableSource(true)
                         .enableCitation(true)
                         .citationFormat("[ref_<number>]")
                         .searchStrategy("pro_max")
                         .forcedSearch(true)
+                        .prependSearchResult(true)
                         .build())
                 .build();
         Flowable<GenerationResult> result = gen.streamCall(param);

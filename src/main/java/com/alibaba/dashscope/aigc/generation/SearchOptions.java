@@ -33,4 +33,13 @@ public class SearchOptions {
   /** 搜索互联网信息的数量。standard：在请求时搜索5条互联网信息; pro：在请求时搜索10条互联网信息。 默认值为standard */
   @SerializedName("search_strategy")
   private String searchStrategy;
+
+  /**
+   * Whether the first data packet in streaming output contains only
+   * search source information. Only effective when enable_source is
+   * true and in streaming mode. Default is false.
+   */
+  @SerializedName("prepend_search_result")
+  @Builder.Default
+  private Boolean prependSearchResult = null;
 }
