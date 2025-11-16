@@ -33,22 +33,65 @@ import okhttp3.Response;
 
 @Slf4j
 public final class OSSUtils {
+  /**
+   * Upload file to OSS without certificate reuse.
+   *
+   * @param model Model name
+   * @param filePath Local file path
+   * @param apiKey API key
+   * @return OSS URL
+   * @throws NoApiKeyException If API key is missing
+   */
   public static String upload(String model, String filePath, String apiKey)
       throws NoApiKeyException {
+    UploadResult result = uploadWithCertificate(model, filePath, apiKey,
+        null);
+    return result.getOssUrl();
+  }
+
+  /**
+   * Upload file to OSS with optional certificate reuse.
+   *
+   * @param model Model name
+   * @param filePath Local file path
+   * @param apiKey API key
+   * @param certificate Optional upload certificate for reuse
+   * @return UploadResult containing OSS URL and certificate
+   * @throws NoApiKeyException If API key is missing
+   */
+  public static UploadResult uploadWithCertificate(String model,
+      String filePath, String apiKey, OSSUploadCertificate certificate)
+      throws NoApiKeyException {
     OkHttpClient client = OkHttpClientFactory.getOkHttpClient();
-    DashScopeResult uploadInfo = get_upload_certificate(model, apiKey);
-    JsonObject outputData = ((JsonObject) uploadInfo.getOutput()).getAsJsonObject("data");
+    OSSUploadCertificate cert = certificate;
+
+    // Get certificate if not provided
+    if (cert == null) {
+      DashScopeResult uploadInfo = get_upload_certificate(model, apiKey);
+      JsonObject outputData = ((JsonObject) uploadInfo.getOutput())
+          .getAsJsonObject("data");
+      cert = new OSSUploadCertificate(
+          outputData.get("upload_host").getAsString(),
+          outputData.get("oss_access_key_id").getAsString(),
+          outputData.get("signature").getAsString(),
+          outputData.get("policy").getAsString(),
+          outputData.get("upload_dir").getAsString(),
+          outputData.get("x_oss_object_acl").getAsString(),
+          outputData.get("x_oss_forbid_overwrite").getAsString()
+      );
+    }
+
     Map<String, String> headers = new HashMap<>();
     headers.put("user-agent", DashScopeHeaders.userAgent());
     headers.put("Accept", "application/json");
     File uploadFile = new File(filePath);
-    String host = outputData.get("upload_host").getAsString();
-    String ossAccessKeyId = outputData.get("oss_access_key_id").getAsString();
-    String signature = outputData.get("signature").getAsString();
-    String policy = outputData.get("policy").getAsString();
-    String key = outputData.get("upload_dir").getAsString() + "/" + uploadFile.getName();
-    String xOssObjectAcl = outputData.get("x_oss_object_acl").getAsString();
-    String xOssForbidOverwrite = outputData.get("x_oss_forbid_overwrite").getAsString();
+    String host = cert.getUploadHost();
+    String ossAccessKeyId = cert.getOssAccessKeyId();
+    String signature = cert.getSignature();
+    String policy = cert.getPolicy();
+    String key = cert.getUploadDir() + "/" + uploadFile.getName();
+    String xOssObjectAcl = cert.getXOssObjectAcl();
+    String xOssForbidOverwrite = cert.getXOssForbidOverwrite();
 
     RequestBody requestBody =
         new MultipartBody.Builder()
@@ -67,13 +110,15 @@ public final class OSSUtils {
                 RequestBody.create(MediaType.parse(getContentType(filePath)), uploadFile))
             .build();
 
-    Request request = new Request.Builder().url(host).post(requestBody).build();
+    Request request = new Request.Builder().url(host).post(requestBody)
+        .build();
     try (Response response = client.newCall(request).execute()) {
       if (!response.isSuccessful()) {
         Status status = parseFailed(response);
         throw new ApiException(status);
       }
-      return String.format("oss://%s", key);
+      String ossUrl = String.format("oss://%s", key);
+      return new UploadResult(ossUrl, cert);
     } catch (Throwable e) {
       throw new ApiException(e);
     }

@@ -8,6 +8,7 @@ import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.exception.UploadFileException;
 import com.alibaba.dashscope.protocol.*;
+import com.alibaba.dashscope.utils.OSSUploadCertificate;
 import com.alibaba.dashscope.utils.ParamUtils;
 import com.alibaba.dashscope.utils.PreprocessMessageInput;
 import io.reactivex.Flowable;
@@ -225,19 +226,26 @@ public final class MultiModalConversation {
   private void preprocessInput(MultiModalConversationParam param)
       throws NoApiKeyException, UploadFileException {
     boolean hasUpload = false;
+    OSSUploadCertificate certificate = null;
+
     for (Object msg : param.getMessages()) {
       boolean isUpload = false;
       if (msg instanceof MultiModalConversationMessage) {
-        isUpload =
+        PreprocessMessageInput.PreprocessResult result =
             PreprocessMessageInput.preProcessMessageInputs(
                 param.getModel(),
                 ((MultiModalConversationMessage) msg).getContent(),
-                param.getApiKey());
-
+                param.getApiKey(),
+                certificate);
+        isUpload = result.hasUpload();
+        certificate = result.getCertificate();
       } else {
-        isUpload =
+        PreprocessMessageInput.PreprocessResult result =
             PreprocessMessageInput.preProcessMultiModalMessageInputs(
-                param.getModel(), (MultiModalMessage) msg, param.getApiKey());
+                param.getModel(), (MultiModalMessage) msg,
+                param.getApiKey(), certificate);
+        isUpload = result.hasUpload();
+        certificate = result.getCertificate();
       }
       if (isUpload && !hasUpload) {
         hasUpload = true;

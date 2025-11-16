@@ -52,7 +52,7 @@ public class MultiModalConversationQwenVL {
             return currentTime;
         }
     }
-    public static void videoImageListSample() throws ApiException, NoApiKeyException, UploadFileException {
+    public static void imageSample() throws ApiException, NoApiKeyException, UploadFileException {
         MultiModalConversation conversation = new MultiModalConversation();
         MultiModalMessageItemText systemText = new MultiModalMessageItemText("你是达摩院的生活助手机器人。");
 
@@ -69,6 +69,28 @@ public class MultiModalConversationQwenVL {
         flowable.forEach(result -> {
             System.out.println(JsonUtils.toJson(result));
         });
+    }
+
+    public static void videoSample() throws ApiException, NoApiKeyException, UploadFileException {
+        MultiModalConversation conv = new MultiModalConversation();
+        MultiModalMessage systemMessage = MultiModalMessage.builder()
+                .role(Role.SYSTEM.getValue())
+                .content(Arrays.asList(Collections.singletonMap("text", "You are a helpful assistant.")))
+                .build();
+        MultiModalMessage userMessage = MultiModalMessage.builder()
+                .role(Role.USER.getValue())
+                .content(Arrays.asList(Collections.singletonMap("video", Arrays.asList(
+                                "/Users/zhiyi/Downloads/vl_data/1.jpg",
+                                "/Users/zhiyi/Downloads/vl_data/2.jpg",
+                                "/Users/zhiyi/Downloads/vl_data/3.jpg",
+                                "/Users/zhiyi/Downloads/vl_data/4.jpg")),
+                        Collections.singletonMap("text", "描述这个视频的具体s过程")))
+                .build();
+        MultiModalConversationParam param = MultiModalConversationParam.builder()
+                .model("qwen-vl-max-latest").message(systemMessage)
+                .message(userMessage).build();
+        MultiModalConversationResult result = conv.call(param);
+        System.out.print(JsonUtils.toJson(result));
     }
 
     public static void streamCallWithToolCalls()
@@ -133,7 +155,8 @@ public class MultiModalConversationQwenVL {
 
     public static void main(String[] args) {
         try {
-            videoImageListSample();
+//            imageSample();
+            videoSample();
 //            streamCallWithToolCalls();
         } catch (ApiException | NoApiKeyException | UploadFileException e) {
             System.out.println(e.getMessage());

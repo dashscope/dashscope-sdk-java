@@ -25,77 +25,154 @@ public final class PreprocessMessageInput {
     }
   }
 
-  public static boolean checkAndUpload(
-      String model, MultiModalMessageItemBase message, String apiKey)
+  /**
+   * Check and upload file with certificate reuse support.
+   *
+   * @param model Model name
+   * @param message Message item containing file path
+   * @param apiKey API key
+   * @param certificate Optional upload certificate for reuse
+   * @return CheckAndUploadResult containing upload status and certificate
+   * @throws NoApiKeyException If API key is missing
+   * @throws UploadFileException If upload fails
+   */
+  public static CheckAndUploadResult checkAndUpload(
+      String model, MultiModalMessageItemBase message, String apiKey,
+      OSSUploadCertificate certificate)
       throws NoApiKeyException, UploadFileException {
     boolean isUpload = false;
+    OSSUploadCertificate cert = certificate;
+
     if (!message.getModal().equals("text")
         && message.getContent().startsWith(ApiKeywords.FILE_PATH_SCHEMA)) {
       try {
         URI fileURI = new URI(message.getContent());
         File f = new File(fileURI);
         if (f.exists()) {
-          String fileUrl = OSSUtils.upload(model, f.getAbsolutePath(), apiKey);
-          if (fileUrl == null) {
+          UploadResult result = OSSUtils.uploadWithCertificate(model,
+              f.getAbsolutePath(), apiKey, cert);
+          if (result.getOssUrl() == null) {
             throw new UploadFileException(
-                String.format("Uploading file: %s failed", message.getContent()));
+                String.format("Uploading file: %s failed",
+                    message.getContent()));
           }
-          message.setContent(fileUrl);
+          message.setContent(result.getOssUrl());
+          cert = result.getCertificate();
           isUpload = true;
         } else {
           throw new UploadFileException(
-              String.format("Local file: %s not exists.", message.getContent()));
+              String.format("Local file: %s not exists.",
+                  message.getContent()));
         }
       } catch (URISyntaxException e) {
         throw new UploadFileException(e.getMessage());
       }
-    } else if (!message.getModal().equals("text") && message.getContent().startsWith("oss://")) {
+    } else if (!message.getModal().equals("text")
+        && message.getContent().startsWith("oss://")) {
       isUpload = true;
-    } else if (!message.getModal().equals("text") && !message.getContent().startsWith("http")) {
+    } else if (!message.getModal().equals("text")
+        && !message.getContent().startsWith("http")) {
       if (isValidPath(message.getContent())) {
         File f = new File(message.getContent());
         if (f.exists()) {
-          String fileUrl = OSSUtils.upload(model, f.getAbsolutePath(), apiKey);
-          if (fileUrl == null) {
+          UploadResult result = OSSUtils.uploadWithCertificate(model,
+              f.getAbsolutePath(), apiKey, cert);
+          if (result.getOssUrl() == null) {
             throw new UploadFileException(
-                String.format("Uploading file: %s failed", message.getContent()));
+                String.format("Uploading file: %s failed",
+                    message.getContent()));
           }
-          message.setContent(fileUrl);
+          message.setContent(result.getOssUrl());
+          cert = result.getCertificate();
           isUpload = true;
         }
       }
     }
-    return isUpload;
+    return new CheckAndUploadResult(isUpload, cert);
   }
 
-  public static <T extends MultiModalMessageItemBase> boolean preProcessMessageInputs(
-      String model, List<T> messages, String apiKey) throws NoApiKeyException, UploadFileException {
+  /**
+   * Preprocess message inputs with certificate reuse support.
+   *
+   * @param model Model name
+   * @param messages List of message items
+   * @param apiKey API key
+   * @param certificate Optional upload certificate for reuse
+   * @return PreprocessResult containing upload status and certificate
+   * @throws NoApiKeyException If API key is missing
+   * @throws UploadFileException If upload fails
+   */
+  public static <T extends MultiModalMessageItemBase> PreprocessResult
+      preProcessMessageInputs(String model, List<T> messages, String apiKey,
+          OSSUploadCertificate certificate)
+      throws NoApiKeyException, UploadFileException {
     boolean hasUpload = false;
+    OSSUploadCertificate cert = certificate;
+
     for (MultiModalMessageItemBase elem : messages) {
-      boolean isUpload = checkAndUpload(model, elem, apiKey);
-      if (isUpload && !hasUpload) {
+      CheckAndUploadResult result = checkAndUpload(model, elem, apiKey,
+          cert);
+      if (result.isUpload() && !hasUpload) {
         hasUpload = true;
       }
+      cert = result.getCertificate();
     }
-    return hasUpload;
+    return new PreprocessResult(hasUpload, cert);
   }
 
-  public static String checkAndUploadOneMultiModalMessage(
-      String model, String apiKey, String key, String value)
+  /**
+   * Preprocess message inputs without certificate reuse (legacy).
+   *
+   * @param model Model name
+   * @param messages List of message items
+   * @param apiKey API key
+   * @return true if any file was uploaded
+   * @throws NoApiKeyException If API key is missing
+   * @throws UploadFileException If upload fails
+   */
+  public static <T extends MultiModalMessageItemBase> boolean
+      preProcessMessageInputs(String model, List<T> messages, String apiKey)
+      throws NoApiKeyException, UploadFileException {
+    PreprocessResult result = preProcessMessageInputs(model, messages,
+        apiKey, null);
+    return result.hasUpload();
+  }
+
+  /**
+   * Check and upload one multimodal message with certificate reuse.
+   *
+   * @param model Model name
+   * @param apiKey API key
+   * @param key Message key
+   * @param value Message value (file path)
+   * @param certificate Optional upload certificate for reuse
+   * @return CheckAndUploadOneResult containing file URL and certificate
+   * @throws NoApiKeyException If API key is missing
+   * @throws UploadFileException If upload fails
+   */
+  public static CheckAndUploadOneResult checkAndUploadOneMultiModalMessage(
+      String model, String apiKey, String key, String value,
+      OSSUploadCertificate certificate)
       throws NoApiKeyException, UploadFileException {
     String dstValue = value;
+    OSSUploadCertificate cert = certificate;
+
     if (value.startsWith(ApiKeywords.FILE_PATH_SCHEMA)) {
       try {
         URI fileURI = new URI(value);
         File f = new File(fileURI);
         if (f.exists()) {
-          String fileUrl = OSSUtils.upload(model, f.getAbsolutePath(), apiKey);
-          if (fileUrl == null) {
-            throw new UploadFileException(String.format("Uploading file: %s failed", value));
+          UploadResult result = OSSUtils.uploadWithCertificate(model,
+              f.getAbsolutePath(), apiKey, cert);
+          if (result.getOssUrl() == null) {
+            throw new UploadFileException(String.format(
+                "Uploading file: %s failed", value));
           }
-          dstValue = fileUrl;
+          dstValue = result.getOssUrl();
+          cert = result.getCertificate();
         } else {
-          throw new UploadFileException(String.format("Local file: %s not exists.", value));
+          throw new UploadFileException(String.format(
+              "Local file: %s not exists.", value));
         }
       } catch (URISyntaxException e) {
         throw new UploadFileException(e.getMessage());
@@ -104,24 +181,60 @@ public final class PreprocessMessageInput {
       if (isValidPath(value)) {
         File f = new File(value);
         if (f.exists()) {
-          String fileUrl = OSSUtils.upload(model, f.getAbsolutePath(), apiKey);
-          if (fileUrl == null) {
-            throw new UploadFileException(String.format("Uploading file: %s failed", value));
+          UploadResult result = OSSUtils.uploadWithCertificate(model,
+              f.getAbsolutePath(), apiKey, cert);
+          if (result.getOssUrl() == null) {
+            throw new UploadFileException(String.format(
+                "Uploading file: %s failed", value));
           }
-          dstValue = fileUrl;
+          dstValue = result.getOssUrl();
+          cert = result.getCertificate();
         }
       }
     }
 
-    return dstValue;
+    return new CheckAndUploadOneResult(dstValue, cert);
   }
 
-  public static boolean checkAndUploadMultiModalMessage(
-      String model, Map.Entry<String, Object> entry, String apiKey)
+  /**
+   * Check and upload one multimodal message without certificate reuse.
+   *
+   * @param model Model name
+   * @param apiKey API key
+   * @param key Message key
+   * @param value Message value (file path)
+   * @return File URL
+   * @throws NoApiKeyException If API key is missing
+   * @throws UploadFileException If upload fails
+   */
+  public static String checkAndUploadOneMultiModalMessage(
+      String model, String apiKey, String key, String value)
+      throws NoApiKeyException, UploadFileException {
+    CheckAndUploadOneResult result = checkAndUploadOneMultiModalMessage(
+        model, apiKey, key, value, null);
+    return result.getFileUrl();
+  }
+
+  /**
+   * Check and upload multimodal message with certificate reuse.
+   *
+   * @param model Model name
+   * @param entry Message entry
+   * @param apiKey API key
+   * @param certificate Optional upload certificate for reuse
+   * @return CheckAndUploadResult containing upload status and certificate
+   * @throws NoApiKeyException If API key is missing
+   * @throws UploadFileException If upload fails
+   */
+  public static CheckAndUploadResult checkAndUploadMultiModalMessage(
+      String model, Map.Entry<String, Object> entry, String apiKey,
+      OSSUploadCertificate certificate)
       throws NoApiKeyException, UploadFileException {
     boolean isUpload = false;
+    OSSUploadCertificate cert = certificate;
     String key = entry.getKey();
     Object value = entry.getValue();
+
     if (value instanceof List) {
       List<?> dstValue = (List<?>) value;
       for (int i = 0; i < dstValue.size(); i++) {
@@ -130,11 +243,14 @@ public final class PreprocessMessageInput {
           if (!key.equals("text") && ((String)v).startsWith("oss://")) {
             isUpload = true;
           } else {
-            String dstV = checkAndUploadOneMultiModalMessage(model, apiKey, key, (String) v);
-            if (!dstV.equals(v)) {
+            CheckAndUploadOneResult result =
+                checkAndUploadOneMultiModalMessage(model, apiKey, key,
+                    (String) v, cert);
+            if (!result.getFileUrl().equals(v)) {
               isUpload = true;
-              ((List<Object>) dstValue).set(i, dstV);
+              ((List<Object>) dstValue).set(i, result.getFileUrl());
             }
+            cert = result.getCertificate();
           }
         }
       }
@@ -143,33 +259,154 @@ public final class PreprocessMessageInput {
       if (!key.equals("text") && ((String)value).startsWith("oss://")) {
         isUpload = true;
       } else {
-        String dstValue = checkAndUploadOneMultiModalMessage(model, apiKey, key, (String) value);
-        if (!dstValue.equals(value)) {
+        CheckAndUploadOneResult result =
+            checkAndUploadOneMultiModalMessage(model, apiKey, key,
+                (String) value, cert);
+        if (!result.getFileUrl().equals(value)) {
           isUpload = true;
-          entry.setValue(dstValue);
+          entry.setValue(result.getFileUrl());
         }
+        cert = result.getCertificate();
       }
     }
-    return isUpload;
+    return new CheckAndUploadResult(isUpload, cert);
   }
 
-  public static boolean preProcessMultiModalMessageInputs(
-      String model, MultiModalMessage messages, String apiKey)
+  /**
+   * Check and upload multimodal message without certificate reuse.
+   *
+   * @param model Model name
+   * @param entry Message entry
+   * @param apiKey API key
+   * @return true if any file was uploaded
+   * @throws NoApiKeyException If API key is missing
+   * @throws UploadFileException If upload fails
+   */
+  public static boolean checkAndUploadMultiModalMessage(
+      String model, Map.Entry<String, Object> entry, String apiKey)
+      throws NoApiKeyException, UploadFileException {
+    CheckAndUploadResult result = checkAndUploadMultiModalMessage(model,
+        entry, apiKey, null);
+    return result.isUpload();
+  }
+
+  /**
+   * Preprocess multimodal message inputs with certificate reuse.
+   *
+   * @param model Model name
+   * @param messages Multimodal message
+   * @param apiKey API key
+   * @param certificate Optional upload certificate for reuse
+   * @return PreprocessResult containing upload status and certificate
+   * @throws NoApiKeyException If API key is missing
+   * @throws UploadFileException If upload fails
+   */
+  public static PreprocessResult preProcessMultiModalMessageInputs(
+      String model, MultiModalMessage messages, String apiKey,
+      OSSUploadCertificate certificate)
       throws NoApiKeyException, UploadFileException {
     boolean hasUpload = false;
+    OSSUploadCertificate cert = certificate;
     List<Map<String, Object>> content = new ArrayList<>();
+
     for (Map<String, Object> item : messages.getContent()) {
       content.add(new HashMap<>(item));
     }
     for (Map<String, Object> item : content) {
       for (Map.Entry<String, Object> entry : item.entrySet()) {
-        boolean isUpload = checkAndUploadMultiModalMessage(model, entry, apiKey);
-        if (isUpload && !hasUpload) {
+        CheckAndUploadResult result = checkAndUploadMultiModalMessage(
+            model, entry, apiKey, cert);
+        if (result.isUpload() && !hasUpload) {
           hasUpload = true;
         }
+        cert = result.getCertificate();
       }
     }
     messages.setContent(content);
-    return hasUpload;
+    return new PreprocessResult(hasUpload, cert);
+  }
+
+  /**
+   * Preprocess multimodal message inputs without certificate reuse.
+   *
+   * @param model Model name
+   * @param messages Multimodal message
+   * @param apiKey API key
+   * @return true if any file was uploaded
+   * @throws NoApiKeyException If API key is missing
+   * @throws UploadFileException If upload fails
+   */
+  public static boolean preProcessMultiModalMessageInputs(
+      String model, MultiModalMessage messages, String apiKey)
+      throws NoApiKeyException, UploadFileException {
+    PreprocessResult result = preProcessMultiModalMessageInputs(model,
+        messages, apiKey, null);
+    return result.hasUpload();
+  }
+
+  /**
+   * Result of check and upload operation.
+   */
+  public static class CheckAndUploadResult {
+    private boolean upload;
+    private OSSUploadCertificate certificate;
+
+    public CheckAndUploadResult(boolean upload,
+        OSSUploadCertificate certificate) {
+      this.upload = upload;
+      this.certificate = certificate;
+    }
+
+    public boolean isUpload() {
+      return upload;
+    }
+
+    public OSSUploadCertificate getCertificate() {
+      return certificate;
+    }
+  }
+
+  /**
+   * Result of check and upload one operation.
+   */
+  public static class CheckAndUploadOneResult {
+    private String fileUrl;
+    private OSSUploadCertificate certificate;
+
+    public CheckAndUploadOneResult(String fileUrl,
+        OSSUploadCertificate certificate) {
+      this.fileUrl = fileUrl;
+      this.certificate = certificate;
+    }
+
+    public String getFileUrl() {
+      return fileUrl;
+    }
+
+    public OSSUploadCertificate getCertificate() {
+      return certificate;
+    }
+  }
+
+  /**
+   * Result of preprocess operation.
+   */
+  public static class PreprocessResult {
+    private boolean hasUpload;
+    private OSSUploadCertificate certificate;
+
+    public PreprocessResult(boolean hasUpload,
+        OSSUploadCertificate certificate) {
+      this.hasUpload = hasUpload;
+      this.certificate = certificate;
+    }
+
+    public boolean hasUpload() {
+      return hasUpload;
+    }
+
+    public OSSUploadCertificate getCertificate() {
+      return certificate;
+    }
   }
 }
