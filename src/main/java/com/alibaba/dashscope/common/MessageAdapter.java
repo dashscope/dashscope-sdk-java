@@ -119,6 +119,69 @@ public class MessageAdapter extends TypeAdapter<Message> {
     out.endObject();
   }
 
+  // Parse array of content objects
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private List<MessageContentBase> parseContentList(List<LinkedTreeMap> contentList) {
+    List<MessageContentBase> contents = new ArrayList<>();
+    for (LinkedTreeMap<String, Object> contentItem : contentList) {
+      String type = (String) contentItem.get("type");
+      if (ApiKeywords.CONTENT_TYPE_TEXT.equals(type)) {
+        contents.add(parseTextContent(contentItem));
+      } else if (ApiKeywords.CONTENT_TYPE_IMAGE_URL.equals(type)) {
+        contents.add(parseImageContent(contentItem));
+      }
+    }
+    return contents;
+  }
+
+  // Parse text content with optional cache_control
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private MessageContentText parseTextContent(LinkedTreeMap<String, Object> contentItem) {
+    MessageContentText.MessageContentTextBuilder textBuilder =
+        MessageContentText.builder()
+            .type((String) contentItem.get("type"))
+            .text((String) contentItem.get(ApiKeywords.CONTENT_TYPE_TEXT));
+
+    // Parse cache_control if present
+    if (contentItem.containsKey(ApiKeywords.CONTENT_TYPE_CACHE_CONTROL)) {
+      LinkedTreeMap<String, Object> cacheControlMap =
+          (LinkedTreeMap<String, Object>) contentItem.get(
+              ApiKeywords.CONTENT_TYPE_CACHE_CONTROL);
+      MessageContentText.CacheControl.CacheControlBuilder cacheBuilder =
+          MessageContentText.CacheControl.builder()
+              .type((String) cacheControlMap.get("type"));
+
+      // Handle ttl field - convert to String regardless of input type
+      if (cacheControlMap.containsKey("ttl")) {
+        Object ttlObj = cacheControlMap.get("ttl");
+        cacheBuilder.ttl(ttlObj instanceof Number
+            ? String.valueOf(((Number) ttlObj).intValue())
+            : String.valueOf(ttlObj));
+      }
+      textBuilder.cacheControl(cacheBuilder.build());
+    }
+    return textBuilder.build();
+  }
+
+  // Parse image_url content
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private MessageContentImageURL parseImageContent(
+      LinkedTreeMap<String, Object> contentItem) {
+    LinkedTreeMap<String, Object> imageUrlMap =
+        (LinkedTreeMap<String, Object>) contentItem.get(
+            ApiKeywords.CONTENT_TYPE_IMAGE_URL);
+    ImageURL.ImageURLBuilder imageBuilder =
+        ImageURL.builder().url((String) imageUrlMap.get("url"));
+    if (imageUrlMap.containsKey("detail")) {
+      imageBuilder.detail((String) imageUrlMap.get("detail"));
+    }
+    return MessageContentImageURL.builder()
+        .type((String) contentItem.get("type"))
+        .imageURL(imageBuilder.build())
+        .build();
+  }
+
+  @SuppressWarnings("unchecked")
   private ToolCallFunction convertToCallFunction(LinkedTreeMap<String, Object> toolCall) {
     ToolCallFunction functionCall = new ToolCallFunction();
     if (toolCall.containsKey("function")) {
@@ -147,6 +210,7 @@ public class MessageAdapter extends TypeAdapter<Message> {
   }
 
   @Override
+  @SuppressWarnings({"unchecked", "rawtypes"})
   public Message read(JsonReader in) throws IOException {
     Map<String, Object> objectMap = JsonUtils.gson.fromJson(in, Map.class);
     Message msg = new Message();
@@ -157,7 +221,13 @@ public class MessageAdapter extends TypeAdapter<Message> {
     }
 
     if (objectMap.containsKey(ApiKeywords.CONTENT)) {
-      msg.setContent((String) objectMap.get(ApiKeywords.CONTENT));
+      Object contentObj = objectMap.get(ApiKeywords.CONTENT);
+      // Handle both string and array content types
+      if (contentObj instanceof String) {
+        msg.setContent((String) contentObj);
+      } else if (contentObj instanceof List) {
+        msg.setContents(parseContentList((List<LinkedTreeMap>) contentObj));
+      }
       objectMap.remove(ApiKeywords.CONTENT);
     }
 
