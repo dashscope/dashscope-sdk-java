@@ -92,6 +92,9 @@ public class OmniRealtimeConfig {
     if (translationConfig != null) {
       Map<String, Object> translationConfig = new HashMap<>();
       translationConfig.put(OmniRealtimeConstants.LANGUAGE, this.translationConfig.getLanguage());
+      if (this.translationConfig.getCorpus() != null) {
+        translationConfig.put(OmniRealtimeConstants.TRANSLATION_CORPUS, this.translationConfig.getCorpus());
+      }
       config.put(OmniRealtimeConstants.TRANSLATION, translationConfig);
     } else {
       config.put(OmniRealtimeConstants.TRANSLATION, null);

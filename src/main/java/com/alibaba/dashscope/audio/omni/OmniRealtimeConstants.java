@@ -19,6 +19,7 @@ public class OmniRealtimeConstants {
 
   // Translation constants
   public static final String TRANSLATION = "translation";
+  public static final String TRANSLATION_CORPUS = "corpus";
   public static final String LANGUAGE = "language";
   public static final String SAMPLE_RATE = "sample_rate";
 
