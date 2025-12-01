@@ -93,7 +93,98 @@ public class AudioParameters implements Serializable {
     KATERINA("Katerina"),
 
     @SerializedName("Elias")
-    ELIAS("Elias");
+    ELIAS("Elias"),
+
+    @SerializedName("Momo")
+    MOMO("Momo"),
+
+    @SerializedName("Moon")
+    MOON("Moon"),
+
+    @SerializedName("Maia")
+    MAIA("Maia"),
+
+    @SerializedName("Kai")
+    KAI("Kai"),
+
+    @SerializedName("Bella")
+    BELLA("Bella"),
+
+    @SerializedName("Aiden")
+    AIDEN("Aiden"),
+
+    @SerializedName("Eldric Saga")
+    ELDRIC_SAGA("Eldric Saga"),
+
+    @SerializedName("Mia")
+    MIA("Mia"),
+
+    @SerializedName("Mochi")
+    MOCHI("Mochi"),
+
+    @SerializedName("Bellona")
+    BELLONA("Bellona"),
+
+    @SerializedName("Vincent")
+    VINCENT("Vincent"),
+
+    @SerializedName("Bunny")
+    BUNNY("Bunny"),
+
+    @SerializedName("Neil")
+    NEIL("Neil"),
+
+    @SerializedName("Arthur")
+    ARTHUR("Arthur"),
+
+    @SerializedName("Nini")
+    NINI("Nini"),
+
+    @SerializedName("Ebona")
+    EBONA("Ebona"),
+
+    @SerializedName("Seren")
+    SEREN("Seren"),
+
+    @SerializedName("Pip")
+    PIP("Pip"),
+
+    @SerializedName("Stella")
+    STELLA("Stella"),
+
+    @SerializedName("Bodega")
+    BODEGA("Bodega"),
+
+    @SerializedName("Sonrisa")
+    SONRISA("Sonrisa"),
+
+    @SerializedName("Alek")
+    ALEK("Alek"),
+
+    @SerializedName("Dolce")
+    DOLCE("Dolce"),
+
+    @SerializedName("Sohee")
+    SOHEE("Sohee"),
+
+    @SerializedName("Ono Anna")
+    ONO_ANNA("Ono Anna"),
+
+    @SerializedName("Lenn")
+    LENN("Lenn"),
+
+    @SerializedName("Emilien")
+    EMILIEN("Emilien"),
+
+    @SerializedName("Andre")
+    ANDRE("Andre"),
+
+    @SerializedName("Radio Gol")
+    RADIO_GOL("Radio Gol"),
+
+    @SerializedName("Vivian")
+    VIVIAN("Vivian");
+
 
     private final String value;
 
