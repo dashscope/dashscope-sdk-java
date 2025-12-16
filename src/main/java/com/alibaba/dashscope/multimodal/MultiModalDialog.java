@@ -221,11 +221,12 @@ public class MultiModalDialog {
 
     stopLatch = new AtomicReference<>(new CountDownLatch(1)); // Initializes stop signal latch
 
+    String preTaskId = requestParam.getTaskId() != null ? requestParam.getTaskId() : UUID.randomUUID().toString();
     requestParamWithStream =
         MultiModalRequestParamWithStream.FromMultiModalParam(
             this.requestParam,
             dataFrames,
-            UUID.randomUUID().toString()); // Creates request parameter with stream
+            preTaskId); // Creates request parameter with stream
 
     try {
       this.duplexApi.duplexCall(
