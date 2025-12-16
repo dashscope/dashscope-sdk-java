@@ -13,6 +13,7 @@ public class MultiModalDialogApiKeyWords {
   public static String CONST_NAME_CLIENT_INFO = "client_info";
   public static String CONST_NAME_BIZ_PARAMS = "biz_params";
   public static String CONST_NAME_IMAGES = "images";
+  public static String CONST_NAME_TASK_ID = "task_id";
 
   public static String CONST_NAME_UP_STREAM_AUDIO_FORMAT = "audio_format";
   public static String CONST_NAME_UP_STREAM_TYPE = "type";

@@ -29,6 +29,7 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
   private BizParams bizParams;
   private CustomInput customInput;
   private List<Object> images;
+  private String taskId;
 
   @Builder
   public static class CustomInput {
@@ -262,6 +263,9 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
 
     if (images != null) {
       params.put(CONST_NAME_IMAGES, images);
+    }
+    if (this.parameters != null){
+      params.putAll(this.parameters);
     }
     return params;
   }
