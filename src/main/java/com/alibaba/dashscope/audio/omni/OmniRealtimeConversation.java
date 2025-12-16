@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /** @author lengjiayi */
 @Slf4j
 public class OmniRealtimeConversation extends WebSocketListener {
+  private static final int DEFAULT_TIMEOUT = 20;
   private OmniRealtimeParam parameters;
   private OmniRealtimeCallback callback;
 
@@ -38,6 +39,7 @@ public class OmniRealtimeConversation extends WebSocketListener {
   private long lastFirstAudioDelay = -1;
   private long lastFirstTextDelay = -1;
   private AtomicBoolean isClosed = new AtomicBoolean(false);
+  private AtomicReference<CountDownLatch> disconnectLatch = new AtomicReference<>(null);
 
   /**
    * Constructor
@@ -72,6 +74,43 @@ public class OmniRealtimeConversation extends WebSocketListener {
     connectLatch.set(new CountDownLatch(1));
     connectLatch.get().await();
   }
+
+  // block wait server session done, max 20 seconds, then close connection
+  public void endSession() {
+    endSession(DEFAULT_TIMEOUT);
+  }
+
+  // block wait server session done ,then close connection
+  public void endSession(int timeout) {
+    disconnectLatch.set(new CountDownLatch(1));
+    endSessionAsync();
+    boolean finishSuccess = false;
+    try {
+      finishSuccess = disconnectLatch.get().await(timeout, java.util.concurrent.TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    if (!finishSuccess) {
+      close(1011, "disconnect timeout");
+    }else{
+      close();
+    }
+  }
+
+  // user need close connection manually after callback 'session.finished'
+  public void endSessionAsync() {
+    checkStatus();
+    Map<String, Object> commit_request = new HashMap<>();
+    commit_request.put(OmniRealtimeConstants.PROTOCOL_EVENT_ID, generateEventId());
+    commit_request.put(
+            OmniRealtimeConstants.PROTOCOL_TYPE, OmniRealtimeConstants.PROTOCOL_EVENT_TYPE_FINISH_SESSION);
+    GsonBuilder builder = new GsonBuilder();
+    builder.serializeNulls();
+    Gson gson = builder.create();
+    sendMessage(gson.toJson(commit_request), true);
+  }
+
+
 
   /**
    * Update session configuration, should be used before create response
@@ -351,6 +390,10 @@ public class OmniRealtimeConversation extends WebSocketListener {
                   + lastFirstAudioDelay
                   + " ms");
           break;
+          case OmniRealtimeConstants.PROTOCOL_RESPONSE_TYPE_SESSION_FINISHED:
+            log.info("session: " + sessionId + " finished");
+            disconnectLatch.get().countDown();
+            break;
       }
     }
   }
