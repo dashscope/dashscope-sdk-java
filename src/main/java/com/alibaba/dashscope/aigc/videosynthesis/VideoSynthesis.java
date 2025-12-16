@@ -54,6 +54,11 @@ public final class VideoSynthesis {
     public static final String DEFAULT = "720P";
   }
 
+  public static class ShotType {
+    public static final String MULTI = "multi";
+    public static final String SINGLE = "single";
+  }
+
   /**
    * Create ApiServiceOption
    *

@@ -12,7 +12,9 @@ import com.alibaba.dashscope.utils.JsonUtils;
 import com.alibaba.dashscope.utils.PreprocessInputImage;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
@@ -55,6 +57,13 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
   /** The input audio url. */
   @Builder.Default private String audioUrl = null;
 
+  /**  list of character reference video file urls uploaded by the user */
+  @Builder.Default private List<String> referenceVideoUrls = null;
+
+  /**  For the description information of the picture and sound of the reference video, corresponding to ref video,
+   * it needs to be in the order of the url. If the quantity is different, an error will be reported */
+  @Builder.Default private List<String> referenceVideoDescription = null;
+
   /** The extra parameters. */
   @GsonExclude @Singular protected Map<String, Object> extraInputs;
 
@@ -81,6 +90,8 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
   @Builder.Default private Boolean watermark = null;
 
   @Builder.Default private Boolean audio = null;
+
+  @Builder.Default private String shotType = null;
 
   /** The inputs of the model. */
   @Override
@@ -124,6 +135,14 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
       jsonObject.addProperty(TAIL_FRAME, tailFrame);
     }
 
+    if (referenceVideoUrls != null && !referenceVideoUrls.isEmpty()) {
+      jsonObject.add(REFERENCE_VIDEO_URLS, JsonUtils.toJsonArray(referenceVideoUrls));
+    }
+
+    if (referenceVideoDescription != null && !referenceVideoDescription.isEmpty()) {
+      jsonObject.add(REFERENCE_VIDEO_DESCRIPTION, JsonUtils.toJsonArray(referenceVideoDescription));
+    }
+
     if (extraInputs != null && !extraInputs.isEmpty()) {
       JsonObject extraInputsJsonObject = JsonUtils.parametersToJsonObject(extraInputs);
       JsonUtils.merge(jsonObject, extraInputsJsonObject);
@@ -164,6 +183,9 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
     if (audio != null) {
       params.put(AUDIO, audio);
     }
+    if (shotType != null) {
+      params.put(SHOT_TYPE, shotType);
+    }
     params.putAll(super.getParameters());
     return params;
   }
@@ -200,6 +222,13 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
     inputChecks.put(LAST_FRAME_URL, this.lastFrameUrl);
     inputChecks.put(HEAD_FRAME, this.headFrame);
     inputChecks.put(TAIL_FRAME, this.tailFrame);
+    int rvs = 0;
+    if (this.referenceVideoUrls != null) {
+      rvs = this.referenceVideoUrls.size();
+      for (int i = 0; i < rvs; i++) {
+        inputChecks.put(REFERENCE_VIDEO_URLS + "[" + i + "]", this.referenceVideoUrls.get(i));
+      }
+    }
 
     boolean isUpload = PreprocessInputImage.checkAndUploadImage(getModel(), inputChecks, getApiKey());
 
@@ -212,6 +241,13 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
       this.lastFrameUrl = inputChecks.get(LAST_FRAME_URL);
       this.headFrame = inputChecks.get(HEAD_FRAME);
       this.tailFrame = inputChecks.get(TAIL_FRAME);
+      if (rvs > 0) {
+        List<String> newVideos = new ArrayList<>();
+        for (int i = 0; i < rvs; i++) {
+          newVideos.add(inputChecks.get(REFERENCE_VIDEO_URLS + "[" + i + "]"));
+        }
+        this.referenceVideoUrls = newVideos;
+      }
     }
   }
 

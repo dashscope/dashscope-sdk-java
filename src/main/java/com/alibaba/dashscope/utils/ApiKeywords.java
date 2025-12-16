@@ -191,4 +191,10 @@ public class ApiKeywords {
   public static final String LANGUAGE_TYPE = "language_type";
 
   public static final String IMAGES = "images";
+
+  public static final String REFERENCE_VIDEO_URLS = "reference_video_urls";
+
+  public static final String REFERENCE_VIDEO_DESCRIPTION = "reference_video_description";
+
+  public static final String SHOT_TYPE = "shot_type";
 }
