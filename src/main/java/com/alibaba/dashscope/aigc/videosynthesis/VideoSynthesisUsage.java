@@ -13,4 +13,17 @@ public class VideoSynthesisUsage {
 
   @SerializedName("video_ratio")
   private String videoRatio;
+
+  private float duration;
+
+  private String size;
+
+  @SerializedName("input_video_duration")
+  private float inputVideoDuration;
+
+  @SerializedName("output_video_duration")
+  private float outputVideoDuration;
+
+  @SerializedName("SR")
+  private String SR;
 }
