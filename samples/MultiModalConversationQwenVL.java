@@ -64,9 +64,9 @@ public class MultiModalConversationQwenVL {
         List<MultiModalConversationMessage> messages = Arrays.asList(systemMessage, userMessage);
         MultiModalConversationParam param = MultiModalConversationParam.builder()
                 .messages(messages)
-                .model("qvq-max").build(); //qwen3-vl-plus
+                .model("qwen3-vl-plus").build(); //qwen3-vl-plus
         Flowable<MultiModalConversationResult> flowable = conversation.streamCall(param);
-        flowable.forEach(result -> {
+        flowable.blockingForEach(result -> {
             System.out.println(JsonUtils.toJson(result));
         });
     }
@@ -155,8 +155,8 @@ public class MultiModalConversationQwenVL {
 
     public static void main(String[] args) {
         try {
-//            imageSample();
-            videoSample();
+            imageSample();
+//            videoSample();
 //            streamCallWithToolCalls();
         } catch (ApiException | NoApiKeyException | UploadFileException e) {
             System.out.println(e.getMessage());
