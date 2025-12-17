@@ -17,4 +17,10 @@ public class VideoSynthesisOutput {
 
   @SerializedName("video_url")
   private String videoUrl;
+
+  @SerializedName("check_audio")
+  private String checkAudio;
+
+  @SerializedName("orig_prompt")
+  private String origPrompt;
 }
