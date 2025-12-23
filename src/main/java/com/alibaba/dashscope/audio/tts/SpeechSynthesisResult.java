@@ -42,6 +42,8 @@ public class SpeechSynthesisResult {
     SpeechSynthesisResult result = new SpeechSynthesisResult();
     if (dashScopeResult.getOutput() instanceof ByteBuffer) {
       result.audioFrame = cloneBuffer((ByteBuffer) dashScopeResult.getOutput());
+    }else if (dashScopeResult.getOutput() instanceof JsonObject) {
+        result.output =(JsonObject) dashScopeResult.getOutput();
     }
     try {
       if (dashScopeResult.getRequestId() != null) {
