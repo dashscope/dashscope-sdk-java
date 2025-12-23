@@ -14,6 +14,7 @@ public class QwenTtsRealtimeConstants {
   public static final String VOLUME = "volume";
   public static final String BIT_RATE = "bit_rate";
   public static final String LANGUAGE_TYPE = "language_type";
+  public static final String ENABLE_TN = "enable_tn";
   public static final String PROTOCOL_EVENT_ID = "event_id";
   public static final String PROTOCOL_TYPE = "type";
   public static final String PROTOCOL_SESSION = "session";
