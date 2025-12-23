@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /** @author lengjiayi */
 @Slf4j
 public class OmniRealtimeConversation extends WebSocketListener {
+  private static final int DEFAULT_TIMEOUT = 20;
   private OmniRealtimeParam parameters;
   private OmniRealtimeCallback callback;
 
@@ -38,6 +39,7 @@ public class OmniRealtimeConversation extends WebSocketListener {
   private long lastFirstAudioDelay = -1;
   private long lastFirstTextDelay = -1;
   private AtomicBoolean isClosed = new AtomicBoolean(false);
+  private final AtomicReference<CountDownLatch> disconnectLatch = new AtomicReference<>(null);
 
   /**
    * Constructor
@@ -73,6 +75,44 @@ public class OmniRealtimeConversation extends WebSocketListener {
     connectLatch.get().await();
   }
 
+  // block wait server session done, max 20 seconds, then close connection
+  public void endSession() throws InterruptedException{
+    endSession(DEFAULT_TIMEOUT);
+  }
+
+  // block wait server session done ,then close connection
+  public void endSession(int timeout) throws InterruptedException{
+    checkStatus();
+    CountDownLatch latch = new CountDownLatch(1);
+    disconnectLatch.set(latch);
+    endSessionAsync();
+    boolean finishSuccess = false;
+    try {
+      finishSuccess = latch.await(timeout, java.util.concurrent.TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      close(1011, "interrupted while waiting for session finish");
+      throw e;
+    }
+    if (!finishSuccess) {
+      close(1011, "disconnect timeout after " + timeout + " seconds");
+    } else {
+      close(1000, "bye");
+    }
+  }
+
+  // user need close connection manually after callback 'session.finished'
+  public void endSessionAsync() {
+    checkStatus();
+    Map<String, Object> commit_request = new HashMap<>();
+    commit_request.put(OmniRealtimeConstants.PROTOCOL_EVENT_ID, generateEventId());
+    commit_request.put(
+            OmniRealtimeConstants.PROTOCOL_TYPE, OmniRealtimeConstants.PROTOCOL_EVENT_TYPE_FINISH_SESSION);
+    sendMessage(createGson().toJson(commit_request), true);
+  }
+
+
+
   /**
    * Update session configuration, should be used before create response
    *
@@ -87,10 +127,7 @@ public class OmniRealtimeConversation extends WebSocketListener {
         OmniRealtimeConstants.PROTOCOL_TYPE,
         OmniRealtimeConstants.PROTOCOL_EVENT_TYPE_UPDATE_SESSION);
     update_request.put(OmniRealtimeConstants.PROTOCOL_SESSION, configJson);
-    GsonBuilder builder = new GsonBuilder();
-    builder.serializeNulls();
-    Gson gson = builder.create();
-    sendMessage(gson.toJson(update_request), true);
+    sendMessage(createGson().toJson(update_request), true);
   }
 
   /**
@@ -108,10 +145,7 @@ public class OmniRealtimeConversation extends WebSocketListener {
         OmniRealtimeConstants.PROTOCOL_EVENT_TYPE_APPEND_AUDIO);
     append_request.put(OmniRealtimeConstants.PROTOCOL_AUDIO, audioBase64);
     log.debug("append audio with eid: {}, length: {}", event_id, audioBase64.length());
-    GsonBuilder builder = new GsonBuilder();
-    builder.serializeNulls();
-    Gson gson = builder.create();
-    sendMessage(gson.toJson(append_request), false);
+    sendMessage(createGson().toJson(append_request), false);
   }
 
   /**
@@ -129,10 +163,7 @@ public class OmniRealtimeConversation extends WebSocketListener {
         OmniRealtimeConstants.PROTOCOL_EVENT_TYPE_APPEND_VIDEO);
     append_request.put(OmniRealtimeConstants.PROTOCOL_VIDEO, videoBase64);
     log.debug("append video with eid: " + event_id + ", length: " + videoBase64.length());
-    GsonBuilder builder = new GsonBuilder();
-    builder.serializeNulls();
-    Gson gson = builder.create();
-    sendMessage(gson.toJson(append_request), false);
+    sendMessage(createGson().toJson(append_request), false);
   }
 
   /**
@@ -145,10 +176,7 @@ public class OmniRealtimeConversation extends WebSocketListener {
     commit_request.put(OmniRealtimeConstants.PROTOCOL_EVENT_ID, generateEventId());
     commit_request.put(
         OmniRealtimeConstants.PROTOCOL_TYPE, OmniRealtimeConstants.PROTOCOL_EVENT_TYPE_COMMIT);
-    GsonBuilder builder = new GsonBuilder();
-    builder.serializeNulls();
-    Gson gson = builder.create();
-    sendMessage(gson.toJson(commit_request), true);
+    sendMessage(createGson().toJson(commit_request), true);
   }
 
   /** clear the audio sent to server before. */
@@ -158,10 +186,7 @@ public class OmniRealtimeConversation extends WebSocketListener {
     clear_request.put(OmniRealtimeConstants.PROTOCOL_EVENT_ID, generateEventId());
     clear_request.put(
         OmniRealtimeConstants.PROTOCOL_TYPE, OmniRealtimeConstants.PROTOCOL_EVENT_TYPE_CLEAR_AUDIO);
-    GsonBuilder builder = new GsonBuilder();
-    builder.serializeNulls();
-    Gson gson = builder.create();
-    sendMessage(gson.toJson(clear_request), true);
+    sendMessage(createGson().toJson(clear_request), true);
   }
 
   /**
@@ -290,6 +315,10 @@ public class OmniRealtimeConversation extends WebSocketListener {
     return "event_" + java.util.UUID.randomUUID().toString().replace("-", "");
   }
 
+  private Gson createGson() {
+    return new GsonBuilder().serializeNulls().create();
+  }
+
   private void sendMessage(String message, boolean enableLog) {
     if (enableLog == true) {
       log.debug("send message: " + message);
@@ -351,6 +380,13 @@ public class OmniRealtimeConversation extends WebSocketListener {
                   + lastFirstAudioDelay
                   + " ms");
           break;
+          case OmniRealtimeConstants.PROTOCOL_RESPONSE_TYPE_SESSION_FINISHED:
+            log.info("session: " + sessionId + " finished");
+            CountDownLatch latch = disconnectLatch.get();
+            if (latch != null) {
+              latch.countDown();
+            }
+            break;
       }
     }
   }
