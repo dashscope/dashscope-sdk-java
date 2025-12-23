@@ -35,10 +35,12 @@ public class OmniRealtimeConstants {
   public static final String PROTOCOL_EVENT_TYPE_CLEAR_AUDIO = "input_audio_buffer.clear";
   public static final String PROTOCOL_EVENT_TYPE_CREATE_RESPONSE = "response.create";
   public static final String PROTOCOL_EVENT_TYPE_CANCEL_RESPONSE = "response.cancel";
+  public static final String PROTOCOL_EVENT_TYPE_FINISH_SESSION = "session.finish";
   public static final String PROTOCOL_RESPONSE_TYPE_SESSION_CREATED = "session.created";
   public static final String PROTOCOL_RESPONSE_TYPE_RESPONSE_CREATED = "response.created";
   public static final String PROTOCOL_RESPONSE_TYPE_AUDIO_TRANSCRIPT_DELTA =
       "response.audio_transcript.delta";
+  public static final String PROTOCOL_RESPONSE_TYPE_SESSION_FINISHED = "session.finished";
   public static final String PROTOCOL_RESPONSE_TYPE_AUDIO_DELTA = "response.audio.delta";
   public static final String PROTOCOL_RESPONSE_TYPE_RESPONSE_DONE = "response.done";
 }
