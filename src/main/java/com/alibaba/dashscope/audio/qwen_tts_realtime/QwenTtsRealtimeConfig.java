@@ -44,6 +44,9 @@ public class QwenTtsRealtimeConfig {
   /** bitRate for tts , support 6~510,default is 128kbps. only work on format: opus/mp3 */
   @Builder.Default Integer bitRate = null;
 
+  /** text normalization, default is true */
+  @Builder.Default Boolean enableTn = true;
+
   /** The extra parameters. */
   @Builder.Default Map<String, Object> parameters = null;
 
@@ -76,6 +79,11 @@ public class QwenTtsRealtimeConfig {
     if (languageType != null) {
       config.put(QwenTtsRealtimeConstants.LANGUAGE_TYPE,languageType);
     }
+
+    if (enableTn != null) {
+      config.put(QwenTtsRealtimeConstants.ENABLE_TN, enableTn);
+    }
+
     if (parameters != null) {
       for (Map.Entry<String, Object> entry : parameters.entrySet()) {
         config.put(entry.getKey(), entry.getValue());
