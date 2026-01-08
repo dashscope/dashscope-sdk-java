@@ -1,9 +1,11 @@
 package com.alibaba.dashscope.utils;
 
+import com.alibaba.dashscope.aigc.imagegeneration.ImageGenerationMessage;
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalMessageItemBase;
 import com.alibaba.dashscope.common.MultiModalMessage;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.exception.UploadFileException;
+
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -316,6 +318,31 @@ public final class PreprocessMessageInput {
       for (Map.Entry<String, Object> entry : item.entrySet()) {
         CheckAndUploadResult result = checkAndUploadMultiModalMessage(
             model, entry, apiKey, cert);
+        if (result.isUpload() && !hasUpload) {
+          hasUpload = true;
+        }
+        cert = result.getCertificate();
+      }
+    }
+    messages.setContent(content);
+    return new PreprocessResult(hasUpload, cert);
+  }
+
+  public static PreprocessResult preProcessMultiModalMessageInputs(
+          String model, ImageGenerationMessage messages, String apiKey,
+          OSSUploadCertificate certificate)
+          throws NoApiKeyException, UploadFileException {
+    boolean hasUpload = false;
+    OSSUploadCertificate cert = certificate;
+    List<Map<String, Object>> content = new ArrayList<>();
+
+    for (Map<String, Object> item : messages.getContent()) {
+      content.add(new HashMap<>(item));
+    }
+    for (Map<String, Object> item : content) {
+      for (Map.Entry<String, Object> entry : item.entrySet()) {
+        CheckAndUploadResult result = checkAndUploadMultiModalMessage(
+                model, entry, apiKey, cert);
         if (result.isUpload() && !hasUpload) {
           hasUpload = true;
         }
