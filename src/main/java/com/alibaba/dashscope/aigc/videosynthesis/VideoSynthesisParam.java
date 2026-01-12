@@ -1,8 +1,6 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.aigc.videosynthesis;
 
-import static com.alibaba.dashscope.utils.ApiKeywords.*;
-
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
@@ -11,16 +9,19 @@ import com.alibaba.dashscope.utils.GsonExclude;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.alibaba.dashscope.utils.PreprocessInputImage;
 import com.google.gson.JsonObject;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Singular;
 import lombok.experimental.SuperBuilder;
+
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static com.alibaba.dashscope.utils.ApiKeywords.*;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -92,6 +93,9 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
   @Builder.Default private Boolean audio = null;
 
   @Builder.Default private String shotType = null;
+
+  /** The enable_overlays parameter. */
+  @Builder.Default private Boolean enableOverlays = null;
 
   /** The inputs of the model. */
   @Override
@@ -186,6 +190,10 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
     if (shotType != null) {
       params.put(SHOT_TYPE, shotType);
     }
+    if (enableOverlays != null) {
+      params.put(ENABLE_OVERLAYS, enableOverlays);
+    }
+
     params.putAll(super.getParameters());
     return params;
   }
