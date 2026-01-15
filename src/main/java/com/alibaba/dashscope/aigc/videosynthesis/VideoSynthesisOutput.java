@@ -23,4 +23,16 @@ public class VideoSynthesisOutput {
 
   @SerializedName("orig_prompt")
   private String origPrompt;
+
+  @SerializedName("actual_prompt")
+  private String actualPrompt;
+
+  @SerializedName("submit_time")
+  private String submitTime;
+
+  @SerializedName("scheduled_time")
+  private String scheduledTime;
+
+  @SerializedName("end_time")
+  private String endTime;
 }
