@@ -9,10 +9,9 @@ import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.*;
 import lombok.extern.slf4j.Slf4j;
 
-
 @Slf4j
 public final class TextReRank {
-  
+
   private final SynchronizeHalfDuplexApi<TextReRankParam> syncApi;
   private final ApiServiceOption serviceOption;
 
@@ -54,8 +53,7 @@ public final class TextReRank {
     syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
 
-  public TextReRank(
-      String protocol, String baseUrl, ConnectionOptions connectionOptions) {
+  public TextReRank(String protocol, String baseUrl, ConnectionOptions connectionOptions) {
     serviceOption = defaultApiServiceOption();
     serviceOption.setProtocol(Protocol.of(protocol));
     if (Protocol.HTTP.getValue().equals(protocol)) {
@@ -75,7 +73,7 @@ public final class TextReRank {
    * @throws ApiException The request failed, possibly due to a network or data error.
    */
   public TextReRankResult call(TextReRankParam param)
-          throws ApiException, NoApiKeyException, InputRequiredException {
+      throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
     serviceOption.setIsSSE(false);
     serviceOption.setStreamingMode(StreamingMode.NONE);

@@ -17,5 +17,4 @@ public enum TaskGroup {
   TaskGroup(String value) {
     this.value = value;
   }
-
 }

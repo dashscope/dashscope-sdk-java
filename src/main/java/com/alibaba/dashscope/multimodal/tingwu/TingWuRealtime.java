@@ -14,17 +14,16 @@ import com.alibaba.dashscope.protocol.StreamingMode;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.experimental.SuperBuilder;
-import lombok.extern.slf4j.Slf4j;
-
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public final class TingWuRealtime {
@@ -64,9 +63,9 @@ public final class TingWuRealtime {
     public static TingWuRealtimeWithStream FromTingWuRealtimeParam(
         TingWuRealtimeParam param, Flowable<ByteBuffer> audioStream, String preRequestId) {
       TingWuRealtimeWithStream tingWuRealtimeWithStream =
-              TingWuRealtimeWithStream.builder()
+          TingWuRealtimeWithStream.builder()
               .parameters((param.getParameters()))
-//              .parameter("pre_task_id", preRequestId)
+              //              .parameter("pre_task_id", preRequestId)
               .headers(param.getHeaders())
               .appId(param.getAppId())
               .format(param.getFormat())
@@ -143,8 +142,7 @@ public final class TingWuRealtime {
    *     source language, target languages, etc.
    * @param callback ResultCallback
    */
-  public void call(
-      TingWuRealtimeParam param, TingWuRealtimeCallback callback) {
+  public void call(TingWuRealtimeParam param, TingWuRealtimeCallback callback) {
     this.reset();
     if (param == null) {
       throw new ApiException(
@@ -180,41 +178,44 @@ public final class TingWuRealtime {
     }
     stopLatch = new AtomicReference<>(new CountDownLatch(1));
 
-//    preRequestId = UUID.randomUUID().toString();
+    //    preRequestId = UUID.randomUUID().toString();
     try {
       duplexApi.duplexCall(
-          TingWuRealtimeWithStream.FromTingWuRealtimeParam(
-              param, audioFrames, preRequestId),
+          TingWuRealtimeWithStream.FromTingWuRealtimeParam(param, audioFrames, preRequestId),
           new ResultCallback<DashScopeResult>() {
             @Override
             public void onEvent(DashScopeResult message) {
-               log.debug("Response Result :" + message);
+              log.debug("Response Result :" + message);
               TingWuRealtimeResult tingWuRealtimeResult =
-                      TingWuRealtimeResult.fromDashScopeResult(message);
+                  TingWuRealtimeResult.fromDashScopeResult(message);
 
-              switch (tingWuRealtimeResult.getAction()){
+              switch (tingWuRealtimeResult.getAction()) {
                 case "speech-listen":
                   // 建联后收到的第一个服务端返回
                   callback.onStarted(tingWuRealtimeResult.getTaskId());
                   synchronized (TingWuRealtime.this) {
-                     isListenState = true;
+                    isListenState = true;
                   }
-                  callback.onSpeechListen(tingWuRealtimeResult.getTaskId(),tingWuRealtimeResult.getOutput().get("dataId").getAsString());
+                  callback.onSpeechListen(
+                      tingWuRealtimeResult.getTaskId(),
+                      tingWuRealtimeResult.getOutput().get("dataId").getAsString());
                   break;
                 case "task-failed":
-                  callback.onError(tingWuRealtimeResult.getOutput().get("errorCode").getAsString(),
-                          tingWuRealtimeResult.getOutput().get("errorMessage").getAsString());
+                  callback.onError(
+                      tingWuRealtimeResult.getOutput().get("errorCode").getAsString(),
+                      tingWuRealtimeResult.getOutput().get("errorMessage").getAsString());
                   break;
                 case "recognize-result":
-                  callback.onRecognizeResult(tingWuRealtimeResult.getTaskId(), tingWuRealtimeResult.getOutput());
+                  callback.onRecognizeResult(
+                      tingWuRealtimeResult.getTaskId(), tingWuRealtimeResult.getOutput());
                   break;
                 case "ai-result":
-                  callback.onAiResult(tingWuRealtimeResult.getTaskId(), tingWuRealtimeResult.getOutput());
+                  callback.onAiResult(
+                      tingWuRealtimeResult.getTaskId(), tingWuRealtimeResult.getOutput());
                   break;
                 case "speech-end":
                   callback.onStopped(tingWuRealtimeResult.getTaskId());
               }
-
             }
 
             @Override
@@ -231,7 +232,7 @@ public final class TingWuRealtime {
             public void onError(Exception e) {
               ApiException apiException = new ApiException(e);
               apiException.setStackTrace(e.getStackTrace());
-              callback.onError(apiException.getStatus().getCode(),apiException.getMessage());
+              callback.onError(apiException.getStatus().getCode(), apiException.getMessage());
               if (stopLatch.get() != null) {
                 stopLatch.get().countDown();
               }
@@ -240,7 +241,7 @@ public final class TingWuRealtime {
     } catch (NoApiKeyException e) {
       ApiException apiException = new ApiException(e);
       apiException.setStackTrace(e.getStackTrace());
-      callback.onError(apiException.getStatus().getCode(),apiException.getMessage());
+      callback.onError(apiException.getStatus().getCode(), apiException.getMessage());
       if (stopLatch.get() != null) {
         stopLatch.get().countDown();
       }
@@ -263,7 +264,7 @@ public final class TingWuRealtime {
     }
     log.debug("send audio frame: " + audioFrame.remaining());
     synchronized (this) {
-      if (audioEmitter == null || !isListenState ) {
+      if (audioEmitter == null || !isListenState) {
         cmdBuffer.add(AsyncCmdBuffer.builder().audioFrame(audioFrame).build());
       } else {
         audioEmitter.onNext(audioFrame);

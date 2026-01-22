@@ -91,8 +91,8 @@ public class HalfDuplexRequest {
     // Extract and filter custom user agent from param headers
     Map<String, String> paramHeaders = param.getHeaders();
     String customUserAgent = paramHeaders != null ? paramHeaders.get("user-agent") : null;
-    Map<String, String> filteredHeaders = paramHeaders != null ?
-            new java.util.HashMap<>(paramHeaders) : new java.util.HashMap<>();
+    Map<String, String> filteredHeaders =
+        paramHeaders != null ? new java.util.HashMap<>(paramHeaders) : new java.util.HashMap<>();
     filteredHeaders.remove("user-agent");
 
     Map<String, String> requestHeaders =

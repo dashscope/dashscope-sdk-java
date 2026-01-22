@@ -18,9 +18,7 @@ public class CipServiceCodes {
   /** Image security check configuration */
   private Image image;
 
-  /**
-   * Text security check configuration.
-   */
+  /** Text security check configuration. */
   @Data
   @Builder
   public static class Text {
@@ -31,9 +29,7 @@ public class CipServiceCodes {
     private String output;
   }
 
-  /**
-   * Image security check configuration.
-   */
+  /** Image security check configuration. */
   @Data
   @Builder
   public static class Image {

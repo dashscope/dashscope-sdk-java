@@ -83,14 +83,14 @@ public final class VideoSynthesis {
    */
   private ApiServiceOption getApiServiceOption(String task) {
     return ApiServiceOption.builder()
-            .protocol(Protocol.HTTP)
-            .httpMethod(HttpMethod.POST)
-            .streamingMode(StreamingMode.NONE)
-            .taskGroup(taskGroup)
-            .task(task)
-            .function(function)
-            .isAsyncTask(true)
-            .build();
+        .protocol(Protocol.HTTP)
+        .httpMethod(HttpMethod.POST)
+        .streamingMode(StreamingMode.NONE)
+        .taskGroup(taskGroup)
+        .task(task)
+        .function(function)
+        .isAsyncTask(true)
+        .build();
   }
 
   /** default VideoSynthesis constructor */
@@ -135,20 +135,19 @@ public final class VideoSynthesis {
    * @throws InputRequiredException Check the input param.
    */
   public VideoSynthesisResult asyncCall(VideoSynthesisParam param)
-          throws ApiException, NoApiKeyException, InputRequiredException {
+      throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
     // add local file support
     try {
       param.checkAndUpload();
-    }catch (UploadFileException e){
+    } catch (UploadFileException e) {
       throw new InputRequiredException(e.getMessage());
     }
     ApiServiceOption serviceOption = createServiceOptions;
     if (param.getModel().contains("kf2v")) {
       serviceOption.setTask("image2video");
     }
-    return VideoSynthesisResult.fromDashScopeResult(
-        asyncApi.asyncCall(param, serviceOption));
+    return VideoSynthesisResult.fromDashScopeResult(asyncApi.asyncCall(param, serviceOption));
   }
 
   /**
@@ -161,20 +160,19 @@ public final class VideoSynthesis {
    * @throws InputRequiredException Check the input param.
    */
   public VideoSynthesisResult call(VideoSynthesisParam param)
-          throws ApiException, NoApiKeyException, InputRequiredException {
+      throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
     // add local file support
     try {
       param.checkAndUpload();
-    }catch (UploadFileException e){
+    } catch (UploadFileException e) {
       throw new InputRequiredException(e.getMessage());
     }
     ApiServiceOption serviceOption = createServiceOptions;
     if (param.getModel().contains("kf2v")) {
       serviceOption.setTask("image2video");
     }
-    return VideoSynthesisResult.fromDashScopeResult(
-            asyncApi.call(param, serviceOption));
+    return VideoSynthesisResult.fromDashScopeResult(asyncApi.call(param, serviceOption));
   }
 
   /**

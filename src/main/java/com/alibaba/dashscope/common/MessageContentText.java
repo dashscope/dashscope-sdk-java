@@ -13,8 +13,8 @@ public class MessageContentText extends MessageContentBase {
   @Data
   @SuperBuilder
   public static class CacheControl {
-     private String type;
-     private String ttl;
+    private String type;
+    private String ttl;
   }
 
   @Builder.Default private String type = "text";

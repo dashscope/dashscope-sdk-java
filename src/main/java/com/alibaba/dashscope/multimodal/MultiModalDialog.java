@@ -10,18 +10,11 @@ import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
-import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.experimental.SuperBuilder;
-import lombok.extern.slf4j.Slf4j;
-
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.Objects;
@@ -29,13 +22,16 @@ import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
 
 /**
- * Multimodal Dialog class responsible for handling various operations in multimodal
- * conversations.
+ * Multimodal Dialog class responsible for handling various operations in multimodal conversations.
  *
- * author songsong.shao
- * date 2025/4/24
+ * <p>author songsong.shao date 2025/4/24
  */
 @Slf4j
 public class MultiModalDialog {
@@ -55,8 +51,7 @@ public class MultiModalDialog {
 
   private MultiModalRequestParamWithStream requestParamWithStream; // Request parameter with stream
 
-  private State.DialogState currentState =
-      State.DialogState.IDLE; // Current dialogue state
+  private State.DialogState currentState = State.DialogState.IDLE; // Current dialogue state
 
   private String currentDialogId = ""; // Current dialogue ID
 
@@ -67,8 +62,7 @@ public class MultiModalDialog {
     private String directive; // Directive type
   }
 
-  private final Queue<AsyncCmdBuffer> DialogBuffer =
-      new LinkedList<>(); // Dialogue buffer queue
+  private final Queue<AsyncCmdBuffer> DialogBuffer = new LinkedList<>(); // Dialogue buffer queue
 
   private AtomicReference<CountDownLatch> stopLatch =
       new AtomicReference<>(null); // Stop signal latch
@@ -99,9 +93,9 @@ public class MultiModalDialog {
     }
 
     public static MultiModalRequestParamWithStream FromMultiModalParam(
-            MultiModalRequestParam param, Flowable<Object> dataStream, String preRequestId) {
+        MultiModalRequestParam param, Flowable<Object> dataStream, String preRequestId) {
       ClientInfo clientInfo = param.getClientInfo();
-      clientInfo.setSdk("dashscope-sdk-java "+ Version.version);
+      clientInfo.setSdk("dashscope-sdk-java " + Version.version);
       return MultiModalRequestParamWithStream.builder()
           .parameter("pre_task_id", preRequestId)
           .headers(param.getHeaders())
@@ -123,11 +117,9 @@ public class MultiModalDialog {
   /**
    * Constructor initializes service options and creates a duplex communication API instance.
    *
-   * param: param Request parameter
-   * param: callback Callback interface
+   * <p>param: param Request parameter param: callback Callback interface
    */
-  public MultiModalDialog(
-          MultiModalRequestParam param, MultiModalDialogCallback callback) {
+  public MultiModalDialog(MultiModalRequestParam param, MultiModalDialogCallback callback) {
     this.serviceOption =
         ApiServiceOption.builder()
             .protocol(Protocol.WEBSOCKET)
@@ -143,43 +135,42 @@ public class MultiModalDialog {
     this.callback = callback;
     connectionOptions = ConnectionOptions.builder().build();
     this.connectionOptions.setUseDefaultClient(false);
-    this.duplexApi = new SynchronizeFullDuplexApi<>(this.connectionOptions,serviceOption);
+    this.duplexApi = new SynchronizeFullDuplexApi<>(this.connectionOptions, serviceOption);
   }
-
 
   /**
    * Constructor initializes service options and creates a duplex communication API instance.
    *
-   * param: param Request parameter
-   * param: callback Callback interface
-   * param: connectionOptions Connection options
+   * <p>param: param Request parameter param: callback Callback interface param: connectionOptions
+   * Connection options
    */
   public MultiModalDialog(
-          MultiModalRequestParam param, MultiModalDialogCallback callback, ConnectionOptions connectionOptions) {
+      MultiModalRequestParam param,
+      MultiModalDialogCallback callback,
+      ConnectionOptions connectionOptions) {
     this.serviceOption =
-            ApiServiceOption.builder()
-                    .protocol(Protocol.WEBSOCKET)
-                    .streamingMode(StreamingMode.DUPLEX)
-                    .outputMode(OutputMode.ACCUMULATE)
-                    .taskGroup(TaskGroup.AIGC.getValue())
-                    .task(Task.MULTIMODAL_GENERATION.getValue())
-                    .function(Function.GENERATION.getValue())
-                    .passTaskStarted(true)
-                    .build();
+        ApiServiceOption.builder()
+            .protocol(Protocol.WEBSOCKET)
+            .streamingMode(StreamingMode.DUPLEX)
+            .outputMode(OutputMode.ACCUMULATE)
+            .taskGroup(TaskGroup.AIGC.getValue())
+            .task(Task.MULTIMODAL_GENERATION.getValue())
+            .function(Function.GENERATION.getValue())
+            .passTaskStarted(true)
+            .build();
     this.connectionOptions = connectionOptions;
     this.connectionOptions.setUseDefaultClient(false);
 
     this.requestParam = param;
     this.callback = callback;
-    this.duplexApi = new SynchronizeFullDuplexApi<>(this.connectionOptions,serviceOption);
+    this.duplexApi = new SynchronizeFullDuplexApi<>(this.connectionOptions, serviceOption);
   }
 
   /**
    * Constructor allows custom service options.
    *
-   * param: param Request parameter
-   * param: callback Callback interface
-   * param: serviceOption Custom service options
+   * <p>param: param Request parameter param: callback Callback interface param: serviceOption
+   * Custom service options
    */
   public MultiModalDialog(
       MultiModalRequestParam param,
@@ -196,11 +187,10 @@ public class MultiModalDialog {
     Flowable<Object> dataFrames =
         Flowable.create(
             emitter -> { // Creates data flow
-              synchronized (
-                  MultiModalDialog.this) { // Synchronized block ensures thread safety
+              synchronized (MultiModalDialog.this) { // Synchronized block ensures thread safety
                 if (!DialogBuffer.isEmpty()) { // If dialogue buffer queue is not empty
                   for (AsyncCmdBuffer buffer :
-                          DialogBuffer) { // Iterates through each buffer in the queue
+                      DialogBuffer) { // Iterates through each buffer in the queue
                     if (buffer.isStop) { // If buffer marks stop, ends data flow
                       emitter.onComplete();
                       return;
@@ -221,12 +211,11 @@ public class MultiModalDialog {
 
     stopLatch = new AtomicReference<>(new CountDownLatch(1)); // Initializes stop signal latch
 
-    String preTaskId = requestParam.getTaskId() != null ? requestParam.getTaskId() : UUID.randomUUID().toString();
+    String preTaskId =
+        requestParam.getTaskId() != null ? requestParam.getTaskId() : UUID.randomUUID().toString();
     requestParamWithStream =
         MultiModalRequestParamWithStream.FromMultiModalParam(
-            this.requestParam,
-            dataFrames,
-            preTaskId); // Creates request parameter with stream
+            this.requestParam, dataFrames, preTaskId); // Creates request parameter with stream
 
     try {
       this.duplexApi.duplexCall(
@@ -263,7 +252,8 @@ public class MultiModalDialog {
                     sendFinishTaskMessage();
                     break;
                   case "Error":
-                    String error_code = output.has("error_code") ? output.get("error_code").getAsString() : "";
+                    String error_code =
+                        output.has("error_code") ? output.get("error_code").getAsString() : "";
                     callback.onError(
                         dialogId,
                         error_code,
@@ -301,7 +291,7 @@ public class MultiModalDialog {
                     callback.onRespondingStarted(dialogId); // Response start event
                     break;
                   case "RespondingEnded":
-                    callback.onRespondingEnded(dialogId,output); // Response end event
+                    callback.onRespondingEnded(dialogId, output); // Response end event
                     break;
                   case "SpeechContent":
                     callback.onSpeechContent(dialogId, output); // Speech content event
@@ -312,12 +302,12 @@ public class MultiModalDialog {
                   default:
                     break;
                 }
-              }else if (message.getEvent() != null) {
-                if (message.getEvent().equals("task-started")){
+              } else if (message.getEvent() != null) {
+                if (message.getEvent().equals("task-started")) {
                   callback.onConnected();
                   log.debug(
-                          "MultiModalDialog connected, state is {}",
-                          currentState.getValue()); // Logs connection status
+                      "MultiModalDialog connected, state is {}",
+                      currentState.getValue()); // Logs connection status
                 }
               }
             }
@@ -336,13 +326,13 @@ public class MultiModalDialog {
                 ApiException apiException = (ApiException) e; // Casts exception to API exception
                 if (apiException.getStatus().isJson()) {
                   callback.onError(
-                          apiException.getStatus().getRequestId(),
-                          apiException.getStatus().getCode(),
-                          apiException.getStatus().getMessage());
-                }else {
+                      apiException.getStatus().getRequestId(),
+                      apiException.getStatus().getCode(),
+                      apiException.getStatus().getMessage());
+                } else {
                   callback.onError(currentDialogId, "", apiException.getMessage());
                 }
-              }else {
+              } else {
                 callback.onError(currentDialogId, "", e.getMessage());
               }
               if (stopLatch.get() != null) {
@@ -384,22 +374,20 @@ public class MultiModalDialog {
     sendTextFrame("LocalRespondingEnded");
   }
 
-//  /** Requests to speak. */
-//  public void requestToSpeak() {
-//    sendTextFrame("RequestToSpeak");
-//  }
+  //  /** Requests to speak. */
+  //  public void requestToSpeak() {
+  //    sendTextFrame("RequestToSpeak");
+  //  }
 
-  /** send heart beat request ,will respond heart beat*/
-  public void sendHeartBeat(){
+  /** send heart beat request ,will respond heart beat */
+  public void sendHeartBeat() {
     sendTextFrame("HeartBeat");
   }
 
   /**
    * Requests response.
    *
-   * param: type Response type
-   * param: text Response text
-   * param: updateParams Update parameters
+   * <p>param: type Response type param: text Response text param: updateParams Update parameters
    */
   public void requestToRespond(
       String type, String text, MultiModalRequestParam.UpdateParams updateParams) {
@@ -424,15 +412,15 @@ public class MultiModalDialog {
   /**
    * Updates information.
    *
-   * param: updateParams Update parameters
+   * <p>param: updateParams Update parameters
    */
   public void updateInfo(MultiModalRequestParam.UpdateParams updateParams) {
     requestParamWithStream.clearParameters();
     MultiModalRequestParam.CustomInput customInput =
-            MultiModalRequestParam.CustomInput.builder()
-                    .directive("UpdateInfo")
-                    .dialogId(currentDialogId)
-                    .build();
+        MultiModalRequestParam.CustomInput.builder()
+            .directive("UpdateInfo")
+            .dialogId(currentDialogId)
+            .build();
     requestParamWithStream.setCustomInput(customInput);
     if (updateParams != null && updateParams.clientInfo != null) {
       requestParamWithStream.setClientInfo(updateParams.clientInfo);
@@ -466,21 +454,21 @@ public class MultiModalDialog {
   /**
    * Gets current dialogue state.
    *
-   * return: Current dialogue state
+   * <p>return: Current dialogue state
    */
   public State.DialogState getDialogState() {
     return currentState;
   }
 
-//  /** Gets dialogue mode. */
-//  public void getDialogMode() {
-//    //
-//  }
+  //  /** Gets dialogue mode. */
+  //  public void getDialogMode() {
+  //    //
+  //  }
 
   /**
    * Sends audio frame.
    *
-   * param: audioFrame Audio frame data
+   * <p>param: audioFrame Audio frame data
    */
   public void sendAudioData(ByteBuffer audioFrame) {
     if (audioFrame == null) {
@@ -504,7 +492,7 @@ public class MultiModalDialog {
   /**
    * Sends text frame.
    *
-   * param: textFrame Text frame data
+   * <p>param: textFrame Text frame data
    */
   private void sendTextFrame(
       String textFrame) { // Instruction type FullDuplex.getWebSocketPayload(data)

@@ -35,9 +35,8 @@ public class SearchOptions {
   private String searchStrategy;
 
   /**
-   * Whether the first data packet in streaming output contains only
-   * search source information. Only effective when enable_source is
-   * true and in streaming mode. Default is false.
+   * Whether the first data packet in streaming output contains only search source information. Only
+   * effective when enable_source is true and in streaming mode. Default is false.
    */
   @SerializedName("prepend_search_result")
   @Builder.Default

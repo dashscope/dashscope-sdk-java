@@ -4,21 +4,15 @@ package com.alibaba.dashscope.audio.qwen_asr;
 
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
 import com.alibaba.dashscope.exception.InputRequiredException;
-import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import lombok.Builder;
+import java.nio.ByteBuffer;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-
-import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data

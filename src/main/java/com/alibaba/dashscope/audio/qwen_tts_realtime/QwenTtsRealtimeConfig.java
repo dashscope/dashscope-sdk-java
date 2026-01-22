@@ -77,7 +77,7 @@ public class QwenTtsRealtimeConfig {
       config.put(QwenTtsRealtimeConstants.BIT_RATE, this.bitRate);
     }
     if (languageType != null) {
-      config.put(QwenTtsRealtimeConstants.LANGUAGE_TYPE,languageType);
+      config.put(QwenTtsRealtimeConstants.LANGUAGE_TYPE, languageType);
     }
 
     if (enableTn != null) {

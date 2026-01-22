@@ -5,13 +5,12 @@ import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
+import java.nio.ByteBuffer;
+import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-
-import java.nio.ByteBuffer;
-import java.util.Map;
 
 @Setter
 @SuperBuilder
@@ -20,14 +19,13 @@ import java.util.Map;
 public class TingWuParam extends HalfDuplexServiceParam {
 
   private Map<String, Object> input;
+
   @Override
   public Map<String, Object> getInput() {
     return input;
   }
 
-  /**
-   * Get the websocket binary data, only for websocket binary input data.
-   **/
+  /** Get the websocket binary data, only for websocket binary input data. */
   @Override
   public ByteBuffer getBinaryData() {
     return null;

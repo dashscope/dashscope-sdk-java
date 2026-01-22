@@ -4,12 +4,10 @@ import com.alibaba.dashscope.base.HalfDuplexServiceParam;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.JsonUtils;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
 import java.security.InvalidParameterException;
 import java.util.List;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;

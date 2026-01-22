@@ -74,8 +74,7 @@ public class VoiceEnrollmentService {
    * @throws InputRequiredException 如果必须参数为空
    */
   public Voice[] listVoice(String prefix) throws NoApiKeyException, InputRequiredException {
-    return listVoice(
-        prefix, 0, 10, VoiceEnrollmentParam.builder().model(this.model).build());
+    return listVoice(prefix, 0, 10, VoiceEnrollmentParam.builder().model(this.model).build());
   }
 
   /**
@@ -91,10 +90,7 @@ public class VoiceEnrollmentService {
   public Voice[] listVoice(String prefix, int pageIndex, int pageSize)
       throws NoApiKeyException, InputRequiredException {
     return listVoice(
-        prefix,
-        pageIndex,
-        pageSize,
-        VoiceEnrollmentParam.builder().model(this.model).build());
+        prefix, pageIndex, pageSize, VoiceEnrollmentParam.builder().model(this.model).build());
   }
 
   /**
@@ -106,8 +102,7 @@ public class VoiceEnrollmentService {
    * @throws InputRequiredException 如果必须参数为空
    */
   public Voice queryVoice(String voiceId) throws NoApiKeyException, InputRequiredException {
-    return queryVoice(
-        voiceId, VoiceEnrollmentParam.builder().model(this.model).build());
+    return queryVoice(voiceId, VoiceEnrollmentParam.builder().model(this.model).build());
   }
 
   /**
@@ -120,8 +115,7 @@ public class VoiceEnrollmentService {
    */
   public void updateVoice(String voiceId, String url)
       throws NoApiKeyException, InputRequiredException {
-    updateVoice(
-        voiceId, url, VoiceEnrollmentParam.builder().model(this.model).build());
+    updateVoice(voiceId, url, VoiceEnrollmentParam.builder().model(this.model).build());
   }
 
   /**

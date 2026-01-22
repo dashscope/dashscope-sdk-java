@@ -184,6 +184,7 @@ public class QwenTtsRealtime extends WebSocketListener {
   public String getSessionId() {
     return sessionId;
   }
+
   public String getResponseId() {
     return lastResponseId;
   }

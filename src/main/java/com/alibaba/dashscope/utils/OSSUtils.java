@@ -44,8 +44,7 @@ public final class OSSUtils {
    */
   public static String upload(String model, String filePath, String apiKey)
       throws NoApiKeyException {
-    UploadResult result = uploadWithCertificate(model, filePath, apiKey,
-        null);
+    UploadResult result = uploadWithCertificate(model, filePath, apiKey, null);
     return result.getOssUrl();
   }
 
@@ -59,8 +58,8 @@ public final class OSSUtils {
    * @return UploadResult containing OSS URL and certificate
    * @throws NoApiKeyException If API key is missing
    */
-  public static UploadResult uploadWithCertificate(String model,
-      String filePath, String apiKey, OSSUploadCertificate certificate)
+  public static UploadResult uploadWithCertificate(
+      String model, String filePath, String apiKey, OSSUploadCertificate certificate)
       throws NoApiKeyException {
     OkHttpClient client = OkHttpClientFactory.getOkHttpClient();
     OSSUploadCertificate cert = certificate;
@@ -68,17 +67,16 @@ public final class OSSUtils {
     // Get certificate if not provided
     if (cert == null) {
       DashScopeResult uploadInfo = get_upload_certificate(model, apiKey);
-      JsonObject outputData = ((JsonObject) uploadInfo.getOutput())
-          .getAsJsonObject("data");
-      cert = new OSSUploadCertificate(
-          outputData.get("upload_host").getAsString(),
-          outputData.get("oss_access_key_id").getAsString(),
-          outputData.get("signature").getAsString(),
-          outputData.get("policy").getAsString(),
-          outputData.get("upload_dir").getAsString(),
-          outputData.get("x_oss_object_acl").getAsString(),
-          outputData.get("x_oss_forbid_overwrite").getAsString()
-      );
+      JsonObject outputData = ((JsonObject) uploadInfo.getOutput()).getAsJsonObject("data");
+      cert =
+          new OSSUploadCertificate(
+              outputData.get("upload_host").getAsString(),
+              outputData.get("oss_access_key_id").getAsString(),
+              outputData.get("signature").getAsString(),
+              outputData.get("policy").getAsString(),
+              outputData.get("upload_dir").getAsString(),
+              outputData.get("x_oss_object_acl").getAsString(),
+              outputData.get("x_oss_forbid_overwrite").getAsString());
     }
 
     Map<String, String> headers = new HashMap<>();
@@ -110,8 +108,7 @@ public final class OSSUtils {
                 RequestBody.create(MediaType.parse(getContentType(filePath)), uploadFile))
             .build();
 
-    Request request = new Request.Builder().url(host).post(requestBody)
-        .build();
+    Request request = new Request.Builder().url(host).post(requestBody).build();
     try (Response response = client.newCall(request).execute()) {
       if (!response.isSuccessful()) {
         Status status = parseFailed(response);

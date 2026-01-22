@@ -75,11 +75,12 @@ public class OkHttpClientFactory {
   }
 
   public static OkHttpClient getNewOkHttpClient(ConnectionOptions connectionOptions) {
-    Builder builder = Holder.INSTANCE
-        .newBuilder()
-        .connectTimeout(connectionOptions.getConnectTimeout())
-        .readTimeout(connectionOptions.getReadTimeout())
-        .writeTimeout(connectionOptions.getWriteTimeout());
+    Builder builder =
+        Holder.INSTANCE
+            .newBuilder()
+            .connectTimeout(connectionOptions.getConnectTimeout())
+            .readTimeout(connectionOptions.getReadTimeout())
+            .writeTimeout(connectionOptions.getWriteTimeout());
 
     // Configure proxy if available
     if (connectionOptions.getProxy() != null) {

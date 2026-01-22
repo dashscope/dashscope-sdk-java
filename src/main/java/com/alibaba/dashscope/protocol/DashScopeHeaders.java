@@ -31,8 +31,7 @@ public final class DashScopeHeaders {
   public static Map<String, String> buildWebSocketHeaders(
       String apiKey, boolean isSecurityCheck, String workspace, Map<String, String> customHeaders)
       throws NoApiKeyException {
-    return buildWebSocketHeaders(apiKey, isSecurityCheck, workspace,
-        customHeaders, null);
+    return buildWebSocketHeaders(apiKey, isSecurityCheck, workspace, customHeaders, null);
   }
 
   // Build WebSocket headers with optional custom user agent suffix
@@ -67,8 +66,8 @@ public final class DashScopeHeaders {
       String workspace,
       Map<String, String> customHeaders)
       throws NoApiKeyException {
-    return buildHttpHeaders(apiKey, isSecurityCheck, protocol, isSSE,
-        isAsyncTask, workspace, customHeaders, null);
+    return buildHttpHeaders(
+        apiKey, isSecurityCheck, protocol, isSSE, isAsyncTask, workspace, customHeaders, null);
   }
 
   // Build HTTP headers with optional custom user agent suffix
