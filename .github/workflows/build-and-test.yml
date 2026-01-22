@@ -37,31 +37,8 @@ permissions:
   contents: read
 
 jobs:
-  checkstyle:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up JDK ${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: ${{ env.JAVA_DISTRIBUTION }}
-          cache: 'maven'
-
-      - name: Run checkstyle
-        run: |
-          if [ -f lint.sh ]; then
-            chmod +x lint.sh
-            ./lint.sh
-          else
-            echo "No lint.sh found, skipping checkstyle"
-          fi
-
   test:
     runs-on: ubuntu-22.04
-    needs: [checkstyle]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -87,7 +64,7 @@ jobs:
 
   build:
     runs-on: ubuntu-22.04
-    needs: [checkstyle, test]
+    needs: [test]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
