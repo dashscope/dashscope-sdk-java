@@ -10,17 +10,16 @@ import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import lombok.extern.slf4j.Slf4j;
-import okhttp3.*;
-import okio.ByteString;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import lombok.extern.slf4j.Slf4j;
+import okhttp3.*;
+import okio.ByteString;
+import org.jetbrains.annotations.NotNull;
 
 /** @author lengjiayi */
 @Slf4j
@@ -76,12 +75,12 @@ public class OmniRealtimeConversation extends WebSocketListener {
   }
 
   // block wait server session done, max 20 seconds, then close connection
-  public void endSession() throws InterruptedException{
+  public void endSession() throws InterruptedException {
     endSession(DEFAULT_TIMEOUT);
   }
 
   // block wait server session done ,then close connection
-  public void endSession(int timeout) throws InterruptedException{
+  public void endSession(int timeout) throws InterruptedException {
     checkStatus();
     CountDownLatch latch = new CountDownLatch(1);
     disconnectLatch.set(latch);
@@ -107,11 +106,10 @@ public class OmniRealtimeConversation extends WebSocketListener {
     Map<String, Object> commit_request = new HashMap<>();
     commit_request.put(OmniRealtimeConstants.PROTOCOL_EVENT_ID, generateEventId());
     commit_request.put(
-            OmniRealtimeConstants.PROTOCOL_TYPE, OmniRealtimeConstants.PROTOCOL_EVENT_TYPE_FINISH_SESSION);
+        OmniRealtimeConstants.PROTOCOL_TYPE,
+        OmniRealtimeConstants.PROTOCOL_EVENT_TYPE_FINISH_SESSION);
     sendMessage(createGson().toJson(commit_request), true);
   }
-
-
 
   /**
    * Update session configuration, should be used before create response
@@ -380,13 +378,13 @@ public class OmniRealtimeConversation extends WebSocketListener {
                   + lastFirstAudioDelay
                   + " ms");
           break;
-          case OmniRealtimeConstants.PROTOCOL_RESPONSE_TYPE_SESSION_FINISHED:
-            log.info("session: " + sessionId + " finished");
-            CountDownLatch latch = disconnectLatch.get();
-            if (latch != null) {
-              latch.countDown();
-            }
-            break;
+        case OmniRealtimeConstants.PROTOCOL_RESPONSE_TYPE_SESSION_FINISHED:
+          log.info("session: " + sessionId + " finished");
+          CountDownLatch latch = disconnectLatch.get();
+          if (latch != null) {
+            latch.countDown();
+          }
+          break;
       }
     }
   }

@@ -9,7 +9,6 @@ import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.*;
-import com.alibaba.dashscope.threads.runs.Run;
 import com.google.gson.JsonObject;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Emitter;
@@ -673,8 +672,7 @@ public final class SpeechSynthesizer {
    * @return If a callback is not set during initialization, the complete audio is returned as the
    *     function's return value. Otherwise, the return value is null.
    */
-  public ByteBuffer call(String text, long timeoutMillis)
-      throws RuntimeException {
+  public ByteBuffer call(String text, long timeoutMillis) throws RuntimeException {
     if (this.callback == null) {
       this.callback =
           new ResultCallback<SpeechSynthesisResult>() {

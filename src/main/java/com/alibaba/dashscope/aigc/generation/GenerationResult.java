@@ -14,8 +14,10 @@ public final class GenerationResult {
   private String requestId;
   private GenerationUsage usage;
   private GenerationOutput output;
+
   @SerializedName("status_code")
   private Integer statusCode;
+
   private String code;
   private String message;
 

@@ -42,15 +42,11 @@ public class AssistantParam extends FlattenHalfDuplexParamBase {
   @Default
   private Map<String, String> metadata = null;
 
-  /**
-   * Top P
-   */
+  /** Top P */
   @SerializedName("top_p")
   private Float topP;
 
-  /**
-   * Top K
-   */
+  /** Top K */
   @SerializedName("top_k")
   private Integer topK;
 
@@ -62,9 +58,7 @@ public class AssistantParam extends FlattenHalfDuplexParamBase {
   @SerializedName("temperature")
   private Float temperature;
 
-  /**
-   * Max Tokens
-   */
+  /** Max Tokens */
   @SerializedName("max_tokens")
   private Integer maxTokens;
 

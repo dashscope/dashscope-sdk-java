@@ -2,9 +2,7 @@ package com.alibaba.dashscope.utils;
 
 import lombok.Data;
 
-/**
- * OSS upload certificate for reuse across multiple file uploads.
- */
+/** OSS upload certificate for reuse across multiple file uploads. */
 @Data
 public class OSSUploadCertificate {
   private String uploadHost;
@@ -26,9 +24,14 @@ public class OSSUploadCertificate {
    * @param xOssObjectAcl OSS object ACL
    * @param xOssForbidOverwrite OSS forbid overwrite flag
    */
-  public OSSUploadCertificate(String uploadHost, String ossAccessKeyId,
-      String signature, String policy, String uploadDir,
-      String xOssObjectAcl, String xOssForbidOverwrite) {
+  public OSSUploadCertificate(
+      String uploadHost,
+      String ossAccessKeyId,
+      String signature,
+      String policy,
+      String uploadDir,
+      String xOssObjectAcl,
+      String xOssForbidOverwrite) {
     this.uploadHost = uploadHost;
     this.ossAccessKeyId = ossAccessKeyId;
     this.signature = signature;
@@ -38,4 +41,3 @@ public class OSSUploadCertificate {
     this.xOssForbidOverwrite = xOssForbidOverwrite;
   }
 }
-

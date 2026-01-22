@@ -145,18 +145,17 @@ public class MessageAdapter extends TypeAdapter<Message> {
     // Parse cache_control if present
     if (contentItem.containsKey(ApiKeywords.CONTENT_TYPE_CACHE_CONTROL)) {
       LinkedTreeMap<String, Object> cacheControlMap =
-          (LinkedTreeMap<String, Object>) contentItem.get(
-              ApiKeywords.CONTENT_TYPE_CACHE_CONTROL);
+          (LinkedTreeMap<String, Object>) contentItem.get(ApiKeywords.CONTENT_TYPE_CACHE_CONTROL);
       MessageContentText.CacheControl.CacheControlBuilder cacheBuilder =
-          MessageContentText.CacheControl.builder()
-              .type((String) cacheControlMap.get("type"));
+          MessageContentText.CacheControl.builder().type((String) cacheControlMap.get("type"));
 
       // Handle ttl field - convert to String regardless of input type
       if (cacheControlMap.containsKey("ttl")) {
         Object ttlObj = cacheControlMap.get("ttl");
-        cacheBuilder.ttl(ttlObj instanceof Number
-            ? String.valueOf(((Number) ttlObj).intValue())
-            : String.valueOf(ttlObj));
+        cacheBuilder.ttl(
+            ttlObj instanceof Number
+                ? String.valueOf(((Number) ttlObj).intValue())
+                : String.valueOf(ttlObj));
       }
       textBuilder.cacheControl(cacheBuilder.build());
     }
@@ -165,13 +164,10 @@ public class MessageAdapter extends TypeAdapter<Message> {
 
   // Parse image_url content
   @SuppressWarnings({"unchecked", "rawtypes"})
-  private MessageContentImageURL parseImageContent(
-      LinkedTreeMap<String, Object> contentItem) {
+  private MessageContentImageURL parseImageContent(LinkedTreeMap<String, Object> contentItem) {
     LinkedTreeMap<String, Object> imageUrlMap =
-        (LinkedTreeMap<String, Object>) contentItem.get(
-            ApiKeywords.CONTENT_TYPE_IMAGE_URL);
-    ImageURL.ImageURLBuilder imageBuilder =
-        ImageURL.builder().url((String) imageUrlMap.get("url"));
+        (LinkedTreeMap<String, Object>) contentItem.get(ApiKeywords.CONTENT_TYPE_IMAGE_URL);
+    ImageURL.ImageURLBuilder imageBuilder = ImageURL.builder().url((String) imageUrlMap.get("url"));
     if (imageUrlMap.containsKey("detail")) {
       imageBuilder.detail((String) imageUrlMap.get("detail"));
     }

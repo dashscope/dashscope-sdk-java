@@ -1,6 +1,8 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.aigc.videosynthesis;
 
+import static com.alibaba.dashscope.utils.ApiKeywords.*;
+
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
@@ -9,19 +11,16 @@ import com.alibaba.dashscope.utils.GsonExclude;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.alibaba.dashscope.utils.PreprocessInputImage;
 import com.google.gson.JsonObject;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Singular;
-import lombok.experimental.SuperBuilder;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.alibaba.dashscope.utils.ApiKeywords.*;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Singular;
+import lombok.experimental.SuperBuilder;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -39,8 +38,7 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
   @Builder.Default private String prompt = null;
 
   /** The negative prompt is the opposite of the prompt meaning. use negativePrompt */
-  @Deprecated
-  @Builder.Default private String negative_prompt = null;
+  @Deprecated @Builder.Default private String negative_prompt = null;
 
   /** The negative prompt is the opposite of the prompt meaning. */
   @Builder.Default private String negativePrompt = null;
@@ -49,8 +47,7 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
   @Builder.Default private String template = null;
 
   /** use promptExtend in parameters */
-  @Deprecated
-  @Builder.Default private Boolean extendPrompt = Boolean.TRUE;
+  @Deprecated @Builder.Default private Boolean extendPrompt = Boolean.TRUE;
 
   /** The input image url, Generate the URL of the image referenced by the video */
   @Builder.Default private String imgUrl = null;
@@ -58,11 +55,14 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
   /** The input audio url. */
   @Builder.Default private String audioUrl = null;
 
-  /**  list of character reference video file urls uploaded by the user */
+  /** list of character reference video file urls uploaded by the user */
   @Builder.Default private List<String> referenceVideoUrls = null;
 
-  /**  For the description information of the picture and sound of the reference video, corresponding to ref video,
-   * it needs to be in the order of the url. If the quantity is different, an error will be reported */
+  /**
+   * For the description information of the picture and sound of the reference video, corresponding
+   * to ref video, it needs to be in the order of the url. If the quantity is different, an error
+   * will be reported
+   */
   @Builder.Default private List<String> referenceVideoDescription = null;
 
   /** The extra parameters. */
@@ -238,7 +238,8 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
       }
     }
 
-    boolean isUpload = PreprocessInputImage.checkAndUploadImage(getModel(), inputChecks, getApiKey());
+    boolean isUpload =
+        PreprocessInputImage.checkAndUploadImage(getModel(), inputChecks, getApiKey());
 
     if (isUpload) {
       this.putHeader("X-DashScope-OssResourceResolve", "enable");
@@ -258,5 +259,4 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
       }
     }
   }
-
 }

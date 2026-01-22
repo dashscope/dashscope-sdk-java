@@ -2,11 +2,10 @@ package com.alibaba.dashscope.aigc.imagegeneration;
 
 import com.alibaba.dashscope.aigc.multimodalconversation.AudioResult;
 import com.google.gson.annotations.SerializedName;
+import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
 
 @Data
 @SuperBuilder

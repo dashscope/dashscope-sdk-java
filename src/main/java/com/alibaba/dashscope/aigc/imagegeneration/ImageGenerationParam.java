@@ -7,13 +7,12 @@ import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.alibaba.dashscope.utils.ParamUtils;
 import com.google.gson.JsonObject;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
-
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @EqualsAndHashCode(callSuper = true)
 @Data

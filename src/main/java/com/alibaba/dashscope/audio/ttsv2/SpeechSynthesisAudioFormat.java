@@ -32,7 +32,6 @@ public enum SpeechSynthesisAudioFormat {
   OGG_OPUS_48KHZ_MONO_32KBPS("opus", 48000, "mono", 32),
   OGG_OPUS_48KHZ_MONO_64KBPS("opus", 48000, "mono", 64);
 
-
   private final String format;
   private final int sampleRate;
   private final String channels;

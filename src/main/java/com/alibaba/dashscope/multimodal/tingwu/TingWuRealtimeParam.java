@@ -1,18 +1,17 @@
 package com.alibaba.dashscope.multimodal.tingwu;
 
+import static com.alibaba.dashscope.multimodal.MultiModalDialogApiKeyWords.CONST_NAME_DIRECTIVE;
+
 import com.alibaba.dashscope.base.FullDuplexServiceParam;
 import io.reactivex.Flowable;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
-import static com.alibaba.dashscope.multimodal.MultiModalDialogApiKeyWords.CONST_NAME_DIRECTIVE;
 
 @Getter
 @Setter
@@ -29,9 +28,8 @@ public class TingWuRealtimeParam extends FullDuplexServiceParam {
   private Map<String, Object> input;
 
   public void clearParameters() {
-      input.clear();
+    input.clear();
   }
-
 
   @Override
   public Map<String, String> getHeaders() {
@@ -40,34 +38,34 @@ public class TingWuRealtimeParam extends FullDuplexServiceParam {
 
   @Override
   public Map<String, Object> getParameters() {
-      Map<String, Object> params = new HashMap<>();
-      params.put("sampleRate", sampleRate);
-      params.put("format", format);
-      params.put("terminology", terminology);
-      if (maxEndSilence != null) {
-          params.put("maxEndSilence", maxEndSilence);
-      }
-      if (parameters != null) {
-          params.putAll(parameters);
-      }
-      return params;
+    Map<String, Object> params = new HashMap<>();
+    params.put("sampleRate", sampleRate);
+    params.put("format", format);
+    params.put("terminology", terminology);
+    if (maxEndSilence != null) {
+      params.put("maxEndSilence", maxEndSilence);
+    }
+    if (parameters != null) {
+      params.putAll(parameters);
+    }
+    return params;
   }
 
   @Override
   public Map<String, Object> getInputs() {
-      if (input == null) {
-          input = new HashMap<>();
-      }
-      input.put("appId", appId);
+    if (input == null) {
+      input = new HashMap<>();
+    }
+    input.put("appId", appId);
 
-      return input;
+    return input;
   }
 
   public void setDirective(String directive) {
-      if (input == null) {
-          input = new HashMap<>();
-      }
-      input.put(CONST_NAME_DIRECTIVE, directive);
+    if (input == null) {
+      input = new HashMap<>();
+    }
+    input.put(CONST_NAME_DIRECTIVE, directive);
   }
 
   @Override

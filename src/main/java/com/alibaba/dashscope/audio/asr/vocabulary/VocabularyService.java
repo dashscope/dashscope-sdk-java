@@ -77,8 +77,7 @@ public class VocabularyService {
    */
   public Vocabulary[] listVocabulary(String prefix)
       throws NoApiKeyException, InputRequiredException {
-    return listVocabulary(
-        prefix, 0, 10, VocabularyParam.builder().model(this.model).build());
+    return listVocabulary(prefix, 0, 10, VocabularyParam.builder().model(this.model).build());
   }
 
   /**
@@ -94,10 +93,7 @@ public class VocabularyService {
   public Vocabulary[] listVocabulary(String prefix, int pageIndex, int pageSize)
       throws NoApiKeyException, InputRequiredException {
     return listVocabulary(
-        prefix,
-        pageIndex,
-        pageSize,
-        VocabularyParam.builder().model(this.model).build());
+        prefix, pageIndex, pageSize, VocabularyParam.builder().model(this.model).build());
   }
 
   /**
@@ -110,8 +106,7 @@ public class VocabularyService {
    */
   public Vocabulary queryVocabulary(String vocabularyId)
       throws NoApiKeyException, InputRequiredException {
-    return queryVocabulary(
-        vocabularyId, VocabularyParam.builder().model(this.model).build());
+    return queryVocabulary(vocabularyId, VocabularyParam.builder().model(this.model).build());
   }
 
   /**
@@ -124,8 +119,7 @@ public class VocabularyService {
    */
   public void updateVocabulary(String vocabularyId, JsonArray vocabulary)
       throws NoApiKeyException, InputRequiredException {
-    updateVocabulary(
-        vocabularyId, vocabulary, VocabularyParam.builder().model(this.model).build());
+    updateVocabulary(vocabularyId, vocabulary, VocabularyParam.builder().model(this.model).build());
   }
 
   /**

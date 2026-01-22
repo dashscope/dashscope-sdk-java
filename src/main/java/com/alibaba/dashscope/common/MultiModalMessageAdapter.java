@@ -63,6 +63,7 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
       out.value(value.toString());
     }
   }
+
   private void writeToolCallBase(JsonWriter writer, ToolCallBase toolCallBase) throws IOException {
     writer.beginObject();
 
@@ -103,14 +104,11 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
 
   // Convert LinkedTreeMap to ToolCallFunction
   @SuppressWarnings("unchecked")
-  private ToolCallFunction convertToCallFunction(
-      LinkedTreeMap<String, Object> toolCall) {
+  private ToolCallFunction convertToCallFunction(LinkedTreeMap<String, Object> toolCall) {
     ToolCallFunction functionCall = new ToolCallFunction();
     if (toolCall.containsKey("function")) {
-      ToolCallFunction.CallFunction callFunction =
-          functionCall.new CallFunction();
-      LinkedTreeMap<String, Object> fc =
-          (LinkedTreeMap<String, Object>) toolCall.get("function");
+      ToolCallFunction.CallFunction callFunction = functionCall.new CallFunction();
+      LinkedTreeMap<String, Object> fc = (LinkedTreeMap<String, Object>) toolCall.get("function");
       if (fc.containsKey("name")) {
         callFunction.setName(fc.get("name").toString());
       }
@@ -134,7 +132,6 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
     }
     return functionCall;
   }
-
 
   @Override
   public void write(JsonWriter out, MultiModalMessage value) throws IOException {
@@ -167,7 +164,8 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
       out.name(ApiKeywords.TOOL_CALLS);
       out.beginArray();
       List<ToolCallBase> toolCalls = value.getToolCalls();
-      for (ToolCallBase tc : JsonUtils.fromJson(JsonUtils.toJson(toolCalls), ToolCallBase[].class)) {
+      for (ToolCallBase tc :
+          JsonUtils.fromJson(JsonUtils.toJson(toolCalls), ToolCallBase[].class)) {
         writeToolCallBase(out, tc);
       }
       out.endArray();
@@ -224,8 +222,7 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
         List<?> toolCallsList = (List<?>) toolCallsObj;
         // Check if need conversion for function type
         boolean needConversion = false;
-        if (!toolCallsList.isEmpty() &&
-            toolCallsList.get(0) instanceof LinkedTreeMap) {
+        if (!toolCallsList.isEmpty() && toolCallsList.get(0) instanceof LinkedTreeMap) {
           LinkedTreeMap<String, Object> firstToolCall =
               (LinkedTreeMap<String, Object>) toolCallsList.get(0);
           if (firstToolCall.containsKey("type")) {

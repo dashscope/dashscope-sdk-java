@@ -37,8 +37,7 @@ public class TextEmbeddingParam extends HalfDuplexServiceParam {
   public enum OutputType {
     DENSE("dense"),
     SPARSE("sparse"),
-    DENSE_AND_SPARSE("dense&sparse")
-    ;
+    DENSE_AND_SPARSE("dense&sparse");
 
     private final String value;
 
@@ -54,25 +53,26 @@ public class TextEmbeddingParam extends HalfDuplexServiceParam {
   @Singular private List<String> texts;
 
   /**
-   * After the text is converted into a vector, it can be applied to downstream tasks such as retrieval,
-   * clustering, and classification. For asymmetric tasks such as retrieval, in order to achieve better
-   * retrieval results, it is recommended to distinguish between query text (query) and bottom database
-   * text (document) types, clustering Symmetric tasks such as , classification, etc. do not need to be
-   * specially specified, and the system default value "document" can be used
-   * */
+   * After the text is converted into a vector, it can be applied to downstream tasks such as
+   * retrieval, clustering, and classification. For asymmetric tasks such as retrieval, in order to
+   * achieve better retrieval results, it is recommended to distinguish between query text (query)
+   * and bottom database text (document) types, clustering Symmetric tasks such as , classification,
+   * etc. do not need to be specially specified, and the system default value "document" can be used
+   */
   private TextType textType;
 
   /**
-   * For specifying the output vector dimensions, which is applicable only to the text-embedding-v3 model and above
-   * versions. The specified value can only be selected from the six values: 1024, 768, 512, 256, 128, or 64,
-   * with 1024 as the default value.
+   * For specifying the output vector dimensions, which is applicable only to the text-embedding-v3
+   * model and above versions. The specified value can only be selected from the six values: 1024,
+   * 768, 512, 256, 128, or 64, with 1024 as the default value.
    */
   private Integer dimension;
 
   /**
-   * The user-specified output for discrete vector representation is only applicable to models of version
-   * text_embedding_v3 or above. The value can be chosen from dense, sparse, or dense&sparse,
-   * with dense as the default selection, resulting in the output of continuous vectors only.
+   * The user-specified output for discrete vector representation is only applicable to models of
+   * version text_embedding_v3 or above. The value can be chosen from dense, sparse, or
+   * dense&sparse, with dense as the default selection, resulting in the output of continuous
+   * vectors only.
    */
   private OutputType outputType;
 

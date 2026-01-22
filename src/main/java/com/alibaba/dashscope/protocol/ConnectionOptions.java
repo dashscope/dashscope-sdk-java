@@ -93,5 +93,4 @@ public final class ConnectionOptions {
   public void setUseDefaultClient(boolean useDefaultClient) {
     this.useDefaultClient = useDefaultClient;
   }
-
 }

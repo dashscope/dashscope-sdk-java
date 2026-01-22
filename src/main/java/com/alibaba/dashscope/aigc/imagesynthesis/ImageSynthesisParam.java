@@ -45,8 +45,10 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
   /** Enter the URL address of the target edited image. */
   @Builder.Default private String baseImageUrl = null;
 
-  /** Provide the URL address of the image of the marked area by the user.
-   * It should be consistent with the image resolution of the base_image_url. */
+  /**
+   * Provide the URL address of the image of the marked area by the user. It should be consistent
+   * with the image resolution of the base_image_url.
+   */
   @Builder.Default private String maskImageUrl = null;
 
   /** The extra parameters. */
@@ -161,7 +163,8 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
       }
     }
 
-    boolean isUpload = PreprocessInputImage.checkAndUploadImage(getModel(), inputChecks, getApiKey());
+    boolean isUpload =
+        PreprocessInputImage.checkAndUploadImage(getModel(), inputChecks, getApiKey());
 
     if (isUpload) {
       this.putHeader("X-DashScope-OssResourceResolve", "enable");
