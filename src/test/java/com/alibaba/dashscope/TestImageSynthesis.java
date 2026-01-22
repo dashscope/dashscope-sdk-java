@@ -48,7 +48,7 @@ public class TestImageSynthesis {
       throws ApiException, NoApiKeyException, IOException, InterruptedException,
           InputRequiredException {
     String responseBody =
-        "{\"request_id\":\"39\",\"output\":{\"task_id\":\"e4\",\"task_status\":\"SUCCEEDED\",\"results\":[{\"url\":\"https://1\"},{\"url\":\"https://2\"},{\"url\":\"https://\"},{\"url\":\"https://4\"}],\"task_metrics\":{\"TOTAL\":4,\"SUCCEEDED\":4,\"FAILED\":0}},\"usage\":{\"image_count\":4}}";
+        "{\"request_id\":\"39\",\"output\":{\"task_id\":\"e4\",\"task_status\":\"SUCCEEDED\",\"results\":[{\"url\":\"https://1\"},{\"url\":\"https://2\"},{\"url\":\"https://\"},{\"url\":\"https://4\"}],\"task_metrics\":{\"TOTAL\":4,\"SUCCEEDED\":4,\"FAILED\":0}},\"usage\":{\"image_count\":4},\"status_code\":200,\"code\":\"\",\"message\":\"\"}";
     server.enqueue(
         new MockResponse()
             .setBody(responseBody)

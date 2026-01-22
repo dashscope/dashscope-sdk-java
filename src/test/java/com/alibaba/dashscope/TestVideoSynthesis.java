@@ -45,7 +45,7 @@ public class TestVideoSynthesis {
       throws ApiException, NoApiKeyException, IOException, InterruptedException,
           InputRequiredException {
     String responseBody =
-        "{\"request_id\":\"39\",\"output\":{\"task_id\":\"e4\",\"task_status\":\"SUCCEEDED\",\"video_url\":\"https://1\"},\"usage\":{\"video_count\":1}}";
+        "{\"request_id\":\"39\",\"output\":{\"task_id\":\"e4\",\"task_status\":\"SUCCEEDED\",\"video_url\":\"https://1\"},\"usage\":{\"video_count\":1,\"duration\":0.0,\"input_video_duration\":0.0,\"output_video_duration\":0.0},\"status_code\":200,\"code\":\"\",\"message\":\"\"}";
     assert MEDIA_TYPE_APPLICATION_JSON != null;
     server.enqueue(
         new MockResponse()
@@ -70,7 +70,7 @@ public class TestVideoSynthesis {
     String requestBody = request.getBody().readUtf8();
     System.out.println(requestBody);
     String expectRequestBody =
-        "{\"model\":\"wanx-kf2v\",\"input\":{\"extend_prompt\":true,\"first_frame_url\":\"https://www.xxx.cn/a.png\",\"last_frame_url\":\"https://www.xxx.cn/b.png\"},\"parameters\":{\"duration\":5,\"with_audio\":false,\"size\":\"1280*720\",\"resolution\":\"720P\"}}";
+        "{\"model\":\"wanx-kf2v\",\"input\":{\"extend_prompt\":true,\"first_frame_url\":\"https://www.xxx.cn/a.png\",\"last_frame_url\":\"https://www.xxx.cn/b.png\"},\"parameters\":{\"with_audio\":false}}";
     Assertions.assertEquals(expectRequestBody, requestBody);
   }
 
@@ -105,7 +105,7 @@ public class TestVideoSynthesis {
     String requestBody = request.getBody().readUtf8();
     System.out.println(requestBody);
     String expectRequestBody =
-        "{\"model\":\"wanx-kf2v\",\"input\":{\"extend_prompt\":true,\"first_frame_url\":\"https://www.xxx.cn/a.png\",\"last_frame_url\":\"https://www.xxx.cn/b.png\"},\"parameters\":{\"duration\":4,\"with_audio\":false,\"size\":\"1280*720\",\"seed\":1234,\"resolution\":\"720P\"}}";
+        "{\"model\":\"wanx-kf2v\",\"input\":{\"extend_prompt\":true,\"first_frame_url\":\"https://www.xxx.cn/a.png\",\"last_frame_url\":\"https://www.xxx.cn/b.png\"},\"parameters\":{\"duration\":4,\"with_audio\":false,\"seed\":1234}}";
     Assertions.assertEquals(expectRequestBody, requestBody);
   }
 }
