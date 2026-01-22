@@ -26,22 +26,16 @@ public class TextReRankParam extends HalfDuplexServiceParam {
   /** The list of candidate documents to be reranked. Maximum 500 documents. */
   @Singular private List<String> documents;
 
-  /** 
-   * The number of top documents to return. 
-   * If not specified, returns all candidate documents.
-   * If top_n is greater than the number of input documents, returns all documents.
+  /**
+   * The number of top documents to return. If not specified, returns all candidate documents. If
+   * top_n is greater than the number of input documents, returns all documents.
    */
   private Integer topN;
 
-  /** 
-   * Whether to return the original document text in the results. 
-   * Default is false.
-   */
+  /** Whether to return the original document text in the results. Default is false. */
   private Boolean returnDocuments;
 
-  /**
-   * The instruction for reranking.
-   */
+  /** The instruction for reranking. */
   private String instruct;
 
   @Override
@@ -67,7 +61,7 @@ public class TextReRankParam extends HalfDuplexServiceParam {
   @Override
   public Map<String, Object> getParameters() {
     Map<String, Object> params = new HashMap<>();
-    
+
     if (topN != null) {
       params.put("top_n", topN);
     }

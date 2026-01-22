@@ -2,9 +2,7 @@ package com.alibaba.dashscope.utils;
 
 import lombok.Data;
 
-/**
- * Result of file upload containing OSS URL and certificate.
- */
+/** Result of file upload containing OSS URL and certificate. */
 @Data
 public class UploadResult {
   private String ossUrl;
@@ -21,4 +19,3 @@ public class UploadResult {
     this.certificate = certificate;
   }
 }
-

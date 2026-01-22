@@ -4,14 +4,13 @@ import com.alibaba.dashscope.audio.tts.SpeechSynthesisApiKeywords;
 import com.alibaba.dashscope.audio.tts.SpeechSynthesisTextType;
 import com.alibaba.dashscope.base.FullDuplexServiceParam;
 import io.reactivex.Flowable;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /** @author lengjiayi */
 @EqualsAndHashCode(callSuper = true)
@@ -46,9 +45,9 @@ public class SpeechSynthesisParam extends FullDuplexServiceParam {
   @Builder.Default private long firstPackageTimeout = -1;
 
   /**
-   * the following parameters take effect
-   * only in CosyVoice V3 and later versions.
-   * instruction for synthesis. */
+   * the following parameters take effect only in CosyVoice V3 and later versions. instruction for
+   * synthesis.
+   */
   @Builder.Default private String instruction = null;
   /** random seed. */
   @Builder.Default private int seed = 0;
@@ -56,7 +55,6 @@ public class SpeechSynthesisParam extends FullDuplexServiceParam {
   @Builder.Default private List<String> languageHints = null;
   /** synthesis style */
   @Builder.Default private int style = 0;
-
 
   @Override
   public Map<String, Object> getParameters() {

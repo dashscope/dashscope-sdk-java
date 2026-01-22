@@ -115,33 +115,31 @@ public final class ImageSynthesis {
     // add local file support
     try {
       param.checkAndUpload();
-    }catch (UploadFileException e){
+    } catch (UploadFileException e) {
       throw new ApiException(e);
     }
     ApiServiceOption serviceOption = createServiceOptions;
     if (param.getModel().contains("imageedit") || param.getModel().contains("wan2.5-i2i")) {
       serviceOption.setTask("image2image");
     }
-    return ImageSynthesisResult.fromDashScopeResult(
-        asyncApi.asyncCall(param, serviceOption));
+    return ImageSynthesisResult.fromDashScopeResult(asyncApi.asyncCall(param, serviceOption));
   }
 
   /**
-   *  Note: This method currently now only supports wan2.2-t2i-flash and wan2.2-t2i-plus.
-   *    Using other models will result in an error，More raw image models may be added for use later
+   * Note: This method currently now only supports wan2.2-t2i-flash and wan2.2-t2i-plus. Using other
+   * models will result in an error，More raw image models may be added for use later
    */
   public ImageSynthesisResult syncCall(ImageSynthesisParam param)
-          throws ApiException, NoApiKeyException {
+      throws ApiException, NoApiKeyException {
     // add local file support
     try {
       param.checkAndUpload();
-    }catch (UploadFileException e){
+    } catch (UploadFileException e) {
       throw new ApiException(e);
     }
     ApiServiceOption serviceOption = createServiceOptions;
     serviceOption.setIsAsyncTask(false);
-    return ImageSynthesisResult.fromDashScopeResult(
-            syncApi.call(param, serviceOption));
+    return ImageSynthesisResult.fromDashScopeResult(syncApi.call(param, serviceOption));
   }
 
   /**
@@ -157,15 +155,14 @@ public final class ImageSynthesis {
     // add local file support
     try {
       param.checkAndUpload();
-    }catch (UploadFileException e){
+    } catch (UploadFileException e) {
       throw new ApiException(e);
     }
     ApiServiceOption serviceOption = createServiceOptions;
     if (param.getModel().contains("imageedit") || param.getModel().contains("wan2.5-i2i")) {
       serviceOption.setTask("image2image");
     }
-    return ImageSynthesisResult.fromDashScopeResult(
-            asyncApi.call(param, serviceOption));
+    return ImageSynthesisResult.fromDashScopeResult(asyncApi.call(param, serviceOption));
   }
 
   /**

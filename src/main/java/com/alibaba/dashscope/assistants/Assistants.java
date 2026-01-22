@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class Assistants {
   private final GeneralApi<HalfDuplexParamBase> api;
   private final GeneralServiceOption serviceOption;
-  
+
   // Connection pre-warming mechanism
   private static final AtomicBoolean connectionPreWarmed = new AtomicBoolean(false);
 
@@ -172,24 +172,25 @@ public final class Assistants {
   }
 
   /**
-   * Pre-warm the HTTP connection to reduce latency for first API call.
-   * Uses a lightweight list request to establish connection pool.
+   * Pre-warm the HTTP connection to reduce latency for first API call. Uses a lightweight list
+   * request to establish connection pool.
    */
   private void preWarmConnection() {
     if (connectionPreWarmed.compareAndSet(false, true)) {
       try {
         // Lightweight GET request to establish connection
-        GeneralServiceOption warmupOption = GeneralServiceOption.builder()
-            .protocol(Protocol.HTTP)
-            .httpMethod(HttpMethod.GET)
-            .streamingMode(StreamingMode.OUT)
-            .path("assistants")
-            .build();
-        
+        GeneralServiceOption warmupOption =
+            GeneralServiceOption.builder()
+                .protocol(Protocol.HTTP)
+                .httpMethod(HttpMethod.GET)
+                .streamingMode(StreamingMode.OUT)
+                .path("assistants")
+                .build();
+
         if (serviceOption.getBaseHttpUrl() != null) {
           warmupOption.setBaseHttpUrl(serviceOption.getBaseHttpUrl());
         }
-        
+
         api.get(GeneralListParam.builder().limit(1L).build(), warmupOption);
       } catch (Exception e) {
         // Reset flag to allow retry if pre-warming failed

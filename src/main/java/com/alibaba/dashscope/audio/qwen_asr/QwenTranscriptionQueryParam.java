@@ -1,9 +1,8 @@
 package com.alibaba.dashscope.audio.qwen_asr;
 
+import java.util.Map;
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
-
-import java.util.Map;
 
 @Data
 @SuperBuilder
@@ -19,7 +18,7 @@ public class QwenTranscriptionQueryParam {
   }
 
   public static QwenTranscriptionQueryParam FromTranscriptionParam(
-          QwenTranscriptionParam param, String taskId) {
+      QwenTranscriptionParam param, String taskId) {
     return QwenTranscriptionQueryParam.builder()
         .apiKey(param.getApiKey())
         .taskId(taskId)

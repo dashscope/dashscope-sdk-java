@@ -8,17 +8,17 @@ import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.exception.UploadFileException;
 import com.alibaba.dashscope.protocol.*;
+import com.alibaba.dashscope.tools.ToolCallBase;
+import com.alibaba.dashscope.tools.ToolCallFunction;
 import com.alibaba.dashscope.utils.OSSUploadCertificate;
 import com.alibaba.dashscope.utils.ParamUtils;
 import com.alibaba.dashscope.utils.PreprocessMessageInput;
 import io.reactivex.Flowable;
-import lombok.extern.slf4j.Slf4j;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
 import java.util.ArrayList;
-import com.alibaba.dashscope.tools.ToolCallBase;
-import com.alibaba.dashscope.tools.ToolCallFunction;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public final class MultiModalConversation {
@@ -157,16 +157,18 @@ public final class MultiModalConversation {
         .streamCall(param)
         .map(MultiModalConversationResult::fromDashScopeResult)
         .map(result -> mergeSingleResponse(result, toMergeResponse))
-        .doOnComplete(() -> {
-          if (toMergeResponse) {
-            clearAccumulatedData();
-          }
-        })
-        .doOnError(throwable -> {
-          if (toMergeResponse) {
-            clearAccumulatedData();
-          }
-        });
+        .doOnComplete(
+            () -> {
+              if (toMergeResponse) {
+                clearAccumulatedData();
+              }
+            })
+        .doOnError(
+            throwable -> {
+              if (toMergeResponse) {
+                clearAccumulatedData();
+              }
+            });
   }
 
   /**
@@ -200,8 +202,10 @@ public final class MultiModalConversation {
         new ResultCallback<DashScopeResult>() {
           @Override
           public void onEvent(DashScopeResult msg) {
-            MultiModalConversationResult result = MultiModalConversationResult.fromDashScopeResult(msg);
-            MultiModalConversationResult mergedResult = mergeSingleResponse(result, toMergeResponse);
+            MultiModalConversationResult result =
+                MultiModalConversationResult.fromDashScopeResult(msg);
+            MultiModalConversationResult mergedResult =
+                mergeSingleResponse(result, toMergeResponse);
             callback.onEvent(mergedResult);
           }
 
@@ -242,8 +246,7 @@ public final class MultiModalConversation {
       } else {
         PreprocessMessageInput.PreprocessResult result =
             PreprocessMessageInput.preProcessMultiModalMessageInputs(
-                param.getModel(), (MultiModalMessage) msg,
-                param.getApiKey(), certificate);
+                param.getModel(), (MultiModalMessage) msg, param.getApiKey(), certificate);
         isUpload = result.hasUpload();
         certificate = result.getCertificate();
       }
@@ -257,17 +260,17 @@ public final class MultiModalConversation {
   }
 
   /**
-   * Modifies the parameters for internal streaming optimization.
-   * If incrementalOutput is false, modifies the MultiModalConversationParam object to set
-   * incrementalOutput to true for internal streaming optimization.
+   * Modifies the parameters for internal streaming optimization. If incrementalOutput is false,
+   * modifies the MultiModalConversationParam object to set incrementalOutput to true for internal
+   * streaming optimization.
    *
    * @param param The parameter object to modify
    * @return true if the parameter was modified, false otherwise
    */
   private boolean modifyIncrementalOutput(MultiModalConversationParam param) {
     Boolean incrementalOutput = param.getIncrementalOutput();
-    if (ParamUtils.shouldModifyIncrementalOutput(param.getModel()) &&
-            Boolean.FALSE.equals(incrementalOutput)) {
+    if (ParamUtils.shouldModifyIncrementalOutput(param.getModel())
+        && Boolean.FALSE.equals(incrementalOutput)) {
       // Modify the MultiModalConversationParam object to enable incremental output
       param.setIncrementalOutput(true);
       return true;
@@ -276,14 +279,15 @@ public final class MultiModalConversation {
   }
 
   /**
-   * Merges a single MultiModalConversationResult with accumulated data for non-incremental output simulation.
-   * This method accumulates text content and tool_calls from streaming responses.
+   * Merges a single MultiModalConversationResult with accumulated data for non-incremental output
+   * simulation. This method accumulates text content and tool_calls from streaming responses.
    *
    * @param result The MultiModalConversationResult to merge
    * @param toMergeResponse Whether to perform merging (based on original incrementalOutput setting)
    * @return The merged MultiModalConversationResult
    */
-  private MultiModalConversationResult mergeSingleResponse(MultiModalConversationResult result, boolean toMergeResponse) {
+  private MultiModalConversationResult mergeSingleResponse(
+      MultiModalConversationResult result, boolean toMergeResponse) {
     if (!toMergeResponse || result == null || result.getOutput() == null) {
       return result;
     }
@@ -297,8 +301,8 @@ public final class MultiModalConversation {
         MultiModalConversationOutput.Choice choice = choices.get(choiceIdx);
 
         // Initialize accumulated data for this choice if not exists
-        AccumulatedData accumulated = accumulatedData.computeIfAbsent(
-                choiceIdx, k -> new AccumulatedData());
+        AccumulatedData accumulated =
+            accumulatedData.computeIfAbsent(choiceIdx, k -> new AccumulatedData());
 
         if (choice.getMessage() != null) {
           // Handle content accumulation (text content in content list)
@@ -338,10 +342,11 @@ public final class MultiModalConversation {
   }
 
   /**
-   * Merges text content from current response with accumulated content.
-   * For MultiModal, content is a List<Map<String, Object>> where text content is in maps with "text" key.
+   * Merges text content from current response with accumulated content. For MultiModal, content is
+   * a List<Map<String, Object>> where text content is in maps with "text" key.
    */
-  private void mergeTextContent(List<Map<String, Object>> currentContent, AccumulatedData accumulated) {
+  private void mergeTextContent(
+      List<Map<String, Object>> currentContent, AccumulatedData accumulated) {
     for (Map<String, Object> contentItem : currentContent) {
       if (contentItem.containsKey("text")) {
         String textValue = (String) contentItem.get("text");
@@ -373,10 +378,9 @@ public final class MultiModalConversation {
     }
   }
 
-  /**
-   * Merges tool calls from current response with accumulated tool calls.
-   */
-  private void mergeToolCalls(List<ToolCallBase> currentToolCalls, List<ToolCallBase> accumulatedToolCalls) {
+  /** Merges tool calls from current response with accumulated tool calls. */
+  private void mergeToolCalls(
+      List<ToolCallBase> currentToolCalls, List<ToolCallBase> accumulatedToolCalls) {
     for (ToolCallBase currentCall : currentToolCalls) {
       if (currentCall == null || currentCall.getIndex() == null) {
         continue;
@@ -387,15 +391,13 @@ public final class MultiModalConversation {
       // Find existing accumulated call with same index
       ToolCallBase existingCall = null;
       for (ToolCallBase accCall : accumulatedToolCalls) {
-        if (accCall != null && accCall.getIndex() != null && 
-            accCall.getIndex().equals(index)) {
+        if (accCall != null && accCall.getIndex() != null && accCall.getIndex().equals(index)) {
           existingCall = accCall;
           break;
         }
       }
 
-      if (existingCall instanceof ToolCallFunction &&
-              currentCall instanceof ToolCallFunction) {
+      if (existingCall instanceof ToolCallFunction && currentCall instanceof ToolCallFunction) {
         // Merge function calls
         ToolCallFunction existingFunctionCall = (ToolCallFunction) existingCall;
         ToolCallFunction currentFunctionCall = (ToolCallFunction) currentCall;
@@ -428,7 +430,9 @@ public final class MultiModalConversation {
 
           // Update function output if present
           if (currentFunctionCall.getFunction().getOutput() != null) {
-            existingFunctionCall.getFunction().setOutput(currentFunctionCall.getFunction().getOutput());
+            existingFunctionCall
+                .getFunction()
+                .setOutput(currentFunctionCall.getFunction().getOutput());
           }
         }
 
@@ -461,7 +465,8 @@ public final class MultiModalConversation {
 
           accumulatedToolCalls.add(newFunctionCall);
         } else {
-          // For other types of tool calls, add directly (assuming they are immutable or don't need merging)
+          // For other types of tool calls, add directly (assuming they are immutable or don't need
+          // merging)
           accumulatedToolCalls.add(currentCall);
         }
       }
@@ -469,17 +474,15 @@ public final class MultiModalConversation {
   }
 
   /**
-   * Clears accumulated data for the current thread.
-   * Should be called when streaming is complete or encounters error.
+   * Clears accumulated data for the current thread. Should be called when streaming is complete or
+   * encounters error.
    */
   private void clearAccumulatedData() {
     accumulatedDataMap.get().clear();
     accumulatedDataMap.remove();
   }
 
-  /**
-   * Inner class to store accumulated data for response merging.
-   */
+  /** Inner class to store accumulated data for response merging. */
   private static class AccumulatedData {
     List<Map<String, Object>> content = new ArrayList<>();
     List<ToolCallBase> toolCalls = new ArrayList<>();

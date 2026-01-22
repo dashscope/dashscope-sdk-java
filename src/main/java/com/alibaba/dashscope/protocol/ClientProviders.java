@@ -57,11 +57,11 @@ public class ClientProviders {
     } else {
       if (connectionOptions.isUseDefaultClient()) {
         return new OkHttpWebSocketClient(
-                OkHttpClientFactory.getNewOkHttpClient(connectionOptions), passTaskStarted);
-      }else {
+            OkHttpClientFactory.getNewOkHttpClient(connectionOptions), passTaskStarted);
+      } else {
         // create custom client for audio models
         return new OkHttpWebSocketClientForAudio(
-                OkHttpClientFactory.getNewOkHttpClient(connectionOptions), passTaskStarted);
+            OkHttpClientFactory.getNewOkHttpClient(connectionOptions), passTaskStarted);
       }
     }
   }

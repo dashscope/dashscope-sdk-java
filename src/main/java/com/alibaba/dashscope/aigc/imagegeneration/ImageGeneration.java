@@ -16,12 +16,11 @@ import com.alibaba.dashscope.utils.OSSUploadCertificate;
 import com.alibaba.dashscope.utils.ParamUtils;
 import com.alibaba.dashscope.utils.PreprocessMessageInput;
 import io.reactivex.Flowable;
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public final class ImageGeneration {
@@ -79,8 +78,7 @@ public final class ImageGeneration {
     this.baseUrl = baseUrl;
   }
 
-  public ImageGeneration(
-      String protocol, String baseUrl, ConnectionOptions connectionOptions) {
+  public ImageGeneration(String protocol, String baseUrl, ConnectionOptions connectionOptions) {
     serviceOption = defaultSyncApiServiceOption();
     serviceOption.setProtocol(Protocol.of(protocol));
     if (Protocol.HTTP.getValue().equals(protocol)) {
@@ -121,8 +119,7 @@ public final class ImageGeneration {
    * @throws ApiException The request failed, possibly due to a network or data error.
    * @throws UploadFileException File upload failed.
    */
-  public void call(
-          ImageGenerationParam param, ResultCallback<ImageGenerationResult> callback)
+  public void call(ImageGenerationParam param, ResultCallback<ImageGenerationResult> callback)
       throws ApiException, NoApiKeyException, UploadFileException {
     serviceOption.setIsSSE(false);
     serviceOption.setStreamingMode(StreamingMode.NONE);
@@ -157,7 +154,7 @@ public final class ImageGeneration {
    * @throws UploadFileException Fail upload failed.
    */
   public ImageGenerationResult asyncCall(ImageGenerationParam param)
-          throws ApiException, NoApiKeyException, UploadFileException {
+      throws ApiException, NoApiKeyException, UploadFileException {
     preprocessInput(param);
     serviceOption.setTask(Task.IMAGE_GENERATION.getValue());
     serviceOption.setIsAsyncTask(true);
@@ -165,59 +162,58 @@ public final class ImageGeneration {
   }
 
   public ImageGenerationListResult list(AsyncTaskListParam param)
-          throws ApiException, NoApiKeyException {
+      throws ApiException, NoApiKeyException {
     return ImageGenerationListResult.fromDashScopeResult(asyncApi.list(param, baseUrl));
   }
 
   public ImageGenerationListResult list(
-          String startTime,
-          String endTime,
-          String modelName,
-          String apiKeyId,
-          String region,
-          String status,
-          Integer pageNo,
-          Integer pageSize)
-          throws ApiException, NoApiKeyException {
+      String startTime,
+      String endTime,
+      String modelName,
+      String apiKeyId,
+      String region,
+      String status,
+      Integer pageNo,
+      Integer pageSize)
+      throws ApiException, NoApiKeyException {
     return ImageGenerationListResult.fromDashScopeResult(
-            asyncApi.list(
-                    startTime, endTime, modelName, apiKeyId, region, status, pageNo, pageSize, baseUrl));
+        asyncApi.list(
+            startTime, endTime, modelName, apiKeyId, region, status, pageNo, pageSize, baseUrl));
   }
 
   public ImageGenerationResult fetch(String taskId, String apiKey)
-          throws ApiException, NoApiKeyException {
+      throws ApiException, NoApiKeyException {
     return ImageGenerationResult.fromDashScopeResult(asyncApi.fetch(taskId, apiKey, baseUrl));
   }
 
   public ImageGenerationResult fetch(ImageGenerationResult taskInfo, String apiKey)
-          throws ApiException, NoApiKeyException {
+      throws ApiException, NoApiKeyException {
 
     return ImageGenerationResult.fromDashScopeResult(
-            asyncApi.fetch(taskInfo.getOutput().getTaskId(), apiKey, baseUrl));
+        asyncApi.fetch(taskInfo.getOutput().getTaskId(), apiKey, baseUrl));
   }
 
   public ImageGenerationResult cancel(String taskId, String apiKey)
-          throws ApiException, NoApiKeyException {
+      throws ApiException, NoApiKeyException {
     return ImageGenerationResult.fromDashScopeResult(asyncApi.cancel(taskId, apiKey, baseUrl));
   }
 
   public ImageGenerationResult cancel(ImageGenerationResult taskInfo, String apiKey)
-          throws ApiException, NoApiKeyException {
+      throws ApiException, NoApiKeyException {
     DashScopeResult res = asyncApi.cancel(taskInfo.getOutput().getTaskId(), apiKey, baseUrl);
     return ImageGenerationResult.fromDashScopeResult(res);
   }
 
   public ImageGenerationResult wait(String taskId, String apiKey)
-          throws ApiException, NoApiKeyException {
+      throws ApiException, NoApiKeyException {
     return ImageGenerationResult.fromDashScopeResult(asyncApi.wait(taskId, apiKey, baseUrl));
   }
 
   public ImageGenerationResult wait(ImageGenerationResult taskInfo, String apiKey)
-          throws ApiException, NoApiKeyException {
+      throws ApiException, NoApiKeyException {
     return ImageGenerationResult.fromDashScopeResult(
-            asyncApi.wait(taskInfo.getOutput().getTaskId(), apiKey, baseUrl));
+        asyncApi.wait(taskInfo.getOutput().getTaskId(), apiKey, baseUrl));
   }
-
 
   /**
    * Call the server to get the result by stream.
@@ -245,16 +241,18 @@ public final class ImageGeneration {
         .streamCall(param)
         .map(ImageGenerationResult::fromDashScopeResult)
         .map(result -> mergeSingleResponse(result, toMergeResponse))
-        .doOnComplete(() -> {
-          if (toMergeResponse) {
-            clearAccumulatedData();
-          }
-        })
-        .doOnError(throwable -> {
-          if (toMergeResponse) {
-            clearAccumulatedData();
-          }
-        });
+        .doOnComplete(
+            () -> {
+              if (toMergeResponse) {
+                clearAccumulatedData();
+              }
+            })
+        .doOnError(
+            throwable -> {
+              if (toMergeResponse) {
+                clearAccumulatedData();
+              }
+            });
   }
 
   /**
@@ -267,8 +265,7 @@ public final class ImageGeneration {
    * @throws InputRequiredException The input field is missing.
    * @throws UploadFileException File upload failed.
    */
-  public void streamCall(
-          ImageGenerationParam param, ResultCallback<ImageGenerationResult> callback)
+  public void streamCall(ImageGenerationParam param, ResultCallback<ImageGenerationResult> callback)
       throws ApiException, NoApiKeyException, InputRequiredException, UploadFileException {
     param.validate();
 
@@ -319,9 +316,9 @@ public final class ImageGeneration {
     for (ImageGenerationMessage msg : param.getMessages()) {
       boolean isUpload;
       PreprocessMessageInput.PreprocessResult result =
-              PreprocessMessageInput.preProcessMultiModalMessageInputs(
-                      param.getModel(), msg,
-                      param.getApiKey(), certificate);
+          PreprocessMessageInput.preProcessMultiModalMessageInputs(
+              param.getModel(), msg,
+              param.getApiKey(), certificate);
       isUpload = result.hasUpload();
       certificate = result.getCertificate();
       if (isUpload && !hasUpload) {
@@ -334,17 +331,17 @@ public final class ImageGeneration {
   }
 
   /**
-   * Modifies the parameters for internal streaming optimization.
-   * If incrementalOutput is false, modifies the ImageGenerationParam object to set
-   * incrementalOutput to true for internal streaming optimization.
+   * Modifies the parameters for internal streaming optimization. If incrementalOutput is false,
+   * modifies the ImageGenerationParam object to set incrementalOutput to true for internal
+   * streaming optimization.
    *
    * @param param The parameter object to modify
    * @return true if the parameter was modified, false otherwise
    */
   private boolean modifyIncrementalOutput(ImageGenerationParam param) {
     Boolean incrementalOutput = param.getIncrementalOutput();
-    if (ParamUtils.shouldModifyIncrementalOutput(param.getModel()) &&
-            Boolean.FALSE.equals(incrementalOutput)) {
+    if (ParamUtils.shouldModifyIncrementalOutput(param.getModel())
+        && Boolean.FALSE.equals(incrementalOutput)) {
       // Modify the ImageGenerationParam object to enable incremental output
       param.setIncrementalOutput(true);
       return true;
@@ -353,14 +350,15 @@ public final class ImageGeneration {
   }
 
   /**
-   * Merges a single ImageGenerationResult with accumulated data for non-incremental output simulation.
-   * This method accumulates text content and tool_calls from streaming responses.
+   * Merges a single ImageGenerationResult with accumulated data for non-incremental output
+   * simulation. This method accumulates text content and tool_calls from streaming responses.
    *
    * @param result The ImageGenerationResult to merge
    * @param toMergeResponse Whether to perform merging (based on original incrementalOutput setting)
    * @return The merged ImageGenerationResult
    */
-  private ImageGenerationResult mergeSingleResponse(ImageGenerationResult result, boolean toMergeResponse) {
+  private ImageGenerationResult mergeSingleResponse(
+      ImageGenerationResult result, boolean toMergeResponse) {
     if (!toMergeResponse || result == null || result.getOutput() == null) {
       return result;
     }
@@ -374,8 +372,8 @@ public final class ImageGeneration {
         ImageGenerationOutput.Choice choice = choices.get(choiceIdx);
 
         // Initialize accumulated data for this choice if not exists
-        AccumulatedData accumulated = accumulatedData.computeIfAbsent(
-                choiceIdx, k -> new AccumulatedData());
+        AccumulatedData accumulated =
+            accumulatedData.computeIfAbsent(choiceIdx, k -> new AccumulatedData());
 
         if (choice.getMessage() != null) {
           // Handle content accumulation (text content in content list)
@@ -395,10 +393,11 @@ public final class ImageGeneration {
   }
 
   /**
-   * Merges text content from current response with accumulated content.
-   * For MultiModal, content is a List<Map<String, Object>> where text content is in maps with "text" key.
+   * Merges text content from current response with accumulated content. For MultiModal, content is
+   * a List<Map<String, Object>> where text content is in maps with "text" key.
    */
-  private void mergeTextContent(List<Map<String, Object>> currentContent, AccumulatedData accumulated) {
+  private void mergeTextContent(
+      List<Map<String, Object>> currentContent, AccumulatedData accumulated) {
     for (Map<String, Object> contentItem : currentContent) {
       if (contentItem.containsKey("text")) {
         String textValue = (String) contentItem.get("text");
@@ -430,10 +429,9 @@ public final class ImageGeneration {
     }
   }
 
-  /**
-   * Merges tool calls from current response with accumulated tool calls.
-   */
-  private void mergeToolCalls(List<ToolCallBase> currentToolCalls, List<ToolCallBase> accumulatedToolCalls) {
+  /** Merges tool calls from current response with accumulated tool calls. */
+  private void mergeToolCalls(
+      List<ToolCallBase> currentToolCalls, List<ToolCallBase> accumulatedToolCalls) {
     for (ToolCallBase currentCall : currentToolCalls) {
       if (currentCall == null || currentCall.getIndex() == null) {
         continue;
@@ -444,15 +442,13 @@ public final class ImageGeneration {
       // Find existing accumulated call with same index
       ToolCallBase existingCall = null;
       for (ToolCallBase accCall : accumulatedToolCalls) {
-        if (accCall != null && accCall.getIndex() != null && 
-            accCall.getIndex().equals(index)) {
+        if (accCall != null && accCall.getIndex() != null && accCall.getIndex().equals(index)) {
           existingCall = accCall;
           break;
         }
       }
 
-      if (existingCall instanceof ToolCallFunction &&
-              currentCall instanceof ToolCallFunction) {
+      if (existingCall instanceof ToolCallFunction && currentCall instanceof ToolCallFunction) {
         // Merge function calls
         ToolCallFunction existingFunctionCall = (ToolCallFunction) existingCall;
         ToolCallFunction currentFunctionCall = (ToolCallFunction) currentCall;
@@ -485,7 +481,9 @@ public final class ImageGeneration {
 
           // Update function output if present
           if (currentFunctionCall.getFunction().getOutput() != null) {
-            existingFunctionCall.getFunction().setOutput(currentFunctionCall.getFunction().getOutput());
+            existingFunctionCall
+                .getFunction()
+                .setOutput(currentFunctionCall.getFunction().getOutput());
           }
         }
 
@@ -518,7 +516,8 @@ public final class ImageGeneration {
 
           accumulatedToolCalls.add(newFunctionCall);
         } else {
-          // For other types of tool calls, add directly (assuming they are immutable or don't need merging)
+          // For other types of tool calls, add directly (assuming they are immutable or don't need
+          // merging)
           accumulatedToolCalls.add(currentCall);
         }
       }
@@ -526,17 +525,15 @@ public final class ImageGeneration {
   }
 
   /**
-   * Clears accumulated data for the current thread.
-   * Should be called when streaming is complete or encounters error.
+   * Clears accumulated data for the current thread. Should be called when streaming is complete or
+   * encounters error.
    */
   private void clearAccumulatedData() {
     accumulatedDataMap.get().clear();
     accumulatedDataMap.remove();
   }
 
-  /**
-   * Inner class to store accumulated data for response merging.
-   */
+  /** Inner class to store accumulated data for response merging. */
   private static class AccumulatedData {
     List<Map<String, Object>> content = new ArrayList<>();
   }

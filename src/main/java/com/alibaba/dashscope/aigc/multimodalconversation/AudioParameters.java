@@ -185,7 +185,6 @@ public class AudioParameters implements Serializable {
     @SerializedName("Vivian")
     VIVIAN("Vivian");
 
-
     private final String value;
 
     Voice(String value) {

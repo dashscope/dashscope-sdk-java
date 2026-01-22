@@ -18,7 +18,7 @@ public class QwenTtsRealtimeParam {
   public static String baseWebsocketApiUrl =
       System.getenv()
           .getOrDefault(
-                  DASHSCOPE_WEBSOCKET_QWEN_TTS_REALTIME_BASE_URL_ENV,
+              DASHSCOPE_WEBSOCKET_QWEN_TTS_REALTIME_BASE_URL_ENV,
               String.format("wss://dashscope.aliyuncs.com/api-ws/v1/realtime"));
 
   /** The model to use. */

@@ -139,8 +139,10 @@ public final class Recognition {
               if (lastRequestId.get() == null && result.getRequestId() != null) {
                 lastRequestId.set(result.getRequestId());
               }
-              if (firstPackageTimeStamp < 0 && result.getSentence()!=null
-                      && result.getSentence().getText() != null && !result.getSentence().getText().isEmpty()) {
+              if (firstPackageTimeStamp < 0
+                  && result.getSentence() != null
+                  && result.getSentence().getText() != null
+                  && !result.getSentence().getText().isEmpty()) {
                 firstPackageTimeStamp = System.currentTimeMillis();
                 log.debug("first package delay: " + getFirstPackageDelay());
               }
@@ -210,9 +212,10 @@ public final class Recognition {
                 lastRequestId.set(recognitionResult.getRequestId());
               }
               if (!recognitionResult.isCompleteResult()) {
-                if (firstPackageTimeStamp < 0 && recognitionResult.getSentence()!=null
-                        && recognitionResult.getSentence().getText() != null
-                        && !recognitionResult.getSentence().getText().isEmpty()) {
+                if (firstPackageTimeStamp < 0
+                    && recognitionResult.getSentence() != null
+                    && recognitionResult.getSentence().getText() != null
+                    && !recognitionResult.getSentence().getText().isEmpty()) {
                   firstPackageTimeStamp = System.currentTimeMillis();
                   log.debug("first package delay: " + getFirstPackageDelay());
                 }
@@ -323,9 +326,10 @@ public final class Recognition {
                 if (lastRequestId.get() == null && recognitionResult.getRequestId() != null) {
                   lastRequestId.set(recognitionResult.getRequestId());
                 }
-                if (!recognitionResult.isCompleteResult() && recognitionResult.getSentence()!=null
-                        && recognitionResult.getSentence().getText() != null
-                        && !recognitionResult.getSentence().getText().isEmpty()) {
+                if (!recognitionResult.isCompleteResult()
+                    && recognitionResult.getSentence() != null
+                    && recognitionResult.getSentence().getText() != null
+                    && !recognitionResult.getSentence().getText().isEmpty()) {
                   if (firstPackageTimeStamp < 0) {
                     firstPackageTimeStamp = System.currentTimeMillis();
                     log.debug("first package delay: " + getFirstPackageDelay());

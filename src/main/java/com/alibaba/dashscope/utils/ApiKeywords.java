@@ -170,21 +170,21 @@ public class ApiKeywords {
 
   public static final String MASK_IMAGE_URL = "mask_image_url";
 
-   public static final String FIRST_FRAME_URL = "first_frame_url";
+  public static final String FIRST_FRAME_URL = "first_frame_url";
 
-   public static final String LAST_FRAME_URL = "last_frame_url";
+  public static final String LAST_FRAME_URL = "last_frame_url";
 
-   public static final String HEAD_FRAME = "head_frame";
+  public static final String HEAD_FRAME = "head_frame";
 
-   public static final String TAIL_FRAME = "tail_frame";
+  public static final String TAIL_FRAME = "tail_frame";
 
-   public static final String RESOLUTION = "resolution";
+  public static final String RESOLUTION = "resolution";
 
-   public static final String WITH_AUDIO = "with_audio";
+  public static final String WITH_AUDIO = "with_audio";
 
-   public static final String PROMPT_EXTEND = "prompt_extend";
+  public static final String PROMPT_EXTEND = "prompt_extend";
 
-   public static final String WATERMARK = "watermark";
+  public static final String WATERMARK = "watermark";
 
   public static final String ANNOTATIONS = "annotations";
 

@@ -173,7 +173,7 @@ public class FullDuplexRequest {
     JsonObject payload = new JsonObject();
     JsonObject input = new JsonObject();
     if (serviceOption.getTask().equals("multimodal-generation")) {
-      input.addProperty("directive","Stop");
+      input.addProperty("directive", "Stop");
     }
     payload.add("input", input);
     wsMessage.add(ApiKeywords.PAYLOAD, payload);

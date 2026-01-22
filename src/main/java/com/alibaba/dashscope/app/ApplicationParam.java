@@ -107,49 +107,31 @@ public class ApplicationParam extends HalfDuplexParamBase {
   /** rag options */
   private RagOptions ragOptions;
 
-  /**
-   * mcp server list
-   */
+  /** mcp server list */
   private List<String> mcpServers;
 
-  /**
-   * enable web search
-   */
+  /** enable web search */
   private Boolean enableWebSearch;
 
-  /**
-   * enable system time
-   */
+  /** enable system time */
   private Boolean enableSystemTime;
 
-  /**
-   * enable prem model calling
-   */
+  /** enable prem model calling */
   private Boolean enablePremium;
 
-  /**
-   * dialog round number
-   */
+  /** dialog round number */
   private Integer dialogRound;
 
-  /**
-   * model ID
-   */
+  /** model ID */
   private String modelId;
 
-  /**
-   * stream mode for flow agent
-   */
+  /** stream mode for flow agent */
   private FlowStreamMode flowStreamMode;
 
-  /**
-   * enable thinking mode
-   */
+  /** enable thinking mode */
   private Boolean enableThinking;
 
-  /**
-   * CIP service codes for content security check
-   */
+  /** CIP service codes for content security check */
   private CipServiceCodes cipServiceCodes;
 
   @Override

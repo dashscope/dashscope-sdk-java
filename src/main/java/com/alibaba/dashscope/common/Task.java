@@ -23,5 +23,4 @@ public enum Task {
   Task(String value) {
     this.value = value;
   }
-
 }

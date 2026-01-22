@@ -198,9 +198,9 @@ public class GenerationParam extends GenerationParamBase {
         params.put("incremental_output", incrementalOutput);
       }
     } else {
-       if (Boolean.TRUE.equals(incrementalOutput)) {
-         params.put(ApiKeywords.INCREMENTAL_OUTPUT, incrementalOutput);
-       }
+      if (Boolean.TRUE.equals(incrementalOutput)) {
+        params.put(ApiKeywords.INCREMENTAL_OUTPUT, incrementalOutput);
+      }
     }
 
     if (repetitionPenalty != null) {

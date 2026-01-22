@@ -22,7 +22,6 @@ public class TingWuRealtimeResult {
 
   private JsonObject usage;
 
-
   public static TingWuRealtimeResult fromDashScopeResult(DashScopeResult dashScopeResult)
       throws ApiException {
     TingWuRealtimeResult result = new TingWuRealtimeResult();

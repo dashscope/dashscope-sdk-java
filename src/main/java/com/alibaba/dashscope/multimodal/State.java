@@ -2,10 +2,7 @@ package com.alibaba.dashscope.multimodal;
 
 import lombok.Getter;
 
-/**
- * author songsong.shao
- * date 2025/4/27
- */
+/** author songsong.shao date 2025/4/27 */
 @Getter
 public class State {
   @Getter
@@ -25,7 +22,7 @@ public class State {
   /**
    * 状态机类，用于管理机器人的状态转换。 -- GETTER -- 获取当前状态。
    *
-   * return 当前状态。
+   * <p>return 当前状态。
    */
   private DialogState currentState;
 
