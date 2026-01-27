@@ -47,6 +47,12 @@ public class QwenTtsRealtimeConfig {
   /** text normalization, default is true */
   @Builder.Default Boolean enableTn = true;
 
+  /** instructions for tts, default is null */
+  @Builder.Default String instructions = null;
+
+  /** instructions will optimize on server side, default is null */
+  @Builder.Default String optimizeInstructions = null;
+
   /** The extra parameters. */
   @Builder.Default Map<String, Object> parameters = null;
 
@@ -82,6 +88,14 @@ public class QwenTtsRealtimeConfig {
 
     if (enableTn != null) {
       config.put(QwenTtsRealtimeConstants.ENABLE_TN, enableTn);
+    }
+
+    if (instructions != null) {
+      config.put(QwenTtsRealtimeConstants.INSTRUCTIONS, instructions);
+    }
+
+    if (optimizeInstructions != null) {
+      config.put(QwenTtsRealtimeConstants.OPTIMIZE_INSTRUCTIONS, optimizeInstructions);
     }
 
     if (parameters != null) {
