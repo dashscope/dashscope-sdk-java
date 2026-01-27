@@ -113,8 +113,8 @@ public class AudioParameters implements Serializable {
     @SerializedName("Aiden")
     AIDEN("Aiden"),
 
-    @SerializedName("Eldric Saga")
-    ELDRIC_SAGA("Eldric Saga"),
+    @SerializedName("Eldric Sage")
+    ELDRIC_SAGE("Eldric Sage"),
 
     @SerializedName("Mia")
     MIA("Mia"),
