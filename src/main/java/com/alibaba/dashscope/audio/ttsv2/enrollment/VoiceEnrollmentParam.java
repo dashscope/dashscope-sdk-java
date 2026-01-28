@@ -8,6 +8,7 @@ import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
 import java.security.InvalidParameterException;
 import java.util.List;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
@@ -25,6 +26,8 @@ public class VoiceEnrollmentParam extends HalfDuplexServiceParam {
 
   private int pageIndex;
   private int pageSize;
+  /** Maximum length of prompt audio in seconds. */
+  private float maxPromptAudioLength = 10.0f;
 
   protected VoiceEnrollmentParam(HalfDuplexServiceParamBuilder<?, ?> b) {
     super(b);
@@ -49,6 +52,9 @@ public class VoiceEnrollmentParam extends HalfDuplexServiceParam {
         input.addProperty("url", url);
         if (languageHints != null) {
           input.add("language_hints", JsonUtils.toJsonArray(languageHints));
+        }
+        if (maxPromptAudioLength > 0) {
+          input.addProperty("max_prompt_audio_length", maxPromptAudioLength);
         }
         break;
       case LIST:
