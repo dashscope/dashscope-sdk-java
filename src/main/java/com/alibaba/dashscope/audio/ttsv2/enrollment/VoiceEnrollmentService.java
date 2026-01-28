@@ -144,6 +144,7 @@ public class VoiceEnrollmentService {
             .languageHints(customParam.getLanguageHints())
             .headers(customParam.getHeaders())
             .resources(customParam.getResources())
+            .maxPromptAudioLength(customParam.getMaxPromptAudioLength())
             .parameters(customParam.getParameters())
             .workspace(customParam.getWorkspace())
             .build();

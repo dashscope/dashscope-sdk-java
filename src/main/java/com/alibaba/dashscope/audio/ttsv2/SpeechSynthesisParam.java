@@ -55,6 +55,8 @@ public class SpeechSynthesisParam extends FullDuplexServiceParam {
   @Builder.Default private List<String> languageHints = null;
   /** synthesis style */
   @Builder.Default private int style = 0;
+  /** Hot fix configuration for pronunciation and replace rules. */
+  @Builder.Default private ParamHotFix hotFix = null;
 
   @Override
   public Map<String, Object> getParameters() {
@@ -83,6 +85,20 @@ public class SpeechSynthesisParam extends FullDuplexServiceParam {
     if (getStyle() != 0) {
       params.put(SpeechSynthesisApiKeywords.STYLE, getStyle());
     }
+    // Add hot fix parameters if present
+    if (getHotFix() != null) {
+      Map<String, Object> hotFixParams = new HashMap<>();
+      if (getHotFix().getPronunciation() != null && !getHotFix().getPronunciation().isEmpty()) {
+        hotFixParams.put(SpeechSynthesisApiKeywords.PRONUNCIATION, getHotFix().getPronunciation());
+      }
+      if (getHotFix().getReplace() != null && !getHotFix().getReplace().isEmpty()) {
+        hotFixParams.put(SpeechSynthesisApiKeywords.REPLACE, getHotFix().getReplace());
+      }
+      if (!hotFixParams.isEmpty()) {
+        params.put(SpeechSynthesisApiKeywords.HOT_FIX, hotFixParams);
+      }
+    }
+
     params.putAll(parameters);
     return params;
   }

@@ -182,6 +182,10 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
       jsonObject.addProperty(ApiKeywords.VOICE, voice.getValue());
     }
 
+    if (parameters != null && !parameters.isEmpty() && parameters.containsKey(ApiKeywords.VOICE)) {
+      jsonObject.addProperty(ApiKeywords.VOICE, (String) parameters.get(ApiKeywords.VOICE));
+    }
+
     if (languageType != null) {
       jsonObject.addProperty(ApiKeywords.LANGUAGE_TYPE, languageType);
     }
