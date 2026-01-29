@@ -50,8 +50,8 @@ public class QwenTtsRealtimeConfig {
   /** instructions for tts, default is null */
   @Builder.Default String instructions = null;
 
-  /** instructions will optimize on server side, default is null */
-  @Builder.Default String optimizeInstructions = null;
+  /** instructions will optimize on server side, default is false */
+  @Builder.Default Boolean optimizeInstructions = false;
 
   /** The extra parameters. */
   @Builder.Default Map<String, Object> parameters = null;
@@ -94,8 +94,8 @@ public class QwenTtsRealtimeConfig {
       config.put(QwenTtsRealtimeConstants.INSTRUCTIONS, instructions);
     }
 
-    if (optimizeInstructions != null) {
-      config.put(QwenTtsRealtimeConstants.OPTIMIZE_INSTRUCTIONS, optimizeInstructions);
+    if (optimizeInstructions != null && optimizeInstructions) {
+      config.put(QwenTtsRealtimeConstants.OPTIMIZE_INSTRUCTIONS, true);
     }
 
     if (parameters != null) {
