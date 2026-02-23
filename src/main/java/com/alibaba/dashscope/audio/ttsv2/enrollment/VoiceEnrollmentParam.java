@@ -55,6 +55,15 @@ public class VoiceEnrollmentParam extends HalfDuplexServiceParam {
         if (maxPromptAudioLength > 0) {
           input.addProperty("max_prompt_audio_length", maxPromptAudioLength);
         }
+        // add parameters into input
+        if (parameters != null) {
+          for (String key : parameters.keySet()) {
+            Object value = parameters.get(key);
+            if (key != null && value != null) {
+              input.add(key, JsonUtils.toJsonElement(value));
+            }
+          }
+        }
         break;
       case LIST:
         input.addProperty(ApiKeywords.ACTION, operationType.getValue());
