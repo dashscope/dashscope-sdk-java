@@ -41,6 +41,9 @@ public class MultiModalConversationUsage {
   @SerializedName("output_tokens_details")
   private MultiModalConversationTokensDetails outputTokensDetails;
 
+  @SerializedName("prompt_tokens_details")
+  private MultiModalConversationTokensDetails promptTokensDetails;
+
   @SerializedName("characters")
   private Integer characters;
 }

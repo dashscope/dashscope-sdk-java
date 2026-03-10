@@ -19,4 +19,7 @@ public class MultiModalConversationTokensDetails {
 
   @SerializedName("reasoning_tokens")
   private Integer reasoningTokens;
+
+  @SerializedName("cached_tokens")
+  private Integer cachedTokens;
 }
