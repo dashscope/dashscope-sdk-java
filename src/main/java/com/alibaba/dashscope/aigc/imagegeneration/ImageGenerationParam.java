@@ -11,7 +11,10 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Singular;
 import lombok.experimental.SuperBuilder;
 
 @EqualsAndHashCode(callSuper = true)
@@ -72,6 +75,8 @@ public class ImageGenerationParam extends HalfDuplexServiceParam {
   private Boolean stream;
 
   private Integer maxImages;
+
+  private Boolean enableSequential;
 
   @Override
   public JsonObject getHttpBody() {
@@ -147,6 +152,10 @@ public class ImageGenerationParam extends HalfDuplexServiceParam {
 
     if (maxImages != null) {
       params.put("max_images", maxImages);
+    }
+
+    if (enableSequential != null) {
+      params.put("enable_sequential", enableSequential);
     }
 
     params.putAll(parameters);

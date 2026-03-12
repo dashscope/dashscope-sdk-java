@@ -194,6 +194,14 @@ public class ApiKeywords {
 
   public static final String REFERENCE_VIDEO_URLS = "reference_video_urls";
 
+  public static final String REFERENCE_URLS = "reference_urls";
+
+  public static final String MEDIA_URLS = "media";
+
+  public static final String REFERENCE_URL = "reference_url";
+
+  public static final String RATIO = "ratio";
+
   public static final String REFERENCE_VIDEO_DESCRIPTION = "reference_video_description";
 
   public static final String SHOT_TYPE = "shot_type";
