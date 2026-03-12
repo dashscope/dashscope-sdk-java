@@ -71,6 +71,12 @@ public final class VideoSynthesis {
     public static final String DRIVING_AUDIO = "driving_audio";
   }
 
+  public static class AudioSetting {
+    public static final String AUTO = "auto";
+    public static final String ORIGIN = "origin";
+    public static final String NO_AUDIO = "no_audio";
+  }
+
   /**
    * Create ApiServiceOption
    *
