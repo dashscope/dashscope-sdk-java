@@ -1,6 +1,8 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.aigc.videosynthesis;
 
+import static com.alibaba.dashscope.utils.ApiKeywords.*;
+
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
@@ -9,12 +11,6 @@ import com.alibaba.dashscope.utils.GsonExclude;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.alibaba.dashscope.utils.PreprocessInputImage;
 import com.google.gson.JsonObject;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Singular;
-import lombok.experimental.SuperBuilder;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,8 +18,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
-
-import static com.alibaba.dashscope.utils.ApiKeywords.*;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Singular;
+import lombok.experimental.SuperBuilder;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
