@@ -119,6 +119,8 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
 
   @Builder.Default private String ratio = null;
 
+  @Builder.Default private String audioSetting = null;
+
   /** The inputs of the model. */
   @Override
   public JsonObject getInput() {
@@ -196,11 +198,11 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
       params.put(DURATION, duration);
     }
 
-    if (size != null) {
+    if (size != null && !size.isEmpty()) {
       params.put(SIZE, size);
     }
 
-    if (resolution != null) {
+    if (resolution != null && !resolution.isEmpty()) {
       params.put(RESOLUTION, resolution);
     }
 
@@ -221,14 +223,17 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
     if (audio != null) {
       params.put(AUDIO, audio);
     }
-    if (shotType != null) {
+    if (shotType != null && !shotType.isEmpty()) {
       params.put(SHOT_TYPE, shotType);
     }
     if (enableOverlays != null) {
       params.put(ENABLE_OVERLAYS, enableOverlays);
     }
-    if (ratio != null) {
+    if (ratio != null && !ratio.isEmpty()) {
       params.put(RATIO, ratio);
+    }
+    if (audioSetting != null && !audioSetting.isEmpty()) {
+      params.put(AUDIO_SETTING, audioSetting);
     }
 
     params.putAll(super.getParameters());

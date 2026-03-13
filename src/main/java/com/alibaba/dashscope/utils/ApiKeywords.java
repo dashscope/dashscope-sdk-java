@@ -202,6 +202,8 @@ public class ApiKeywords {
 
   public static final String RATIO = "ratio";
 
+  public static final String AUDIO_SETTING = "audio_setting";
+
   public static final String REFERENCE_VIDEO_DESCRIPTION = "reference_video_description";
 
   public static final String SHOT_TYPE = "shot_type";
