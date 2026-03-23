@@ -314,7 +314,7 @@ public final class ImageGeneration {
     boolean hasUpload = false;
     OSSUploadCertificate certificate = null;
     for (ImageGenerationMessage msg : param.getMessages()) {
-      if (msg.getRole().equals(Role.USER)) {
+      if (msg.getRole().equals(Role.USER.getValue())) {
         boolean isUpload;
         PreprocessMessageInput.PreprocessResult result =
             PreprocessMessageInput.preProcessMultiModalMessageInputs(

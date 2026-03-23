@@ -236,7 +236,7 @@ public final class MultiModalConversation {
       boolean isUpload = false;
       if (msg instanceof MultiModalConversationMessage) {
         MultiModalConversationMessage realMsg = (MultiModalConversationMessage)msg;
-        if (realMsg.getRole().equals(Role.USER)) {
+        if (realMsg.getRole().equals(Role.USER.getValue())) {
           PreprocessMessageInput.PreprocessResult result =
               PreprocessMessageInput.preProcessMessageInputs(
                   param.getModel(),
@@ -248,7 +248,7 @@ public final class MultiModalConversation {
         }
       } else {
         MultiModalMessage realMsg = (MultiModalMessage) msg;
-        if (realMsg.getRole().equals(Role.USER)) {
+        if (realMsg.getRole().equals(Role.USER.getValue())) {
           PreprocessMessageInput.PreprocessResult result =
               PreprocessMessageInput.preProcessMultiModalMessageInputs(
                   param.getModel(), (MultiModalMessage) msg, param.getApiKey(), certificate);
