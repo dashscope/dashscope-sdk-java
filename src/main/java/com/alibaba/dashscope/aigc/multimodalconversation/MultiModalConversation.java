@@ -235,7 +235,7 @@ public final class MultiModalConversation {
     for (Object msg : param.getMessages()) {
       boolean isUpload = false;
       if (msg instanceof MultiModalConversationMessage) {
-        MultiModalConversationMessage realMsg = (MultiModalConversationMessage)msg;
+        MultiModalConversationMessage realMsg = (MultiModalConversationMessage) msg;
         if (realMsg.getRole().equals(Role.USER.getValue())) {
           PreprocessMessageInput.PreprocessResult result =
               PreprocessMessageInput.preProcessMessageInputs(
