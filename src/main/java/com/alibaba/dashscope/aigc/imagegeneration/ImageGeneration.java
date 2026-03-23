@@ -314,15 +314,17 @@ public final class ImageGeneration {
     boolean hasUpload = false;
     OSSUploadCertificate certificate = null;
     for (ImageGenerationMessage msg : param.getMessages()) {
-      boolean isUpload;
-      PreprocessMessageInput.PreprocessResult result =
-          PreprocessMessageInput.preProcessMultiModalMessageInputs(
-              param.getModel(), msg,
-              param.getApiKey(), certificate);
-      isUpload = result.hasUpload();
-      certificate = result.getCertificate();
-      if (isUpload && !hasUpload) {
-        hasUpload = true;
+      if (msg.getRole().equals(Role.USER)) {
+        boolean isUpload;
+        PreprocessMessageInput.PreprocessResult result =
+            PreprocessMessageInput.preProcessMultiModalMessageInputs(
+                param.getModel(), msg,
+                param.getApiKey(), certificate);
+        isUpload = result.hasUpload();
+        certificate = result.getCertificate();
+        if (isUpload && !hasUpload) {
+          hasUpload = true;
+        }
       }
     }
     if (hasUpload) {

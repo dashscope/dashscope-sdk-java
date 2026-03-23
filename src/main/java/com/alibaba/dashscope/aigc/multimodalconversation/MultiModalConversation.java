@@ -235,20 +235,26 @@ public final class MultiModalConversation {
     for (Object msg : param.getMessages()) {
       boolean isUpload = false;
       if (msg instanceof MultiModalConversationMessage) {
-        PreprocessMessageInput.PreprocessResult result =
-            PreprocessMessageInput.preProcessMessageInputs(
-                param.getModel(),
-                ((MultiModalConversationMessage) msg).getContent(),
-                param.getApiKey(),
-                certificate);
-        isUpload = result.hasUpload();
-        certificate = result.getCertificate();
+        MultiModalConversationMessage realMsg = (MultiModalConversationMessage)msg;
+        if (realMsg.getRole().equals(Role.USER)) {
+          PreprocessMessageInput.PreprocessResult result =
+              PreprocessMessageInput.preProcessMessageInputs(
+                  param.getModel(),
+                  ((MultiModalConversationMessage) msg).getContent(),
+                  param.getApiKey(),
+                  certificate);
+          isUpload = result.hasUpload();
+          certificate = result.getCertificate();
+        }
       } else {
-        PreprocessMessageInput.PreprocessResult result =
-            PreprocessMessageInput.preProcessMultiModalMessageInputs(
-                param.getModel(), (MultiModalMessage) msg, param.getApiKey(), certificate);
-        isUpload = result.hasUpload();
-        certificate = result.getCertificate();
+        MultiModalMessage realMsg = (MultiModalMessage) msg;
+        if (realMsg.getRole().equals(Role.USER)) {
+          PreprocessMessageInput.PreprocessResult result =
+              PreprocessMessageInput.preProcessMultiModalMessageInputs(
+                  param.getModel(), (MultiModalMessage) msg, param.getApiKey(), certificate);
+          isUpload = result.hasUpload();
+          certificate = result.getCertificate();
+        }
       }
       if (isUpload && !hasUpload) {
         hasUpload = true;
