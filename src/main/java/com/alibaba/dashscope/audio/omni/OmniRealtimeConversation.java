@@ -129,6 +129,21 @@ public class OmniRealtimeConversation extends WebSocketListener {
   }
 
   /**
+   * send item to server by event conversation.item.create
+   *
+   * @param item item pass to server
+   */
+  public void createItem(JsonObject item) {
+    checkStatus();
+    Map<String, Object> item_request = new HashMap<>();
+    item_request.put(OmniRealtimeConstants.PROTOCOL_EVENT_ID, generateEventId());
+    item_request.put(
+        OmniRealtimeConstants.PROTOCOL_TYPE, OmniRealtimeConstants.PROTOCOL_EVENT_TYPE_ITEM_CREATE);
+    item_request.put("item", item);
+    sendMessage(createGson().toJson(item_request), true);
+  }
+
+  /**
    * send audio in base64 format
    *
    * @param audioBase64 base64 audio string
