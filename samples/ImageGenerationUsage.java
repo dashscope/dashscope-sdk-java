@@ -5,8 +5,10 @@ import com.alibaba.dashscope.exception.UploadFileException;
 import com.alibaba.dashscope.task.AsyncTaskListParam;
 import io.reactivex.Flowable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 public class ImageGenerationUsage {
 
@@ -123,12 +125,42 @@ public class ImageGenerationUsage {
         res.blockingForEach(System.out::println);
     }
 
+    static ImageGenerationMessage wan27ImageMessage = ImageGenerationMessage.builder()
+            .role(Role.USER.getValue())
+            .content(Arrays.asList(
+                    Collections.singletonMap("image", "https://img.alicdn.com/imgextra/i3/O1CN0157XGE51l6iL9441yX_!!6000000004770-49-tps-1104-1472.webp"),
+                    Collections.singletonMap("image", "https://img.alicdn.com/imgextra/i3/O1CN01SfG4J41UYn9WNt4X1_!!6000000002530-49-tps-1696-960.webp"),
+                    Collections.singletonMap("text", "把图1的闹钟放在图2的框选的位置，保持场景和光线融合自然")
+            )).build();
+
+    static List<List<List<Integer>>> bboxList = Arrays.asList(
+            new ArrayList<>(),
+            Collections.singletonList(
+                    Arrays.asList(989, 515, 1138, 681)
+            )
+    );
+
+    public static void wan27ImageUsage() throws NoApiKeyException, UploadFileException {
+        ImageGenerationParam param = ImageGenerationParam.builder()
+                .apiKey(DASHSCOPE_API_KEY)
+                .model("wan2.7-image-pro")
+                .n(1)
+                .messages(Collections.singletonList(wan27ImageMessage))
+                .bboxList(bboxList)
+                .build();
+
+        ImageGeneration ig = new ImageGeneration();
+        ImageGenerationResult res =ig.call(param);
+        System.out.println(res);
+    }
+
     public static void main(String[] args) {
         try {
-        t2iUsage();
+//        t2iUsage();
 //        imageUsage();
 //        t2iUsageAsync();
 //        imageUsageStream();
+            wan27ImageUsage();
         }catch (NoApiKeyException | UploadFileException e){
             System.out.println(e.getMessage());
         }
