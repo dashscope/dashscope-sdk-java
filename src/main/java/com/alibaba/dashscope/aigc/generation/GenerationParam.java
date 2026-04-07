@@ -12,6 +12,7 @@ import static com.alibaba.dashscope.utils.ApiKeywords.STOP;
 import com.alibaba.dashscope.common.Message;
 import com.alibaba.dashscope.common.ResponseFormat;
 import com.alibaba.dashscope.common.Role;
+import com.alibaba.dashscope.common.SearchOptions;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.tools.ToolBase;
 import com.alibaba.dashscope.utils.ApiKeywords;

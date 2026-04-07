@@ -1,5 +1,5 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
-package com.alibaba.dashscope.aigc.generation;
+package com.alibaba.dashscope.common;
 
 import com.google.gson.annotations.SerializedName;
 import java.util.List;

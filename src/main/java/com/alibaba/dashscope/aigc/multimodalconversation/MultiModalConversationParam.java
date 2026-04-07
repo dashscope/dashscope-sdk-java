@@ -2,6 +2,7 @@ package com.alibaba.dashscope.aigc.multimodalconversation;
 
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
 import com.alibaba.dashscope.common.ResponseFormat;
+import com.alibaba.dashscope.common.SearchOptions;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.tools.ToolBase;
 import com.alibaba.dashscope.utils.ApiKeywords;
@@ -58,6 +59,10 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
   Currently works best only on the first round of conversation.
   Default to False */
   @Builder.Default private Boolean enableSearch = false;
+
+  /** 联网搜索的策略。仅当enable_search为true时生效。 */
+  private SearchOptions searchOptions;
+
   /*
    * When generating, the seed of the random number is used to control the randomness of the model generation.
    * If you use the same seed, each run will generate the same results;
@@ -213,6 +218,10 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
     }
 
     params.put("enable_search", enableSearch);
+
+    if (searchOptions != null) {
+      params.put("search_options", searchOptions);
+    }
 
     if (seed != null) {
       params.put(ApiKeywords.SEED, seed);

@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.aigc.generation;
 
 import com.alibaba.dashscope.common.Message;
+import com.alibaba.dashscope.common.SearchInfo;
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
 import lombok.Data;
