@@ -78,6 +78,10 @@ public class ImageGenerationParam extends HalfDuplexServiceParam {
 
   private Boolean enableSequential;
 
+  /**
+   * The bounding boxes for the images.
+   * The structure is [image_index][box_index][x1, y1, x2, y2].
+   */
   @Builder.Default private List<List<List<Integer>>> bboxList = null;
 
   @Override
