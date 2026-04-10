@@ -132,7 +132,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
                 },
                 BackpressureStrategy.BUFFER);
         // wait for connection establish
-        flowable.blockingSubscribe();
+        flowable.timeout(60, TimeUnit.SECONDS).blockingSubscribe();
         return;
       } catch (Throwable ex) {
         reconnectionTimes += 1;
