@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
@@ -71,7 +72,9 @@ public class OmniRealtimeConversation extends WebSocketListener {
     client = OkHttpClientFactory.getOkHttpClient();
     websocktetClient = client.newWebSocket(request, this);
     connectLatch.set(new CountDownLatch(1));
-    connectLatch.get().await();
+    if (!connectLatch.get().await(60, TimeUnit.SECONDS)) {
+      throw new RuntimeException("Connection timed out after 60 seconds");
+    }
   }
 
   // block wait server session done, max 20 seconds, then close connection
@@ -414,6 +417,7 @@ public class OmniRealtimeConversation extends WebSocketListener {
 
   @Override
   public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+    connectLatch.get().countDown();
     log.error("WebSocket failed: " + t.getMessage());
   }
 
