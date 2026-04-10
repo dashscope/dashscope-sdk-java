@@ -71,7 +71,7 @@ public class OmniRealtimeConversation extends WebSocketListener {
     client = OkHttpClientFactory.getOkHttpClient();
     websocktetClient = client.newWebSocket(request, this);
     connectLatch.set(new CountDownLatch(1));
-    connectLatch.get().await();
+    connectLatch.get().await(60, java.util.concurrent.TimeUnit.SECONDS);
   }
 
   // block wait server session done, max 20 seconds, then close connection
@@ -414,6 +414,7 @@ public class OmniRealtimeConversation extends WebSocketListener {
 
   @Override
   public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+    connectLatch.get().countDown();
     log.error("WebSocket failed: " + t.getMessage());
   }
 
