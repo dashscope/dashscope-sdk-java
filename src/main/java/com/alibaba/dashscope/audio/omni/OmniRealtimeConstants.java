@@ -36,7 +36,7 @@ public class OmniRealtimeConstants {
   public static final String PROTOCOL_EVENT_TYPE_CREATE_RESPONSE = "response.create";
   public static final String PROTOCOL_EVENT_TYPE_CANCEL_RESPONSE = "response.cancel";
   public static final String PROTOCOL_EVENT_TYPE_FINISH_SESSION = "session.finish";
-  public static final Object PROTOCOL_EVENT_TYPE_ITEM_CREATE = "conversation.item.create";
+  public static final String PROTOCOL_EVENT_TYPE_ITEM_CREATE = "conversation.item.create";
   public static final String PROTOCOL_RESPONSE_TYPE_SESSION_CREATED = "session.created";
   public static final String PROTOCOL_RESPONSE_TYPE_RESPONSE_CREATED = "response.created";
   public static final String PROTOCOL_RESPONSE_TYPE_AUDIO_TRANSCRIPT_DELTA =
