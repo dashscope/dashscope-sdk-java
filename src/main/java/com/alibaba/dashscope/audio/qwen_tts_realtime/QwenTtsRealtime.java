@@ -13,6 +13,7 @@ import com.google.gson.JsonObject;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
@@ -68,7 +69,9 @@ public class QwenTtsRealtime extends WebSocketListener {
     client = OkHttpClientFactory.getOkHttpClient();
     websocktetClient = client.newWebSocket(request, this);
     connectLatch.set(new CountDownLatch(1));
-    connectLatch.get().await();
+    if (!connectLatch.get().await(60, TimeUnit.SECONDS)) {
+      throw new RuntimeException("Connection timed out after 60 seconds");
+    }
   }
 
   /**
@@ -303,6 +306,7 @@ public class QwenTtsRealtime extends WebSocketListener {
 
   @Override
   public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+    connectLatch.get().countDown();
     log.error("WebSocket failed: " + t.getMessage());
   }
 }

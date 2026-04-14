@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
@@ -71,7 +72,9 @@ public class OmniRealtimeConversation extends WebSocketListener {
     client = OkHttpClientFactory.getOkHttpClient();
     websocktetClient = client.newWebSocket(request, this);
     connectLatch.set(new CountDownLatch(1));
-    connectLatch.get().await();
+    if (!connectLatch.get().await(60, TimeUnit.SECONDS)) {
+      throw new RuntimeException("Connection timed out after 60 seconds");
+    }
   }
 
   // block wait server session done, max 20 seconds, then close connection
@@ -126,6 +129,21 @@ public class OmniRealtimeConversation extends WebSocketListener {
         OmniRealtimeConstants.PROTOCOL_EVENT_TYPE_UPDATE_SESSION);
     update_request.put(OmniRealtimeConstants.PROTOCOL_SESSION, configJson);
     sendMessage(createGson().toJson(update_request), true);
+  }
+
+  /**
+   * send item to server by event conversation.item.create
+   *
+   * @param item item pass to server
+   */
+  public void createItem(JsonObject item) {
+    checkStatus();
+    Map<String, Object> item_request = new HashMap<>();
+    item_request.put(OmniRealtimeConstants.PROTOCOL_EVENT_ID, generateEventId());
+    item_request.put(
+        OmniRealtimeConstants.PROTOCOL_TYPE, OmniRealtimeConstants.PROTOCOL_EVENT_TYPE_ITEM_CREATE);
+    item_request.put("item", item);
+    sendMessage(createGson().toJson(item_request), true);
   }
 
   /**
@@ -399,6 +417,7 @@ public class OmniRealtimeConversation extends WebSocketListener {
 
   @Override
   public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+    connectLatch.get().countDown();
     log.error("WebSocket failed: " + t.getMessage());
   }
 
