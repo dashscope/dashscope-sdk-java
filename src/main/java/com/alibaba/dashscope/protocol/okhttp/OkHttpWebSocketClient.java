@@ -11,6 +11,7 @@ import com.alibaba.dashscope.protocol.*;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.JsonObject;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
@@ -163,7 +164,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
     // transmitted and the connection has been successfully released. No further
     // calls to this
     // listener will be made.
-    log.debug(String.format("WebSocket %s closed: %d, %s", webSocket.toString(), code, reason));
+    log.debug(
+        StringUtils.format("WebSocket %s closed: %d, %s", webSocket.toString(), code, reason));
     isOpen.set(false);
     isClosed.set(false);
   }
@@ -188,7 +190,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
     // endpoint that understands only text data MAY send this if it receives a
     // binary message)
     webSocket.close(code, null);
-    log.debug(String.format("Websocket is closing, code: %s, reasion: %s", code, reason));
+    log.debug(StringUtils.format("Websocket is closing, code: %s, reasion: %s", code, reason));
     if (responseEmitter != null && !responseEmitter.isCancelled()) {
       responseEmitter.onComplete();
     } else { // close on idle, such as server close the connection.
@@ -219,7 +221,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
       }
     }
     String failureMessage =
-        String.format(
+        StringUtils.format(
             "Websocket failure %s, cause: %s, body: %s",
             t.getMessage(), t.getCause(), responseBody);
     log.error(failureMessage);
@@ -272,7 +274,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
           }
           break;
         case TASK_FAILED:
-          log.error(String.format("Receive task_failed message: %s", text));
+          log.error(StringUtils.format("Receive task_failed message: %s", text));
           Status st =
               Status.builder()
                   .code(response.header.code)
@@ -285,7 +287,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
           if (!responseEmitter.isCancelled()) {
             responseEmitter.onError(new ApiException(st));
           } else {
-            log.error(String.format("Something wrong, receive task failed message: %s", text));
+            log.error(StringUtils.format("Something wrong, receive task failed message: %s", text));
           }
         case TASK_FINISHED:
           // check the payload and usage is null.
@@ -310,13 +312,13 @@ public class OkHttpWebSocketClient extends WebSocketListener
           break;
         default:
           // throw new ApiException(Status.builder().code("")
-          // .message(String.format("Receive unknown message: %s", text))
+          // .message(StringUtils.format("Receive unknown message: %s", text))
           // .statusCode(Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE).build());
           responseEmitter.onError(
               new ApiException(
                   Status.builder()
                       .code("UnknownMessage")
-                      .message(String.format("Receive unknown message: %s", text))
+                      .message(StringUtils.format("Receive unknown message: %s", text))
                       .statusCode(Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE)
                       .build()));
       }
@@ -325,7 +327,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
           new ApiException(
               Status.builder()
                   .code("MessageFormatError")
-                  .message(String.format("Receive message: %s, json deserialize exception", text))
+                  .message(
+                      StringUtils.format("Receive message: %s, json deserialize exception", text))
                   .statusCode(Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE)
                   .build()));
     }
@@ -400,7 +403,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
         establishWebSocketClient(
             apiKey, isSecurityCheck, workspace, customHeaders, baseWebSocketUrl);
         log.warn(
-            String.format(
+            StringUtils.format(
                 "Send request failed, the connection may closed, will reconnect and send again"));
       }
       Observable.timer(5000, TimeUnit.MILLISECONDS).blockingSingle();
@@ -428,7 +431,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
         establishWebSocketClient(
             apiKey, isSecurityCheck, workspace, customHeaders, baseWebSocketUrl);
         log.warn(
-            String.format(
+            StringUtils.format(
                 "Send request failed, the connection may closed, will reconnect and send again"));
       }
       Observable.timer(5000, TimeUnit.MILLISECONDS).blockingSingle();
@@ -620,18 +623,19 @@ public class OkHttpWebSocketClient extends WebSocketListener
                               req.getBaseWebSocketUrl());
                         }
                       } catch (Throwable ex) {
-                        log.error(String.format("sendStreamData exception: %s", ex.getMessage()));
+                        log.error(
+                            StringUtils.format("sendStreamData exception: %s", ex.getMessage()));
                         responseEmitter.onError(ex);
                       }
                     },
                     err -> {
-                      log.error(String.format("Get stream data error!"));
+                      log.error(StringUtils.format("Get stream data error!"));
                       responseEmitter.onError(err);
                     },
                     new Action() {
                       @Override
                       public void run() throws Exception {
-                        log.debug(String.format("Stream data send completed!"));
+                        log.debug(StringUtils.format("Stream data send completed!"));
                         sendTextWithRetry(
                             req.getApiKey(),
                             req.isSecurityCheck(),
@@ -642,7 +646,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
                       }
                     });
               } catch (Throwable ex) {
-                log.error(String.format("sendStreamData exception: %s", ex.getMessage()));
+                log.error(StringUtils.format("sendStreamData exception: %s", ex.getMessage()));
                 responseEmitter.onError(ex);
               }
             });

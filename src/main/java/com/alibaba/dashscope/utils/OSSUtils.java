@@ -114,7 +114,7 @@ public final class OSSUtils {
         Status status = parseFailed(response);
         throw new ApiException(status);
       }
-      String ossUrl = String.format("oss://%s", key);
+      String ossUrl = StringUtils.format("oss://%s", key);
       return new UploadResult(ossUrl, cert);
     } catch (Throwable e) {
       throw new ApiException(e);

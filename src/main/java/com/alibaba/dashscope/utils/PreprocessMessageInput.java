@@ -56,14 +56,14 @@ public final class PreprocessMessageInput {
               OSSUtils.uploadWithCertificate(model, f.getAbsolutePath(), apiKey, cert);
           if (result.getOssUrl() == null) {
             throw new UploadFileException(
-                String.format("Uploading file: %s failed", message.getContent()));
+                StringUtils.format("Uploading file: %s failed", message.getContent()));
           }
           message.setContent(result.getOssUrl());
           cert = result.getCertificate();
           isUpload = true;
         } else {
           throw new UploadFileException(
-              String.format("Local file: %s not exists.", message.getContent()));
+              StringUtils.format("Local file: %s not exists.", message.getContent()));
         }
       } catch (URISyntaxException e) {
         throw new UploadFileException(e.getMessage());
@@ -78,7 +78,7 @@ public final class PreprocessMessageInput {
               OSSUtils.uploadWithCertificate(model, f.getAbsolutePath(), apiKey, cert);
           if (result.getOssUrl() == null) {
             throw new UploadFileException(
-                String.format("Uploading file: %s failed", message.getContent()));
+                StringUtils.format("Uploading file: %s failed", message.getContent()));
           }
           message.setContent(result.getOssUrl());
           cert = result.getCertificate();
@@ -158,12 +158,12 @@ public final class PreprocessMessageInput {
           UploadResult result =
               OSSUtils.uploadWithCertificate(model, f.getAbsolutePath(), apiKey, cert);
           if (result.getOssUrl() == null) {
-            throw new UploadFileException(String.format("Uploading file: %s failed", value));
+            throw new UploadFileException(StringUtils.format("Uploading file: %s failed", value));
           }
           dstValue = result.getOssUrl();
           cert = result.getCertificate();
         } else {
-          throw new UploadFileException(String.format("Local file: %s not exists.", value));
+          throw new UploadFileException(StringUtils.format("Local file: %s not exists.", value));
         }
       } catch (URISyntaxException e) {
         throw new UploadFileException(e.getMessage());
@@ -175,7 +175,7 @@ public final class PreprocessMessageInput {
           UploadResult result =
               OSSUtils.uploadWithCertificate(model, f.getAbsolutePath(), apiKey, cert);
           if (result.getOssUrl() == null) {
-            throw new UploadFileException(String.format("Uploading file: %s failed", value));
+            throw new UploadFileException(StringUtils.format("Uploading file: %s failed", value));
           }
           dstValue = result.getOssUrl();
           cert = result.getCertificate();

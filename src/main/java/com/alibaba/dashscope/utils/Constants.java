@@ -76,7 +76,7 @@ public final class Constants {
       System.getenv()
           .getOrDefault(
               DASHSCOPE_WEBSOCKET_BASE_URL_ENV,
-              String.format("wss://dashscope.aliyuncs.com/api-ws/%s/inference/", apiVersion));
+              StringUtils.format("wss://dashscope.aliyuncs.com/api-ws/%s/inference/", apiVersion));
   public static ConnectionConfigurations connectionConfigurations = null;
 
   public static final int MAX_PROMPT_LENGTH = 500;

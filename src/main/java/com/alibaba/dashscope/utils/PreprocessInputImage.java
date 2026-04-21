@@ -86,12 +86,12 @@ public final class PreprocessInputImage {
           UploadResult result =
               OSSUtils.uploadWithCertificate(model, f.getAbsolutePath(), apiKey, cert);
           if (result.getOssUrl().isEmpty()) {
-            throw new UploadFileException(String.format("Uploading file: %s failed", value));
+            throw new UploadFileException(StringUtils.format("Uploading file: %s failed", value));
           }
           dstValue = result.getOssUrl();
           cert = result.getCertificate();
         } else {
-          throw new UploadFileException(String.format("Local file: %s not exists.", value));
+          throw new UploadFileException(StringUtils.format("Local file: %s not exists.", value));
         }
       } catch (URISyntaxException e) {
         throw new UploadFileException(e.getMessage());

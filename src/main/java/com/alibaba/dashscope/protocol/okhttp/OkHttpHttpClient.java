@@ -17,6 +17,7 @@ import com.alibaba.dashscope.protocol.NetworkResponse;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.JsonObject;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
@@ -219,7 +220,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
           Status.builder()
               .statusCode(400)
               .code("BadRequest")
-              .message(String.format("Unsupported method: %s", req.getHttpMethod()))
+              .message(StringUtils.format("Unsupported method: %s", req.getHttpMethod()))
               .build();
       throw new ApiException(status);
     }
@@ -299,7 +300,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       boolean isFlattenResult,
       Response response,
       HalfDuplexRequest req) {
-    log.debug(String.format("Event: id %s, type: %s, data: %s", id, eventType, data));
+    log.debug(StringUtils.format("Event: id %s, type: %s, data: %s", id, eventType, data));
     if (SSEEventType.ERROR.equals(eventType)) {
       Status st = parseStreamEventData(data);
       emitter.onError(new ApiException(st));
@@ -317,7 +318,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                   isFlattenResult,
                   req));
     } else if (SSEEventType.DONE.equals(eventType)) { // event done ignore message
-      log.debug(String.format("Ignore event id: %s, type: %s, data: %s", id, eventType, data));
+      log.debug(StringUtils.format("Ignore event id: %s, type: %s, data: %s", id, eventType, data));
     } else if (eventType != null) {
       // process assistant events.
       emitter.onNext(
@@ -425,7 +426,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                   java.lang.String id,
                   java.lang.String type,
                   java.lang.String data) {
-                log.debug(String.format("Event: id %s, type: %s, data: %s", id, type, data));
+                log.debug(StringUtils.format("Event: id %s, type: %s, data: %s", id, type, data));
                 if (SSEEventType.ERROR.equals(type)) {
                   Status st = parseStreamEventData(data);
                   callback.onError(new ApiException(st));

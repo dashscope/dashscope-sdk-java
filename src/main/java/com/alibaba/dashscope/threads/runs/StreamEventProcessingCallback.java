@@ -6,6 +6,7 @@ import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.threads.AssistantStreamEvents;
 import com.alibaba.dashscope.threads.AssistantThread;
 import com.alibaba.dashscope.threads.messages.ThreadMessage;
+import com.alibaba.dashscope.utils.StringUtils;
 
 final class StreamEventProcessingCallback extends ResultCallback<DashScopeResult> {
   private AssistantEventHandler handler;
@@ -119,12 +120,13 @@ final class StreamEventProcessingCallback extends ResultCallback<DashScopeResult
         break;
       case ERROR:
         String errorMsg =
-            String.format("Event: %s, data: %s", message.getEvent(), message.getOutput());
+            StringUtils.format("Event: %s, data: %s", message.getEvent(), message.getOutput());
         handler.onError(errorMsg);
         break;
       default:
         String msg =
-            String.format("Unknown event: %s, data: %s", message.getEvent(), message.getOutput());
+            StringUtils.format(
+                "Unknown event: %s, data: %s", message.getEvent(), message.getOutput());
         handler.onUnknown(msg);
         break;
     }

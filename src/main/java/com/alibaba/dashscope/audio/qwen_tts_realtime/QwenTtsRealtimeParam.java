@@ -3,6 +3,7 @@ package com.alibaba.dashscope.audio.qwen_tts_realtime;
 
 import static com.alibaba.dashscope.utils.Constants.DASHSCOPE_WEBSOCKET_QWEN_TTS_REALTIME_BASE_URL_ENV;
 
+import com.alibaba.dashscope.utils.StringUtils;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Data;
@@ -19,7 +20,7 @@ public class QwenTtsRealtimeParam {
       System.getenv()
           .getOrDefault(
               DASHSCOPE_WEBSOCKET_QWEN_TTS_REALTIME_BASE_URL_ENV,
-              String.format("wss://dashscope.aliyuncs.com/api-ws/v1/realtime"));
+              StringUtils.format("wss://dashscope.aliyuncs.com/api-ws/v1/realtime"));
 
   /** The model to use. */
   @Getter @lombok.NonNull private String model;

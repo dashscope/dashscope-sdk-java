@@ -1,6 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.audio.omni;
 
+import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.annotations.SerializedName;
 
 /** @author lengjiayi */
@@ -41,7 +42,7 @@ public enum OmniRealtimeAudioFormat {
 
   @Override
   public String toString() {
-    return String.format(
+    return StringUtils.format(
         "%s with %dHz sample rate, %s channel, %s",
         format.toUpperCase(), sampleRate, channels, bitRate);
   }

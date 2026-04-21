@@ -45,7 +45,7 @@ public class QwenTokenizer implements Tokenizer {
     map.put(IMSTART, specialStartIndex++);
     map.put(IMEND, specialStartIndex++);
     for (int i = 0; i < 205; i++) {
-      String specialToken = String.format("<|extra_%d|>", i);
+      String specialToken = StringUtils.format("<|extra_%d|>", i);
       map.put(specialToken, specialStartIndex++);
     }
     specialTokens = Collections.unmodifiableMap(map);
@@ -236,11 +236,11 @@ public class QwenTokenizer implements Tokenizer {
         }
       }
       if (!isSpecialTokenExists) {
-        throw new NoSpecialTokenExists(String.format("No special token in %s", text));
+        throw new NoSpecialTokenExists(StringUtils.format("No special token in %s", text));
       }
     } else {
       throw new UnSupportedSpecialTokenMode(
-          String.format("UnSupport allowedSpecial: %s", allowedSpecial));
+          StringUtils.format("UnSupport allowedSpecial: %s", allowedSpecial));
     }
     if (specialTokensUse.isEmpty()) {
       // use ordinary encode

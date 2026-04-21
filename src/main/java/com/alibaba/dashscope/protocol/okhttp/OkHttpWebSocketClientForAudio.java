@@ -2,6 +2,7 @@ package com.alibaba.dashscope.protocol.okhttp;
 
 import com.alibaba.dashscope.protocol.FullDuplexRequest;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.JsonObject;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Action;
@@ -104,18 +105,19 @@ public class OkHttpWebSocketClientForAudio extends OkHttpWebSocketClient {
                               req.getBaseWebSocketUrl());
                         }
                       } catch (Throwable ex) {
-                        log.error(String.format("sendStreamData exception: %s", ex.getMessage()));
+                        log.error(
+                            StringUtils.format("sendStreamData exception: %s", ex.getMessage()));
                         responseEmitter.onError(ex);
                       }
                     },
                     err -> {
-                      log.error(String.format("Get stream data error!"));
+                      log.error(StringUtils.format("Get stream data error!"));
                       responseEmitter.onError(err);
                     },
                     new Action() {
                       @Override
                       public void run() throws Exception {
-                        log.debug(String.format("Stream data send completed!"));
+                        log.debug(StringUtils.format("Stream data send completed!"));
                         sendTextWithRetry(
                             req.getApiKey(),
                             req.isSecurityCheck(),
@@ -126,7 +128,7 @@ public class OkHttpWebSocketClientForAudio extends OkHttpWebSocketClient {
                       }
                     });
               } catch (Throwable ex) {
-                log.error(String.format("sendStreamData exception: %s", ex.getMessage()));
+                log.error(StringUtils.format("sendStreamData exception: %s", ex.getMessage()));
                 responseEmitter.onError(ex);
               }
             },

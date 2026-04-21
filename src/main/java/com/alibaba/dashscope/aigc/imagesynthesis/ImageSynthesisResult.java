@@ -3,6 +3,7 @@ package com.alibaba.dashscope.aigc.imagesynthesis;
 
 import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
@@ -42,7 +43,7 @@ public class ImageSynthesisResult {
           JsonUtils.fromJsonObject(
               (JsonObject) dashScopeResult.getOutput(), ImageSynthesisOutput.class));
     } else {
-      log.error(String.format("Result no output: %s", dashScopeResult));
+      log.error(StringUtils.format("Result no output: %s", dashScopeResult));
     }
     return result;
   }

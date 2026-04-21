@@ -5,6 +5,7 @@ package com.alibaba.dashscope.protocol;
 import com.alibaba.dashscope.Version;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.utils.ApiKey;
+import com.alibaba.dashscope.utils.StringUtils;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,7 +17,7 @@ public final class DashScopeHeaders {
   // Generate user agent with optional custom suffix
   public static String userAgent(String customUserAgent) {
     String userAgent =
-        String.format(
+        StringUtils.format(
             "dashscope/%s; java/%s; platform/%s; processor/%s",
             Version.version,
             System.getProperty("java.version"),

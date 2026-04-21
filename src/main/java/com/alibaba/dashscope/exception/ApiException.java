@@ -4,6 +4,7 @@ package com.alibaba.dashscope.exception;
 import com.alibaba.dashscope.common.ErrorType;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.utils.StringUtils;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,7 +21,7 @@ public class ApiException extends RuntimeException {
           Status.builder()
               .statusCode(-1)
               .code(ErrorType.NETWORK_ERROR.getValue())
-              .message(String.format("%s: %s", e.getClass().getSimpleName(), e.getMessage()))
+              .message(StringUtils.format("%s: %s", e.getClass().getSimpleName(), e.getMessage()))
               .build();
     }
     this.setStackTrace(e.getStackTrace());

@@ -10,6 +10,7 @@ import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.EncryptionConfig;
 import com.alibaba.dashscope.utils.EncryptionUtils;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
@@ -80,7 +81,7 @@ public class HalfDuplexRequest {
   private String getEncryptionKeyHeader(EncryptionConfig encryptionConfig) throws ApiException {
     byte[] cipherBytes = encryptionConfig.getAESEncryptKey().getEncoded();
     String base64Cipher = Base64.getEncoder().encodeToString(cipherBytes);
-    return String.format(
+    return StringUtils.format(
         "{\"public_key_id\":\"%s\",\"encrypt_key\":\"%s\",\"iv\":\"%s\"}",
         encryptionConfig.getPublicKeyId(),
         EncryptionUtils.RSAEncrypt(base64Cipher, encryptionConfig.getBase64PublicKey()),

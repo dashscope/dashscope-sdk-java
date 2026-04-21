@@ -1,5 +1,7 @@
 package com.alibaba.dashscope.audio.ttsv2;
 
+import com.alibaba.dashscope.utils.StringUtils;
+
 public enum SpeechSynthesisAudioFormat {
   DEFAULT("Default", 0, "0", 0),
   WAV_8000HZ_MONO_16BIT("wav", 8000, "mono", 16),
@@ -64,7 +66,7 @@ public enum SpeechSynthesisAudioFormat {
 
   @Override
   public String toString() {
-    return String.format(
+    return StringUtils.format(
         "%s with %dHz sample rate, %s channel, %s",
         format.toUpperCase(), sampleRate, channels, bitRate);
   }

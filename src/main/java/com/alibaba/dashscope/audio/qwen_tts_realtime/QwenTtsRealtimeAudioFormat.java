@@ -1,6 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.audio.qwen_tts_realtime;
 
+import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.annotations.SerializedName;
 
 /** @author lengjiayi */
@@ -39,7 +40,7 @@ public enum QwenTtsRealtimeAudioFormat {
 
   @Override
   public String toString() {
-    return String.format(
+    return StringUtils.format(
         "%s with %dHz sample rate, %s channel, %s",
         format.toUpperCase(), sampleRate, channels, bitRate);
   }

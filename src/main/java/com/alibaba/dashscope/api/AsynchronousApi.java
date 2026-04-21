@@ -12,6 +12,7 @@ import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.*;
 import com.alibaba.dashscope.task.AsyncTaskListParam;
 import com.alibaba.dashscope.task.AsyncTaskParam;
+import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.JsonObject;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
@@ -86,7 +87,7 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
         AsyncTaskOption.builder()
             .protocol(Protocol.HTTP)
             .httpMethod(HttpMethod.GET)
-            .url(String.format("/tasks/%s", taskId))
+            .url(StringUtils.format("/tasks/%s", taskId))
             .baseHttpUrl(baseUrl)
             .build();
 
@@ -173,7 +174,7 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
             .protocol(Protocol.HTTP)
             .httpMethod(HttpMethod.GET)
             .baseHttpUrl(baseUrl)
-            .url(String.format("/tasks/%s", taskId))
+            .url(StringUtils.format("/tasks/%s", taskId))
             .build();
 
     AsyncTaskParam getParam =
@@ -209,7 +210,7 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
     AsyncTaskOption taskOption =
         AsyncTaskOption.builder()
             .baseHttpUrl(baseUrl)
-            .url(String.format("/tasks/%s/cancel", taskId))
+            .url(StringUtils.format("/tasks/%s/cancel", taskId))
             .build();
     DashScopeResult result = client.send(new HalfDuplexRequest(param, taskOption));
     return result;

@@ -15,6 +15,7 @@ import com.alibaba.dashscope.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
+import com.alibaba.dashscope.utils.StringUtils;
 
 public final class Threads {
   private final GeneralApi<HalfDuplexParamBase> api;
@@ -42,7 +43,7 @@ public final class Threads {
 
   public AssistantThread create(ThreadParam param) throws ApiException, NoApiKeyException {
     serviceOption.setHttpMethod(HttpMethod.POST);
-    serviceOption.setPath(String.format("threads"));
+    serviceOption.setPath(StringUtils.format("threads"));
     DashScopeResult result = api.call(param, serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, AssistantThread.class);
   }
@@ -53,7 +54,7 @@ public final class Threads {
       throw new InputRequiredException("threadId is required!");
     }
     serviceOption.setHttpMethod(HttpMethod.POST);
-    serviceOption.setPath(String.format("threads/%s", threadId));
+    serviceOption.setPath(StringUtils.format("threads/%s", threadId));
     DashScopeResult result = api.call(param, serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, AssistantThread.class);
   }
@@ -65,7 +66,7 @@ public final class Threads {
   public AssistantThread retrieve(String threadId, String apiKey)
       throws ApiException, NoApiKeyException {
     serviceOption.setHttpMethod(HttpMethod.GET);
-    serviceOption.setPath(String.format("threads/%s", threadId));
+    serviceOption.setPath(StringUtils.format("threads/%s", threadId));
     DashScopeResult result =
         api.get(GeneralGetParam.builder().apiKey(apiKey).build(), serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, AssistantThread.class);
@@ -78,7 +79,7 @@ public final class Threads {
   public DeletionStatus delete(String threadId, String apiKey)
       throws ApiException, NoApiKeyException {
     serviceOption.setHttpMethod(HttpMethod.DELETE);
-    serviceOption.setPath(String.format("threads/%s", threadId));
+    serviceOption.setPath(StringUtils.format("threads/%s", threadId));
     DashScopeResult result =
         api.delete(GeneralGetParam.builder().apiKey(apiKey).build(), serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, DeletionStatus.class);

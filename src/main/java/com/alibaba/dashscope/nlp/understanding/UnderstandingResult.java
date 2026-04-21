@@ -3,6 +3,7 @@ package com.alibaba.dashscope.nlp.understanding;
 
 import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.JsonObject;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,7 @@ public final class UnderstandingResult {
           JsonUtils.fromJsonObject(
               (JsonObject) dashScopeResult.getOutput(), UnderstandingOutput.class));
     } else {
-      log.error(String.format("Result no output: %s", dashScopeResult));
+      log.error(StringUtils.format("Result no output: %s", dashScopeResult));
     }
     return result;
   }

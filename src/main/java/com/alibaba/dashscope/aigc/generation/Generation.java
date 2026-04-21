@@ -20,6 +20,7 @@ import com.alibaba.dashscope.protocol.StreamingMode;
 import com.alibaba.dashscope.tools.ToolCallBase;
 import com.alibaba.dashscope.tools.ToolCallFunction;
 import com.alibaba.dashscope.utils.ParamUtils;
+import com.alibaba.dashscope.utils.StringUtils;
 import io.reactivex.Flowable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -164,7 +165,7 @@ public final class Generation {
 
     // Build custom user agent suffix with incremental_to_full flag
     int flagValue = toMergeResponse ? 1 : 0;
-    String userAgentSuffix = String.format("incremental_to_full/%d", flagValue);
+    String userAgentSuffix = StringUtils.format("incremental_to_full/%d", flagValue);
     param.putHeader("user-agent", userAgentSuffix);
 
     serviceOption.setIsSSE(true);
@@ -203,7 +204,7 @@ public final class Generation {
 
     // Build custom user agent suffix with incremental_to_full flag
     int flagValue = toMergeResponse ? 1 : 0;
-    String userAgentSuffix = String.format("incremental_to_full/%d", flagValue);
+    String userAgentSuffix = StringUtils.format("incremental_to_full/%d", flagValue);
     param.putHeader("user-agent", userAgentSuffix);
 
     serviceOption.setIsSSE(true);
