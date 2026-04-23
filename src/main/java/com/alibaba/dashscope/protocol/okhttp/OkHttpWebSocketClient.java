@@ -207,7 +207,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
 
     if (isClosed.get()) {
       log.debug("called close before but not working, close again in onFailure.");
-      close(1013, "call closed before");
+      close(1001, "call closed before");
       return;
     }
 
@@ -240,7 +240,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
   public void onMessage(WebSocket webSocket, String text) {
     if (isClosed.get()) {
       log.debug("called close before but not working, close again in onMessage.");
-      close(1013, "call closed before");
+      close(1001, "call closed before");
       return;
     }
     log.debug(text);
@@ -339,7 +339,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
     // Invoked when a binary (type 0x2) message has been received.
     if (isClosed.get()) {
       log.debug("called close before but not working, close again in onMessage.");
-      close(1013, "call closed before");
+      close(1001, "call closed before");
       return;
     }
     if (!isFirstMessage.get()) {
@@ -363,7 +363,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
     // messages..
     if (isClosed.get()) {
       log.debug("called close before but not working, close again in onOpen.");
-      close(1013, "call closed before");
+      close(1001, "call closed before");
       return;
     }
     isOpen.set(true);
