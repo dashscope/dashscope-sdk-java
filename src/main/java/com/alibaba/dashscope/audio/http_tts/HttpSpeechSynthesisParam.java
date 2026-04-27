@@ -4,6 +4,7 @@ package com.alibaba.dashscope.audio.http_tts;
 
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
 import com.alibaba.dashscope.exception.InputRequiredException;
+import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
 import lombok.*;
@@ -79,6 +80,9 @@ public class HttpSpeechSynthesisParam extends HalfDuplexServiceParam {
     }
     if (pitch != null) {
       input.addProperty("pitch", pitch);
+    }
+    if (parameters != null && !parameters.isEmpty()) {
+      JsonUtils.merge(input, JsonUtils.parametersToJsonObject(parameters));
     }
 
     body.add("input", input);

@@ -58,7 +58,9 @@ public class OmniRealtimeConfig {
   public JsonObject getConfig() {
     Map<String, Object> config = new HashMap<>();
     config.put(OmniRealtimeConstants.MODALITIES, modalities);
-    config.put(OmniRealtimeConstants.VOICE, voice);
+    if (voice != null) {
+      config.put(OmniRealtimeConstants.VOICE, voice);
+    }
     config.put(OmniRealtimeConstants.INPUT_AUDIO_FORMAT, inputAudioFormat);
     config.put(OmniRealtimeConstants.OUTPUT_AUDIO_FORMAT, outputAudioFormat);
     if (enableInputAudioTranscription) {
@@ -95,8 +97,6 @@ public class OmniRealtimeConfig {
             OmniRealtimeConstants.TRANSLATION_CORPUS, this.translationConfig.getCorpus());
       }
       config.put(OmniRealtimeConstants.TRANSLATION, translationConfig);
-    } else {
-      config.put(OmniRealtimeConstants.TRANSLATION, null);
     }
     // Add transcription configuration for qwen-asr-realtime
     if (transcriptionConfig != null) {
@@ -119,7 +119,15 @@ public class OmniRealtimeConfig {
             OmniRealtimeConstants.INPUT_AUDIO_TRANSCRIPTION_CORPUS,
             this.transcriptionConfig.getCorpus());
       }
-      config.put(OmniRealtimeConstants.INPUT_AUDIO_TRANSCRIPTION, transcriptionConfig);
+      Object existingConfig = config.get(OmniRealtimeConstants.INPUT_AUDIO_TRANSCRIPTION);
+      if (existingConfig instanceof Map) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> tempMap = (Map<String, Object>) existingConfig;
+        tempMap.putAll(transcriptionConfig);
+        config.put(OmniRealtimeConstants.INPUT_AUDIO_TRANSCRIPTION, tempMap);
+      } else {
+        config.put(OmniRealtimeConstants.INPUT_AUDIO_TRANSCRIPTION, transcriptionConfig);
+      }
     }
     if (parameters != null) {
       for (Map.Entry<String, Object> entry : parameters.entrySet()) {
