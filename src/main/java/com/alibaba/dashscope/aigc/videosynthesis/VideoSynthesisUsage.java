@@ -14,15 +14,15 @@ public class VideoSynthesisUsage {
   @SerializedName("video_ratio")
   private String videoRatio;
 
-  private float duration;
+  private Float duration;
 
   private String size;
 
   @SerializedName("input_video_duration")
-  private float inputVideoDuration;
+  private Float inputVideoDuration;
 
   @SerializedName("output_video_duration")
-  private float outputVideoDuration;
+  private Float outputVideoDuration;
 
   @SerializedName("SR")
   private String SR;
@@ -34,7 +34,7 @@ public class VideoSynthesisUsage {
   @SerializedName("shot_type")
   private String shotType;
 
-  private float fps;
+  private Float fps;
 
   @SerializedName("reference_type")
   private String referenceType;
