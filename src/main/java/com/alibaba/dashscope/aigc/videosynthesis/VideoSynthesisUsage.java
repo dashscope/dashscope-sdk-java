@@ -26,4 +26,16 @@ public class VideoSynthesisUsage {
 
   @SerializedName("SR")
   private String SR;
+
+  private String ratio;
+
+  private Boolean audio;
+
+  @SerializedName("shot_type")
+  private String shotType;
+
+  private float fps;
+
+  @SerializedName("reference_type")
+  private String referenceType;
 }
