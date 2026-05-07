@@ -10,7 +10,10 @@ public enum FlowStreamMode {
   AGENT_FORMAT("agent_format"),
 
   /** Use the output node and end node to perform the output. */
-  MESSAGE_FORMAT("message_format");
+  MESSAGE_FORMAT("message_format"),
+
+  /** The streaming results from all nodes will be output in the workflowMessage field. */
+  MESSAGE_FORMAT_PLUS("message_format_plus");
 
   private final String value;
 
