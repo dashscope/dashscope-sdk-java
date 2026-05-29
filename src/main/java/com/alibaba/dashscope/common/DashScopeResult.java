@@ -149,6 +149,7 @@ public class DashScopeResult extends Result {
     if (!isFlattenResult) {
       return fromResponse(protocol, response);
     } else {
+      this.setHeaders(changeHeaders(response.getHeaders()));
       // flatten not support websocket.
       if (protocol == Protocol.WEBSOCKET) {
         if (response.getBinary() == null) {
@@ -244,6 +245,7 @@ public class DashScopeResult extends Result {
       return new java.util.HashMap<>();
     }
     return headers.entrySet().stream()
+        .filter(entry -> entry.getKey() != null)
         .collect(
             Collectors.toMap(
                 Map.Entry::getKey,
