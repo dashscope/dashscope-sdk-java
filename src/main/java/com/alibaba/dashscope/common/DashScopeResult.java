@@ -241,8 +241,8 @@ public class DashScopeResult extends Result {
   }
 
   private Map<String, Object> changeHeaders(Map<String, List<String>> headers) {
-    if (headers == null) {
-      return new java.util.HashMap<>();
+    if (headers == null || headers.isEmpty()) {
+      return null;
     }
     return headers.entrySet().stream()
         .filter(entry -> entry.getKey() != null)
@@ -252,6 +252,8 @@ public class DashScopeResult extends Result {
                 entry -> {
                   List<String> values = entry.getValue();
                   return (values == null || values.isEmpty()) ? "" : String.join(",", values);
-                }));
+                },
+                (v1, v2) -> v1,
+                java.util.LinkedHashMap::new));
   }
 }
