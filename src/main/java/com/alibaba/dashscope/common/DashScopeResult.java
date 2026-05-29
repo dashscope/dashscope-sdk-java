@@ -240,6 +240,9 @@ public class DashScopeResult extends Result {
   }
 
   private Map<String, Object> changeHeaders(Map<String, List<String>> headers) {
+    if (headers == null) {
+      return new java.util.HashMap<>();
+    }
     return headers.entrySet().stream()
         .collect(
             Collectors.toMap(
