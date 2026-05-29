@@ -78,7 +78,9 @@ public class TestHalfDuplexHttpApi {
         HalfDuplexTestParam.builder().model("qwen-turbo").parameter("k1", "v1").build();
     Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", port);
     DashScopeResult result = syncApi.call(param);
-    assertEquals(JsonUtils.toJson(result), "{\"statusCode\":200,\"code\":\"\",\"message\":\"\"}");
+    assertEquals(
+        JsonUtils.toJson(result),
+        "{\"headers\":{\"content-length\":\"2\",\"content-type\":\"application/json; charset=utf-8\"},\"statusCode\":200,\"code\":\"\",\"message\":\"\"}");
     server.close();
   }
 
