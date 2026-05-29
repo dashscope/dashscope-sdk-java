@@ -4,6 +4,7 @@ import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
+import java.util.Map;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -13,6 +14,7 @@ public class ImageGenerationResult {
   private String requestId;
   private ImageGenerationUsage usage;
   private ImageGenerationOutput output;
+  private Map<String, Object> headers;
 
   @SerializedName("status_code")
   private Integer statusCode;
@@ -28,6 +30,7 @@ public class ImageGenerationResult {
     result.setStatusCode(dashScopeResult.getStatusCode());
     result.setCode(dashScopeResult.getCode());
     result.setMessage(dashScopeResult.getMessage());
+    result.setHeaders(dashScopeResult.getHeaders());
     if (dashScopeResult.getUsage() != null) {
       result.setUsage(
           JsonUtils.fromJsonObject(

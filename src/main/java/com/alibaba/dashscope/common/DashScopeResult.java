@@ -11,6 +11,9 @@ import com.alibaba.dashscope.utils.EncryptionUtils;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -28,6 +31,7 @@ public class DashScopeResult extends Result {
   @SuppressWarnings("unchecked")
   protected <T extends Result> T fromResponse(Protocol protocol, NetworkResponse response)
       throws ApiException {
+    this.setHeaders(changeHeaders(response.getHeaders()));
     if (protocol == Protocol.WEBSOCKET) {
       if (response.getBinary() == null) {
         JsonObject jsonObject = JsonUtils.parse(response.getMessage());
@@ -168,6 +172,7 @@ public class DashScopeResult extends Result {
   public <T extends Result> T fromResponse(
       Protocol protocol, NetworkResponse response, boolean isFlattenResult, HalfDuplexRequest req)
       throws ApiException {
+    this.setHeaders(changeHeaders(response.getHeaders()));
     // check it's encrypted output
     if ((response.getHeaders().containsKey("X-DashScope-OutputEncrypted".toLowerCase())
             || req.isEncryptRequest())
@@ -232,5 +237,16 @@ public class DashScopeResult extends Result {
       return (T) this;
     }
     return fromResponse(protocol, response, isFlattenResult);
+  }
+
+  private Map<String, Object> changeHeaders(Map<String, List<String>> headers) {
+    return headers.entrySet().stream()
+        .collect(
+            Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> {
+                  List<String> values = entry.getValue();
+                  return (values == null || values.isEmpty()) ? "" : String.join(",", values);
+                }));
   }
 }

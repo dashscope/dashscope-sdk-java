@@ -6,6 +6,7 @@ import com.alibaba.dashscope.utils.JsonUtils;
 import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
+import java.util.Map;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,6 +18,7 @@ public class ImageSynthesisResult {
 
   private ImageSynthesisOutput output;
   private ImageSynthesisUsage usage;
+  private Map<String, Object> headers;
 
   @SerializedName("status_code")
   private Integer statusCode;
@@ -33,6 +35,7 @@ public class ImageSynthesisResult {
     result.statusCode = dashScopeResult.getStatusCode();
     result.code = dashScopeResult.getCode();
     result.message = dashScopeResult.getMessage();
+    result.headers = dashScopeResult.getHeaders();
     if (dashScopeResult.getUsage() != null) {
       result.setUsage(
           JsonUtils.fromJsonObject(
