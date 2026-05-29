@@ -45,7 +45,7 @@ public class TestVideoSynthesis {
       throws ApiException, NoApiKeyException, IOException, InterruptedException,
           InputRequiredException {
     String responseBody =
-        "{\"request_id\":\"39\",\"output\":{\"task_id\":\"e4\",\"task_status\":\"SUCCEEDED\",\"video_url\":\"https://1\"},\"usage\":{\"video_count\":1,\"duration\":0.0,\"input_video_duration\":0.0,\"output_video_duration\":0.0},\"headers\":{\"content-length\":\"232\",\"content-type\":\"application/json; charset=utf-8\"},\"status_code\":200,\"code\":\"\",\"message\":\"\"}";
+        "{\"request_id\":\"39\",\"output\":{\"task_id\":\"e4\",\"task_status\":\"SUCCEEDED\",\"video_url\":\"https://1\"},\"usage\":{\"video_count\":1,\"duration\":0.0,\"input_video_duration\":0.0,\"output_video_duration\":0.0},\"headers\":{\"content-length\":\"316\",\"content-type\":\"application/json; charset=utf-8\"},\"status_code\":200,\"code\":\"\",\"message\":\"\"}";
     assert MEDIA_TYPE_APPLICATION_JSON != null;
     server.enqueue(
         new MockResponse()
