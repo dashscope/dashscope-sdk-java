@@ -35,6 +35,23 @@ public final class GenerationUsage {
     private CacheCreation cacheCreation;
   }
 
+  @Data
+  @SuperBuilder
+  public static class Plugins {
+
+    @Data
+    public static class Search {
+      @SerializedName("count")
+      private Integer count;
+
+      @SerializedName("strategy")
+      private String strategy;
+    }
+
+    @SerializedName("search")
+    private Search search;
+  }
+
   @SerializedName("input_tokens")
   private Integer inputTokens;
 
@@ -49,4 +66,7 @@ public final class GenerationUsage {
 
   @SerializedName("prompt_tokens_details")
   private PromptTokensDetails promptTokensDetails;
+
+  @SerializedName("plugins")
+  private Plugins plugins;
 }
