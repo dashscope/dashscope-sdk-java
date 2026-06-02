@@ -15,9 +15,7 @@ public class TestGenerationUsagePlugins {
 
   private static final Gson GSON = new Gson();
 
-  /**
-   * 验证 GenerationUsage 声明了 plugins 字段（反射检查，对应客户 dump 逻辑）。
-   */
+  /** Verify that GenerationUsage declares the 'plugins' field (reflection-based check). */
   @Test
   public void testPluginsFieldDeclared() {
     List<String> fieldNames =
@@ -25,13 +23,12 @@ public class TestGenerationUsagePlugins {
             .map(Field::getName)
             .collect(Collectors.toList());
 
-    assertTrue(fieldNames.contains("plugins"),
+    assertTrue(
+        fieldNames.contains("plugins"),
         "GenerationUsage should declare 'plugins' field, actual fields: " + fieldNames);
   }
 
-  /**
-   * 验证 plugins 字段的 @SerializedName 值为 "plugins"。
-   */
+  /** Verify the @SerializedName value of the 'plugins' field is "plugins". */
   @Test
   public void testPluginsSerializedName() throws NoSuchFieldException {
     Field pluginsField = GenerationUsage.class.getDeclaredField("plugins");
@@ -41,20 +38,18 @@ public class TestGenerationUsagePlugins {
     assertEquals("plugins", annotation.value());
   }
 
-  /**
-   * 验证 getPlugins() 方法存在且可调用。
-   */
+  /** Verify the lombok-generated getPlugins() method exists and is callable. */
   @Test
   public void testGetPluginsMethodExists() {
     GenerationUsage usage = GenerationUsage.builder().build();
-    // 不抛异常即说明 getPlugins() 方法存在
+    // Calling without exception confirms getPlugins() exists.
     assertDoesNotThrow(usage::getPlugins);
     assertNull(usage.getPlugins(), "plugins should be null when not set");
   }
 
   /**
-   * 模拟服务端返回含 usage.plugins.search 的 JSON，验证 Gson 反序列化后能正确读取。
-   * 对应客户真实调用场景：request_id 541336c2-... 返回的 JSON 结构。
+   * Simulate a server response containing usage.plugins.search and verify Gson can deserialize it
+   * end-to-end into the typed Plugins inner class.
    */
   @Test
   public void testGsonDeserializeWithPlugins() {
@@ -83,17 +78,11 @@ public class TestGenerationUsagePlugins {
     assertEquals("web_search", usage.getPlugins().getSearch().getStrategy());
   }
 
-  /**
-   * 验证不含 plugins 的旧版 JSON 仍能正常反序列化（向后兼容）。
-   */
+  /** Verify legacy JSON without the 'plugins' field still deserializes (backward compatible). */
   @Test
   public void testGsonDeserializeWithoutPlugins() {
     String json =
-        "{"
-            + "\"input_tokens\": 100,"
-            + "\"output_tokens\": 50,"
-            + "\"total_tokens\": 150"
-            + "}";
+        "{" + "\"input_tokens\": 100," + "\"output_tokens\": 50," + "\"total_tokens\": 150" + "}";
 
     GenerationUsage usage = GSON.fromJson(json, GenerationUsage.class);
 
@@ -103,9 +92,7 @@ public class TestGenerationUsagePlugins {
     assertNull(usage.getPlugins(), "plugins should be null when not present in JSON");
   }
 
-  /**
-   * 验证 plugins.search 部分字段缺失时不会报错。
-   */
+  /** Verify that a partial plugins.search payload (missing optional fields) does not error. */
   @Test
   public void testGsonDeserializeWithPartialPlugins() {
     String json =
@@ -125,7 +112,7 @@ public class TestGenerationUsagePlugins {
     assertNotNull(usage.getPlugins());
     assertNotNull(usage.getPlugins().getSearch());
     assertEquals(5, (int) usage.getPlugins().getSearch().getCount());
-    assertNull(usage.getPlugins().getSearch().getStrategy(),
-        "strategy should be null when not present");
+    assertNull(
+        usage.getPlugins().getSearch().getStrategy(), "strategy should be null when not present");
   }
 }
