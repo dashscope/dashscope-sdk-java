@@ -110,7 +110,7 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
    * apple
    * </pre>
    */
-  @Builder.Default private Boolean incrementalOutput = false;
+  @Builder.Default private Boolean incrementalOutput;
 
   /** Output format of the model including "text" and "audio". Default value: ["text"] */
   private List<String> modalities;
