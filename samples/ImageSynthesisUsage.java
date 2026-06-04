@@ -7,12 +7,11 @@ import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesisListResult;
 import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesisParam;
 import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesisResult;
 import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.task.AsyncTaskListParam;
 
 public class ImageSynthesisUsage {
-  public static void basicCall() throws ApiException, NoApiKeyException, InputRequiredException {
+  public static void basicCall() throws ApiException, NoApiKeyException {
     // create with image2image, 参考文档(image2image|text2image)
     ImageSynthesis is = new ImageSynthesis();
     ImageSynthesisParam param =
@@ -29,7 +28,7 @@ public class ImageSynthesisUsage {
     System.out.println(result);
   }
 
-  public static void synCall() throws ApiException, NoApiKeyException, InputRequiredException {
+  public static void synCall() throws ApiException, NoApiKeyException {
     ImageSynthesis is = new ImageSynthesis();
     ImageSynthesisParam param =
             ImageSynthesisParam.builder()
@@ -44,14 +43,14 @@ public class ImageSynthesisUsage {
     System.out.println(result);
   }
 
-  public static void listTask() throws ApiException, NoApiKeyException, InputRequiredException {
+  public static void listTask() throws ApiException, NoApiKeyException {
     ImageSynthesis is = new ImageSynthesis();
     AsyncTaskListParam param = AsyncTaskListParam.builder().build();
     ImageSynthesisListResult result = is.list(param);
     System.out.println(result);
   }
 
-  public void fetchTask() throws ApiException, NoApiKeyException, InputRequiredException {
+  public void fetchTask() throws ApiException, NoApiKeyException {
     String taskId = "your task id";
     ImageSynthesis is = new ImageSynthesis();
     // If set DASHSCOPE_API_KEY environment variable, apiKey can null.
@@ -65,7 +64,7 @@ public class ImageSynthesisUsage {
       // basicCall();
       synCall();
       //listTask();
-    }catch(ApiException|NoApiKeyException|InputRequiredException e){
+    }catch(ApiException|NoApiKeyException e){
       System.out.println(e.getMessage());
     }
     System.exit(0);

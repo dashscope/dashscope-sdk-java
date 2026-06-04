@@ -6,7 +6,6 @@ import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
 import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.exception.UploadFileException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
@@ -112,12 +111,12 @@ public final class ImageSynthesis {
   }
 
   public ImageSynthesisResult asyncCall(ImageSynthesisParam param)
-      throws ApiException, NoApiKeyException, InputRequiredException {
+      throws ApiException, NoApiKeyException {
     // add local file support
     try {
       param.checkAndUpload();
     } catch (UploadFileException e) {
-      throw new InputRequiredException(e.getMessage());
+      throw new ApiException(e);
     }
     ApiServiceOption serviceOption = createServiceOptions;
     if (param.getModel().contains("imageedit") || param.getModel().contains("wan2.5-i2i")) {
@@ -131,12 +130,12 @@ public final class ImageSynthesis {
    * models will result in an error，More raw image models may be added for use later
    */
   public ImageSynthesisResult syncCall(ImageSynthesisParam param)
-      throws ApiException, NoApiKeyException, InputRequiredException {
+      throws ApiException, NoApiKeyException {
     // add local file support
     try {
       param.checkAndUpload();
     } catch (UploadFileException e) {
-      throw new InputRequiredException(e.getMessage());
+      throw new ApiException(e);
     }
     ApiServiceOption serviceOption = createServiceOptions;
     serviceOption.setIsAsyncTask(false);
@@ -152,12 +151,12 @@ public final class ImageSynthesis {
    * @throws ApiException The request failed, possibly due to a network or data error.
    */
   public ImageSynthesisResult call(ImageSynthesisParam param)
-      throws ApiException, NoApiKeyException, InputRequiredException {
+      throws ApiException, NoApiKeyException {
     // add local file support
     try {
       param.checkAndUpload();
     } catch (UploadFileException e) {
-      throw new InputRequiredException(e.getMessage());
+      throw new ApiException(e);
     }
     ApiServiceOption serviceOption = createServiceOptions;
     if (param.getModel().contains("imageedit") || param.getModel().contains("wan2.5-i2i")) {

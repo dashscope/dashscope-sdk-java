@@ -66,15 +66,7 @@ public final class TingWu {
   public DashScopeResult call(HalfDuplexServiceParam param)
       throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
-    ApiServiceOption callOption =
-        ApiServiceOption.builder()
-            .protocol(serviceOption.getProtocol())
-            .httpMethod(serviceOption.getHttpMethod())
-            .isService(serviceOption.getIsService())
-            .baseHttpUrl(serviceOption.getBaseHttpUrl())
-            .baseWebSocketUrl(serviceOption.getBaseWebSocketUrl())
-            .isSSE(false)
-            .build();
+    serviceOption.setIsSSE(false);
     return syncApi.call(param);
   }
 

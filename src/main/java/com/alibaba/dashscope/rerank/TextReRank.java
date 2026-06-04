@@ -71,14 +71,6 @@ public final class TextReRank {
     syncApi = new SynchronizeHalfDuplexApi<>(connectionOptions, serviceOption);
   }
 
-  /**
-   * Call the server to get the whole result.
-   *
-   * @param param The input param of class `TextReRankParam`.
-   * @return The output structure of `TextReRankResult`.
-   * @throws NoApiKeyException Can not find api key
-   * @throws ApiException The request failed, possibly due to a network or data error.
-   */
   /** Creates a copy of the shared serviceOption for thread-safe per-call usage. */
   private ApiServiceOption copyServiceOption() {
     return ApiServiceOption.builder()
@@ -94,6 +86,14 @@ public final class TextReRank {
         .build();
   }
 
+  /**
+   * Call the server to get the whole result.
+   *
+   * @param param The input param of class `TextReRankParam`.
+   * @return The output structure of `TextReRankResult`.
+   * @throws NoApiKeyException Can not find api key
+   * @throws ApiException The request failed, possibly due to a network or data error.
+   */
   public TextReRankResult call(TextReRankParam param)
       throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
