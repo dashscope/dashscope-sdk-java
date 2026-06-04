@@ -13,6 +13,7 @@ import com.alibaba.dashscope.common.Message;
 import com.alibaba.dashscope.common.ResponseFormat;
 import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.common.SearchOptions;
+import com.alibaba.dashscope.common.StreamOptions;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.tools.ToolBase;
 import com.alibaba.dashscope.utils.ApiKeywords;
@@ -36,8 +37,8 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class GenerationParam extends GenerationParamBase {
   public static class ResultFormat {
-    public static String TEXT = "text";
-    public static String MESSAGE = "message";
+    public static final String TEXT = "text";
+    public static final String MESSAGE = "message";
   }
 
   private List<Message> messages;
@@ -103,6 +104,18 @@ public class GenerationParam extends GenerationParamBase {
   /** repetition penalty */
   private Float repetitionPenalty;
 
+  /**
+   * Presence penalty: reduces the model's likelihood to repeat the exact tokens that have already
+   * appeared in the output. A value of 0 indicates no penalty. Default value: 0.0
+   */
+  private Float presencePenalty;
+
+  /**
+   * Frequency penalty: reduces the model's likelihood to repeat tokens based on their frequency in
+   * the output so far. A value of 0 indicates no penalty. Default value: 0.0
+   */
+  private Float frequencyPenalty;
+
   /** stopString and token are mutually exclusive. */
   @Singular("stopString")
   private List<String> stopStrings;
@@ -142,6 +155,9 @@ public class GenerationParam extends GenerationParamBase {
 
   /** 翻译参数 */
   private TranslationOptions translationOptions;
+
+  /** Streaming options controlling what extra info is included in stream chunks. */
+  private StreamOptions streamOptions;
 
   @Override
   public JsonObject getInput() {
@@ -207,6 +223,14 @@ public class GenerationParam extends GenerationParamBase {
     if (repetitionPenalty != null) {
       params.put(REPETITION_PENALTY, repetitionPenalty);
     }
+
+    if (presencePenalty != null) {
+      params.put("presence_penalty", presencePenalty);
+    }
+
+    if (frequencyPenalty != null) {
+      params.put("frequency_penalty", frequencyPenalty);
+    }
     if (maxTokens != null) {
       params.put(MAX_TOKENS, maxTokens);
     }
@@ -260,6 +284,10 @@ public class GenerationParam extends GenerationParamBase {
 
     if (translationOptions != null) {
       params.put("translation_options", translationOptions);
+    }
+
+    if (streamOptions != null) {
+      params.put("stream_options", streamOptions);
     }
 
     params.putAll(parameters);

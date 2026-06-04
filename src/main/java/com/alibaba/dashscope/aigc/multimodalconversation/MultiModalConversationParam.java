@@ -3,6 +3,7 @@ package com.alibaba.dashscope.aigc.multimodalconversation;
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
 import com.alibaba.dashscope.common.ResponseFormat;
 import com.alibaba.dashscope.common.SearchOptions;
+import com.alibaba.dashscope.common.StreamOptions;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.tools.ToolBase;
 import com.alibaba.dashscope.utils.ApiKeywords;
@@ -55,6 +56,12 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
    */
   private Float presencePenalty;
 
+  /**
+   * Frequency penalty: reduces the model's likelihood to repeat tokens based on their frequency in
+   * the output so far. A value of 0 indicates no penalty. Default value: 0.0
+   */
+  private Float frequencyPenalty;
+
   /* Whether to enable web search(quark).
   Currently works best only on the first round of conversation.
   Default to False */
@@ -103,7 +110,7 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
    * apple
    * </pre>
    */
-  @Builder.Default private Boolean incrementalOutput;
+  @Builder.Default private Boolean incrementalOutput = false;
 
   /** Output format of the model including "text" and "audio". Default value: ["text"] */
   private List<String> modalities;
@@ -161,6 +168,9 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
 
   /** thinking budget */
   private Integer thinkingBudget;
+
+  /** Streaming options controlling what extra info is included in stream chunks. */
+  private StreamOptions streamOptions;
 
   @Override
   public JsonObject getHttpBody() {
@@ -237,6 +247,10 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
 
     if (presencePenalty != null) {
       params.put(ApiKeywords.PRESENCE_PENALTY, presencePenalty);
+    }
+
+    if (frequencyPenalty != null) {
+      params.put("frequency_penalty", frequencyPenalty);
     }
 
     // Apply different logic based on model version
@@ -316,6 +330,10 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
 
     if (thinkingBudget != null) {
       params.put("thinking_budget", thinkingBudget);
+    }
+
+    if (streamOptions != null) {
+      params.put("stream_options", streamOptions);
     }
 
     params.putAll(parameters);

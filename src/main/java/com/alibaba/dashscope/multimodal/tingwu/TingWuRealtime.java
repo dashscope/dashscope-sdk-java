@@ -3,7 +3,12 @@
 package com.alibaba.dashscope.multimodal.tingwu;
 
 import com.alibaba.dashscope.api.SynchronizeFullDuplexApi;
-import com.alibaba.dashscope.common.*;
+import com.alibaba.dashscope.common.DashScopeResult;
+import com.alibaba.dashscope.common.Function;
+import com.alibaba.dashscope.common.OutputMode;
+import com.alibaba.dashscope.common.ResultCallback;
+import com.alibaba.dashscope.common.Task;
+import com.alibaba.dashscope.common.TaskGroup;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
