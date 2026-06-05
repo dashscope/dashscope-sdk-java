@@ -98,6 +98,7 @@ public final class TingWu {
    */
   public void call(HalfDuplexServiceParam param, ResultCallback<DashScopeResult> callback)
       throws ApiException, NoApiKeyException, InputRequiredException {
+    java.util.Objects.requireNonNull(callback, "callback must not be null");
     param.validate();
     ApiServiceOption callOption = copyServiceOption();
     callOption.setIsSSE(false);
