@@ -38,8 +38,6 @@ public final class MultiModalConversation {
   private final SynchronizeHalfDuplexApi<MultiModalConversationParam> syncApi;
   private final ApiServiceOption serviceOption;
 
-  private final ThreadLocal<Map<Integer, AccumulatedData>> accumulatedDataMap =
-      ThreadLocal.withInitial(HashMap::new);
 
   public static class Models {
     public static final String QWEN_VL_CHAT_V1 = "qwen-vl-chat-v1";
@@ -184,16 +182,14 @@ public final class MultiModalConversation {
     callOption.setIsSSE(true);
     callOption.setStreamingMode(StreamingMode.OUT);
     preprocessInput(param);
-    return syncApi
-        .streamCall(param, callOption)
-        .map(MultiModalConversationResult::fromDashScopeResult)
-        .map(result -> mergeSingleResponse(result, toMergeResponse))
-        .doFinally(
-            () -> {
-              if (toMergeResponse) {
-                StreamingMerger.clearAccumulatedData(accumulatedDataMap);
-              }
-            });
+    return Flowable.defer(
+        () -> {
+          Map<Integer, AccumulatedData> accumulatedData = new HashMap<>();
+          return syncApi
+              .streamCall(param, callOption)
+              .map(MultiModalConversationResult::fromDashScopeResult)
+              .map(result -> mergeSingleResponse(result, toMergeResponse, accumulatedData));
+        });
   }
 
   /**
@@ -223,6 +219,7 @@ public final class MultiModalConversation {
     callOption.setIsSSE(true);
     callOption.setStreamingMode(StreamingMode.OUT);
     preprocessInput(param);
+    Map<Integer, AccumulatedData> accumulatedData = new HashMap<>();
     syncApi.streamCall(
         param,
         new ResultCallback<DashScopeResult>() {
@@ -231,7 +228,7 @@ public final class MultiModalConversation {
             MultiModalConversationResult result =
                 MultiModalConversationResult.fromDashScopeResult(msg);
             MultiModalConversationResult mergedResult =
-                mergeSingleResponse(result, toMergeResponse);
+                mergeSingleResponse(result, toMergeResponse, accumulatedData);
             if (mergedResult != null) {
               callback.onEvent(mergedResult);
             }
@@ -239,17 +236,13 @@ public final class MultiModalConversation {
 
           @Override
           public void onComplete() {
-            if (toMergeResponse) {
-              StreamingMerger.clearAccumulatedData(accumulatedDataMap);
-            }
+            accumulatedData.clear();
             callback.onComplete();
           }
 
           @Override
           public void onError(Exception e) {
-            if (toMergeResponse) {
-              StreamingMerger.clearAccumulatedData(accumulatedDataMap);
-            }
+            accumulatedData.clear();
             callback.onError(e);
           }
         },
@@ -319,15 +312,16 @@ public final class MultiModalConversation {
    *
    * @param result The MultiModalConversationResult to merge
    * @param toMergeResponse Whether to perform merging (based on original incrementalOutput setting)
+   * @param accumulatedData The per-stream accumulated data
    * @return The merged MultiModalConversationResult
    */
   private MultiModalConversationResult mergeSingleResponse(
-      MultiModalConversationResult result, boolean toMergeResponse) {
+      MultiModalConversationResult result,
+      boolean toMergeResponse,
+      Map<Integer, AccumulatedData> accumulatedData) {
     if (!toMergeResponse || result == null || result.getOutput() == null) {
       return result;
     }
-
-    Map<Integer, AccumulatedData> accumulatedData = accumulatedDataMap.get();
 
     // Handle choices format: output.choices[].message.content
     if (result.getOutput().getChoices() != null) {

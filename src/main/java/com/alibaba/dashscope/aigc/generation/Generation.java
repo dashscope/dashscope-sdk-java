@@ -33,8 +33,6 @@ public final class Generation {
   private final SynchronizeHalfDuplexApi<HalfDuplexServiceParam> syncApi;
   private final ApiServiceOption serviceOption;
 
-  private final ThreadLocal<Map<Integer, AccumulatedData>> accumulatedDataMap =
-      ThreadLocal.withInitial(HashMap::new);
 
   public static class Models {
     /** @deprecated use QWEN_TURBO instead */
@@ -189,23 +187,22 @@ public final class Generation {
     ApiServiceOption callOption = copyServiceOption();
     callOption.setIsSSE(true);
     callOption.setStreamingMode(StreamingMode.OUT);
-    return syncApi
-        .streamCall(param, callOption)
-        .map(GenerationResult::fromDashScopeResult)
-        .flatMap(
-            result -> {
-              GenerationResult merged = mergeSingleResponse(result, toMergeResponse, param);
-              if (merged == null) {
-                return Flowable.empty();
-              }
-              return Flowable.just(merged);
-            })
-        .doFinally(
-            () -> {
-              if (toMergeResponse) {
-                StreamingMerger.clearAccumulatedData(accumulatedDataMap);
-              }
-            });
+    return Flowable.defer(
+        () -> {
+          Map<Integer, AccumulatedData> accumulatedData = new HashMap<>();
+          return syncApi
+              .streamCall(param, callOption)
+              .map(GenerationResult::fromDashScopeResult)
+              .flatMap(
+                  result -> {
+                    GenerationResult merged =
+                        mergeSingleResponse(result, toMergeResponse, param, accumulatedData);
+                    if (merged == null) {
+                      return Flowable.empty();
+                    }
+                    return Flowable.just(merged);
+                  });
+        });
   }
 
   public void streamCall(HalfDuplexServiceParam param, ResultCallback<GenerationResult> callback)
@@ -223,13 +220,15 @@ public final class Generation {
     ApiServiceOption callOption = copyServiceOption();
     callOption.setIsSSE(true);
     callOption.setStreamingMode(StreamingMode.OUT);
+    Map<Integer, AccumulatedData> accumulatedData = new HashMap<>();
     syncApi.streamCall(
         param,
         new ResultCallback<DashScopeResult>() {
           @Override
           public void onEvent(DashScopeResult msg) {
             GenerationResult result = GenerationResult.fromDashScopeResult(msg);
-            GenerationResult mergedResult = mergeSingleResponse(result, toMergeResponse, param);
+            GenerationResult mergedResult =
+                mergeSingleResponse(result, toMergeResponse, param, accumulatedData);
             if (mergedResult != null) {
               callback.onEvent(mergedResult);
             }
@@ -237,17 +236,13 @@ public final class Generation {
 
           @Override
           public void onComplete() {
-            if (toMergeResponse) {
-              StreamingMerger.clearAccumulatedData(accumulatedDataMap);
-            }
+            accumulatedData.clear();
             callback.onComplete();
           }
 
           @Override
           public void onError(Exception e) {
-            if (toMergeResponse) {
-              StreamingMerger.clearAccumulatedData(accumulatedDataMap);
-            }
+            accumulatedData.clear();
             callback.onError(e);
           }
         },
@@ -285,15 +280,17 @@ public final class Generation {
    * @param result The GenerationResult to merge
    * @param toMergeResponse Whether to perform merging (based on original incrementalOutput setting)
    * @param param The HalfDuplexServiceParam to get n parameter
+   * @param accumulatedData The per-stream accumulated data
    * @return The merged GenerationResult, or null if should be filtered out
    */
   private GenerationResult mergeSingleResponse(
-      GenerationResult result, boolean toMergeResponse, HalfDuplexServiceParam param) {
+      GenerationResult result,
+      boolean toMergeResponse,
+      HalfDuplexServiceParam param,
+      Map<Integer, AccumulatedData> accumulatedData) {
     if (!toMergeResponse || result == null || result.getOutput() == null) {
       return result;
     }
-
-    Map<Integer, AccumulatedData> accumulatedData = accumulatedDataMap.get();
 
     // Get n parameter
     Integer n = null;

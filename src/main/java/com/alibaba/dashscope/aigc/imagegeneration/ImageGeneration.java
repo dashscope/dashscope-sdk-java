@@ -40,8 +40,6 @@ public final class ImageGeneration {
   private final ApiServiceOption serviceOption;
   private final String baseUrl;
 
-  private final ThreadLocal<Map<Integer, AccumulatedData>> accumulatedDataMap =
-      ThreadLocal.withInitial(HashMap::new);
 
   public static class Models {
     public static final String WanX2_6_T2I = "wan2.6-t2i";
@@ -267,16 +265,14 @@ public final class ImageGeneration {
     callOption.setStreamingMode(StreamingMode.OUT);
     callOption.setTask(Task.MULTIMODAL_GENERATION.getValue());
     preprocessInput(param);
-    return syncApi
-        .streamCall(param, callOption)
-        .map(ImageGenerationResult::fromDashScopeResult)
-        .map(result -> mergeSingleResponse(result, toMergeResponse))
-        .doFinally(
-            () -> {
-              if (toMergeResponse) {
-                StreamingMerger.clearAccumulatedData(accumulatedDataMap);
-              }
-            });
+    return Flowable.defer(
+        () -> {
+          Map<Integer, AccumulatedData> accumulatedData = new HashMap<>();
+          return syncApi
+              .streamCall(param, callOption)
+              .map(ImageGenerationResult::fromDashScopeResult)
+              .map(result -> mergeSingleResponse(result, toMergeResponse, accumulatedData));
+        });
   }
 
   /**
@@ -306,13 +302,15 @@ public final class ImageGeneration {
     callOption.setStreamingMode(StreamingMode.OUT);
     callOption.setTask(Task.MULTIMODAL_GENERATION.getValue());
     preprocessInput(param);
+    Map<Integer, AccumulatedData> accumulatedData = new HashMap<>();
     syncApi.streamCall(
         param,
         new ResultCallback<DashScopeResult>() {
           @Override
           public void onEvent(DashScopeResult msg) {
             ImageGenerationResult result = ImageGenerationResult.fromDashScopeResult(msg);
-            ImageGenerationResult mergedResult = mergeSingleResponse(result, toMergeResponse);
+            ImageGenerationResult mergedResult =
+                mergeSingleResponse(result, toMergeResponse, accumulatedData);
             if (mergedResult != null) {
               callback.onEvent(mergedResult);
             }
@@ -320,17 +318,13 @@ public final class ImageGeneration {
 
           @Override
           public void onComplete() {
-            if (toMergeResponse) {
-              StreamingMerger.clearAccumulatedData(accumulatedDataMap);
-            }
+            accumulatedData.clear();
             callback.onComplete();
           }
 
           @Override
           public void onError(Exception e) {
-            if (toMergeResponse) {
-              StreamingMerger.clearAccumulatedData(accumulatedDataMap);
-            }
+            accumulatedData.clear();
             callback.onError(e);
           }
         },
@@ -385,15 +379,16 @@ public final class ImageGeneration {
    *
    * @param result The ImageGenerationResult to merge
    * @param toMergeResponse Whether to perform merging (based on original incrementalOutput setting)
+   * @param accumulatedData The per-stream accumulated data
    * @return The merged ImageGenerationResult
    */
   private ImageGenerationResult mergeSingleResponse(
-      ImageGenerationResult result, boolean toMergeResponse) {
+      ImageGenerationResult result,
+      boolean toMergeResponse,
+      Map<Integer, AccumulatedData> accumulatedData) {
     if (!toMergeResponse || result == null || result.getOutput() == null) {
       return result;
     }
-
-    Map<Integer, AccumulatedData> accumulatedData = accumulatedDataMap.get();
 
     // Handle choices format: output.choices[].message.content
     if (result.getOutput().getChoices() != null) {
