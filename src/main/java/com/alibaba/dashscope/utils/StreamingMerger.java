@@ -55,6 +55,9 @@ public final class StreamingMerger {
 
   public static void mergeToolCalls(
       List<ToolCallBase> currentToolCalls, List<ToolCallBase> accumulatedToolCalls) {
+    if (currentToolCalls == null || accumulatedToolCalls == null) {
+      return;
+    }
     for (ToolCallBase currentCall : currentToolCalls) {
       if (currentCall == null || currentCall.getIndex() == null) {
         continue;
