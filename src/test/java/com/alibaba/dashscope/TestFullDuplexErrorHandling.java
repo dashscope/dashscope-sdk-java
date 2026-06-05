@@ -13,7 +13,6 @@ import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
-import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
@@ -42,15 +41,18 @@ import org.junitpioneer.jupiter.SetEnvironmentVariable;
 @Slf4j
 @SetEnvironmentVariable(key = "DASHSCOPE_API_KEY", value = "1234")
 public class TestFullDuplexErrorHandling {
-  private ApiServiceOption serviceOption =
-      ApiServiceOption.builder()
-          .protocol(Protocol.WEBSOCKET)
-          .streamingMode(StreamingMode.DUPLEX)
-          .outputMode(OutputMode.ACCUMULATE)
-          .taskGroup("group")
-          .task("task")
-          .function("function")
-          .build();
+  private ApiServiceOption createServiceOption(String baseWebSocketUrl) {
+    return ApiServiceOption.builder()
+        .protocol(Protocol.WEBSOCKET)
+        .streamingMode(StreamingMode.DUPLEX)
+        .outputMode(OutputMode.ACCUMULATE)
+        .taskGroup("group")
+        .task("task")
+        .function("function")
+        .baseWebSocketUrl(baseWebSocketUrl)
+        .build();
+  }
+
   MockWebServer server;
   WebSocketRecorder serverListener;
   int msgIndex = 0;
@@ -167,7 +169,8 @@ public class TestFullDuplexErrorHandling {
     serverListener = new WebSocketRecorder("server");
     server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
     int port = this.server.getPort() + 1; // address is invalid
-    Constants.baseWebsocketApiUrl = String.format("ws://127.0.0.1:%s/api-ws/v1/inference/", port);
+    ApiServiceOption serviceOption =
+        createServiceOption(String.format("ws://127.0.0.1:%s/api-ws/v1/inference/", port));
     FullDuplexTestParam param = getStreamMixParam();
     ApiException thrown =
         assertThrows(
@@ -192,7 +195,8 @@ public class TestFullDuplexErrorHandling {
     serverListener = new WebSocketRecorder("server");
     server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
     int port = this.server.getPort();
-    Constants.baseWebsocketApiUrl = String.format("ws://127.0.0.1:%s/api-ws/v1/inference/", port);
+    ApiServiceOption serviceOption =
+        createServiceOption(String.format("ws://127.0.0.1:%s/api-ws/v1/inference/", port));
     FullDuplexTestParam param = getStreamErrorData();
     Exception thrown =
         assertThrows(
@@ -208,7 +212,19 @@ public class TestFullDuplexErrorHandling {
             });
     log.error(thrown.getMessage());
     thrown.printStackTrace();
-    assertTrue(thrown.getMessage().contains("emitter on error"));
+    assertTrue(hasMessageInCauseChain(thrown, "emitter on error"));
+  }
+
+  private boolean hasMessageInCauseChain(Throwable throwable, String expectedMessage) {
+    Throwable currentThrowable = throwable;
+    while (currentThrowable != null) {
+      String message = currentThrowable.getMessage();
+      if (message != null && message.contains(expectedMessage)) {
+        return true;
+      }
+      currentThrowable = currentThrowable.getCause();
+    }
+    return false;
   }
 
   private FullDuplexTestParam getStreamDataWithNullStreamData() {
@@ -230,7 +246,8 @@ public class TestFullDuplexErrorHandling {
     serverListener = new WebSocketRecorder("server");
     server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
     int port = this.server.getPort();
-    Constants.baseWebsocketApiUrl = String.format("ws://127.0.0.1:%s/api-ws/v1/inference/", port);
+    ApiServiceOption serviceOption =
+        createServiceOption(String.format("ws://127.0.0.1:%s/api-ws/v1/inference/", port));
     FullDuplexTestParam param = getStreamDataWithNullStreamData();
     Exception thrown =
         assertThrows(
@@ -257,7 +274,8 @@ public class TestFullDuplexErrorHandling {
     serverListener = new WebSocketRecorder("server");
     server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
     int port = this.server.getPort();
-    Constants.baseWebsocketApiUrl = String.format("ws://127.0.0.1:%s/api-ws/v1/inference/", port);
+    ApiServiceOption serviceOption =
+        createServiceOption(String.format("ws://127.0.0.1:%s/api-ws/v1/inference/", port));
     FullDuplexTestParam param = getStreamTextParam();
     SynchronizeFullDuplexApi<FullDuplexTestParam> api =
         new SynchronizeFullDuplexApi<>(serviceOption);

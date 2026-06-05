@@ -5,6 +5,7 @@ package com.alibaba.dashscope.aigc.generation;
 import static com.alibaba.dashscope.utils.ApiKeywords.HISTORY;
 import static com.alibaba.dashscope.utils.ApiKeywords.MAX_TOKENS;
 import static com.alibaba.dashscope.utils.ApiKeywords.MESSAGES;
+import static com.alibaba.dashscope.utils.ApiKeywords.PRESENCE_PENALTY;
 import static com.alibaba.dashscope.utils.ApiKeywords.PROMPT;
 import static com.alibaba.dashscope.utils.ApiKeywords.REPETITION_PENALTY;
 import static com.alibaba.dashscope.utils.ApiKeywords.STOP;
@@ -97,7 +98,7 @@ public class GenerationParam extends GenerationParamBase {
    * apple
    * </pre>
    */
-  @Builder.Default private Boolean incrementalOutput;
+  @Builder.Default private Boolean incrementalOutput = null;
 
   /** Maximum tokens to generate. */
   private Integer maxTokens;
@@ -225,7 +226,7 @@ public class GenerationParam extends GenerationParamBase {
     }
 
     if (presencePenalty != null) {
-      params.put("presence_penalty", presencePenalty);
+      params.put(PRESENCE_PENALTY, presencePenalty);
     }
 
     if (frequencyPenalty != null) {
