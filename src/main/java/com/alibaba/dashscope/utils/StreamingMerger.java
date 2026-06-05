@@ -22,7 +22,11 @@ public final class StreamingMerger {
         continue;
       }
 
-      String textValue = (String) contentItem.get("text");
+      Object textObj = contentItem.get("text");
+      if (!(textObj instanceof String)) {
+        continue;
+      }
+      String textValue = (String) textObj;
       if (textValue == null || textValue.isEmpty()) {
         continue;
       }
