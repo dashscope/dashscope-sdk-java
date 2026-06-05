@@ -113,6 +113,7 @@ public final class TextReRank {
    */
   public void call(TextReRankParam param, ResultCallback<TextReRankResult> callback)
       throws ApiException, NoApiKeyException, InputRequiredException {
+    java.util.Objects.requireNonNull(callback, "callback must not be null");
     param.validate();
     ApiServiceOption callOption = copyServiceOption();
     callOption.setIsSSE(false);
