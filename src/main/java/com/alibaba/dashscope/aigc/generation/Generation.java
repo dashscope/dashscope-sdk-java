@@ -33,7 +33,6 @@ public final class Generation {
   private final SynchronizeHalfDuplexApi<HalfDuplexServiceParam> syncApi;
   private final ApiServiceOption serviceOption;
 
-
   public static class Models {
     /** @deprecated use QWEN_TURBO instead */
     @Deprecated public static final String QWEN_V1 = "qwen-v1";

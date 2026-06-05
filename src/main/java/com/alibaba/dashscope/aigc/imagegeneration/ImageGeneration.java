@@ -40,7 +40,6 @@ public final class ImageGeneration {
   private final ApiServiceOption serviceOption;
   private final String baseUrl;
 
-
   public static class Models {
     public static final String WanX2_6_T2I = "wan2.6-t2i";
     public static final String WanX2_6_IMAGE = "wan2.6-image";

@@ -38,7 +38,6 @@ public final class MultiModalConversation {
   private final SynchronizeHalfDuplexApi<MultiModalConversationParam> syncApi;
   private final ApiServiceOption serviceOption;
 
-
   public static class Models {
     public static final String QWEN_VL_CHAT_V1 = "qwen-vl-chat-v1";
     public static final String QWEN_VL_PLUS = "qwen-vl-plus";
