@@ -98,7 +98,7 @@ public class GenerationParam extends GenerationParamBase {
    * apple
    * </pre>
    */
-  @Builder.Default private Boolean incrementalOutput = null;
+  private Boolean incrementalOutput;
 
   /** Maximum tokens to generate. */
   private Integer maxTokens;
