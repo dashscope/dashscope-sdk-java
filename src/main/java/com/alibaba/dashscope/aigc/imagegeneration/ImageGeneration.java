@@ -271,7 +271,8 @@ public final class ImageGeneration {
           return syncApi
               .streamCall(param, callOption)
               .map(ImageGenerationResult::fromDashScopeResult)
-              .map(result -> mergeSingleResponse(result, toMergeResponse, accumulatedData));
+              .map(result -> mergeSingleResponse(result, toMergeResponse, accumulatedData))
+              .doFinally(accumulatedData::clear);
         });
   }
 

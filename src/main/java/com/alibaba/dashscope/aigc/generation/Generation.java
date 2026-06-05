@@ -201,7 +201,8 @@ public final class Generation {
                       return Flowable.empty();
                     }
                     return Flowable.just(merged);
-                  });
+                  })
+              .doFinally(accumulatedData::clear);
         });
   }
 

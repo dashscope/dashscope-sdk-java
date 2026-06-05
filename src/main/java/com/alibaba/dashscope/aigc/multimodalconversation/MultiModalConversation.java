@@ -188,7 +188,8 @@ public final class MultiModalConversation {
           return syncApi
               .streamCall(param, callOption)
               .map(MultiModalConversationResult::fromDashScopeResult)
-              .map(result -> mergeSingleResponse(result, toMergeResponse, accumulatedData));
+              .map(result -> mergeSingleResponse(result, toMergeResponse, accumulatedData))
+              .doFinally(accumulatedData::clear);
         });
   }
 
