@@ -11,37 +11,40 @@ public final class StreamingMerger {
 
   private StreamingMerger() {}
 
-  public static <T> void clearAccumulatedData(ThreadLocal<Map<Integer, T>> accumulatedDataMap) {
-    accumulatedDataMap.get().clear();
-    accumulatedDataMap.remove();
-  }
-
   public static void mergeTextContent(
       List<Map<String, Object>> currentContent, List<Map<String, Object>> accumulatedContent) {
-    for (Map<String, Object> contentItem : currentContent) {
-      if (contentItem.containsKey("text")) {
-        String textValue = (String) contentItem.get("text");
-        if (textValue != null && !textValue.isEmpty()) {
-          Map<String, Object> accumulatedTextItem = null;
-          for (Map<String, Object> accItem : accumulatedContent) {
-            if (accItem.containsKey("text")) {
-              accumulatedTextItem = accItem;
-              break;
-            }
-          }
+    if (currentContent == null || accumulatedContent == null) {
+      return;
+    }
 
-          if (accumulatedTextItem == null) {
-            accumulatedTextItem = new HashMap<>();
-            accumulatedTextItem.put("text", textValue);
-            accumulatedContent.add(accumulatedTextItem);
-          } else {
-            String existingText = (String) accumulatedTextItem.get("text");
-            if (existingText == null) {
-              existingText = "";
-            }
-            accumulatedTextItem.put("text", existingText + textValue);
-          }
+    for (Map<String, Object> contentItem : currentContent) {
+      if (contentItem == null || !contentItem.containsKey("text")) {
+        continue;
+      }
+
+      String textValue = (String) contentItem.get("text");
+      if (textValue == null || textValue.isEmpty()) {
+        continue;
+      }
+
+      Map<String, Object> accumulatedTextItem = null;
+      for (Map<String, Object> accumulatedItem : accumulatedContent) {
+        if (accumulatedItem != null && accumulatedItem.containsKey("text")) {
+          accumulatedTextItem = accumulatedItem;
+          break;
         }
+      }
+
+      if (accumulatedTextItem == null) {
+        accumulatedTextItem = new HashMap<>();
+        accumulatedTextItem.put("text", textValue);
+        accumulatedContent.add(accumulatedTextItem);
+      } else {
+        String existingText = (String) accumulatedTextItem.get("text");
+        if (existingText == null) {
+          existingText = "";
+        }
+        accumulatedTextItem.put("text", existingText + textValue);
       }
     }
   }

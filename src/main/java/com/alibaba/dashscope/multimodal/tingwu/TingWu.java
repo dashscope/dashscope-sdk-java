@@ -29,6 +29,22 @@ public final class TingWu {
         .build();
   }
 
+  /** Creates a copy of the shared serviceOption for thread-safe per-call usage. */
+  private ApiServiceOption copyServiceOption() {
+    return ApiServiceOption.builder()
+        .protocol(serviceOption.getProtocol())
+        .httpMethod(serviceOption.getHttpMethod())
+        .streamingMode(serviceOption.getStreamingMode())
+        .outputMode(serviceOption.getOutputMode())
+        .taskGroup(serviceOption.getTaskGroup())
+        .task(serviceOption.getTask())
+        .function(serviceOption.getFunction())
+        .isService(false)
+        .baseHttpUrl(serviceOption.getBaseHttpUrl())
+        .baseWebSocketUrl(serviceOption.getBaseWebSocketUrl())
+        .build();
+  }
+
   public TingWu() {
     serviceOption = defaultApiServiceOption();
     syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
@@ -66,8 +82,9 @@ public final class TingWu {
   public DashScopeResult call(HalfDuplexServiceParam param)
       throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
-    serviceOption.setIsSSE(false);
-    return syncApi.call(param);
+    ApiServiceOption callOption = copyServiceOption();
+    callOption.setIsSSE(false);
+    return syncApi.call(param, callOption);
   }
 
   /**
@@ -82,6 +99,8 @@ public final class TingWu {
   public void call(HalfDuplexServiceParam param, ResultCallback<DashScopeResult> callback)
       throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
-    syncApi.call(param, callback);
+    ApiServiceOption callOption = copyServiceOption();
+    callOption.setIsSSE(false);
+    syncApi.call(param, callback, callOption);
   }
 }
