@@ -7,6 +7,7 @@ import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.common.Function;
 import com.alibaba.dashscope.common.OutputMode;
 import com.alibaba.dashscope.common.ResultCallback;
+import com.alibaba.dashscope.common.SearchInfo;
 import com.alibaba.dashscope.common.Task;
 import com.alibaba.dashscope.common.TaskGroup;
 import com.alibaba.dashscope.exception.ApiException;
@@ -329,6 +330,12 @@ public final class Generation {
         // Initialize accumulated data for this choice index if not exists
         AccumulatedData accumulated =
             accumulatedData.computeIfAbsent(choiceIndex, k -> new AccumulatedData());
+        if (choice.getSearchInfo() != null) {
+          accumulated.searchInfo = choice.getSearchInfo();
+        }
+        if (accumulated.searchInfo != null) {
+          choice.setSearchInfo(accumulated.searchInfo);
+        }
 
         if (choice.getMessage() != null) {
           // Save role if present
@@ -480,6 +487,9 @@ public final class Generation {
                 message.setToolCalls(completeToolCalls);
               }
               finalChoice.setMessage(message);
+              if (data.searchInfo != null) {
+                finalChoice.setSearchInfo(data.searchInfo);
+              }
               if (!data.logprobsContent.isEmpty()) {
                 GenerationLogprobs logprobs = new GenerationLogprobs();
                 logprobs.setContent(new ArrayList<>(data.logprobsContent));
@@ -535,9 +545,15 @@ public final class Generation {
       if (currentText != null && !currentText.isEmpty()) {
         accumulated.content.append(currentText);
       }
+      if (result.getOutput().getSearchInfo() != null) {
+        accumulated.searchInfo = result.getOutput().getSearchInfo();
+      }
       // Always set the accumulated content if we have any
       if (accumulated.content.length() > 0) {
         result.getOutput().setText(accumulated.content.toString());
+      }
+      if (accumulated.searchInfo != null) {
+        result.getOutput().setSearchInfo(accumulated.searchInfo);
       }
     }
 
@@ -555,5 +571,6 @@ public final class Generation {
     boolean allChoicesSent = false;
     String role = null;
     Integer outputTokens = null;
+    SearchInfo searchInfo = null;
   }
 }
