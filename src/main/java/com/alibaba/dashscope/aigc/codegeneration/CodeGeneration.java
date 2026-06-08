@@ -1,16 +1,26 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.aigc.codegeneration;
 
 import com.alibaba.dashscope.api.SynchronizeHalfDuplexApi;
-import com.alibaba.dashscope.common.*;
+import com.alibaba.dashscope.common.DashScopeResult;
+import com.alibaba.dashscope.common.Function;
+import com.alibaba.dashscope.common.OutputMode;
+import com.alibaba.dashscope.common.ResultCallback;
+import com.alibaba.dashscope.common.Task;
+import com.alibaba.dashscope.common.TaskGroup;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
-import com.alibaba.dashscope.protocol.*;
+import com.alibaba.dashscope.protocol.ApiServiceOption;
+import com.alibaba.dashscope.protocol.ConnectionOptions;
+import com.alibaba.dashscope.protocol.HttpMethod;
+import com.alibaba.dashscope.protocol.Protocol;
+import com.alibaba.dashscope.protocol.StreamingMode;
 import io.reactivex.Flowable;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class CodeGeneration {
+public final class CodeGeneration {
   private final SynchronizeHalfDuplexApi<CodeGenerationParam> syncApi;
   private final ApiServiceOption serviceOption;
 

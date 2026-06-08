@@ -1,6 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.aigc.generation;
 
+import com.alibaba.dashscope.common.Plugins;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
@@ -33,23 +34,6 @@ public final class GenerationUsage {
 
     @SerializedName("cache_creation")
     private CacheCreation cacheCreation;
-  }
-
-  @Data
-  @SuperBuilder
-  public static class Plugins {
-
-    @Data
-    public static class Search {
-      @SerializedName("count")
-      private Integer count;
-
-      @SerializedName("strategy")
-      private String strategy;
-    }
-
-    @SerializedName("search")
-    private Search search;
   }
 
   @SerializedName("input_tokens")

@@ -2,17 +2,28 @@
 package com.alibaba.dashscope.aigc.multimodalconversation;
 
 import com.alibaba.dashscope.api.SynchronizeHalfDuplexApi;
-import com.alibaba.dashscope.common.*;
+import com.alibaba.dashscope.common.DashScopeResult;
+import com.alibaba.dashscope.common.Function;
+import com.alibaba.dashscope.common.MultiModalMessage;
+import com.alibaba.dashscope.common.OutputMode;
+import com.alibaba.dashscope.common.ResultCallback;
+import com.alibaba.dashscope.common.Role;
+import com.alibaba.dashscope.common.Task;
+import com.alibaba.dashscope.common.TaskGroup;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.exception.UploadFileException;
-import com.alibaba.dashscope.protocol.*;
+import com.alibaba.dashscope.protocol.ApiServiceOption;
+import com.alibaba.dashscope.protocol.ConnectionOptions;
+import com.alibaba.dashscope.protocol.HttpMethod;
+import com.alibaba.dashscope.protocol.Protocol;
+import com.alibaba.dashscope.protocol.StreamingMode;
 import com.alibaba.dashscope.tools.ToolCallBase;
-import com.alibaba.dashscope.tools.ToolCallFunction;
 import com.alibaba.dashscope.utils.OSSUploadCertificate;
 import com.alibaba.dashscope.utils.ParamUtils;
 import com.alibaba.dashscope.utils.PreprocessMessageInput;
+import com.alibaba.dashscope.utils.StreamingMerger;
 import com.alibaba.dashscope.utils.StringUtils;
 import io.reactivex.Flowable;
 import java.util.ArrayList;
@@ -26,9 +37,6 @@ public final class MultiModalConversation {
   /* Auto history messages */
   private final SynchronizeHalfDuplexApi<MultiModalConversationParam> syncApi;
   private final ApiServiceOption serviceOption;
-
-  private final ThreadLocal<Map<Integer, AccumulatedData>> accumulatedDataMap =
-      ThreadLocal.withInitial(HashMap::new);
 
   public static class Models {
     public static final String QWEN_VL_CHAT_V1 = "qwen-vl-chat-v1";
@@ -44,6 +52,21 @@ public final class MultiModalConversation {
         .taskGroup(TaskGroup.AIGC.getValue())
         .task(Task.MULTIMODAL_GENERATION.getValue())
         .function(Function.GENERATION.getValue())
+        .build();
+  }
+
+  /** Creates a copy of the shared serviceOption for thread-safe per-call usage. */
+  private ApiServiceOption copyServiceOption() {
+    return ApiServiceOption.builder()
+        .protocol(serviceOption.getProtocol())
+        .httpMethod(serviceOption.getHttpMethod())
+        .streamingMode(serviceOption.getStreamingMode())
+        .outputMode(serviceOption.getOutputMode())
+        .taskGroup(serviceOption.getTaskGroup())
+        .task(serviceOption.getTask())
+        .function(serviceOption.getFunction())
+        .baseHttpUrl(serviceOption.getBaseHttpUrl())
+        .baseWebSocketUrl(serviceOption.getBaseWebSocketUrl())
         .build();
   }
 
@@ -90,10 +113,11 @@ public final class MultiModalConversation {
    */
   public MultiModalConversationResult call(MultiModalConversationParam param)
       throws ApiException, NoApiKeyException, UploadFileException {
-    serviceOption.setIsSSE(false);
-    serviceOption.setStreamingMode(StreamingMode.NONE);
+    ApiServiceOption callOption = copyServiceOption();
+    callOption.setIsSSE(false);
+    callOption.setStreamingMode(StreamingMode.NONE);
     preprocessInput(param);
-    return MultiModalConversationResult.fromDashScopeResult(syncApi.call(param));
+    return MultiModalConversationResult.fromDashScopeResult(syncApi.call(param, callOption));
   }
 
   /**
@@ -109,8 +133,9 @@ public final class MultiModalConversation {
   public void call(
       MultiModalConversationParam param, ResultCallback<MultiModalConversationResult> callback)
       throws ApiException, NoApiKeyException, UploadFileException {
-    serviceOption.setIsSSE(false);
-    serviceOption.setStreamingMode(StreamingMode.NONE);
+    ApiServiceOption callOption = copyServiceOption();
+    callOption.setIsSSE(false);
+    callOption.setStreamingMode(StreamingMode.NONE);
     preprocessInput(param);
     syncApi.call(
         param,
@@ -129,7 +154,8 @@ public final class MultiModalConversation {
           public void onError(Exception e) {
             callback.onError(e);
           }
-        });
+        },
+        callOption);
   }
 
   /**
@@ -151,25 +177,19 @@ public final class MultiModalConversation {
     String userAgentSuffix = StringUtils.format("incremental_to_full/%d", flagValue);
     param.putHeader("user-agent", userAgentSuffix);
 
-    serviceOption.setIsSSE(true);
-    serviceOption.setStreamingMode(StreamingMode.OUT);
+    ApiServiceOption callOption = copyServiceOption();
+    callOption.setIsSSE(true);
+    callOption.setStreamingMode(StreamingMode.OUT);
     preprocessInput(param);
-    return syncApi
-        .streamCall(param)
-        .map(MultiModalConversationResult::fromDashScopeResult)
-        .map(result -> mergeSingleResponse(result, toMergeResponse))
-        .doOnComplete(
-            () -> {
-              if (toMergeResponse) {
-                clearAccumulatedData();
-              }
-            })
-        .doOnError(
-            throwable -> {
-              if (toMergeResponse) {
-                clearAccumulatedData();
-              }
-            });
+    return Flowable.defer(
+        () -> {
+          Map<Integer, AccumulatedData> accumulatedData = new HashMap<>();
+          return syncApi
+              .streamCall(param, callOption)
+              .map(MultiModalConversationResult::fromDashScopeResult)
+              .map(result -> mergeSingleResponse(result, toMergeResponse, accumulatedData))
+              .doFinally(accumulatedData::clear);
+        });
   }
 
   /**
@@ -195,9 +215,11 @@ public final class MultiModalConversation {
     String userAgentSuffix = StringUtils.format("incremental_to_full/%d", flagValue);
     param.putHeader("user-agent", userAgentSuffix);
 
-    serviceOption.setIsSSE(true);
-    serviceOption.setStreamingMode(StreamingMode.OUT);
+    ApiServiceOption callOption = copyServiceOption();
+    callOption.setIsSSE(true);
+    callOption.setStreamingMode(StreamingMode.OUT);
     preprocessInput(param);
+    Map<Integer, AccumulatedData> accumulatedData = new HashMap<>();
     syncApi.streamCall(
         param,
         new ResultCallback<DashScopeResult>() {
@@ -206,26 +228,25 @@ public final class MultiModalConversation {
             MultiModalConversationResult result =
                 MultiModalConversationResult.fromDashScopeResult(msg);
             MultiModalConversationResult mergedResult =
-                mergeSingleResponse(result, toMergeResponse);
-            callback.onEvent(mergedResult);
+                mergeSingleResponse(result, toMergeResponse, accumulatedData);
+            if (mergedResult != null) {
+              callback.onEvent(mergedResult);
+            }
           }
 
           @Override
           public void onComplete() {
-            if (toMergeResponse) {
-              clearAccumulatedData();
-            }
+            accumulatedData.clear();
             callback.onComplete();
           }
 
           @Override
           public void onError(Exception e) {
-            if (toMergeResponse) {
-              clearAccumulatedData();
-            }
+            accumulatedData.clear();
             callback.onError(e);
           }
-        });
+        },
+        callOption);
   }
 
   private void preprocessInput(MultiModalConversationParam param)
@@ -291,15 +312,16 @@ public final class MultiModalConversation {
    *
    * @param result The MultiModalConversationResult to merge
    * @param toMergeResponse Whether to perform merging (based on original incrementalOutput setting)
+   * @param accumulatedData The per-stream accumulated data
    * @return The merged MultiModalConversationResult
    */
   private MultiModalConversationResult mergeSingleResponse(
-      MultiModalConversationResult result, boolean toMergeResponse) {
+      MultiModalConversationResult result,
+      boolean toMergeResponse,
+      Map<Integer, AccumulatedData> accumulatedData) {
     if (!toMergeResponse || result == null || result.getOutput() == null) {
       return result;
     }
-
-    Map<Integer, AccumulatedData> accumulatedData = accumulatedDataMap.get();
 
     // Handle choices format: output.choices[].message.content
     if (result.getOutput().getChoices() != null) {
@@ -315,11 +337,11 @@ public final class MultiModalConversation {
           // Handle content accumulation (text content in content list)
           List<Map<String, Object>> currentContent = choice.getMessage().getContent();
           if (currentContent != null && !currentContent.isEmpty()) {
-            mergeTextContent(currentContent, accumulated);
+            StreamingMerger.mergeTextContent(currentContent, accumulated.content);
           }
           // Always set the accumulated content if we have any
           if (!accumulated.content.isEmpty()) {
-            choice.getMessage().setContent(accumulated.content);
+            choice.getMessage().setContent(StreamingMerger.copyContent(accumulated.content));
           }
 
           // Handle reasoning_content accumulation
@@ -332,10 +354,10 @@ public final class MultiModalConversation {
             choice.getMessage().setReasoningContent(accumulated.reasoningContent.toString());
           }
 
-          // Handle tool_calls accumulation
+          // Handle tool_calls accumulation (delegate to shared utility)
           List<ToolCallBase> currentToolCalls = choice.getMessage().getToolCalls();
           if (currentToolCalls != null && !currentToolCalls.isEmpty()) {
-            mergeToolCalls(currentToolCalls, accumulated.toolCalls);
+            StreamingMerger.mergeToolCalls(currentToolCalls, accumulated.toolCalls);
           }
           // Always set accumulated tool_calls if we have any
           if (!accumulated.toolCalls.isEmpty()) {
@@ -346,147 +368,6 @@ public final class MultiModalConversation {
     }
 
     return result;
-  }
-
-  /**
-   * Merges text content from current response with accumulated content. For MultiModal, content is
-   * a List<Map<String, Object>> where text content is in maps with "text" key.
-   */
-  private void mergeTextContent(
-      List<Map<String, Object>> currentContent, AccumulatedData accumulated) {
-    for (Map<String, Object> contentItem : currentContent) {
-      if (contentItem.containsKey("text")) {
-        String textValue = (String) contentItem.get("text");
-        if (textValue != null && !textValue.isEmpty()) {
-          // Find or create text content item in accumulated content
-          Map<String, Object> accumulatedTextItem = null;
-          for (Map<String, Object> accItem : accumulated.content) {
-            if (accItem.containsKey("text")) {
-              accumulatedTextItem = accItem;
-              break;
-            }
-          }
-
-          if (accumulatedTextItem == null) {
-            // Create new text content item
-            accumulatedTextItem = new HashMap<>();
-            accumulatedTextItem.put("text", textValue);
-            accumulated.content.add(accumulatedTextItem);
-          } else {
-            // Append to existing text content
-            String existingText = (String) accumulatedTextItem.get("text");
-            if (existingText == null) {
-              existingText = "";
-            }
-            accumulatedTextItem.put("text", existingText + textValue);
-          }
-        }
-      }
-    }
-  }
-
-  /** Merges tool calls from current response with accumulated tool calls. */
-  private void mergeToolCalls(
-      List<ToolCallBase> currentToolCalls, List<ToolCallBase> accumulatedToolCalls) {
-    for (ToolCallBase currentCall : currentToolCalls) {
-      if (currentCall == null || currentCall.getIndex() == null) {
-        continue;
-      }
-
-      int index = currentCall.getIndex();
-
-      // Find existing accumulated call with same index
-      ToolCallBase existingCall = null;
-      for (ToolCallBase accCall : accumulatedToolCalls) {
-        if (accCall != null && accCall.getIndex() != null && accCall.getIndex().equals(index)) {
-          existingCall = accCall;
-          break;
-        }
-      }
-
-      if (existingCall instanceof ToolCallFunction && currentCall instanceof ToolCallFunction) {
-        // Merge function calls
-        ToolCallFunction existingFunctionCall = (ToolCallFunction) existingCall;
-        ToolCallFunction currentFunctionCall = (ToolCallFunction) currentCall;
-
-        if (currentFunctionCall.getFunction() != null) {
-          // Ensure existing function call has a function object
-          if (existingFunctionCall.getFunction() == null) {
-            existingFunctionCall.setFunction(existingFunctionCall.new CallFunction());
-          }
-
-          // Accumulate arguments if present
-          if (currentFunctionCall.getFunction().getArguments() != null) {
-            String existingArguments = existingFunctionCall.getFunction().getArguments();
-            if (existingArguments == null) {
-              existingArguments = "";
-            }
-            String currentArguments = currentFunctionCall.getFunction().getArguments();
-            existingFunctionCall.getFunction().setArguments(existingArguments + currentArguments);
-          }
-
-          // Accumulate function name if present
-          if (currentFunctionCall.getFunction().getName() != null) {
-            String existingName = existingFunctionCall.getFunction().getName();
-            if (existingName == null) {
-              existingName = "";
-            }
-            String currentName = currentFunctionCall.getFunction().getName();
-            existingFunctionCall.getFunction().setName(existingName + currentName);
-          }
-
-          // Update function output if present
-          if (currentFunctionCall.getFunction().getOutput() != null) {
-            existingFunctionCall
-                .getFunction()
-                .setOutput(currentFunctionCall.getFunction().getOutput());
-          }
-        }
-
-        // Update other fields with latest non-empty values
-        if (currentFunctionCall.getIndex() != null) {
-          existingFunctionCall.setIndex(currentFunctionCall.getIndex());
-        }
-        if (currentFunctionCall.getId() != null && !currentFunctionCall.getId().isEmpty()) {
-          existingFunctionCall.setId(currentFunctionCall.getId());
-        }
-        if (currentFunctionCall.getType() != null) {
-          existingFunctionCall.setType(currentFunctionCall.getType());
-        }
-      } else {
-        // Add new tool call (create a copy)
-        if (currentCall instanceof ToolCallFunction) {
-          ToolCallFunction currentFunctionCall = (ToolCallFunction) currentCall;
-          ToolCallFunction newFunctionCall = new ToolCallFunction();
-          newFunctionCall.setIndex(currentFunctionCall.getIndex());
-          newFunctionCall.setId(currentFunctionCall.getId());
-          newFunctionCall.setType(currentFunctionCall.getType());
-
-          if (currentFunctionCall.getFunction() != null) {
-            ToolCallFunction.CallFunction newCallFunction = newFunctionCall.new CallFunction();
-            newCallFunction.setName(currentFunctionCall.getFunction().getName());
-            newCallFunction.setArguments(currentFunctionCall.getFunction().getArguments());
-            newCallFunction.setOutput(currentFunctionCall.getFunction().getOutput());
-            newFunctionCall.setFunction(newCallFunction);
-          }
-
-          accumulatedToolCalls.add(newFunctionCall);
-        } else {
-          // For other types of tool calls, add directly (assuming they are immutable or don't need
-          // merging)
-          accumulatedToolCalls.add(currentCall);
-        }
-      }
-    }
-  }
-
-  /**
-   * Clears accumulated data for the current thread. Should be called when streaming is complete or
-   * encounters error.
-   */
-  private void clearAccumulatedData() {
-    accumulatedDataMap.get().clear();
-    accumulatedDataMap.remove();
   }
 
   /** Inner class to store accumulated data for response merging. */
