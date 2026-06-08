@@ -405,19 +405,22 @@ public final class Generation {
         }
       }
 
-      // Store output_tokens for each choice when n > 1.
-      // Each streaming packet contains usage info for one specific choice.
+      // Store usage for each choice when n > 1.
+      // A streaming packet may contain either one choice or multiple choices.
       if (n > 1
           && result.getUsage() != null
           && result.getUsage().getOutputTokens() != null
           && !choices.isEmpty()) {
-        Integer choiceIndex = choices.get(0).getIndex();
-        if (choiceIndex == null) {
-          choiceIndex = 0;
-        }
-        AccumulatedData accumulated = accumulatedData.get(choiceIndex);
-        if (accumulated != null) {
-          accumulated.outputTokens = result.getUsage().getOutputTokens();
+        for (GenerationOutput.Choice choice : choices) {
+          Integer choiceIndex = choice.getIndex();
+          if (choiceIndex == null) {
+            choiceIndex = 0;
+          }
+          AccumulatedData accumulated = accumulatedData.get(choiceIndex);
+          if (accumulated != null) {
+            accumulated.outputTokens = result.getUsage().getOutputTokens();
+            accumulated.totalTokens = result.getUsage().getTotalTokens();
+          }
         }
         applyAccumulatedUsage(result, accumulatedData);
       }
@@ -466,6 +469,7 @@ public final class Generation {
             GenerationOutput output = result.getOutput();
             List<GenerationOutput.Choice> allChoices = new ArrayList<>();
             int totalOutputTokens = 0;
+            int totalTokens = 0;
             for (Map.Entry<Integer, AccumulatedData> entry : accumulatedData.entrySet()) {
               Integer index = entry.getKey();
               AccumulatedData data = entry.getValue();
@@ -499,11 +503,16 @@ public final class Generation {
               if (data.outputTokens != null) {
                 totalOutputTokens += data.outputTokens;
               }
+              if (data.totalTokens != null) {
+                totalTokens += data.totalTokens;
+              }
             }
             output.setChoices(allChoices);
             if (result.getUsage() != null && totalOutputTokens > 0) {
               result.getUsage().setOutputTokens(totalOutputTokens);
-              if (result.getUsage().getInputTokens() != null) {
+              if (totalTokens > 0) {
+                result.getUsage().setTotalTokens(totalTokens);
+              } else if (result.getUsage().getInputTokens() != null) {
                 result
                     .getUsage()
                     .setTotalTokens(result.getUsage().getInputTokens() + totalOutputTokens);
@@ -595,9 +604,13 @@ public final class Generation {
     }
 
     int totalOutputTokens = 0;
+    int totalTokens = 0;
     for (AccumulatedData data : accumulatedData.values()) {
       if (data.outputTokens != null) {
         totalOutputTokens += data.outputTokens;
+      }
+      if (data.totalTokens != null) {
+        totalTokens += data.totalTokens;
       }
     }
     if (totalOutputTokens <= 0) {
@@ -605,7 +618,9 @@ public final class Generation {
     }
 
     result.getUsage().setOutputTokens(totalOutputTokens);
-    if (result.getUsage().getInputTokens() != null) {
+    if (totalTokens > 0) {
+      result.getUsage().setTotalTokens(totalTokens);
+    } else if (result.getUsage().getInputTokens() != null) {
       result.getUsage().setTotalTokens(result.getUsage().getInputTokens() + totalOutputTokens);
     }
   }
@@ -621,6 +636,7 @@ public final class Generation {
     boolean allChoicesSent = false;
     String role = null;
     Integer outputTokens = null;
+    Integer totalTokens = null;
     SearchInfo searchInfo = null;
   }
 }

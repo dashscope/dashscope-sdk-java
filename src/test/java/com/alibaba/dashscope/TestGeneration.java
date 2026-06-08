@@ -358,10 +358,41 @@ public class TestGeneration {
     server.takeRequest();
     assertEquals(2, results.size());
     assertEquals(16, results.get(0).getUsage().getOutputTokens().intValue());
+    assertEquals(258, results.get(0).getUsage().getTotalTokens().intValue());
     assertEquals(31, results.get(1).getUsage().getOutputTokens().intValue());
+    assertEquals(515, results.get(1).getUsage().getTotalTokens().intValue());
     assertTrue(
         results.get(1).getUsage().getOutputTokens()
             >= results.get(0).getUsage().getOutputTokens());
+  }
+
+  @Test
+  public void testHttpStreamAccumulatesUsageForMultipleChoicesInSamePacket()
+      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+          InputRequiredException {
+    TestResponse response = buildMultiChoiceStreamResponse(131, 13, "request-1");
+    server.enqueue(
+        new MockResponse()
+            .setBody("data: " + JsonUtils.toJson(response) + "\n\n")
+            .setHeader("content-type", MEDIA_TYPE_EVENT_STREAM));
+
+    Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", server.getPort());
+    QwenParam param =
+        QwenParam.builder()
+            .model(Generation.Models.QWEN_TURBO)
+            .prompt("test")
+            .resultFormat(QwenParam.ResultFormat.MESSAGE)
+            .incrementalOutput(false)
+            .n(2)
+            .build();
+    Generation generation = new Generation();
+
+    List<GenerationResult> results = generation.streamCall(param).toList().blockingGet();
+
+    server.takeRequest();
+    assertEquals(1, results.size());
+    assertEquals(262, results.get(0).getUsage().getOutputTokens().intValue());
+    assertEquals(288, results.get(0).getUsage().getTotalTokens().intValue());
   }
 
   private TestResponse buildLegacyStreamResponse(
@@ -424,6 +455,36 @@ public class TestGeneration {
 
     JsonArray choices = new JsonArray();
     choices.add(choice);
+
+    JsonObject streamOutput = new JsonObject();
+    streamOutput.add("choices", choices);
+
+    JsonObject streamUsage = new JsonObject();
+    streamUsage.addProperty("input_tokens", inputTokens);
+    streamUsage.addProperty("output_tokens", outputTokens);
+    streamUsage.addProperty("total_tokens", inputTokens + outputTokens);
+
+    return TestResponse.builder()
+        .requestId(responseRequestId)
+        .output(streamOutput)
+        .usage(streamUsage)
+        .build();
+  }
+
+  private TestResponse buildMultiChoiceStreamResponse(
+      int outputTokens, int inputTokens, String responseRequestId) {
+    JsonArray choices = new JsonArray();
+    for (int choiceIndex = 0; choiceIndex < 2; choiceIndex++) {
+      JsonObject message = new JsonObject();
+      message.addProperty("role", "assistant");
+      message.addProperty("content", "choice " + choiceIndex);
+
+      JsonObject choice = new JsonObject();
+      choice.addProperty("finish_reason", "stop");
+      choice.addProperty("index", choiceIndex);
+      choice.add("message", message);
+      choices.add(choice);
+    }
 
     JsonObject streamOutput = new JsonObject();
     streamOutput.add("choices", choices);
