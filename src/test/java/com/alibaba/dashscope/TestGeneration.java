@@ -16,6 +16,7 @@ import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.reactivex.Flowable;
 import io.reactivex.functions.Action;
@@ -54,7 +55,7 @@ public class TestGeneration {
   private String expectTextBody =
       "{\"model\":\"qwen-turbo\",\"input\":{\"prompt\":\"如何做土豆炖猪脚?\"},\"parameters\":{\"top_p\":0.8}}";
   private String expectTextBodyOutputMessage =
-      "{\"model\":\"qwen-turbo\",\"input\":{\"prompt\":\"如何做土豆炖猪脚?\"},\"parameters\":{\"top_p\":0.8,\"result_format\":\"message\",\"enable_search\":true}}";
+      "{\"model\":\"qwen-turbo\",\"input\":{\"prompt\":\"如何做土豆炖猪脚?\"},\"parameters\":{\"top_p\":0.8,\"search_options\":{\"enable_source\":true,\"enable_citation\":false,\"forced_search\":false},\"result_format\":\"message\",\"enable_search\":true}}";
 
   @BeforeEach
   public void before() {
@@ -264,6 +265,179 @@ public class TestGeneration {
         });
     semaphore.acquire();
     checkResult(results.get(0), server.takeRequest(), expectTextBodyOutputMessage);
+  }
+
+  @Test
+  public void testHttpStreamWaitsForSearchInfoAfterTextFinished()
+      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+          InputRequiredException {
+    TestResponse textResponse =
+        buildLegacyStreamResponse("杭州明天多云[ref_1]", "stop", null, 57, 2411, "request-search");
+    addSearchPluginUsage(textResponse);
+    JsonObject searchInfo = new JsonObject();
+    JsonArray searchResults = new JsonArray();
+    JsonObject searchResult = new JsonObject();
+    searchResult.addProperty("site_name", "weather.example.com");
+    searchResult.addProperty("icon", "");
+    searchResult.addProperty("index", 1);
+    searchResult.addProperty("title", "杭州天气");
+    searchResult.addProperty("url", "https://weather.example.com/hangzhou");
+    searchResults.add(searchResult);
+    searchInfo.add("search_results", searchResults);
+    TestResponse searchInfoResponse =
+        buildLegacyStreamResponse(null, null, searchInfo, 57, 2411, "request-search");
+    addSearchPluginUsage(searchInfoResponse);
+
+    server.enqueue(
+        new MockResponse()
+            .setBody(
+                "data: "
+                    + JsonUtils.toJson(textResponse)
+                    + "\n\n"
+                    + "data: "
+                    + JsonUtils.toJson(searchInfoResponse)
+                    + "\n\n")
+            .setHeader("content-type", MEDIA_TYPE_EVENT_STREAM)
+            .setHeader("x-dashscope-finished", "false"));
+
+    Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", server.getPort());
+    QwenParam param =
+        QwenParam.builder()
+            .model(Generation.Models.QWEN_TURBO)
+            .prompt("杭州明天天气")
+            .resultFormat(QwenParam.ResultFormat.TEXT)
+            .enableSearch(true)
+            .incrementalOutput(false)
+            .build();
+    Generation generation = new Generation();
+
+    List<GenerationResult> results = generation.streamCall(param).toList().blockingGet();
+
+    server.takeRequest();
+    assertEquals(1, results.size());
+    assertEquals("杭州明天多云[ref_1]", results.get(0).getOutput().getText());
+    assertEquals("stop", results.get(0).getOutput().getFinishReason());
+    assertTrue(results.get(0).getOutput().getSearchInfo() != null);
+    assertEquals(
+        "杭州天气",
+        results.get(0).getOutput().getSearchInfo().getSearchResults().get(0).getTitle());
+  }
+
+  @Test
+  public void testHttpStreamOutputTokensNeverDecreaseForMultipleChoices()
+      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+          InputRequiredException {
+    TestResponse firstChoiceResponse =
+        buildChoiceStreamResponse(0, "first choice", null, 16, 242, "request-1");
+    TestResponse secondChoiceResponse =
+        buildChoiceStreamResponse(1, "second choice", null, 15, 242, "request-1");
+    server.enqueue(
+        new MockResponse()
+            .setBody(
+                "data: "
+                    + JsonUtils.toJson(firstChoiceResponse)
+                    + "\n\n"
+                    + "data: "
+                    + JsonUtils.toJson(secondChoiceResponse)
+                    + "\n\n")
+            .setHeader("content-type", MEDIA_TYPE_EVENT_STREAM));
+
+    Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", server.getPort());
+    QwenParam param =
+        QwenParam.builder()
+            .model(Generation.Models.QWEN_TURBO)
+            .prompt("test")
+            .resultFormat(QwenParam.ResultFormat.MESSAGE)
+            .incrementalOutput(false)
+            .n(2)
+            .build();
+    Generation generation = new Generation();
+
+    List<GenerationResult> results = generation.streamCall(param).toList().blockingGet();
+
+    server.takeRequest();
+    assertEquals(2, results.size());
+    assertEquals(16, results.get(0).getUsage().getOutputTokens().intValue());
+    assertEquals(31, results.get(1).getUsage().getOutputTokens().intValue());
+    assertTrue(
+        results.get(1).getUsage().getOutputTokens()
+            >= results.get(0).getUsage().getOutputTokens());
+  }
+
+  private TestResponse buildLegacyStreamResponse(
+      String text,
+      String finishReason,
+      JsonObject searchInfo,
+      int outputTokens,
+      int inputTokens,
+      String responseRequestId) {
+    JsonObject streamOutput = new JsonObject();
+    if (text != null) {
+      streamOutput.addProperty("text", text);
+    }
+    if (finishReason != null) {
+      streamOutput.addProperty("finish_reason", finishReason);
+    }
+    if (searchInfo != null) {
+      streamOutput.add("search_info", searchInfo);
+    }
+
+    JsonObject streamUsage = new JsonObject();
+    streamUsage.addProperty("input_tokens", inputTokens);
+    streamUsage.addProperty("output_tokens", outputTokens);
+    streamUsage.addProperty("total_tokens", inputTokens + outputTokens);
+
+    return TestResponse.builder()
+        .requestId(responseRequestId)
+        .output(streamOutput)
+        .usage(streamUsage)
+        .build();
+  }
+
+  private void addSearchPluginUsage(TestResponse response) {
+    JsonObject search = new JsonObject();
+    search.addProperty("count", 1);
+    search.addProperty("strategy", "pro_max");
+
+    JsonObject plugins = new JsonObject();
+    plugins.add("search", search);
+    response.getUsage().add("plugins", plugins);
+  }
+
+  private TestResponse buildChoiceStreamResponse(
+      int choiceIndex,
+      String content,
+      String finishReason,
+      int outputTokens,
+      int inputTokens,
+      String responseRequestId) {
+    JsonObject message = new JsonObject();
+    message.addProperty("role", "assistant");
+    message.addProperty("content", content);
+
+    JsonObject choice = new JsonObject();
+    choice.addProperty("index", choiceIndex);
+    choice.add("message", message);
+    if (finishReason != null) {
+      choice.addProperty("finish_reason", finishReason);
+    }
+
+    JsonArray choices = new JsonArray();
+    choices.add(choice);
+
+    JsonObject streamOutput = new JsonObject();
+    streamOutput.add("choices", choices);
+
+    JsonObject streamUsage = new JsonObject();
+    streamUsage.addProperty("input_tokens", inputTokens);
+    streamUsage.addProperty("output_tokens", outputTokens);
+    streamUsage.addProperty("total_tokens", inputTokens + outputTokens);
+
+    return TestResponse.builder()
+        .requestId(responseRequestId)
+        .output(streamOutput)
+        .usage(streamUsage)
+        .build();
   }
 
   @Test

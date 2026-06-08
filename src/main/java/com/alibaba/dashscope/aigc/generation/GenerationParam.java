@@ -255,6 +255,13 @@ public class GenerationParam extends GenerationParamBase {
       params.put("parallel_tool_calls", parallelToolCalls);
     }
 
+    if (Boolean.TRUE.equals(enableSearch)) {
+      if (searchOptions == null) {
+        searchOptions = SearchOptions.builder().enableSource(true).build();
+      } else if (!Boolean.TRUE.equals(searchOptions.getEnableSource())) {
+        searchOptions.setEnableSource(true);
+      }
+    }
     if (searchOptions != null) {
       params.put("search_options", searchOptions);
     }

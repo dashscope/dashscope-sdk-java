@@ -405,13 +405,12 @@ public final class Generation {
         }
       }
 
-      // Store output_tokens for each choice when n > 1
-      // Each streaming packet contains usage info for one specific choice
+      // Store output_tokens for each choice when n > 1.
+      // Each streaming packet contains usage info for one specific choice.
       if (n > 1
           && result.getUsage() != null
           && result.getUsage().getOutputTokens() != null
           && !choices.isEmpty()) {
-        // Get the choice index from the first choice in this packet
         Integer choiceIndex = choices.get(0).getIndex();
         if (choiceIndex == null) {
           choiceIndex = 0;
@@ -420,6 +419,7 @@ public final class Generation {
         if (accumulated != null) {
           accumulated.outputTokens = result.getUsage().getOutputTokens();
         }
+        applyAccumulatedUsage(result, accumulatedData);
       }
 
       // Handle n > 1 case: different strategies for different
@@ -520,16 +520,7 @@ public final class Generation {
           // Reuse current choice in result, just update it
           for (GenerationOutput.Choice choice : choices) {
             if (choice.getIndex() != null && choice.getIndex().equals(currentChoiceIndex)) {
-              // Update usage with this choice's output tokens
-              if (result.getUsage() != null && currentData.outputTokens != null) {
-                result.getUsage().setOutputTokens(currentData.outputTokens);
-                if (result.getUsage().getInputTokens() != null) {
-                  result
-                      .getUsage()
-                      .setTotalTokens(
-                          result.getUsage().getInputTokens() + currentData.outputTokens);
-                }
-              }
+              applyAccumulatedUsage(result, accumulatedData);
               return result;
             }
           }
@@ -545,19 +536,78 @@ public final class Generation {
       if (currentText != null && !currentText.isEmpty()) {
         accumulated.content.append(currentText);
       }
+      if (result.getOutput().getFinishReason() != null) {
+        accumulated.finishReason = result.getOutput().getFinishReason();
+      }
       if (result.getOutput().getSearchInfo() != null) {
         accumulated.searchInfo = result.getOutput().getSearchInfo();
       }
-      // Always set the accumulated content if we have any
+      // Always set the accumulated content if we have any.
       if (accumulated.content.length() > 0) {
         result.getOutput().setText(accumulated.content.toString());
       }
+      if (accumulated.finishReason != null) {
+        result.getOutput().setFinishReason(accumulated.finishReason);
+      }
       if (accumulated.searchInfo != null) {
         result.getOutput().setSearchInfo(accumulated.searchInfo);
+      } else if (shouldWaitForSearchInfo(result, param)) {
+        return null;
       }
     }
 
     return result;
+  }
+
+  private boolean shouldWaitForSearchInfo(GenerationResult result, HalfDuplexServiceParam param) {
+    if (!(param instanceof GenerationParam)) {
+      return false;
+    }
+    if (!Boolean.TRUE.equals(((GenerationParam) param).getEnableSearch())) {
+      return false;
+    }
+    if (!"stop".equals(result.getOutput().getFinishReason())) {
+      return false;
+    }
+    if (result.getUsage() == null
+        || result.getUsage().getPlugins() == null
+        || result.getUsage().getPlugins().getSearch() == null
+        || result.getUsage().getPlugins().getSearch().getCount() == null
+        || result.getUsage().getPlugins().getSearch().getCount() <= 0) {
+      return false;
+    }
+    if (result.getHeaders() == null) {
+      return false;
+    }
+
+    for (Map.Entry<String, Object> header : result.getHeaders().entrySet()) {
+      if ("x-dashscope-finished".equalsIgnoreCase(header.getKey())) {
+        return "false".equalsIgnoreCase(String.valueOf(header.getValue()));
+      }
+    }
+    return false;
+  }
+
+  private void applyAccumulatedUsage(
+      GenerationResult result, Map<Integer, AccumulatedData> accumulatedData) {
+    if (result.getUsage() == null) {
+      return;
+    }
+
+    int totalOutputTokens = 0;
+    for (AccumulatedData data : accumulatedData.values()) {
+      if (data.outputTokens != null) {
+        totalOutputTokens += data.outputTokens;
+      }
+    }
+    if (totalOutputTokens <= 0) {
+      return;
+    }
+
+    result.getUsage().setOutputTokens(totalOutputTokens);
+    if (result.getUsage().getInputTokens() != null) {
+      result.getUsage().setTotalTokens(result.getUsage().getInputTokens() + totalOutputTokens);
+    }
   }
 
   /** Inner class to store accumulated data for response merging. */
