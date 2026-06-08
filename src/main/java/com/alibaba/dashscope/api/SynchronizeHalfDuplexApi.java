@@ -59,21 +59,6 @@ public final class SynchronizeHalfDuplexApi<ParamT extends HalfDuplexParamBase> 
   }
 
   /**
-   * Call the server to get the whole result with custom service option.
-   *
-   * @param param The input param, should be the subclass of `ConversationParam`.
-   * @param serviceOption The custom service option for this call.
-   * @return The output structure, should be the subclass of `ConversationResult`.
-   * @throws NoApiKeyException Can not find api key
-   * @throws ApiException The request failed, possibly due to a network or data error.
-   */
-  public DashScopeResult call(ParamT param, ServiceOption serviceOption)
-      throws ApiException, NoApiKeyException {
-    HalfDuplexRequest req = new HalfDuplexRequest(param, serviceOption);
-    return client.send(req);
-  }
-
-  /**
    * Call the server to get the result in the callback function.
    *
    * @param param The input param, should be the subclass of `Param`.
@@ -84,22 +69,6 @@ public final class SynchronizeHalfDuplexApi<ParamT extends HalfDuplexParamBase> 
   public void call(ParamT param, ResultCallback<DashScopeResult> callback)
       throws ApiException, NoApiKeyException {
     HalfDuplexRequest req = new HalfDuplexRequest(param, serviceOptions);
-    client.send(req, callback);
-  }
-
-  /**
-   * Call the server to get the result in the callback function with custom service option.
-   *
-   * @param param The input param, should be the subclass of `Param`.
-   * @param callback The callback to receive response, should be the subclass of `Result`.
-   * @param serviceOption The custom service option for this call.
-   * @throws NoApiKeyException Can not find api key
-   * @throws ApiException The request failed, possibly due to a network or data error.
-   */
-  public void call(
-      ParamT param, ResultCallback<DashScopeResult> callback, ServiceOption serviceOption)
-      throws ApiException, NoApiKeyException {
-    HalfDuplexRequest req = new HalfDuplexRequest(param, serviceOption);
     client.send(req, callback);
   }
 
@@ -117,21 +86,6 @@ public final class SynchronizeHalfDuplexApi<ParamT extends HalfDuplexParamBase> 
   }
 
   /**
-   * Call the server to get the result by stream with custom service option.
-   *
-   * @param param The input param, should be the subclass of `Param`.
-   * @param serviceOption The custom service option for this call.
-   * @return A `Flowable` of the output structure, which is the subclass of `Result`.
-   * @throws NoApiKeyException Can not find api key
-   * @throws ApiException The request failed, possibly due to a network or data error.
-   */
-  public Flowable<DashScopeResult> streamCall(ParamT param, ServiceOption serviceOption)
-      throws ApiException, NoApiKeyException {
-    HalfDuplexRequest req = new HalfDuplexRequest(param, serviceOption);
-    return client.streamOut(req);
-  }
-
-  /**
    * Call the server to get the result by stream.
    *
    * @param param The input param, should be the subclass of `Param`.
@@ -142,22 +96,6 @@ public final class SynchronizeHalfDuplexApi<ParamT extends HalfDuplexParamBase> 
   public void streamCall(ParamT param, ResultCallback<DashScopeResult> callback)
       throws ApiException, NoApiKeyException {
     HalfDuplexRequest req = new HalfDuplexRequest(param, serviceOptions);
-    client.streamOut(req, callback);
-  }
-
-  /**
-   * Call the server to get the result by stream with custom service option.
-   *
-   * @param param The input param, should be the subclass of `Param`.
-   * @param callback The result callback.
-   * @param serviceOption The custom service option for this call.
-   * @throws NoApiKeyException Can not find api key
-   * @throws ApiException The request failed, possibly due to a network or data error.
-   */
-  public void streamCall(
-      ParamT param, ResultCallback<DashScopeResult> callback, ServiceOption serviceOption)
-      throws ApiException, NoApiKeyException {
-    HalfDuplexRequest req = new HalfDuplexRequest(param, serviceOption);
     client.streamOut(req, callback);
   }
 

@@ -1,4 +1,3 @@
-// Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.multimodal.tingwu;
 
 import static com.alibaba.dashscope.multimodal.MultiModalDialogApiKeyWords.CONST_NAME_DIRECTIVE;

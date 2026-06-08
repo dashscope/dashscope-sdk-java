@@ -16,12 +16,12 @@ import com.alibaba.dashscope.protocol.StreamingMode;
 import com.alibaba.dashscope.task.AsyncTaskListParam;
 import com.alibaba.dashscope.task.AsyncTaskListResult;
 
-public final class BatchTextEmbedding {
+public class BatchTextEmbedding {
   private final AsynchronousApi<BatchTextEmbeddingParam> asyncApi;
   private final ApiServiceOption serviceOption;
   private final String baseUrl;
 
-  public static class Models {
+  public final class Models {
     public static final String TEXT_EMBEDDING_ASYNC_V1 = "text-embedding-async-v1";
     public static final String TEXT_EMBEDDING_ASYNC_V2 = "text-embedding-async-v2";
   }

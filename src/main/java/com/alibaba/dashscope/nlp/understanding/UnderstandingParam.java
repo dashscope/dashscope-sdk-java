@@ -1,4 +1,3 @@
-// Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.nlp.understanding;
 
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;

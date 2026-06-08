@@ -1,25 +1,15 @@
-// Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.nlp.understanding;
 
 import com.alibaba.dashscope.api.SynchronizeHalfDuplexApi;
-import com.alibaba.dashscope.common.DashScopeResult;
-import com.alibaba.dashscope.common.Function;
-import com.alibaba.dashscope.common.OutputMode;
-import com.alibaba.dashscope.common.ResultCallback;
-import com.alibaba.dashscope.common.Task;
-import com.alibaba.dashscope.common.TaskGroup;
+import com.alibaba.dashscope.common.*;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
-import com.alibaba.dashscope.protocol.ApiServiceOption;
-import com.alibaba.dashscope.protocol.ConnectionOptions;
-import com.alibaba.dashscope.protocol.HttpMethod;
-import com.alibaba.dashscope.protocol.Protocol;
-import com.alibaba.dashscope.protocol.StreamingMode;
+import com.alibaba.dashscope.protocol.*;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public final class Understanding {
+public class Understanding {
   private final SynchronizeHalfDuplexApi<UnderstandingParam> syncApi;
   private final ApiServiceOption serviceOption;
 
@@ -31,12 +21,13 @@ public final class Understanding {
     return ApiServiceOption.builder()
         .protocol(Protocol.HTTP)
         .httpMethod(HttpMethod.POST)
-        .streamingMode(StreamingMode.NONE)
+        .streamingMode(StreamingMode.OUT)
         .outputMode(OutputMode.ACCUMULATE)
         .taskGroup(TaskGroup.NLP.getValue())
         .task(Task.NLU.getValue())
         .function(Function.UNDERSTANDING.getValue())
         .isSSE(false)
+        .streamingMode(StreamingMode.NONE)
         .build();
   }
 
@@ -60,17 +51,6 @@ public final class Understanding {
       serviceOption.setBaseWebSocketUrl(baseUrl);
     }
     syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
-  }
-
-  public Understanding(String protocol, String baseUrl, ConnectionOptions connectionOptions) {
-    serviceOption = defaultApiServiceOption();
-    serviceOption.setProtocol(Protocol.of(protocol));
-    if (Protocol.HTTP.getValue().equals(protocol)) {
-      serviceOption.setBaseHttpUrl(baseUrl);
-    } else {
-      serviceOption.setBaseWebSocketUrl(baseUrl);
-    }
-    syncApi = new SynchronizeHalfDuplexApi<>(connectionOptions, serviceOption);
   }
 
   /**

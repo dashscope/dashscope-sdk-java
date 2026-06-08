@@ -1,4 +1,5 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
+
 package com.alibaba.dashscope.embeddings;
 
 import com.alibaba.dashscope.api.SynchronizeHalfDuplexApi;
@@ -15,18 +16,18 @@ import com.alibaba.dashscope.protocol.HttpMethod;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 
-public final class TextEmbedding {
+public class TextEmbedding {
   private final SynchronizeHalfDuplexApi<TextEmbeddingParam> syncApi;
   private final ApiServiceOption serviceOption;
 
-  public static class Models {
+  public final class Models {
     public static final String TEXT_EMBEDDING_V1 = "text-embedding-v1";
     public static final String TEXT_EMBEDDING_V2 = "text-embedding-v2";
     public static final String TEXT_EMBEDDING_V3 = "text-embedding-v3";
     public static final String TEXT_EMBEDDING_V4 = "text-embedding-v4";
   }
 
-  private ApiServiceOption defaultApiServiceOption() {
+  private ApiServiceOption defaulApiServiceOption() {
     return ApiServiceOption.builder()
         .protocol(Protocol.HTTP)
         .httpMethod(HttpMethod.POST)
@@ -39,12 +40,12 @@ public final class TextEmbedding {
   }
 
   public TextEmbedding() {
-    serviceOption = defaultApiServiceOption();
+    serviceOption = defaulApiServiceOption();
     syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
 
   public TextEmbedding(String baseUrl) {
-    serviceOption = defaultApiServiceOption();
+    serviceOption = defaulApiServiceOption();
     serviceOption.setBaseHttpUrl(baseUrl);
     syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
@@ -52,8 +53,8 @@ public final class TextEmbedding {
   /**
    * Call the server to get the result in the callback function.
    *
-   * @param param The input param of class `TextEmbeddingParam`.
-   * @param callback The callback to receive response, the template class is `TextEmbeddingResult`.
+   * @param param The input param of class `GenerationParam`.
+   * @param callback The callback to receive response, the template class is `GenerationResult`.
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
    */
@@ -82,8 +83,8 @@ public final class TextEmbedding {
   /**
    * Call the server to get the whole result, only http protocol
    *
-   * @param param The input param of class `TextEmbeddingParam`.
-   * @return The output structure of `TextEmbeddingResult`.
+   * @param param The input param of class `ConversationParam`.
+   * @return The output structure of `QWenConversationResult`.
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
    */

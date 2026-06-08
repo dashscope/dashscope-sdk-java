@@ -20,10 +20,6 @@ public final class GenerationOutput {
     private Message message;
 
     private GenerationLogprobs logprobs;
-
-    /** Search information for this specific choice, returned when search_options is configured. */
-    @SerializedName("search_info")
-    private SearchInfo searchInfo;
   }
   // output text
   private String text;

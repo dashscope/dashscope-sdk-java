@@ -80,7 +80,23 @@ public final class VideoSynthesis {
   /**
    * Create ApiServiceOption
    *
-   * @param task The task name for the API service.
+   * @return ApiServiceOption
+   */
+  private ApiServiceOption getApiServiceOption() {
+    return ApiServiceOption.builder()
+        .protocol(Protocol.HTTP)
+        .httpMethod(HttpMethod.POST)
+        .streamingMode(StreamingMode.NONE)
+        .taskGroup(taskGroup)
+        .task(task)
+        .function(function)
+        .isAsyncTask(true)
+        .build();
+  }
+
+  /**
+   * Create ApiServiceOption
+   *
    * @return ApiServiceOption
    */
   private ApiServiceOption getApiServiceOption(String task) {
@@ -99,7 +115,7 @@ public final class VideoSynthesis {
   public VideoSynthesis() {
     // only support http
     asyncApi = new AsynchronousApi<>();
-    createServiceOptions = getApiServiceOption(task);
+    createServiceOptions = getApiServiceOption();
     this.baseUrl = null;
   }
 
@@ -111,7 +127,7 @@ public final class VideoSynthesis {
   public VideoSynthesis(String baseUrl) {
     // only support http
     asyncApi = new AsynchronousApi<>();
-    createServiceOptions = getApiServiceOption(task);
+    createServiceOptions = getApiServiceOption();
     this.baseUrl = baseUrl;
   }
 
@@ -122,7 +138,6 @@ public final class VideoSynthesis {
    */
   public VideoSynthesis(String baseUrl, String task) {
     // only support http
-    this.task = task;
     asyncApi = new AsynchronousApi<>();
     createServiceOptions = getApiServiceOption(task);
     this.baseUrl = baseUrl;

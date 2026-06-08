@@ -55,7 +55,7 @@
         {
         "event": "done",
         "data": "[DONE]"
-        }
+        }        
     ],
     "create_stream_thread_and_run_response": [
         {"event": "thread.created",
@@ -120,7 +120,7 @@
         {
         "event": "done",
         "data": "[DONE]"
-        }
+        }        
     ],
     "create_stream_require_action_function_1": [
         {
@@ -182,7 +182,7 @@
         {
             "event": "done",
             "data": "[DONE]"
-        }
+        }   
     ],
     "create_stream_require_action_function_2": [
         {

@@ -12,11 +12,13 @@ import com.alibaba.dashscope.protocol.StreamingMode;
 import io.reactivex.Flowable;
 
 /**
- * Application completion calls.
+ * Title Ap completion calls.<br>
+ * Description App completion calls.<br>
+ * Created at 2024-02-23 15:38
  *
  * @since jdk8
  */
-public final class Application {
+public class Application {
   private final SynchronizeHalfDuplexApi<ApplicationParam> syncApi;
 
   private final ApiServiceOption serviceOption;
@@ -40,7 +42,7 @@ public final class Application {
   }
 
   /**
-   * App completion call for http request
+   * app completion call for http request
    *
    * @param param app completion params
    * @return app completion result
@@ -59,7 +61,7 @@ public final class Application {
   }
 
   /**
-   * App completion call for http request by sse stream
+   * app completion call for http request by sse stream
    *
    * @param param app completion params
    * @return flowable stream of app completion result
@@ -86,5 +88,8 @@ public final class Application {
     serviceOption.setTaskGroup("apps");
     serviceOption.setTask(resourceId);
     serviceOption.setFunction("completion");
+    //        serviceOption.setResource("apps");
+    //        serviceOption.setResourceId(resourceId);
+    //        serviceOption.setAction("completion");
   }
 }

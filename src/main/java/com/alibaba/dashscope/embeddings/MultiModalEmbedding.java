@@ -1,4 +1,5 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
+
 package com.alibaba.dashscope.embeddings;
 
 import com.alibaba.dashscope.api.SynchronizeHalfDuplexApi;
@@ -17,7 +18,7 @@ import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import com.alibaba.dashscope.utils.PreprocessMessageInput;
 
-public final class MultiModalEmbedding {
+public class MultiModalEmbedding {
   private final SynchronizeHalfDuplexApi<MultiModalEmbeddingParam> syncApi;
   private final ApiServiceOption serviceOption;
 
@@ -27,7 +28,7 @@ public final class MultiModalEmbedding {
     public static final String MULTIMODAL_EMBEDDING_V1 = "multimodal-embedding-v1";
   }
 
-  private ApiServiceOption defaultApiServiceOption() {
+  private ApiServiceOption defaulApiServiceOption() {
     return ApiServiceOption.builder()
         .protocol(Protocol.HTTP)
         .httpMethod(HttpMethod.POST)
@@ -40,12 +41,12 @@ public final class MultiModalEmbedding {
   }
 
   public MultiModalEmbedding() {
-    serviceOption = defaultApiServiceOption();
+    serviceOption = defaulApiServiceOption();
     syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
 
   public MultiModalEmbedding(String baseUrl) {
-    serviceOption = defaultApiServiceOption();
+    serviceOption = defaulApiServiceOption();
     serviceOption.setBaseHttpUrl(baseUrl);
     syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
   }
@@ -53,9 +54,8 @@ public final class MultiModalEmbedding {
   /**
    * Call the server to get the result in the callback function.
    *
-   * @param param The input param of class `MultiModalEmbeddingParam`.
-   * @param callback The callback to receive response, the template class is
-   *     `MultiModalEmbeddingResult`.
+   * @param param The input param of class `GenerationParam`.
+   * @param callback The callback to receive response, the template class is `GenerationResult`.
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
    * @throws UploadFileException File upload failed.
@@ -87,8 +87,8 @@ public final class MultiModalEmbedding {
   /**
    * Call the server to get the whole result, only http protocol
    *
-   * @param param The input param of class `MultiModalEmbeddingParam`.
-   * @return The output structure of `MultiModalEmbeddingResult`.
+   * @param param The input param of class `ConversationParam`.
+   * @return The output structure of `QWenConversationResult`.
    * @throws NoApiKeyException Can not find api key
    * @throws ApiException The request failed, possibly due to a network or data error.
    * @throws UploadFileException File upload failed.
