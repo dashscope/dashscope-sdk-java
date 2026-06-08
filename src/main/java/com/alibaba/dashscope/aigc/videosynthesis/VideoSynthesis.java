@@ -122,6 +122,7 @@ public final class VideoSynthesis {
    */
   public VideoSynthesis(String baseUrl, String task) {
     // only support http
+    this.task = task;
     asyncApi = new AsynchronousApi<>();
     createServiceOptions = getApiServiceOption(task);
     this.baseUrl = baseUrl;
