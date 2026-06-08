@@ -17,11 +17,13 @@ import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
 import java.nio.ByteBuffer;
+import java.util.Base64;
 import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Queue;
@@ -300,7 +302,12 @@ public class MultiModalDialog {
                     callback.onRespondingEnded(dialogId, output); // Response end event
                     break;
                   case "SpeechContent":
-                    callback.onSpeechContent(dialogId, output); // Speech content event
+                    ByteBuffer speechAudioData = extractSpeechAudioData(output);
+                    if (speechAudioData != null) {
+                      callback.onSpeechAudioData(speechAudioData);
+                    } else {
+                      callback.onSpeechContent(dialogId, output); // Speech content event
+                    }
                     break;
                   case "RespondingContent":
                     callback.onRespondingContent(dialogId, output); // Response content event
@@ -454,6 +461,51 @@ public class MultiModalDialog {
         stopLatch.get().await();
       } catch (InterruptedException ignored) {
       }
+    }
+  }
+
+  private ByteBuffer extractSpeechAudioData(JsonObject output) {
+    if (output == null) {
+      return null;
+    }
+
+    byte[] audioBytes = decodeAudioField(output.get("audio"));
+    if (audioBytes == null) {
+      audioBytes = decodeAudioField(output.get("data"));
+    }
+    if (audioBytes == null) {
+      audioBytes = decodeAudioField(output.get("binary"));
+    }
+    if (audioBytes == null || audioBytes.length == 0) {
+      return null;
+    }
+    return ByteBuffer.wrap(audioBytes);
+  }
+
+  private byte[] decodeAudioField(JsonElement audioElement) {
+    if (audioElement == null || audioElement.isJsonNull()) {
+      return null;
+    }
+
+    if (audioElement.isJsonObject()) {
+      JsonObject audioObject = audioElement.getAsJsonObject();
+      return decodeAudioField(audioObject.get("data"));
+    }
+
+    if (!audioElement.isJsonPrimitive()) {
+      return null;
+    }
+
+    String audioBase64 = audioElement.getAsString();
+    if (audioBase64 == null || audioBase64.isEmpty()) {
+      return null;
+    }
+
+    try {
+      return Base64.getDecoder().decode(audioBase64);
+    } catch (IllegalArgumentException exception) {
+      log.warn("Failed to decode speech audio data", exception);
+      return null;
     }
   }
 

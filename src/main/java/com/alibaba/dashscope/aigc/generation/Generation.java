@@ -361,9 +361,13 @@ public final class Generation {
           if (currentToolCalls != null && !currentToolCalls.isEmpty()) {
             StreamingMerger.mergeToolCalls(currentToolCalls, accumulated.toolCalls);
           }
-          // Always set accumulated tool_calls if we have any
-          if (!accumulated.toolCalls.isEmpty()) {
-            choice.getMessage().setToolCalls(accumulated.toolCalls);
+          // Only expose complete accumulated tool_calls to avoid leaking partial chunks.
+          List<ToolCallBase> completeToolCalls =
+              StreamingMerger.copyCompleteToolCalls(accumulated.toolCalls);
+          if (!completeToolCalls.isEmpty()) {
+            choice.getMessage().setToolCalls(completeToolCalls);
+          } else {
+            choice.getMessage().setToolCalls(null);
           }
 
           // Restore role if we have it
@@ -470,8 +474,10 @@ public final class Generation {
               if (data.reasoningContent.length() > 0) {
                 message.setReasoningContent(data.reasoningContent.toString());
               }
-              if (!data.toolCalls.isEmpty()) {
-                message.setToolCalls(data.toolCalls);
+              List<ToolCallBase> completeToolCalls =
+                  StreamingMerger.copyCompleteToolCalls(data.toolCalls);
+              if (!completeToolCalls.isEmpty()) {
+                message.setToolCalls(completeToolCalls);
               }
               finalChoice.setMessage(message);
               if (!data.logprobsContent.isEmpty()) {

@@ -157,4 +157,58 @@ public final class StreamingMerger {
       }
     }
   }
+
+  public static List<ToolCallBase> copyCompleteToolCalls(List<ToolCallBase> toolCalls) {
+    List<ToolCallBase> copiedToolCalls = new ArrayList<>();
+    if (toolCalls == null) {
+      return copiedToolCalls;
+    }
+
+    for (ToolCallBase toolCall : toolCalls) {
+      ToolCallBase copiedToolCall = copyToolCall(toolCall);
+      if (isCompleteToolCall(copiedToolCall)) {
+        copiedToolCalls.add(copiedToolCall);
+      }
+    }
+    return copiedToolCalls;
+  }
+
+  private static ToolCallBase copyToolCall(ToolCallBase toolCall) {
+    if (!(toolCall instanceof ToolCallFunction)) {
+      return toolCall;
+    }
+
+    ToolCallFunction sourceToolCall = (ToolCallFunction) toolCall;
+    ToolCallFunction copiedToolCall = new ToolCallFunction();
+    copiedToolCall.setIndex(sourceToolCall.getIndex());
+    copiedToolCall.setId(sourceToolCall.getId());
+    copiedToolCall.setType(sourceToolCall.getType());
+
+    if (sourceToolCall.getFunction() != null) {
+      ToolCallFunction.CallFunction copiedFunction = copiedToolCall.new CallFunction();
+      copiedFunction.setName(sourceToolCall.getFunction().getName());
+      copiedFunction.setArguments(sourceToolCall.getFunction().getArguments());
+      copiedFunction.setOutput(sourceToolCall.getFunction().getOutput());
+      copiedToolCall.setFunction(copiedFunction);
+    }
+    return copiedToolCall;
+  }
+
+  private static boolean isCompleteToolCall(ToolCallBase toolCall) {
+    if (!(toolCall instanceof ToolCallFunction)) {
+      return true;
+    }
+
+    ToolCallFunction functionToolCall = (ToolCallFunction) toolCall;
+    if (functionToolCall.getFunction() == null) {
+      return false;
+    }
+
+    String functionName = functionToolCall.getFunction().getName();
+    String functionArguments = functionToolCall.getFunction().getArguments();
+    return functionName != null
+        && !functionName.isEmpty()
+        && functionArguments != null
+        && !functionArguments.isEmpty();
+  }
 }

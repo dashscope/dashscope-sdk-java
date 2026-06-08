@@ -359,9 +359,13 @@ public final class MultiModalConversation {
           if (currentToolCalls != null && !currentToolCalls.isEmpty()) {
             StreamingMerger.mergeToolCalls(currentToolCalls, accumulated.toolCalls);
           }
-          // Always set accumulated tool_calls if we have any
-          if (!accumulated.toolCalls.isEmpty()) {
-            choice.getMessage().setToolCalls(accumulated.toolCalls);
+          // Only expose complete accumulated tool_calls to avoid leaking partial chunks.
+          List<ToolCallBase> completeToolCalls =
+              StreamingMerger.copyCompleteToolCalls(accumulated.toolCalls);
+          if (!completeToolCalls.isEmpty()) {
+            choice.getMessage().setToolCalls(completeToolCalls);
+          } else {
+            choice.getMessage().setToolCalls(null);
           }
         }
       }
