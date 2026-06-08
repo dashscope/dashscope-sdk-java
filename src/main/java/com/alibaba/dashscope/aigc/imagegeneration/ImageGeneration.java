@@ -408,7 +408,7 @@ public final class ImageGeneration {
           }
           // Always set the accumulated content if we have any
           if (!accumulated.content.isEmpty()) {
-            choice.getMessage().setContent(accumulated.content);
+            choice.getMessage().setContent(StreamingMerger.copyContent(accumulated.content));
           }
         }
       }

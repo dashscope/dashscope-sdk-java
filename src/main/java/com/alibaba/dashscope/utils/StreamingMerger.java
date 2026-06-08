@@ -3,6 +3,7 @@ package com.alibaba.dashscope.utils;
 
 import com.alibaba.dashscope.tools.ToolCallBase;
 import com.alibaba.dashscope.tools.ToolCallFunction;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +52,23 @@ public final class StreamingMerger {
         accumulatedTextItem.put("text", existingText + textValue);
       }
     }
+  }
+
+  public static List<Map<String, Object>> copyContent(
+      List<Map<String, Object>> accumulatedContent) {
+    List<Map<String, Object>> copiedContent = new ArrayList<>();
+    if (accumulatedContent == null) {
+      return copiedContent;
+    }
+
+    for (Map<String, Object> contentItem : accumulatedContent) {
+      if (contentItem == null) {
+        copiedContent.add(null);
+      } else {
+        copiedContent.add(new HashMap<>(contentItem));
+      }
+    }
+    return copiedContent;
   }
 
   public static void mergeToolCalls(
