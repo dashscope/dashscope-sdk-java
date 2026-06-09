@@ -82,7 +82,7 @@ public final class VideoSynthesis {
    *
    * @return ApiServiceOption
    */
-  private ApiServiceOption getApiServiceOption() {
+  private ApiServiceOption getApiServiceOption(String baseUrl, String task) {
     return ApiServiceOption.builder()
         .protocol(Protocol.HTTP)
         .httpMethod(HttpMethod.POST)
@@ -91,23 +91,7 @@ public final class VideoSynthesis {
         .task(task)
         .function(function)
         .isAsyncTask(true)
-        .build();
-  }
-
-  /**
-   * Create ApiServiceOption
-   *
-   * @return ApiServiceOption
-   */
-  private ApiServiceOption getApiServiceOption(String task) {
-    return ApiServiceOption.builder()
-        .protocol(Protocol.HTTP)
-        .httpMethod(HttpMethod.POST)
-        .streamingMode(StreamingMode.NONE)
-        .taskGroup(taskGroup)
-        .task(task)
-        .function(function)
-        .isAsyncTask(true)
+        .baseHttpUrl(baseUrl)
         .build();
   }
 
@@ -115,7 +99,7 @@ public final class VideoSynthesis {
   public VideoSynthesis() {
     // only support http
     asyncApi = new AsynchronousApi<>();
-    createServiceOptions = getApiServiceOption();
+    createServiceOptions = getApiServiceOption(null, task);
     this.baseUrl = null;
   }
 
@@ -127,7 +111,7 @@ public final class VideoSynthesis {
   public VideoSynthesis(String baseUrl) {
     // only support http
     asyncApi = new AsynchronousApi<>();
-    createServiceOptions = getApiServiceOption();
+    createServiceOptions = getApiServiceOption(baseUrl, task);
     this.baseUrl = baseUrl;
   }
 
@@ -139,7 +123,7 @@ public final class VideoSynthesis {
   public VideoSynthesis(String baseUrl, String task) {
     // only support http
     asyncApi = new AsynchronousApi<>();
-    createServiceOptions = getApiServiceOption(task);
+    createServiceOptions = getApiServiceOption(baseUrl, task);
     this.baseUrl = baseUrl;
   }
 
