@@ -44,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 @Slf4j
 public final class OkHttpHttpClient implements HalfDuplexClient {
   private final OkHttpClient client;
+  private volatile EventSource activeEventSource;
   private static final MediaType MEDIA_TYPE_APPLICATION_JSON =
       MediaType.parse("application/json; charset=utf-8");
 
@@ -359,45 +360,55 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
         Flowable.<DashScopeResult>create(
             emitter -> {
               Request request = buildRequest(req.getHttpRequest());
-              EventSources.createFactory(client)
-                  .newEventSource(
-                      request,
-                      new EventSourceListener() {
-                        private Response response;
+              activeEventSource =
+                  EventSources.createFactory(client)
+                      .newEventSource(
+                          request,
+                          new EventSourceListener() {
+                            private Response response;
 
-                        @java.lang.Override
-                        public void onEvent(
-                            EventSource eventSource,
-                            java.lang.String id,
-                            java.lang.String type,
-                            java.lang.String data) {
-                          handleSSEEvent(
-                              emitter, id, type, data, req.getIsFlatten(), response, req);
-                        }
+                            @java.lang.Override
+                            public void onEvent(
+                                EventSource eventSource,
+                                java.lang.String id,
+                                java.lang.String type,
+                                java.lang.String data) {
+                              handleSSEEvent(
+                                  emitter, id, type, data, req.getIsFlatten(), response, req);
+                            }
 
-                        @java.lang.Override
-                        public void onOpen(
-                            @NotNull EventSource eventSource, @NotNull Response response) {
-                          this.response = response;
-                          super.onOpen(eventSource, response);
-                        }
+                            @java.lang.Override
+                            public void onOpen(
+                                @NotNull EventSource eventSource, @NotNull Response response) {
+                              this.response = response;
+                              super.onOpen(eventSource, response);
+                            }
 
-                        @java.lang.Override
-                        public void onFailure(
-                            @NotNull EventSource eventSource,
-                            java.lang.Throwable t,
-                            Response response) {
-                          this.response = response;
-                          super.onFailure(eventSource, t, response);
-                          emitter.onError(new ApiException(parseFailed(response, t), t));
-                        }
+                            @java.lang.Override
+                            public void onFailure(
+                                @NotNull EventSource eventSource,
+                                java.lang.Throwable t,
+                                Response response) {
+                              this.response = response;
+                              activeEventSource = null;
+                              super.onFailure(eventSource, t, response);
+                              emitter.onError(new ApiException(parseFailed(response, t), t));
+                            }
 
-                        @java.lang.Override
-                        public void onClosed(@NotNull EventSource eventSource) {
-                          super.onClosed(eventSource);
-                          emitter.onComplete();
-                        }
-                      });
+                            @java.lang.Override
+                            public void onClosed(@NotNull EventSource eventSource) {
+                              activeEventSource = null;
+                              super.onClosed(eventSource);
+                              emitter.onComplete();
+                            }
+                          });
+              emitter.setCancellable(
+                  () -> {
+                    if (activeEventSource != null) {
+                      activeEventSource.cancel();
+                      activeEventSource = null;
+                    }
+                  });
             },
             BackpressureStrategy.BUFFER);
     return flowable;
@@ -493,6 +504,11 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
 
   @Override
   public boolean close(int code, String reason) {
+    if (activeEventSource != null) {
+      activeEventSource.cancel();
+      activeEventSource = null;
+      return true;
+    }
     return false;
   }
 }
