@@ -7,6 +7,7 @@ import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.common.Function;
 import com.alibaba.dashscope.common.OutputMode;
 import com.alibaba.dashscope.common.ResultCallback;
+import com.alibaba.dashscope.common.SearchInfo;
 import com.alibaba.dashscope.common.Task;
 import com.alibaba.dashscope.common.TaskGroup;
 import com.alibaba.dashscope.exception.ApiException;
@@ -18,8 +19,8 @@ import com.alibaba.dashscope.protocol.HttpMethod;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import com.alibaba.dashscope.tools.ToolCallBase;
-import com.alibaba.dashscope.tools.ToolCallFunction;
 import com.alibaba.dashscope.utils.ParamUtils;
+import com.alibaba.dashscope.utils.StreamingMerger;
 import com.alibaba.dashscope.utils.StringUtils;
 import io.reactivex.Flowable;
 import java.util.ArrayList;
@@ -32,9 +33,6 @@ import lombok.extern.slf4j.Slf4j;
 public final class Generation {
   private final SynchronizeHalfDuplexApi<HalfDuplexServiceParam> syncApi;
   private final ApiServiceOption serviceOption;
-
-  private final ThreadLocal<Map<Integer, AccumulatedData>> accumulatedDataMap =
-      ThreadLocal.withInitial(HashMap::new);
 
   public static class Models {
     /** @deprecated use QWEN_TURBO instead */
@@ -64,6 +62,21 @@ public final class Generation {
         .build();
   }
 
+  /** Creates a copy of the shared serviceOption for thread-safe per-call usage. */
+  private ApiServiceOption copyServiceOption() {
+    return ApiServiceOption.builder()
+        .protocol(serviceOption.getProtocol())
+        .httpMethod(serviceOption.getHttpMethod())
+        .streamingMode(serviceOption.getStreamingMode())
+        .outputMode(serviceOption.getOutputMode())
+        .taskGroup(serviceOption.getTaskGroup())
+        .task(serviceOption.getTask())
+        .function(serviceOption.getFunction())
+        .baseHttpUrl(serviceOption.getBaseHttpUrl())
+        .baseWebSocketUrl(serviceOption.getBaseWebSocketUrl())
+        .build();
+  }
+
   public Generation() {
     serviceOption = defaultApiServiceOption();
     syncApi = new SynchronizeHalfDuplexApi<>(serviceOption);
@@ -78,7 +91,7 @@ public final class Generation {
   public Generation(String protocol, String baseUrl) {
     serviceOption = defaultApiServiceOption();
     serviceOption.setProtocol(Protocol.of(protocol));
-    if (protocol.equals(Protocol.HTTP.getValue())) {
+    if (Protocol.HTTP.getValue().equals(protocol)) {
       serviceOption.setBaseHttpUrl(baseUrl);
     } else {
       serviceOption.setBaseWebSocketUrl(baseUrl);
@@ -89,7 +102,7 @@ public final class Generation {
   public Generation(String protocol, String baseUrl, ConnectionOptions connectionOptions) {
     serviceOption = defaultApiServiceOption();
     serviceOption.setProtocol(Protocol.of(protocol));
-    if (protocol.equals(Protocol.HTTP.getValue())) {
+    if (Protocol.HTTP.getValue().equals(protocol)) {
       serviceOption.setBaseHttpUrl(baseUrl);
     } else {
       serviceOption.setBaseWebSocketUrl(baseUrl);
@@ -108,9 +121,10 @@ public final class Generation {
   public GenerationResult call(HalfDuplexServiceParam param)
       throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
-    serviceOption.setIsSSE(false);
-    serviceOption.setStreamingMode(StreamingMode.NONE);
-    return GenerationResult.fromDashScopeResult(syncApi.call(param));
+    ApiServiceOption callOption = copyServiceOption();
+    callOption.setIsSSE(false);
+    callOption.setStreamingMode(StreamingMode.NONE);
+    return GenerationResult.fromDashScopeResult(syncApi.call(param, callOption));
   }
 
   /**
@@ -125,8 +139,9 @@ public final class Generation {
   public void call(HalfDuplexServiceParam param, ResultCallback<GenerationResult> callback)
       throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
-    serviceOption.setIsSSE(false);
-    serviceOption.setStreamingMode(StreamingMode.NONE);
+    ApiServiceOption callOption = copyServiceOption();
+    callOption.setIsSSE(false);
+    callOption.setStreamingMode(StreamingMode.NONE);
     syncApi.call(
         param,
         new ResultCallback<DashScopeResult>() {
@@ -144,7 +159,8 @@ public final class Generation {
           public void onError(Exception e) {
             callback.onError(e);
           }
-        });
+        },
+        callOption);
   }
 
   /**
@@ -168,31 +184,26 @@ public final class Generation {
     String userAgentSuffix = StringUtils.format("incremental_to_full/%d", flagValue);
     param.putHeader("user-agent", userAgentSuffix);
 
-    serviceOption.setIsSSE(true);
-    serviceOption.setStreamingMode(StreamingMode.OUT);
-    return syncApi
-        .streamCall(param)
-        .map(GenerationResult::fromDashScopeResult)
-        .flatMap(
-            result -> {
-              GenerationResult merged = mergeSingleResponse(result, toMergeResponse, param);
-              if (merged == null) {
-                return Flowable.empty();
-              }
-              return Flowable.just(merged);
-            })
-        .doOnComplete(
-            () -> {
-              if (toMergeResponse) {
-                clearAccumulatedData();
-              }
-            })
-        .doOnError(
-            throwable -> {
-              if (toMergeResponse) {
-                clearAccumulatedData();
-              }
-            });
+    ApiServiceOption callOption = copyServiceOption();
+    callOption.setIsSSE(true);
+    callOption.setStreamingMode(StreamingMode.OUT);
+    return Flowable.defer(
+        () -> {
+          Map<Integer, AccumulatedData> accumulatedData = new HashMap<>();
+          return syncApi
+              .streamCall(param, callOption)
+              .map(GenerationResult::fromDashScopeResult)
+              .flatMap(
+                  result -> {
+                    GenerationResult merged =
+                        mergeSingleResponse(result, toMergeResponse, param, accumulatedData);
+                    if (merged == null) {
+                      return Flowable.empty();
+                    }
+                    return Flowable.just(merged);
+                  })
+              .doFinally(accumulatedData::clear);
+        });
   }
 
   public void streamCall(HalfDuplexServiceParam param, ResultCallback<GenerationResult> callback)
@@ -207,15 +218,18 @@ public final class Generation {
     String userAgentSuffix = StringUtils.format("incremental_to_full/%d", flagValue);
     param.putHeader("user-agent", userAgentSuffix);
 
-    serviceOption.setIsSSE(true);
-    serviceOption.setStreamingMode(StreamingMode.OUT);
+    ApiServiceOption callOption = copyServiceOption();
+    callOption.setIsSSE(true);
+    callOption.setStreamingMode(StreamingMode.OUT);
+    Map<Integer, AccumulatedData> accumulatedData = new HashMap<>();
     syncApi.streamCall(
         param,
         new ResultCallback<DashScopeResult>() {
           @Override
           public void onEvent(DashScopeResult msg) {
             GenerationResult result = GenerationResult.fromDashScopeResult(msg);
-            GenerationResult mergedResult = mergeSingleResponse(result, toMergeResponse, param);
+            GenerationResult mergedResult =
+                mergeSingleResponse(result, toMergeResponse, param, accumulatedData);
             if (mergedResult != null) {
               callback.onEvent(mergedResult);
             }
@@ -223,20 +237,17 @@ public final class Generation {
 
           @Override
           public void onComplete() {
-            if (toMergeResponse) {
-              clearAccumulatedData();
-            }
+            accumulatedData.clear();
             callback.onComplete();
           }
 
           @Override
           public void onError(Exception e) {
-            if (toMergeResponse) {
-              clearAccumulatedData();
-            }
+            accumulatedData.clear();
             callback.onError(e);
           }
-        });
+        },
+        callOption);
   }
 
   /**
@@ -270,15 +281,17 @@ public final class Generation {
    * @param result The GenerationResult to merge
    * @param toMergeResponse Whether to perform merging (based on original incrementalOutput setting)
    * @param param The HalfDuplexServiceParam to get n parameter
+   * @param accumulatedData The per-stream accumulated data
    * @return The merged GenerationResult, or null if should be filtered out
    */
   private GenerationResult mergeSingleResponse(
-      GenerationResult result, boolean toMergeResponse, HalfDuplexServiceParam param) {
+      GenerationResult result,
+      boolean toMergeResponse,
+      HalfDuplexServiceParam param,
+      Map<Integer, AccumulatedData> accumulatedData) {
     if (!toMergeResponse || result == null || result.getOutput() == null) {
       return result;
     }
-
-    Map<Integer, AccumulatedData> accumulatedData = accumulatedDataMap.get();
 
     // Get n parameter
     Integer n = null;
@@ -317,6 +330,12 @@ public final class Generation {
         // Initialize accumulated data for this choice index if not exists
         AccumulatedData accumulated =
             accumulatedData.computeIfAbsent(choiceIndex, k -> new AccumulatedData());
+        if (choice.getSearchInfo() != null) {
+          accumulated.searchInfo = choice.getSearchInfo();
+        }
+        if (accumulated.searchInfo != null) {
+          choice.setSearchInfo(accumulated.searchInfo);
+        }
 
         if (choice.getMessage() != null) {
           // Save role if present
@@ -344,14 +363,18 @@ public final class Generation {
             choice.getMessage().setReasoningContent(accumulated.reasoningContent.toString());
           }
 
-          // Handle tool_calls accumulation
+          // Handle tool_calls accumulation (delegate to shared utility)
           List<ToolCallBase> currentToolCalls = choice.getMessage().getToolCalls();
           if (currentToolCalls != null && !currentToolCalls.isEmpty()) {
-            mergeToolCalls(currentToolCalls, accumulated.toolCalls);
+            StreamingMerger.mergeToolCalls(currentToolCalls, accumulated.toolCalls);
           }
-          // Always set accumulated tool_calls if we have any
-          if (!accumulated.toolCalls.isEmpty()) {
-            choice.getMessage().setToolCalls(accumulated.toolCalls);
+          // Only expose complete accumulated tool_calls to avoid leaking partial chunks.
+          List<ToolCallBase> completeToolCalls =
+              StreamingMerger.copyCompleteToolCalls(accumulated.toolCalls);
+          if (!completeToolCalls.isEmpty()) {
+            choice.getMessage().setToolCalls(completeToolCalls);
+          } else {
+            choice.getMessage().setToolCalls(null);
           }
 
           // Restore role if we have it
@@ -382,21 +405,24 @@ public final class Generation {
         }
       }
 
-      // Store output_tokens for each choice when n > 1
-      // Each streaming packet contains usage info for one specific choice
+      // Store usage for each choice when n > 1.
+      // A streaming packet may contain either one choice or multiple choices.
       if (n > 1
           && result.getUsage() != null
           && result.getUsage().getOutputTokens() != null
           && !choices.isEmpty()) {
-        // Get the choice index from the first choice in this packet
-        Integer choiceIndex = choices.get(0).getIndex();
-        if (choiceIndex == null) {
-          choiceIndex = 0;
+        for (GenerationOutput.Choice choice : choices) {
+          Integer choiceIndex = choice.getIndex();
+          if (choiceIndex == null) {
+            choiceIndex = 0;
+          }
+          AccumulatedData accumulated = accumulatedData.get(choiceIndex);
+          if (accumulated != null) {
+            accumulated.outputTokens = result.getUsage().getOutputTokens();
+            accumulated.totalTokens = result.getUsage().getTotalTokens();
+          }
         }
-        AccumulatedData accumulated = accumulatedData.get(choiceIndex);
-        if (accumulated != null) {
-          accumulated.outputTokens = result.getUsage().getOutputTokens();
-        }
+        applyAccumulatedUsage(result, accumulatedData);
       }
 
       // Handle n > 1 case: different strategies for different
@@ -443,6 +469,7 @@ public final class Generation {
             GenerationOutput output = result.getOutput();
             List<GenerationOutput.Choice> allChoices = new ArrayList<>();
             int totalOutputTokens = 0;
+            int totalTokens = 0;
             for (Map.Entry<Integer, AccumulatedData> entry : accumulatedData.entrySet()) {
               Integer index = entry.getKey();
               AccumulatedData data = entry.getValue();
@@ -458,10 +485,15 @@ public final class Generation {
               if (data.reasoningContent.length() > 0) {
                 message.setReasoningContent(data.reasoningContent.toString());
               }
-              if (!data.toolCalls.isEmpty()) {
-                message.setToolCalls(data.toolCalls);
+              List<ToolCallBase> completeToolCalls =
+                  StreamingMerger.copyCompleteToolCalls(data.toolCalls);
+              if (!completeToolCalls.isEmpty()) {
+                message.setToolCalls(completeToolCalls);
               }
               finalChoice.setMessage(message);
+              if (data.searchInfo != null) {
+                finalChoice.setSearchInfo(data.searchInfo);
+              }
               if (!data.logprobsContent.isEmpty()) {
                 GenerationLogprobs logprobs = new GenerationLogprobs();
                 logprobs.setContent(new ArrayList<>(data.logprobsContent));
@@ -471,11 +503,16 @@ public final class Generation {
               if (data.outputTokens != null) {
                 totalOutputTokens += data.outputTokens;
               }
+              if (data.totalTokens != null) {
+                totalTokens += data.totalTokens;
+              }
             }
             output.setChoices(allChoices);
             if (result.getUsage() != null && totalOutputTokens > 0) {
               result.getUsage().setOutputTokens(totalOutputTokens);
-              if (result.getUsage().getInputTokens() != null) {
+              if (totalTokens > 0) {
+                result.getUsage().setTotalTokens(totalTokens);
+              } else if (result.getUsage().getInputTokens() != null) {
                 result
                     .getUsage()
                     .setTotalTokens(result.getUsage().getInputTokens() + totalOutputTokens);
@@ -492,16 +529,7 @@ public final class Generation {
           // Reuse current choice in result, just update it
           for (GenerationOutput.Choice choice : choices) {
             if (choice.getIndex() != null && choice.getIndex().equals(currentChoiceIndex)) {
-              // Update usage with this choice's output tokens
-              if (result.getUsage() != null && currentData.outputTokens != null) {
-                result.getUsage().setOutputTokens(currentData.outputTokens);
-                if (result.getUsage().getInputTokens() != null) {
-                  result
-                      .getUsage()
-                      .setTotalTokens(
-                          result.getUsage().getInputTokens() + currentData.outputTokens);
-                }
-              }
+              applyAccumulatedUsage(result, accumulatedData);
               return result;
             }
           }
@@ -517,117 +545,84 @@ public final class Generation {
       if (currentText != null && !currentText.isEmpty()) {
         accumulated.content.append(currentText);
       }
-      // Always set the accumulated content if we have any
+      if (result.getOutput().getFinishReason() != null) {
+        accumulated.finishReason = result.getOutput().getFinishReason();
+      }
+      if (result.getOutput().getSearchInfo() != null) {
+        accumulated.searchInfo = result.getOutput().getSearchInfo();
+      }
+      // Always set the accumulated content if we have any.
       if (accumulated.content.length() > 0) {
         result.getOutput().setText(accumulated.content.toString());
+      }
+      if (accumulated.finishReason != null) {
+        result.getOutput().setFinishReason(accumulated.finishReason);
+      }
+      if (accumulated.searchInfo != null) {
+        result.getOutput().setSearchInfo(accumulated.searchInfo);
+      } else if (shouldWaitForSearchInfo(result, param)) {
+        return null;
       }
     }
 
     return result;
   }
 
-  /** Merges tool calls from current response with accumulated tool calls. */
-  private void mergeToolCalls(
-      List<ToolCallBase> currentToolCalls, List<ToolCallBase> accumulatedToolCalls) {
-    for (ToolCallBase currentCall : currentToolCalls) {
-      if (currentCall == null || currentCall.getIndex() == null) {
-        continue;
-      }
+  private boolean shouldWaitForSearchInfo(GenerationResult result, HalfDuplexServiceParam param) {
+    if (!(param instanceof GenerationParam)) {
+      return false;
+    }
+    if (!Boolean.TRUE.equals(((GenerationParam) param).getEnableSearch())) {
+      return false;
+    }
+    if (!"stop".equals(result.getOutput().getFinishReason())) {
+      return false;
+    }
+    if (result.getUsage() == null
+        || result.getUsage().getPlugins() == null
+        || result.getUsage().getPlugins().getSearch() == null
+        || result.getUsage().getPlugins().getSearch().getCount() == null
+        || result.getUsage().getPlugins().getSearch().getCount() <= 0) {
+      return false;
+    }
+    if (result.getHeaders() == null) {
+      return false;
+    }
 
-      int index = currentCall.getIndex();
-
-      // Find existing accumulated call with same index
-      ToolCallBase existingCall = null;
-      for (ToolCallBase accCall : accumulatedToolCalls) {
-        if (accCall != null && accCall.getIndex() != null && accCall.getIndex().equals(index)) {
-          existingCall = accCall;
-          break;
-        }
-      }
-
-      if (existingCall instanceof ToolCallFunction && currentCall instanceof ToolCallFunction) {
-        // Merge function calls
-        ToolCallFunction existingFunctionCall = (ToolCallFunction) existingCall;
-        ToolCallFunction currentFunctionCall = (ToolCallFunction) currentCall;
-
-        if (currentFunctionCall.getFunction() != null) {
-          // Ensure existing function call has a function object
-          if (existingFunctionCall.getFunction() == null) {
-            existingFunctionCall.setFunction(existingFunctionCall.new CallFunction());
-          }
-
-          // Accumulate arguments if present
-          if (currentFunctionCall.getFunction().getArguments() != null) {
-            String existingArguments = existingFunctionCall.getFunction().getArguments();
-            if (existingArguments == null) {
-              existingArguments = "";
-            }
-            String currentArguments = currentFunctionCall.getFunction().getArguments();
-            existingFunctionCall.getFunction().setArguments(existingArguments + currentArguments);
-          }
-
-          // Accumulate function name if present
-          if (currentFunctionCall.getFunction().getName() != null) {
-            String existingName = existingFunctionCall.getFunction().getName();
-            if (existingName == null) {
-              existingName = "";
-            }
-            String currentName = currentFunctionCall.getFunction().getName();
-            existingFunctionCall.getFunction().setName(existingName + currentName);
-          }
-
-          // Update function output if present
-          if (currentFunctionCall.getFunction().getOutput() != null) {
-            existingFunctionCall
-                .getFunction()
-                .setOutput(currentFunctionCall.getFunction().getOutput());
-          }
-        }
-
-        // Update other fields with latest non-empty values
-        if (currentFunctionCall.getIndex() != null) {
-          existingFunctionCall.setIndex(currentFunctionCall.getIndex());
-        }
-        if (currentFunctionCall.getId() != null && !currentFunctionCall.getId().isEmpty()) {
-          existingFunctionCall.setId(currentFunctionCall.getId());
-        }
-        if (currentFunctionCall.getType() != null) {
-          existingFunctionCall.setType(currentFunctionCall.getType());
-        }
-      } else {
-        // Add new tool call (create a copy)
-        if (currentCall instanceof ToolCallFunction) {
-          ToolCallFunction currentFunctionCall = (ToolCallFunction) currentCall;
-          ToolCallFunction newFunctionCall = new ToolCallFunction();
-          newFunctionCall.setIndex(currentFunctionCall.getIndex());
-          newFunctionCall.setId(currentFunctionCall.getId());
-          newFunctionCall.setType(currentFunctionCall.getType());
-
-          if (currentFunctionCall.getFunction() != null) {
-            ToolCallFunction.CallFunction newCallFunction = newFunctionCall.new CallFunction();
-            newCallFunction.setName(currentFunctionCall.getFunction().getName());
-            newCallFunction.setArguments(currentFunctionCall.getFunction().getArguments());
-            newCallFunction.setOutput(currentFunctionCall.getFunction().getOutput());
-            newFunctionCall.setFunction(newCallFunction);
-          }
-
-          accumulatedToolCalls.add(newFunctionCall);
-        } else {
-          // For other types of tool calls, add directly (assuming they are immutable or don't need
-          // merging)
-          accumulatedToolCalls.add(currentCall);
-        }
+    for (Map.Entry<String, Object> header : result.getHeaders().entrySet()) {
+      if ("x-dashscope-finished".equalsIgnoreCase(header.getKey())) {
+        return "false".equalsIgnoreCase(String.valueOf(header.getValue()));
       }
     }
+    return false;
   }
 
-  /**
-   * Clears accumulated data for the current thread. Should be called when streaming is complete or
-   * encounters error.
-   */
-  private void clearAccumulatedData() {
-    accumulatedDataMap.get().clear();
-    accumulatedDataMap.remove();
+  private void applyAccumulatedUsage(
+      GenerationResult result, Map<Integer, AccumulatedData> accumulatedData) {
+    if (result.getUsage() == null) {
+      return;
+    }
+
+    int totalOutputTokens = 0;
+    int totalTokens = 0;
+    for (AccumulatedData data : accumulatedData.values()) {
+      if (data.outputTokens != null) {
+        totalOutputTokens += data.outputTokens;
+      }
+      if (data.totalTokens != null) {
+        totalTokens += data.totalTokens;
+      }
+    }
+    if (totalOutputTokens <= 0) {
+      return;
+    }
+
+    result.getUsage().setOutputTokens(totalOutputTokens);
+    if (totalTokens > 0) {
+      result.getUsage().setTotalTokens(totalTokens);
+    } else if (result.getUsage().getInputTokens() != null) {
+      result.getUsage().setTotalTokens(result.getUsage().getInputTokens() + totalOutputTokens);
+    }
   }
 
   /** Inner class to store accumulated data for response merging. */
@@ -641,5 +636,7 @@ public final class Generation {
     boolean allChoicesSent = false;
     String role = null;
     Integer outputTokens = null;
+    Integer totalTokens = null;
+    SearchInfo searchInfo = null;
   }
 }

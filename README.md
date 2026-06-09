@@ -33,7 +33,7 @@ Conversation conversation = new Conversation(Protocol.HTTP.getValue());
 Conversation conversation = new Conversation(Protocol.WEBSOCKET.getValue());
 ```
 
-The conversation interface supports both stream and non-stream queries. These queries all accept `ConversationParam`  as input, and returns `ConversationResult` as output . Each model has a unique input structure and output structure which derives from the two data classes mentioned above. Please use these sub classes when you are using the coordinating model. 
+The conversation interface supports both stream and non-stream queries. These queries all accept `ConversationParam`  as input, and returns `ConversationResult` as output . Each model has a unique input structure and output structure which derives from the two data classes mentioned above. Please use these sub classes when you are using the coordinating model.
 
 Here shows the usages of each method, with the examples of `qwen-turbo` model.
 

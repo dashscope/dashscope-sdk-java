@@ -14,7 +14,13 @@ public class MultiModalConversationOutput {
     @SerializedName("finish_reason")
     private String finishReason;
 
+    private Integer index;
+
     private MultiModalMessage message;
+
+    /** Search information for this specific choice, returned when search_options is configured. */
+    @SerializedName("search_info")
+    private SearchInfo searchInfo;
   }
 
   private List<Choice> choices;

@@ -1,3 +1,4 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.multimodal;
 
 /** author songsong.shao date 2025/4/24 */

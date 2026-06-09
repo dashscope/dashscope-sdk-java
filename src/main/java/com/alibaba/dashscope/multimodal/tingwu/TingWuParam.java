@@ -1,3 +1,4 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.multimodal.tingwu;
 
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;

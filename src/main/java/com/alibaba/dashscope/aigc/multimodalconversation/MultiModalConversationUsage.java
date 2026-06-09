@@ -1,26 +1,12 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.aigc.multimodalconversation;
 
+import com.alibaba.dashscope.common.Plugins;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 @Data
 public class MultiModalConversationUsage {
-
-  @Data
-  public static class Plugins {
-
-    @Data
-    public static class Search {
-      @SerializedName("count")
-      private Integer count;
-
-      @SerializedName("strategy")
-      private String strategy;
-    }
-
-    @SerializedName("search")
-    private Search search;
-  }
 
   @SerializedName("input_tokens")
   private Integer inputTokens;
