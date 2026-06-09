@@ -48,6 +48,11 @@ public class RecognitionResult {
           JsonUtils.fromJsonObject(
               dashScopeResult.getUsage().getAsJsonObject(), RecognitionUsage.class));
     }
+    if (dashScopeResult.getOutput() == null || !(dashScopeResult.getOutput() instanceof JsonObject)) {
+      result.isCompleteResult = true;
+      result.sentence = new Sentence();
+      return result;
+    }
     JsonObject jsonDashScopeResult = (JsonObject) dashScopeResult.getOutput();
     if (jsonDashScopeResult.has(RecognitionApiKeywords.SENTENCE)) {
       JsonObject timestampObject =
@@ -56,6 +61,7 @@ public class RecognitionResult {
         result.sentence = Sentence.from(timestampObject);
       } else {
         result.isCompleteResult = true;
+        result.sentence = new Sentence();
       }
     } else {
       result.isCompleteResult = true;

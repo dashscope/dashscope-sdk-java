@@ -204,7 +204,8 @@ public final class Recognition {
             @Override
             public void onEvent(DashScopeResult message) {
               RecognitionResult recognitionResult = RecognitionResult.fromDashScopeResult(message);
-              if (recognitionResult.getSentence().isHeartbeat()) {
+              if (recognitionResult.getSentence() != null
+                  && recognitionResult.getSentence().isHeartbeat()) {
                 log.debug("recv heartbeat");
                 return;
               }
