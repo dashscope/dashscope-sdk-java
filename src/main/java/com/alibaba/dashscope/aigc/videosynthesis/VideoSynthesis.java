@@ -38,6 +38,8 @@ public final class VideoSynthesis {
 
     public static final String WANX_2_1_KF2V_PLUS = "wanx2.1-kf2v-plus";
     public static final String WANX_KF2V = "wanx-kf2v";
+
+    public static final String HAPPYHORSE_1_0_T2V = "happyhorse-1.0-t2v";
   }
 
   /** Video synthesis size */
