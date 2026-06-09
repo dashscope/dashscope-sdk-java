@@ -22,4 +22,10 @@ public class MultiModalConversationTokensDetails {
 
   @SerializedName("cached_tokens")
   private Integer cachedTokens;
+
+  @SerializedName("cache_creation_input_tokens")
+  private Integer cacheCreationInputTokens;
+
+  @SerializedName("cache_type")
+  private String cacheType;
 }
