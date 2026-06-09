@@ -48,7 +48,8 @@ public class RecognitionResult {
           JsonUtils.fromJsonObject(
               dashScopeResult.getUsage().getAsJsonObject(), RecognitionUsage.class));
     }
-    if (dashScopeResult.getOutput() == null || !(dashScopeResult.getOutput() instanceof JsonObject)) {
+    if (dashScopeResult.getOutput() == null
+        || !(dashScopeResult.getOutput() instanceof JsonObject)) {
       result.isCompleteResult = true;
       result.sentence = new Sentence();
       return result;
