@@ -36,6 +36,10 @@ public class ImageGenerationOutput {
   @SerializedName("task_status")
   private String taskStatus;
 
+  private String code;
+
+  private String message;
+
   @SerializedName("finished")
   private Boolean finished;
 
