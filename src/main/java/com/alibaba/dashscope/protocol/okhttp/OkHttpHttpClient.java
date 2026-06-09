@@ -23,7 +23,10 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -44,7 +47,8 @@ import org.jetbrains.annotations.NotNull;
 @Slf4j
 public final class OkHttpHttpClient implements HalfDuplexClient {
   private final OkHttpClient client;
-  private volatile EventSource activeEventSource;
+  private final Set<EventSource> activeEventSources =
+      Collections.newSetFromMap(new ConcurrentHashMap<>());
   private static final MediaType MEDIA_TYPE_APPLICATION_JSON =
       MediaType.parse("application/json; charset=utf-8");
 
@@ -360,7 +364,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
         Flowable.<DashScopeResult>create(
             emitter -> {
               Request request = buildRequest(req.getHttpRequest());
-              activeEventSource =
+              EventSource eventSource =
                   EventSources.createFactory(client)
                       .newEventSource(
                           request,
@@ -390,24 +394,23 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                                 java.lang.Throwable t,
                                 Response response) {
                               this.response = response;
-                              activeEventSource = null;
+                              activeEventSources.remove(eventSource);
                               super.onFailure(eventSource, t, response);
                               emitter.onError(new ApiException(parseFailed(response, t), t));
                             }
 
                             @java.lang.Override
                             public void onClosed(@NotNull EventSource eventSource) {
-                              activeEventSource = null;
+                              activeEventSources.remove(eventSource);
                               super.onClosed(eventSource);
                               emitter.onComplete();
                             }
                           });
+              activeEventSources.add(eventSource);
               emitter.setCancellable(
                   () -> {
-                    if (activeEventSource != null) {
-                      activeEventSource.cancel();
-                      activeEventSource = null;
-                    }
+                    activeEventSources.remove(eventSource);
+                    eventSource.cancel();
                   });
             },
             BackpressureStrategy.BUFFER);
@@ -504,11 +507,13 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
 
   @Override
   public boolean close(int code, String reason) {
-    if (activeEventSource != null) {
-      activeEventSource.cancel();
-      activeEventSource = null;
-      return true;
+    if (activeEventSources.isEmpty()) {
+      return false;
     }
-    return false;
+    for (EventSource es : activeEventSources) {
+      es.cancel();
+    }
+    activeEventSources.clear();
+    return true;
   }
 }
