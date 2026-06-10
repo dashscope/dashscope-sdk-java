@@ -1,4 +1,0 @@
-user_name = "java"
-model = "qwen3.7-max"
-enabled_capabilities = "bailian.profile,bailian.mcp,bailian.cli"
-memory_user_id = "acli-java"
