@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -364,6 +365,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
         Flowable.<DashScopeResult>create(
             emitter -> {
               Request request = buildRequest(req.getHttpRequest());
+              AtomicBoolean terminated = new AtomicBoolean(false);
               EventSource eventSource =
                   EventSources.createFactory(client)
                       .newEventSource(
@@ -394,6 +396,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                                 java.lang.Throwable t,
                                 Response response) {
                               this.response = response;
+                              terminated.set(true);
                               activeEventSources.remove(eventSource);
                               super.onFailure(eventSource, t, response);
                               emitter.onError(new ApiException(parseFailed(response, t), t));
@@ -401,12 +404,20 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
 
                             @java.lang.Override
                             public void onClosed(@NotNull EventSource eventSource) {
+                              terminated.set(true);
                               activeEventSources.remove(eventSource);
                               super.onClosed(eventSource);
                               emitter.onComplete();
                             }
                           });
-              activeEventSources.add(eventSource);
+              if (terminated.get()) {
+                activeEventSources.remove(eventSource);
+              } else {
+                activeEventSources.add(eventSource);
+                if (terminated.get()) {
+                  activeEventSources.remove(eventSource);
+                }
+              }
               emitter.setCancellable(
                   () -> {
                     activeEventSources.remove(eventSource);
