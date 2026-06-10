@@ -67,20 +67,22 @@ public class MessageAdapter extends TypeAdapter<Message> {
           out.endObject();
           out.endObject(); // image url
         } else if (content.getType().equals(ApiKeywords.CONTENT_TYPE_DOC_URL)) {
-          out.beginObject();
-          out.name("type");
-          out.value(ApiKeywords.CONTENT_TYPE_DOC_URL);
-          out.name(ApiKeywords.CONTENT_TYPE_DOC_URL);
-          out.beginObject();
           DocURL docURL = ((MessageContentDocURL) content).getDocURL();
-          out.name("url");
-          out.value(docURL.getUrl());
-          if (docURL.getFileParsingStrategy() != null) {
-            out.name("file_parsing_strategy");
-            out.value(docURL.getFileParsingStrategy());
+          if (docURL != null) {
+            out.beginObject();
+            out.name("type");
+            out.value(ApiKeywords.CONTENT_TYPE_DOC_URL);
+            out.name(ApiKeywords.CONTENT_TYPE_DOC_URL);
+            out.beginObject();
+            out.name("url");
+            out.value(docURL.getUrl());
+            if (docURL.getFileParsingStrategy() != null) {
+              out.name("file_parsing_strategy");
+              out.value(docURL.getFileParsingStrategy());
+            }
+            out.endObject();
+            out.endObject();
           }
-          out.endObject();
-          out.endObject();
         }
       }
       out.endArray();
@@ -198,13 +200,17 @@ public class MessageAdapter extends TypeAdapter<Message> {
   private MessageContentDocURL parseDocContent(LinkedTreeMap<String, Object> contentItem) {
     LinkedTreeMap<String, Object> docUrlMap =
         (LinkedTreeMap<String, Object>) contentItem.get(ApiKeywords.CONTENT_TYPE_DOC_URL);
-    DocURL.DocURLBuilder docBuilder = DocURL.builder().url((String) docUrlMap.get("url"));
-    if (docUrlMap.containsKey("file_parsing_strategy")) {
-      docBuilder.fileParsingStrategy((String) docUrlMap.get("file_parsing_strategy"));
+    DocURL docURL = null;
+    if (docUrlMap != null) {
+      DocURL.DocURLBuilder docBuilder = DocURL.builder().url((String) docUrlMap.get("url"));
+      if (docUrlMap.containsKey("file_parsing_strategy")) {
+        docBuilder.fileParsingStrategy((String) docUrlMap.get("file_parsing_strategy"));
+      }
+      docURL = docBuilder.build();
     }
     return MessageContentDocURL.builder()
         .type((String) contentItem.get("type"))
-        .docURL(docBuilder.build())
+        .docURL(docURL)
         .build();
   }
 
