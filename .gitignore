@@ -169,3 +169,6 @@ cython_debug/
 #.idea/
 /dashscope-sdk-java.iml
 /.idea
+
+.acli/
+settings.xml
