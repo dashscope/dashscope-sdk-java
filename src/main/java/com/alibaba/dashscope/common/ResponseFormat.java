@@ -3,7 +3,6 @@ package com.alibaba.dashscope.common;
 
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
-import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
 
