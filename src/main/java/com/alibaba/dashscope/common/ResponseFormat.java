@@ -3,7 +3,6 @@ package com.alibaba.dashscope.common;
 
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
-import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
 
@@ -27,7 +26,7 @@ public class ResponseFormat {
   public static class JsonSchemaFormat {
     private String name;
 
-    @Builder.Default private Boolean strict = null;
+    private Boolean strict;
 
     private JsonObject schema;
   }
