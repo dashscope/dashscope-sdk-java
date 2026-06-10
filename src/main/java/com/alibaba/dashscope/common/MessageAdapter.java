@@ -66,8 +66,22 @@ public class MessageAdapter extends TypeAdapter<Message> {
           }
           out.endObject();
           out.endObject(); // image url
+        } else if (content.getType().equals(ApiKeywords.CONTENT_TYPE_DOC_URL)) {
+          out.beginObject();
+          out.name("type");
+          out.value(ApiKeywords.CONTENT_TYPE_DOC_URL);
+          out.name(ApiKeywords.CONTENT_TYPE_DOC_URL);
+          out.beginObject();
+          DocURL docURL = ((MessageContentDocURL) content).getDocURL();
+          out.name("url");
+          out.value(docURL.getUrl());
+          if (docURL.getFileParsingStrategy() != null) {
+            out.name("file_parsing_strategy");
+            out.value(docURL.getFileParsingStrategy());
+          }
+          out.endObject();
+          out.endObject();
         }
-        // not support type, TODO extends types.
       }
       out.endArray();
     }
@@ -129,6 +143,8 @@ public class MessageAdapter extends TypeAdapter<Message> {
         contents.add(parseTextContent(contentItem));
       } else if (ApiKeywords.CONTENT_TYPE_IMAGE_URL.equals(type)) {
         contents.add(parseImageContent(contentItem));
+      } else if (ApiKeywords.CONTENT_TYPE_DOC_URL.equals(type)) {
+        contents.add(parseDocContent(contentItem));
       }
     }
     return contents;
@@ -174,6 +190,21 @@ public class MessageAdapter extends TypeAdapter<Message> {
     return MessageContentImageURL.builder()
         .type((String) contentItem.get("type"))
         .imageURL(imageBuilder.build())
+        .build();
+  }
+
+  // Parse doc_url content
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private MessageContentDocURL parseDocContent(LinkedTreeMap<String, Object> contentItem) {
+    LinkedTreeMap<String, Object> docUrlMap =
+        (LinkedTreeMap<String, Object>) contentItem.get(ApiKeywords.CONTENT_TYPE_DOC_URL);
+    DocURL.DocURLBuilder docBuilder = DocURL.builder().url((String) docUrlMap.get("url"));
+    if (docUrlMap.containsKey("file_parsing_strategy")) {
+      docBuilder.fileParsingStrategy((String) docUrlMap.get("file_parsing_strategy"));
+    }
+    return MessageContentDocURL.builder()
+        .type((String) contentItem.get("type"))
+        .docURL(docBuilder.build())
         .build();
   }
 
