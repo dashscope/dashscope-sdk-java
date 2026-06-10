@@ -27,9 +27,6 @@ public class WorkflowMessage {
   @SerializedName("message")
   private Message message;
 
-  @SerializedName("parent_node_id")
-  private String parentNodeId;
-
   @Data
   public static class Message {
     @SerializedName("role")
