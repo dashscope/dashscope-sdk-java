@@ -85,6 +85,9 @@ public final class Recognition {
       if (param.getPhraseId() != null && !param.getPhraseId().isEmpty()) {
         recognitionParamWithStream.setPhraseId(param.getPhraseId());
       }
+      if (param.getInputs() != null && !param.getInputs().isEmpty()) {
+        recognitionParamWithStream.setInput(param.getInputs());
+      }
 
       return recognitionParamWithStream;
     }
