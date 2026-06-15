@@ -45,13 +45,18 @@ public final class QwenTranscription {
   }
 
   public QwenTranscriptionResult wait(QwenTranscriptionQueryParam queryParam) {
+    return wait(queryParam, -1);
+  }
+
+  public QwenTranscriptionResult wait(QwenTranscriptionQueryParam queryParam, long timeoutSeconds) {
     try {
       return QwenTranscriptionResult.fromDashScopeResult(
           asyncApi.wait(
               queryParam.getTaskId(),
               queryParam.getApiKey(),
               baseUrl,
-              queryParam.getCustomHeaders()));
+              queryParam.getCustomHeaders(),
+              timeoutSeconds));
     } catch (NoApiKeyException e) {
       throw new ApiException(e);
     }

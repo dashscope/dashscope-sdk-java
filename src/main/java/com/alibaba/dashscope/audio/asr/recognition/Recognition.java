@@ -9,6 +9,7 @@ import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
+import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import com.google.gson.Gson;
@@ -104,6 +105,33 @@ public final class Recognition {
             .function(Function.RECOGNITION.getValue())
             .build();
     duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
+  }
+
+  public Recognition(ConnectionOptions connectionOptions) {
+    serviceOption =
+        ApiServiceOption.builder()
+            .protocol(Protocol.WEBSOCKET)
+            .streamingMode(StreamingMode.DUPLEX)
+            .outputMode(OutputMode.ACCUMULATE)
+            .taskGroup(TaskGroup.AUDIO.getValue())
+            .task(Task.ASR.getValue())
+            .function(Function.RECOGNITION.getValue())
+            .build();
+    duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
+  }
+
+  public Recognition(ConnectionOptions connectionOptions, String baseUrl) {
+    serviceOption =
+        ApiServiceOption.builder()
+            .protocol(Protocol.WEBSOCKET)
+            .streamingMode(StreamingMode.DUPLEX)
+            .outputMode(OutputMode.ACCUMULATE)
+            .taskGroup(TaskGroup.AUDIO.getValue())
+            .task(Task.ASR.getValue())
+            .baseWebSocketUrl(baseUrl)
+            .function(Function.RECOGNITION.getValue())
+            .build();
+    duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
   }
 
   public Flowable<RecognitionResult> streamCall(
