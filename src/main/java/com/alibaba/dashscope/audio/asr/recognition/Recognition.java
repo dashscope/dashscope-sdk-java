@@ -106,6 +106,10 @@ public final class Recognition {
     duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
   }
 
+  public void setWebsocketUrl(String websocketUrl) {
+    serviceOption.setBaseWebSocketUrl(websocketUrl);
+  }
+
   public Flowable<RecognitionResult> streamCall(
       RecognitionParam param, Flowable<ByteBuffer> audioFrame)
       throws ApiException, NoApiKeyException {
