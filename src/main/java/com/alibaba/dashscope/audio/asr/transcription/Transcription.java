@@ -45,13 +45,18 @@ public final class Transcription {
   }
 
   public TranscriptionResult wait(TranscriptionQueryParam queryParam) {
+    return wait(queryParam, -1);
+  }
+
+  public TranscriptionResult wait(TranscriptionQueryParam queryParam, long timeoutSeconds) {
     try {
       return TranscriptionResult.fromDashScopeResult(
           asyncApi.wait(
               queryParam.getTaskId(),
               queryParam.getApiKey(),
               baseUrl,
-              queryParam.getCustomHeaders()));
+              queryParam.getCustomHeaders(),
+              timeoutSeconds));
     } catch (NoApiKeyException e) {
       throw new ApiException(e);
     }
