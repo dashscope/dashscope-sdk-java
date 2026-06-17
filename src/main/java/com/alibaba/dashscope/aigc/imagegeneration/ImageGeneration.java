@@ -37,6 +37,21 @@ public final class ImageGeneration {
   public static class Models {
     public static final String WanX2_6_T2I = "wan2.6-t2i";
     public static final String WanX2_6_IMAGE = "wan2.6-image";
+
+    public static final String WanX2_7_T2V = "wan2.7-t2v";
+    public static final String WanX2_7_I2V = "wan2.7-i2v";
+    public static final String WanX2_7_IMAGE = "wan2.7-image";
+    public static final String WanX2_7_IMAGE_PRO = "wan2.7-image-pro";
+    public static final String WanX2_7_VIDEOEDIT = "wan2.7-videoedit";
+    public static final String WanX2_7_R2V = "wan2.7-r2v";
+
+    public static final String QWEN_IMAGE = "qwen-image";
+    public static final String QWEN_IMAGE_EDIT = "qwen-image-edit";
+    public static final String QWEN_IMAGE_2_0 = "qwen-image-2.0";
+    public static final String QWEN_IMAGE_2_0_PRO = "qwen-image-2.0-pro";
+    public static final String QWEN_IMAGE_PLUS = "qwen-image-plus";
+    public static final String QWEN_IMAGE_MAX = "qwen-image-max";
+    public static final String QWEN_IMAGE_EDIT_PLUS = "qwen-image-edit-plus";
   }
 
   private ApiServiceOption defaultSyncApiServiceOption() {

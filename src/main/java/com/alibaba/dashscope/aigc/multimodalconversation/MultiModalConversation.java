@@ -33,6 +33,17 @@ public final class MultiModalConversation {
   public static class Models {
     public static final String QWEN_VL_CHAT_V1 = "qwen-vl-chat-v1";
     public static final String QWEN_VL_PLUS = "qwen-vl-plus";
+    public static final String QWEN_VL_MAX = "qwen-vl-max";
+    public static final String QWEN_VL_OCR = "qwen-vl-ocr";
+
+    public static final String QWEN3_VL_PLUS = "qwen3-vl-plus";
+    public static final String QWEN3_VL_FLASH = "qwen3-vl-flash";
+
+    public static final String QWEN_OMNI_TURBO = "qwen-omni-turbo";
+    public static final String QWEN_OMNI_TURBO_LATEST = "qwen-omni-turbo-latest";
+    public static final String QWEN3_OMNI_FLASH = "qwen3-omni-flash";
+    public static final String QWEN3_5_OMNI_PLUS = "qwen3.5-omni-plus";
+    public static final String QWEN3_5_OMNI_FLASH = "qwen3.5-omni-flash";
   }
 
   private ApiServiceOption defaultApiServiceOption() {
