@@ -44,23 +44,14 @@ public final class Generation {
     public static final String QWEN_PLUS = "qwen-plus";
     public static final String QWEN_MAX = "qwen-max";
     public static final String QWEN_FLASH = "qwen-flash";
-    public static final String QWEN_LONG = "qwen-long";
 
     public static final String QWEN3_MAX = "qwen3-max";
-    public static final String QWEN3_6_PLUS = "qwen3.6-plus";
-    public static final String QWEN3_6_FLASH = "qwen3.6-flash";
     public static final String QWEN3_7_PLUS = "qwen3.7-plus";
     public static final String QWEN3_7_MAX = "qwen3.7-max";
-    public static final String QWEN3_5_PLUS = "qwen3.5-plus";
-    public static final String QWEN3_5_FLASH = "qwen3.5-flash";
 
     public static final String QWEN3_CODER_PLUS = "qwen3-coder-plus";
     public static final String QWEN3_CODER_FLASH = "qwen3-coder-flash";
     public static final String QWEN3_CODER_NEXT = "qwen3-coder-next";
-
-    public static final String QWQ_PLUS = "qwq-plus";
-    public static final String QVQ_MAX = "qvq-max";
-    public static final String QVQ_PLUS = "qvq-plus";
 
     public static final String BAILIAN_V1 = "bailian-v1";
     public static final String DOLLY_12B_V2 = "dolly-12b-v2";
