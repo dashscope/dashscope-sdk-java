@@ -41,15 +41,23 @@ public final class Generation {
     @Deprecated public static final String QWEN_V1 = "qwen-v1";
 
     public static final String QWEN_TURBO = "qwen-turbo";
+    public static final String QWEN_PLUS = "qwen-plus";
+    public static final String QWEN_MAX = "qwen-max";
+    public static final String QWEN_FLASH = "qwen-flash";
+
+    public static final String QWEN3_MAX = "qwen3-max";
+    public static final String QWEN3_7_PLUS = "qwen3.7-plus";
+    public static final String QWEN3_7_MAX = "qwen3.7-max";
+
+    public static final String QWEN3_CODER_PLUS = "qwen3-coder-plus";
+    public static final String QWEN3_CODER_FLASH = "qwen3-coder-flash";
+    public static final String QWEN3_CODER_NEXT = "qwen3-coder-next";
 
     public static final String BAILIAN_V1 = "bailian-v1";
     public static final String DOLLY_12B_V2 = "dolly-12b-v2";
 
     /** @deprecated use QWEN_PLUS instead */
     @Deprecated public static final String QWEN_PLUS_V1 = "qwen-plus-v1";
-
-    public static final String QWEN_PLUS = "qwen-plus";
-    public static final String QWEN_MAX = "qwen-max";
   }
 
   private ApiServiceOption defaultApiServiceOption() {

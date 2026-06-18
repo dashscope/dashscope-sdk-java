@@ -39,7 +39,15 @@ public final class VideoSynthesis {
     public static final String WANX_2_1_KF2V_PLUS = "wanx2.1-kf2v-plus";
     public static final String WANX_KF2V = "wanx-kf2v";
 
+    public static final String WAN_2_7_T2V = "wan2.7-t2v";
+    public static final String WAN_2_7_I2V = "wan2.7-i2v";
+    public static final String WAN_2_7_R2V = "wan2.7-r2v";
+    public static final String WAN_2_7_VIDEOEDIT = "wan2.7-videoedit";
+
     public static final String HAPPYHORSE_1_0_T2V = "happyhorse-1.0-t2v";
+    public static final String HAPPYHORSE_1_0_I2V = "happyhorse-1.0-i2v";
+    public static final String HAPPYHORSE_1_0_R2V = "happyhorse-1.0-r2v";
+    public static final String HAPPYHORSE_1_0_VIDEO_EDIT = "happyhorse-1.0-video-edit";
   }
 
   /** Video synthesis size */
