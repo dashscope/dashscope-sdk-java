@@ -114,7 +114,7 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
     if (temperature != null) {
       params.put("temperature", temperature);
     }
-    if (incrementalOutput) {
+    if (incrementalOutput != null) {
       params.put("incremental_output", incrementalOutput);
     }
     params.putAll(parameters);
