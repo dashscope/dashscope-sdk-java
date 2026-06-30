@@ -21,6 +21,7 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.Builder;
 import lombok.Getter;
@@ -64,7 +65,7 @@ public class MultiModalDialog {
 
   private final Queue<AsyncCmdBuffer> DialogBuffer = new LinkedList<>(); // Dialogue buffer queue
 
-  private AtomicReference<CountDownLatch> stopLatch =
+  private final AtomicReference<CountDownLatch> stopLatch =
       new AtomicReference<>(null); // Stop signal latch
 
   @SuperBuilder
@@ -209,7 +210,7 @@ public class MultiModalDialog {
             },
             BackpressureStrategy.BUFFER);
 
-    stopLatch = new AtomicReference<>(new CountDownLatch(1)); // Initializes stop signal latch
+    stopLatch.set(new CountDownLatch(1)); // Initializes stop signal latch
 
     String preTaskId =
         requestParam.getTaskId() != null ? requestParam.getTaskId() : UUID.randomUUID().toString();
@@ -440,14 +441,56 @@ public class MultiModalDialog {
     sendTextFrame("UpdateInfo");
   }
 
-  /** Stops the MultiModalDialog. */
+  /**
+   * Stops the MultiModalDialog gracefully. Sends a finish message to the server and waits for the
+   * server to acknowledge. If the server does not respond within the timeout (30s), falls back to
+   * force close.
+   *
+   * <p>This method is safe to call after onError — it will not deadlock.
+   */
   public void stop() {
     sendFinishTaskMessage();
-    if (stopLatch.get() != null) {
+
+    CountDownLatch latch = stopLatch.get();
+    if (latch != null) {
       try {
-        stopLatch.get().await();
-      } catch (InterruptedException ignored) {
+        // Use timeout to prevent deadlock: if server doesn't respond in 30s, force close
+        boolean completed = latch.await(30, TimeUnit.SECONDS);
+        if (!completed) {
+          log.warn("stop() timed out waiting for server acknowledgement, forcing close");
+          close();
+        }
+      } catch (InterruptedException e) {
+        close();
+        Thread.currentThread().interrupt();
       }
+    }
+  }
+
+  /**
+   * Force closes the dialog immediately without sending any message to the server. Safe to call
+   * from any callback thread (including onError/onStopped). Does not block.
+   *
+   * <p>This method: - Nullifies emitter to prevent further data sending - Disposes upstream
+   * subscription to stop sendBinaryWithRetry - Forces WebSocket cancel (non-blocking) - Sets
+   * isClosed to short-circuit any reconnection loops in progress - Releases stopLatch to unblock
+   * any thread waiting in stop()
+   */
+  public void close() {
+    // Nullify emitter to prevent further data sending
+    synchronized (MultiModalDialog.this) {
+      conversationEmitter = null;
+    }
+    // Force cancel: disposes upstream subscription + cancels WebSocket (non-blocking)
+    // Also sets isClosed=true which breaks reconnection loops in
+    // establishWebSocketClient/sendTextWithRetry/sendBinaryWithRetry
+    duplexApi.cancel();
+    // Release stopLatch to prevent stop() from blocking forever.
+    // This is critical: if close() is called from onError callback, any thread waiting
+    // in stop() will be unblocked immediately instead of deadlocking.
+    CountDownLatch latch = stopLatch.get();
+    if (latch != null) {
+      latch.countDown();
     }
   }
 

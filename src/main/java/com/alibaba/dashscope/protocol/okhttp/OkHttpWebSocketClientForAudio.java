@@ -5,6 +5,7 @@ import com.alibaba.dashscope.utils.JsonUtils;
 import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.JsonObject;
 import io.reactivex.Flowable;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Action;
 import java.nio.ByteBuffer;
 import java.util.concurrent.*;
@@ -66,67 +67,77 @@ public class OkHttpWebSocketClientForAudio extends OkHttpWebSocketClient {
                     req.getBaseWebSocketUrl());
 
                 Flowable<Object> streamingData = req.getStreamingData();
-                streamingData.subscribe(
-                    data -> {
-                      try {
-                        if (data instanceof String) {
-                          JsonObject continueData = req.getContinueMessage((String) data, taskId);
-                          sendTextWithRetry(
-                              req.getApiKey(),
-                              req.isSecurityCheck(),
-                              JsonUtils.toJson(continueData),
-                              req.getWorkspace(),
-                              req.getHeaders(),
-                              req.getBaseWebSocketUrl());
-                        } else if (data instanceof byte[]) {
-                          sendBinaryWithRetry(
-                              req.getApiKey(),
-                              req.isSecurityCheck(),
-                              ByteString.of((byte[]) data),
-                              req.getWorkspace(),
-                              req.getHeaders(),
-                              req.getBaseWebSocketUrl());
-                        } else if (data instanceof ByteBuffer) {
-                          sendBinaryWithRetry(
-                              req.getApiKey(),
-                              req.isSecurityCheck(),
-                              ByteString.of((ByteBuffer) data),
-                              req.getWorkspace(),
-                              req.getHeaders(),
-                              req.getBaseWebSocketUrl());
-                        } else {
-                          JsonObject continueData = req.getContinueMessage(data, taskId);
-                          sendTextWithRetry(
-                              req.getApiKey(),
-                              req.isSecurityCheck(),
-                              JsonUtils.toJson(continueData),
-                              req.getWorkspace(),
-                              req.getHeaders(),
-                              req.getBaseWebSocketUrl());
-                        }
-                      } catch (Throwable ex) {
-                        log.error(
-                            StringUtils.format("sendStreamData exception: %s", ex.getMessage()));
-                        responseEmitter.onError(ex);
-                      }
-                    },
-                    err -> {
-                      log.error(StringUtils.format("Get stream data error!"));
-                      responseEmitter.onError(err);
-                    },
-                    new Action() {
-                      @Override
-                      public void run() throws Exception {
-                        log.debug(StringUtils.format("Stream data send completed!"));
-                        sendTextWithRetry(
-                            req.getApiKey(),
-                            req.isSecurityCheck(),
-                            JsonUtils.toJson(req.getFinishedTaskMessage(taskId)),
-                            req.getWorkspace(),
-                            req.getHeaders(),
-                            req.getBaseWebSocketUrl());
-                      }
-                    });
+                Disposable d =
+                    streamingData.subscribe(
+                        data -> {
+                          try {
+                            if (data instanceof String) {
+                              JsonObject continueData =
+                                  req.getContinueMessage((String) data, taskId);
+                              sendTextWithRetry(
+                                  req.getApiKey(),
+                                  req.isSecurityCheck(),
+                                  JsonUtils.toJson(continueData),
+                                  req.getWorkspace(),
+                                  req.getHeaders(),
+                                  req.getBaseWebSocketUrl());
+                            } else if (data instanceof byte[]) {
+                              sendBinaryWithRetry(
+                                  req.getApiKey(),
+                                  req.isSecurityCheck(),
+                                  ByteString.of((byte[]) data),
+                                  req.getWorkspace(),
+                                  req.getHeaders(),
+                                  req.getBaseWebSocketUrl());
+                            } else if (data instanceof ByteBuffer) {
+                              sendBinaryWithRetry(
+                                  req.getApiKey(),
+                                  req.isSecurityCheck(),
+                                  ByteString.of((ByteBuffer) data),
+                                  req.getWorkspace(),
+                                  req.getHeaders(),
+                                  req.getBaseWebSocketUrl());
+                            } else {
+                              JsonObject continueData = req.getContinueMessage(data, taskId);
+                              sendTextWithRetry(
+                                  req.getApiKey(),
+                                  req.isSecurityCheck(),
+                                  JsonUtils.toJson(continueData),
+                                  req.getWorkspace(),
+                                  req.getHeaders(),
+                                  req.getBaseWebSocketUrl());
+                            }
+                          } catch (Throwable ex) {
+                            log.error(
+                                StringUtils.format(
+                                    "sendStreamData exception: %s", ex.getMessage()));
+                            responseEmitter.onError(ex);
+                          }
+                        },
+                        err -> {
+                          log.error(StringUtils.format("Get stream data error!"));
+                          responseEmitter.onError(err);
+                        },
+                        new Action() {
+                          @Override
+                          public void run() throws Exception {
+                            log.debug(StringUtils.format("Stream data send completed!"));
+                            sendTextWithRetry(
+                                req.getApiKey(),
+                                req.isSecurityCheck(),
+                                JsonUtils.toJson(req.getFinishedTaskMessage(taskId)),
+                                req.getWorkspace(),
+                                req.getHeaders(),
+                                req.getBaseWebSocketUrl());
+                          }
+                        });
+                // Publish the disposable, then check if cancel() raced ahead.
+                // If isClosed is already true, cancel() has already run and missed
+                // this disposable, so we must dispose it ourselves.
+                streamingDataDisposable = d;
+                if (isClosed.get()) {
+                  d.dispose();
+                }
               } catch (Throwable ex) {
                 log.error(StringUtils.format("sendStreamData exception: %s", ex.getMessage()));
                 responseEmitter.onError(ex);
