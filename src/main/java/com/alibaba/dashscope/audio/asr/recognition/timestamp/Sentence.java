@@ -56,6 +56,9 @@ public class Sentence {
   @SerializedName("sentence_end")
   boolean sentenceEnd;
 
+  @SerializedName("speaker_id")
+  String speakerId;
+
   public static Sentence from(String message) {
     return JsonUtils.fromJson(message, Sentence.class);
   }
