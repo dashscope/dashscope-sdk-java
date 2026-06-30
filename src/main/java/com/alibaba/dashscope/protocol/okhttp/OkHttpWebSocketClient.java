@@ -17,6 +17,7 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.Observable;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Action;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -40,7 +41,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
   private WebSocket webSocketClient;
   // indicate the websocket connection is established.
   private AtomicBoolean isOpen = new AtomicBoolean(false);
-  private AtomicBoolean isClosed = new AtomicBoolean(false);
+  protected AtomicBoolean isClosed = new AtomicBoolean(false);
   // indicate the first response is received.
   protected AtomicBoolean isFirstMessage = new AtomicBoolean(false);
   // used for get request response
@@ -50,6 +51,9 @@ public class OkHttpWebSocketClient extends WebSocketListener
   private FlowableEmitter<DashScopeResult> connectionEmitter;
 
   private AtomicBoolean passTaskStarted = new AtomicBoolean(false);
+
+  // Disposable for the streaming data subscription, used to cancel upstream when stopping
+  protected volatile Disposable streamingDataDisposable;
 
   public OkHttpWebSocketClient(OkHttpClient client, boolean passTaskStarted) {
     this.client = client;
@@ -97,6 +101,13 @@ public class OkHttpWebSocketClient extends WebSocketListener
   }
 
   public void cancel() {
+    // Set isClosed BEFORE cancel to suppress onFailure error propagation
+    isClosed.set(true);
+    // Dispose upstream subscription to stop sending data
+    Disposable d = streamingDataDisposable;
+    if (d != null && !d.isDisposed()) {
+      d.dispose();
+    }
     if (webSocketClient != null) {
       webSocketClient.cancel();
     }
@@ -111,6 +122,11 @@ public class OkHttpWebSocketClient extends WebSocketListener
     int reconnectionTimes = 0;
     String errorMessage = "";
     while (reconnectionTimes < MAX_CONNECTION_TIMES) {
+      // Bail out immediately if cancel() has been called
+      if (isClosed.get()) {
+        log.debug("Connection cancelled, stop reconnecting.");
+        return;
+      }
       try {
         Flowable<DashScopeResult> flowable =
             Flowable.<DashScopeResult>create(
@@ -144,9 +160,17 @@ public class OkHttpWebSocketClient extends WebSocketListener
         } else if (errorMessage.contains(Constants.NO_API_KEY_ERROR)) {
           throw ex;
         }
+        // Check again before sleeping
+        if (isClosed.get()) {
+          log.debug("Connection cancelled during retry, stop reconnecting.");
+          return;
+        }
         try {
           Thread.sleep(10000);
-        } catch (InterruptedException e) {;
+        } catch (InterruptedException e) {
+          // Respect interruption - exit the loop
+          Thread.currentThread().interrupt();
+          return;
         }
       }
     }
@@ -167,7 +191,6 @@ public class OkHttpWebSocketClient extends WebSocketListener
     log.debug(
         StringUtils.format("WebSocket %s closed: %d, %s", webSocket.toString(), code, reason));
     isOpen.set(false);
-    isClosed.set(false);
   }
 
   @Override
@@ -379,13 +402,25 @@ public class OkHttpWebSocketClient extends WebSocketListener
       String workspace,
       Map<String, String> customHeaders,
       String baseWebSocketUrl) {
+    // Guard: skip if already cancelled
+    if (isClosed.get()) {
+      log.debug("sendTextWithRetry skipped: connection already closed.");
+      return;
+    }
     // simple retry with fixed delay, no strategy
     if (!isOpen.get()) {
       establishWebSocketClient(apiKey, isSecurityCheck, workspace, customHeaders, baseWebSocketUrl);
     }
+    if (isClosed.get()) {
+      return;
+    }
     int maxRetries = 3;
     if (passTaskStarted.get()) {
       // when pass througn task started, no need to retry.
+      if (webSocketClient == null) {
+        log.warn("webSocketClient is null, cannot send message.");
+        return;
+      }
       log.info("Sending message: " + message);
       Boolean isOk = webSocketClient.send(message);
       if (!isOk) {
@@ -395,6 +430,13 @@ public class OkHttpWebSocketClient extends WebSocketListener
     }
     int retryCount = 0;
     while (retryCount < maxRetries) {
+      if (isClosed.get()) {
+        return;
+      }
+      if (webSocketClient == null) {
+        log.warn("webSocketClient is null, cannot send message.");
+        return;
+      }
       log.debug("Sending message: " + message);
       Boolean isOk = webSocketClient.send(message);
       if (isOk) {
@@ -418,12 +460,26 @@ public class OkHttpWebSocketClient extends WebSocketListener
       String workspace,
       Map<String, String> customHeaders,
       String baseWebSocketUrl) {
+    // Guard: skip if already cancelled
+    if (isClosed.get()) {
+      return;
+    }
     if (!isOpen.get()) {
       establishWebSocketClient(apiKey, isSecurityCheck, workspace, customHeaders, baseWebSocketUrl);
+    }
+    if (isClosed.get()) {
+      return;
     }
     int maxRetries = 3;
     int retryCount = 0;
     while (retryCount < maxRetries) {
+      if (isClosed.get()) {
+        return;
+      }
+      if (webSocketClient == null) {
+        log.warn("webSocketClient is null, cannot send binary message.");
+        return;
+      }
       Boolean isOk = webSocketClient.send(message);
       if (isOk) {
         break;
@@ -564,92 +620,114 @@ public class OkHttpWebSocketClient extends WebSocketListener
         });
   }
 
+  /**
+   * Hook method called before sending the start message. Subclasses may override to add additional
+   * logging or pre-processing.
+   */
+  protected void onBeforeSendStartMessage(JsonObject startMessage) {
+    // no-op by default
+  }
+
+  /** Core streaming request logic. Extracted to allow subclasses to use different executors. */
+  protected void executeStreamRequest(FullDuplexRequest req) {
+    try {
+      isFirstMessage.set(false);
+
+      JsonObject startMessage = req.getStartTaskMessage();
+      onBeforeSendStartMessage(startMessage);
+      String taskId = startMessage.get("header").getAsJsonObject().get("task_id").getAsString();
+      // send start message out.
+      sendTextWithRetry(
+          req.getApiKey(),
+          req.isSecurityCheck(),
+          JsonUtils.toJson(startMessage),
+          req.getWorkspace(),
+          req.getHeaders(),
+          req.getBaseWebSocketUrl());
+
+      Flowable<Object> streamingData = req.getStreamingData();
+      Disposable d =
+          streamingData.subscribe(
+              data -> {
+                try {
+                  if (data instanceof String) {
+                    JsonObject continueData = req.getContinueMessage((String) data, taskId);
+                    sendTextWithRetry(
+                        req.getApiKey(),
+                        req.isSecurityCheck(),
+                        JsonUtils.toJson(continueData),
+                        req.getWorkspace(),
+                        req.getHeaders(),
+                        req.getBaseWebSocketUrl());
+                  } else if (data instanceof byte[]) {
+                    sendBinaryWithRetry(
+                        req.getApiKey(),
+                        req.isSecurityCheck(),
+                        ByteString.of((byte[]) data),
+                        req.getWorkspace(),
+                        req.getHeaders(),
+                        req.getBaseWebSocketUrl());
+                  } else if (data instanceof ByteBuffer) {
+                    sendBinaryWithRetry(
+                        req.getApiKey(),
+                        req.isSecurityCheck(),
+                        ByteString.of((ByteBuffer) data),
+                        req.getWorkspace(),
+                        req.getHeaders(),
+                        req.getBaseWebSocketUrl());
+                  } else {
+                    JsonObject continueData = req.getContinueMessage(data, taskId);
+                    sendTextWithRetry(
+                        req.getApiKey(),
+                        req.isSecurityCheck(),
+                        JsonUtils.toJson(continueData),
+                        req.getWorkspace(),
+                        req.getHeaders(),
+                        req.getBaseWebSocketUrl());
+                  }
+                } catch (Throwable ex) {
+                  log.error(StringUtils.format("sendStreamData exception: %s", ex.getMessage()));
+                  if (responseEmitter != null && !responseEmitter.isCancelled()) {
+                    responseEmitter.onError(ex);
+                  }
+                }
+              },
+              err -> {
+                log.error(StringUtils.format("Get stream data error!"));
+                if (responseEmitter != null && !responseEmitter.isCancelled()) {
+                  responseEmitter.onError(err);
+                }
+              },
+              new Action() {
+                @Override
+                public void run() throws Exception {
+                  log.debug(StringUtils.format("Stream data send completed!"));
+                  sendTextWithRetry(
+                      req.getApiKey(),
+                      req.isSecurityCheck(),
+                      JsonUtils.toJson(req.getFinishedTaskMessage(taskId)),
+                      req.getWorkspace(),
+                      req.getHeaders(),
+                      req.getBaseWebSocketUrl());
+                }
+              });
+      // Publish the disposable, then check if cancel() raced ahead.
+      // If isClosed is already true, cancel() has already run and missed
+      // this disposable, so we must dispose it ourselves.
+      streamingDataDisposable = d;
+      if (isClosed.get()) {
+        d.dispose();
+      }
+    } catch (Throwable ex) {
+      log.error(StringUtils.format("sendStreamData exception: %s", ex.getMessage()));
+      if (responseEmitter != null && !responseEmitter.isCancelled()) {
+        responseEmitter.onError(ex);
+      }
+    }
+  }
+
   protected CompletableFuture<Void> sendStreamRequest(FullDuplexRequest req) {
-    CompletableFuture<Void> future =
-        CompletableFuture.runAsync(
-            () -> {
-              try {
-                isFirstMessage.set(false);
-
-                JsonObject startMessage = req.getStartTaskMessage();
-                String taskId =
-                    startMessage.get("header").getAsJsonObject().get("task_id").getAsString();
-                // send start message out.
-                sendTextWithRetry(
-                    req.getApiKey(),
-                    req.isSecurityCheck(),
-                    JsonUtils.toJson(startMessage),
-                    req.getWorkspace(),
-                    req.getHeaders(),
-                    req.getBaseWebSocketUrl());
-
-                Flowable<Object> streamingData = req.getStreamingData();
-                streamingData.subscribe(
-                    data -> {
-                      try {
-                        if (data instanceof String) {
-                          JsonObject continueData = req.getContinueMessage((String) data, taskId);
-                          sendTextWithRetry(
-                              req.getApiKey(),
-                              req.isSecurityCheck(),
-                              JsonUtils.toJson(continueData),
-                              req.getWorkspace(),
-                              req.getHeaders(),
-                              req.getBaseWebSocketUrl());
-                        } else if (data instanceof byte[]) {
-                          sendBinaryWithRetry(
-                              req.getApiKey(),
-                              req.isSecurityCheck(),
-                              ByteString.of((byte[]) data),
-                              req.getWorkspace(),
-                              req.getHeaders(),
-                              req.getBaseWebSocketUrl());
-                        } else if (data instanceof ByteBuffer) {
-                          sendBinaryWithRetry(
-                              req.getApiKey(),
-                              req.isSecurityCheck(),
-                              ByteString.of((ByteBuffer) data),
-                              req.getWorkspace(),
-                              req.getHeaders(),
-                              req.getBaseWebSocketUrl());
-                        } else {
-                          JsonObject continueData = req.getContinueMessage(data, taskId);
-                          sendTextWithRetry(
-                              req.getApiKey(),
-                              req.isSecurityCheck(),
-                              JsonUtils.toJson(continueData),
-                              req.getWorkspace(),
-                              req.getHeaders(),
-                              req.getBaseWebSocketUrl());
-                        }
-                      } catch (Throwable ex) {
-                        log.error(
-                            StringUtils.format("sendStreamData exception: %s", ex.getMessage()));
-                        responseEmitter.onError(ex);
-                      }
-                    },
-                    err -> {
-                      log.error(StringUtils.format("Get stream data error!"));
-                      responseEmitter.onError(err);
-                    },
-                    new Action() {
-                      @Override
-                      public void run() throws Exception {
-                        log.debug(StringUtils.format("Stream data send completed!"));
-                        sendTextWithRetry(
-                            req.getApiKey(),
-                            req.isSecurityCheck(),
-                            JsonUtils.toJson(req.getFinishedTaskMessage(taskId)),
-                            req.getWorkspace(),
-                            req.getHeaders(),
-                            req.getBaseWebSocketUrl());
-                      }
-                    });
-              } catch (Throwable ex) {
-                log.error(StringUtils.format("sendStreamData exception: %s", ex.getMessage()));
-                responseEmitter.onError(ex);
-              }
-            });
+    CompletableFuture<Void> future = CompletableFuture.runAsync(() -> executeStreamRequest(req));
     return future;
   }
 
