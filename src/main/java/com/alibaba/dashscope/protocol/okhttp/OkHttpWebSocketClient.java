@@ -631,6 +631,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
   /** Core streaming request logic. Extracted to allow subclasses to use different executors. */
   protected void executeStreamRequest(FullDuplexRequest req) {
     try {
+      isClosed.set(false); // Reset for reuse across sessions
       isFirstMessage.set(false);
 
       JsonObject startMessage = req.getStartTaskMessage();
