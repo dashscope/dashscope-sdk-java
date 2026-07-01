@@ -27,8 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import okhttp3.ConnectionPool;
-import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
@@ -142,12 +140,7 @@ public final class SessionEvents implements Closeable {
 
     String resolvedKey = resolveApiKey();
     OkHttpClient client =
-        streamClientTemplate
-            .newBuilder()
-            .dispatcher(new Dispatcher())
-            .connectionPool(new ConnectionPool())
-            .readTimeout(timeoutMs, TimeUnit.MILLISECONDS)
-            .build();
+        streamClientTemplate.newBuilder().readTimeout(timeoutMs, TimeUnit.MILLISECONDS).build();
 
     Request request =
         new Request.Builder()

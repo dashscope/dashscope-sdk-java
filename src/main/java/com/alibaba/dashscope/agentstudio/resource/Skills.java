@@ -40,6 +40,9 @@ public final class Skills implements Closeable {
   }
 
   private CompletableFuture<String> resolveFileId(SkillCreateParam param) {
+    if (param == null) {
+      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+    }
     if (param.getFileId() != null) {
       return CompletableFuture.completedFuture(param.getFileId());
     }
@@ -133,6 +136,9 @@ public final class Skills implements Closeable {
   }
 
   public CompletableFuture<CursorPage<Skill>> listAsync(SkillListParam param) {
+    if (param == null) {
+      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+    }
     String query = param.toQueryString();
     String path = query.isEmpty() ? "skills" : "skills?" + query;
     GeneralServiceOption opt = AgentStudioConstants.newServiceOption(HttpMethod.GET, path, baseUrl);

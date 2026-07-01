@@ -34,12 +34,10 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
 
   private final BlockingQueue<Object> queue = new LinkedBlockingQueue<>();
   private final AtomicBoolean closed = new AtomicBoolean(false);
-  private final OkHttpClient client;
   private final EventSource eventSource;
   private final long timeoutMs;
 
   public AgentStudioEventStream(OkHttpClient client, Request request, long timeoutMs) {
-    this.client = client;
     this.timeoutMs = timeoutMs;
     EventSource.Factory factory = EventSources.createFactory(client);
     this.eventSource =
@@ -158,11 +156,6 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
   public void close() {
     if (closed.compareAndSet(false, true)) {
       eventSource.cancel();
-      // Each stream owns its own OkHttpClient (constructed in SessionEvents.stream), so it is safe
-      // to release both the dispatcher and the connection pool here without affecting sibling
-      // streams.
-      client.dispatcher().executorService().shutdown();
-      client.connectionPool().evictAll();
     }
   }
 
@@ -229,12 +222,15 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
     }
 
     private static String extractSessionStatus(Message msg) {
-      if (msg.getContent() != null && !msg.getContent().isEmpty()) {
-        ContentBlock block = msg.getContent().get(0);
-        if (block instanceof ContentBlock.DataContent) {
-          ContentBlock.DataContent dataBlock = (ContentBlock.DataContent) block;
-          if (dataBlock.getData() != null && dataBlock.getData().has("session_status")) {
-            return dataBlock.getData().get("session_status").getAsString();
+      if (msg.getContent() != null) {
+        for (ContentBlock block : msg.getContent()) {
+          if (block instanceof ContentBlock.DataContent) {
+            ContentBlock.DataContent dataBlock = (ContentBlock.DataContent) block;
+            if (dataBlock.getData() != null
+                && dataBlock.getData().has("session_status")
+                && !dataBlock.getData().get("session_status").isJsonNull()) {
+              return dataBlock.getData().get("session_status").getAsString();
+            }
           }
         }
       }

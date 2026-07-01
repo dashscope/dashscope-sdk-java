@@ -72,6 +72,9 @@ public final class Agents {
   }
 
   public CompletableFuture<Agent> createAsync(AgentCreateParam param) {
+    if (param == null) {
+      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+    }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(HttpMethod.POST, "agents", baseUrl);
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
@@ -116,6 +119,9 @@ public final class Agents {
     if (agentId == null || agentId.isEmpty()) {
       return AsyncHelper.failedFuture(new InputRequiredException("agentId is required!"));
     }
+    if (param == null) {
+      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+    }
     try {
       param.validate();
     } catch (InputRequiredException e) {
@@ -129,6 +135,9 @@ public final class Agents {
   }
 
   public CompletableFuture<CursorPage<Agent>> listAsync(AgentListParam param) {
+    if (param == null) {
+      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+    }
     String query = param.toQueryString();
     String path = query.isEmpty() ? "agents" : "agents?" + query;
     GeneralServiceOption opt = AgentStudioConstants.newServiceOption(HttpMethod.GET, path, baseUrl);

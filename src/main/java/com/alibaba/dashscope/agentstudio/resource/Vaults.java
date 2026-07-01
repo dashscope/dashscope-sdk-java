@@ -78,6 +78,9 @@ public final class Vaults {
   }
 
   public CompletableFuture<Vault> createAsync(VaultCreateParam param) {
+    if (param == null) {
+      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+    }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(HttpMethod.POST, "vaults", baseUrl);
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
@@ -111,6 +114,9 @@ public final class Vaults {
     if (vaultId == null || vaultId.isEmpty()) {
       return AsyncHelper.failedFuture(new InputRequiredException("vaultId is required!"));
     }
+    if (param == null) {
+      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+    }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
             HttpMethod.POST, StringUtils.format("vaults/%s", vaultId), baseUrl);
@@ -119,6 +125,9 @@ public final class Vaults {
   }
 
   public CompletableFuture<CursorPage<Vault>> listAsync(VaultListParam param) {
+    if (param == null) {
+      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+    }
     String query = param.toQueryString();
     String path = query.isEmpty() ? "vaults" : "vaults?" + query;
     GeneralServiceOption opt = AgentStudioConstants.newServiceOption(HttpMethod.GET, path, baseUrl);
@@ -216,6 +225,9 @@ public final class Vaults {
       if (vaultId == null || vaultId.isEmpty()) {
         return AsyncHelper.failedFuture(new InputRequiredException("vaultId is required!"));
       }
+      if (param == null) {
+        return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      }
       GeneralServiceOption opt =
           AgentStudioConstants.newServiceOption(
               HttpMethod.POST, StringUtils.format("vaults/%s/credentials", vaultId), baseUrl);
@@ -255,6 +267,9 @@ public final class Vaults {
         return AsyncHelper.failedFuture(
             new InputRequiredException("vaultId and credentialId are required!"));
       }
+      if (param == null) {
+        return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      }
       GeneralServiceOption opt =
           AgentStudioConstants.newServiceOption(
               HttpMethod.POST,
@@ -268,6 +283,9 @@ public final class Vaults {
         String vaultId, CredentialListParam param) {
       if (vaultId == null || vaultId.isEmpty()) {
         return AsyncHelper.failedFuture(new InputRequiredException("vaultId is required!"));
+      }
+      if (param == null) {
+        return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
       }
       String query = param.toQueryString();
       String path = StringUtils.format("vaults/%s/credentials", vaultId);

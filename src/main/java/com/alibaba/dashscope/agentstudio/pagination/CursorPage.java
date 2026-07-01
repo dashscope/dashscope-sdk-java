@@ -42,15 +42,21 @@ public class CursorPage<T> extends FlattenResultBase implements Iterable<T> {
 
       @Override
       public boolean hasNext() {
+        if (currentPage == null) {
+          return false;
+        }
         while (true) {
           if (currentPage.data != null && index < currentPage.data.size()) {
             return true;
           }
           if (!currentPage.hasNext()) {
+            currentPage = null;
             return false;
           }
           currentPage = currentPage.getNext().join();
-          if (currentPage == null) return false;
+          if (currentPage == null) {
+            return false;
+          }
           index = 0;
         }
       }

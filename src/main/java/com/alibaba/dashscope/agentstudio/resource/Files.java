@@ -108,7 +108,18 @@ public final class Files implements Closeable {
     }
     String mt = mimeType != null ? mimeType : "application/octet-stream";
     RequestBody body = streamingBody(MediaType.parse(mt), inputStream);
-    return uploadRequestAsync(filename, body);
+    CompletableFuture<AgentStudioFile> future = uploadRequestAsync(filename, body);
+    future.whenComplete(
+        (r, t) -> {
+          if (t != null) {
+            try {
+              inputStream.close();
+            } catch (IOException e) {
+              // ignore
+            }
+          }
+        });
+    return future;
   }
 
   public CompletableFuture<AgentStudioFile> retrieveAsync(String fileId) {
@@ -270,6 +281,11 @@ public final class Files implements Closeable {
       @Override
       public MediaType contentType() {
         return mediaType;
+      }
+
+      @Override
+      public boolean isOneShot() {
+        return true;
       }
 
       @Override

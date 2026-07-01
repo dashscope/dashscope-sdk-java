@@ -74,6 +74,9 @@ public final class Sessions {
   }
 
   public CompletableFuture<Session> createAsync(SessionCreateParam param) {
+    if (param == null) {
+      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+    }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(HttpMethod.POST, "sessions", baseUrl);
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
@@ -107,6 +110,9 @@ public final class Sessions {
     if (sessionId == null || sessionId.isEmpty()) {
       return AsyncHelper.failedFuture(new InputRequiredException("sessionId is required!"));
     }
+    if (param == null) {
+      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+    }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
             HttpMethod.POST, StringUtils.format("sessions/%s", sessionId), baseUrl);
@@ -115,6 +121,9 @@ public final class Sessions {
   }
 
   public CompletableFuture<CursorPage<Session>> listAsync(SessionListParam param) {
+    if (param == null) {
+      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+    }
     String query = param.toQueryString();
     String path = query.isEmpty() ? "sessions" : "sessions?" + query;
     GeneralServiceOption opt = AgentStudioConstants.newServiceOption(HttpMethod.GET, path, baseUrl);

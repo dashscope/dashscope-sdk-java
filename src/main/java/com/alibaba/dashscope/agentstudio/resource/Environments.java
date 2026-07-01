@@ -68,6 +68,9 @@ public final class Environments {
   }
 
   public CompletableFuture<Environment> createAsync(EnvironmentCreateParam param) {
+    if (param == null) {
+      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+    }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(HttpMethod.POST, "environments", baseUrl);
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
@@ -102,6 +105,9 @@ public final class Environments {
     if (environmentId == null || environmentId.isEmpty()) {
       return AsyncHelper.failedFuture(new InputRequiredException("environmentId is required!"));
     }
+    if (param == null) {
+      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+    }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
             HttpMethod.POST, StringUtils.format("environments/%s", environmentId), baseUrl);
@@ -110,6 +116,9 @@ public final class Environments {
   }
 
   public CompletableFuture<CursorPage<Environment>> listAsync(EnvironmentListParam param) {
+    if (param == null) {
+      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+    }
     String query = param.toQueryString();
     String path = query.isEmpty() ? "environments" : "environments?" + query;
     GeneralServiceOption opt = AgentStudioConstants.newServiceOption(HttpMethod.GET, path, baseUrl);
