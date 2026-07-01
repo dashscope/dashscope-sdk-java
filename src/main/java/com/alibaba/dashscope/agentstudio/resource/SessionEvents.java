@@ -98,6 +98,9 @@ public final class SessionEvents implements Closeable {
     if (sessionId == null || sessionId.isEmpty()) {
       return AsyncHelper.failedFuture(new InputRequiredException("sessionId is required!"));
     }
+    if (param == null) {
+      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+    }
     String query = param.toQueryString();
     String path = StringUtils.format("sessions/%s/events", sessionId);
     GeneralServiceOption opt =

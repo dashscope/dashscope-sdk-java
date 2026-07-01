@@ -146,6 +146,9 @@ public final class Files implements Closeable {
   }
 
   public CompletableFuture<CursorPage<AgentStudioFile>> listAsync(FileListParam param) {
+    if (param == null) {
+      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+    }
     String query = param.toQueryString();
     String path = query.isEmpty() ? "files" : "files?" + query;
     GeneralServiceOption opt = AgentStudioConstants.newServiceOption(HttpMethod.GET, path, baseUrl);
