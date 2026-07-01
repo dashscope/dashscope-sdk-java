@@ -16,7 +16,6 @@ public class VaultListParam extends FlattenHalfDuplexParamBase {
   @Default private Integer limit = null;
   @Default private String page = null;
   @Default private Boolean includeArchived = null;
-  @Default private String keyword = null;
 
   @Override
   public JsonObject getHttpBody() {
@@ -28,7 +27,6 @@ public class VaultListParam extends FlattenHalfDuplexParamBase {
     AgentStudioConstants.appendParam(sb, "limit", limit);
     AgentStudioConstants.appendParam(sb, "page", page);
     AgentStudioConstants.appendParam(sb, "include_archived", includeArchived);
-    AgentStudioConstants.appendParam(sb, "keyword", keyword);
     return sb.toString();
   }
 }

@@ -161,8 +161,6 @@ public final class Files implements Closeable {
                           FileListParam.builder()
                               .limit(param.getLimit())
                               .scopeId(param.getScopeId())
-                              .afterId(param.getAfterId())
-                              .beforeId(param.getBeforeId())
                               .page(cursor)
                               .build()));
               return page;

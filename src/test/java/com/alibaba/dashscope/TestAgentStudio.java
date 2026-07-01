@@ -743,9 +743,9 @@ public class TestAgentStudio {
   }
 
   @Test
-  public void testVaultListWithKeyword() {
-    String qs = VaultListParam.builder().keyword("my-vault").limit(10).build().toQueryString();
-    assertTrue(qs.contains("keyword=my-vault"));
+  public void testVaultListWithIncludeArchived() {
+    String qs = VaultListParam.builder().includeArchived(true).limit(10).build().toQueryString();
+    assertTrue(qs.contains("include_archived=true"));
     assertTrue(qs.contains("limit=10"));
   }
 

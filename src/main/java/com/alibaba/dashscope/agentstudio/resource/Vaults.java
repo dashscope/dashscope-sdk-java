@@ -143,7 +143,6 @@ public final class Vaults {
                           VaultListParam.builder()
                               .limit(param.getLimit())
                               .includeArchived(param.getIncludeArchived())
-                              .keyword(param.getKeyword())
                               .page(cursor)
                               .build()));
               return page;

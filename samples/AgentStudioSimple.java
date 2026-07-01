@@ -7,7 +7,6 @@ import com.alibaba.dashscope.agentstudio.model.Session;
 import com.alibaba.dashscope.agentstudio.param.AgentCreateParam;
 import com.alibaba.dashscope.agentstudio.param.SessionCreateParam;
 import com.alibaba.dashscope.agentstudio.resource.AgentStudioEventStream;
-import com.google.gson.JsonObject;
 import java.util.Collections;
 
 /**
@@ -69,9 +68,9 @@ public class AgentStudioSimple {
             }
           }
         } else if ("session_status".equals(event.getType())) {
-          JsonObject stopReason = event.getStopReason();
+          Session.StopReason stopReason = event.getStopReason();
           if (stopReason != null) {
-            System.out.println("\nstop_reason: " + stopReason.get("type"));
+            System.out.println("\nstop_reason: " + stopReason.getType());
           }
           break;
         }
