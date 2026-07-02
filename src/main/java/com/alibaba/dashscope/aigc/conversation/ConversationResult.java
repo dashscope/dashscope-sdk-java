@@ -29,7 +29,8 @@ public final class ConversationResult {
     }
     if (dashScopeResult.getOutput() instanceof JsonObject) {
       result.setOutput(
-          JsonUtils.fromJsonObject((JsonObject) dashScopeResult.getOutput(), GenerationOutput.class));
+          JsonUtils.fromJsonObject(
+              (JsonObject) dashScopeResult.getOutput(), GenerationOutput.class));
     }
     return result;
   }
