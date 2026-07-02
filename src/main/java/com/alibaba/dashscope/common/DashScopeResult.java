@@ -180,7 +180,30 @@ public class DashScopeResult extends Result {
         }
       } else { // HTTP
         JsonObject jsonObject = JsonUtils.parse(response.getMessage());
-        this.output = jsonObject;
+        // Check if output field contains encrypted content
+        if (jsonObject.has(ApiKeywords.OUTPUT)) {
+          if (jsonObject.get(ApiKeywords.OUTPUT).isJsonNull()) {
+            this.output = null;
+          } else if (jsonObject.get(ApiKeywords.OUTPUT).isJsonObject()) {
+            this.output = jsonObject.get(ApiKeywords.OUTPUT).getAsJsonObject();
+          } else if (jsonObject.get(ApiKeywords.OUTPUT).isJsonPrimitive()) {
+            // Server returned encrypted output but client didn't enable encryption
+            String outputStr = jsonObject.get(ApiKeywords.OUTPUT).getAsString();
+            if (outputStr.length() > 100 && outputStr.matches("^[A-Za-z0-9+/=]+$")) {
+              throw new ApiException(
+                  Status.builder()
+                      .statusCode(400)
+                      .code("EncryptionMismatch")
+                      .message(
+                          "Server returned encrypted output but client encryption is not enabled. "
+                              + "Please set enableEncrypt(true) in your request parameters.")
+                      .build());
+            }
+            this.output = jsonObject.get(ApiKeywords.OUTPUT);
+          } else {
+            this.output = jsonObject.get(ApiKeywords.OUTPUT);
+          }
+        }
         this.event = response.getEvent();
       }
       return (T) this;
