@@ -39,8 +39,19 @@ public class OmniRealtimeConversation extends WebSocketListener {
   private long lastFirstAudioDelay = -1;
   private long lastFirstTextDelay = -1;
   private AtomicBoolean isClosed = new AtomicBoolean(false);
-  private volatile int closeCode = -1;
-  private volatile String closeReason = null;
+
+  /** Immutable holder for WebSocket close code and reason, updated atomically. */
+  private static class CloseInfo {
+    final int code;
+    final String reason;
+
+    CloseInfo(int code, String reason) {
+      this.code = code;
+      this.reason = reason;
+    }
+  }
+
+  private final AtomicReference<CloseInfo> closeInfo = new AtomicReference<>(null);
   private final AtomicReference<CountDownLatch> disconnectLatch = new AtomicReference<>(null);
 
   /**
@@ -58,8 +69,9 @@ public class OmniRealtimeConversation extends WebSocketListener {
   public void checkStatus() {
     if (this.isClosed.get()) {
       String msg = "conversation is already closed!";
-      if (closeCode >= 0) {
-        msg = msg + " (code=" + closeCode + ", reason=" + closeReason + ")";
+      CloseInfo ci = closeInfo.get();
+      if (ci != null && ci.code >= 0) {
+        msg = msg + " (code=" + ci.code + ", reason=" + ci.reason + ")";
       }
       throw new RuntimeException(msg);
     }
@@ -430,6 +442,7 @@ public class OmniRealtimeConversation extends WebSocketListener {
   public void onClosed(WebSocket webSocket, int code, String reason) {
     isOpen.set(false);
     isClosed.set(true);
+    closeInfo.set(new CloseInfo(code, reason));
     connectLatch.get().countDown();
     CountDownLatch latch = disconnectLatch.get();
     if (latch != null) {
@@ -441,8 +454,7 @@ public class OmniRealtimeConversation extends WebSocketListener {
 
   @Override
   public void onFailure(WebSocket webSocket, Throwable t, Response response) {
-    this.closeCode = -1;
-    this.closeReason = "failure: " + t.getMessage();
+    closeInfo.set(new CloseInfo(-1, "failure: " + t.getMessage()));
     isClosed.set(true);
     isOpen.set(false);
     connectLatch.get().countDown();
@@ -451,12 +463,12 @@ public class OmniRealtimeConversation extends WebSocketListener {
       latch.countDown();
     }
     log.error("WebSocket failed: " + t.getMessage());
+    callback.onClose(-1, "failure: " + t.getMessage());
   }
 
   @Override
   public void onClosing(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
-    this.closeCode = code;
-    this.closeReason = reason;
+    closeInfo.set(new CloseInfo(code, reason));
     close(code, reason);
     log.debug("WebSocket closing: " + code + ", " + reason);
   }

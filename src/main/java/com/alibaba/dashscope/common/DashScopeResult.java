@@ -9,6 +9,7 @@ import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.EncryptionUtils;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -27,6 +28,27 @@ public class DashScopeResult extends Result {
 
   public Boolean isBinaryOutput() {
     return output instanceof ByteBuffer;
+  }
+
+  /**
+   * Parse the output field from a JsonElement in a type-safe manner.
+   *
+   * <p>Returns {@code null} for JsonNull, {@code JsonObject} for object elements, and the raw
+   * {@code JsonElement} for primitives/arrays to avoid {@code getAsJsonObject()} throwing.
+   *
+   * @param outputElement the JSON element representing the output field
+   * @return parsed output value, or {@code null} if the element is JSON null
+   */
+  private Object parseOutputField(JsonElement outputElement) {
+    if (outputElement.isJsonNull()) {
+      return null;
+    } else if (outputElement.isJsonObject()) {
+      return outputElement.getAsJsonObject();
+    } else {
+      // JsonPrimitive or JsonArray — return the raw element so downstream code
+      // can handle it gracefully instead of throwing getAsJsonObject().
+      return outputElement;
+    }
   }
 
   @Override
@@ -74,10 +96,7 @@ public class DashScopeResult extends Result {
         if (jsonObject.has(ApiKeywords.PAYLOAD)) {
           JsonObject payload = jsonObject.getAsJsonObject(ApiKeywords.PAYLOAD);
           if (payload.has(ApiKeywords.OUTPUT)) {
-            this.output =
-                payload.get(ApiKeywords.OUTPUT).isJsonNull()
-                    ? null
-                    : payload.get(ApiKeywords.OUTPUT);
+            this.output = parseOutputField(payload.get(ApiKeywords.OUTPUT));
           }
           if (payload.has(ApiKeywords.USAGE)) {
             this.setUsage(
@@ -96,27 +115,7 @@ public class DashScopeResult extends Result {
         this.setStatusCode(response.getHttpStatusCode());
       }
       if (jsonObject.has(ApiKeywords.OUTPUT)) {
-        if (jsonObject.get(ApiKeywords.OUTPUT).isJsonNull()) {
-          this.output = null;
-        } else if (jsonObject.get(ApiKeywords.OUTPUT).isJsonObject()) {
-          this.output = jsonObject.get(ApiKeywords.OUTPUT).getAsJsonObject();
-        } else if (jsonObject.get(ApiKeywords.OUTPUT).isJsonPrimitive()) {
-          // Server returned encrypted output but client didn't enable encryption
-          String outputStr = jsonObject.get(ApiKeywords.OUTPUT).getAsString();
-          if (outputStr.length() > 100 && outputStr.matches("^[A-Za-z0-9+/=]+$")) {
-            throw new ApiException(
-                Status.builder()
-                    .statusCode(400)
-                    .code("EncryptionMismatch")
-                    .message(
-                        "Server returned encrypted output but client encryption is not enabled. "
-                            + "Please set enableEncrypt(true) in your request parameters.")
-                    .build());
-          }
-          this.output = jsonObject.get(ApiKeywords.OUTPUT);
-        } else {
-          this.output = jsonObject.get(ApiKeywords.OUTPUT);
-        }
+        this.output = parseOutputField(jsonObject.get(ApiKeywords.OUTPUT));
       }
       if (jsonObject.has(ApiKeywords.USAGE)) {
         this.setUsage(
@@ -180,30 +179,8 @@ public class DashScopeResult extends Result {
         }
       } else { // HTTP
         JsonObject jsonObject = JsonUtils.parse(response.getMessage());
-        // Check if output field contains encrypted content
-        if (jsonObject.has(ApiKeywords.OUTPUT)) {
-          if (jsonObject.get(ApiKeywords.OUTPUT).isJsonNull()) {
-            this.output = null;
-          } else if (jsonObject.get(ApiKeywords.OUTPUT).isJsonObject()) {
-            this.output = jsonObject.get(ApiKeywords.OUTPUT).getAsJsonObject();
-          } else if (jsonObject.get(ApiKeywords.OUTPUT).isJsonPrimitive()) {
-            // Server returned encrypted output but client didn't enable encryption
-            String outputStr = jsonObject.get(ApiKeywords.OUTPUT).getAsString();
-            if (outputStr.length() > 100 && outputStr.matches("^[A-Za-z0-9+/=]+$")) {
-              throw new ApiException(
-                  Status.builder()
-                      .statusCode(400)
-                      .code("EncryptionMismatch")
-                      .message(
-                          "Server returned encrypted output but client encryption is not enabled. "
-                              + "Please set enableEncrypt(true) in your request parameters.")
-                      .build());
-            }
-            this.output = jsonObject.get(ApiKeywords.OUTPUT);
-          } else {
-            this.output = jsonObject.get(ApiKeywords.OUTPUT);
-          }
-        }
+        // Preserve original behavior: the entire JSON object is the output for flatten mode.
+        this.output = jsonObject;
         this.event = response.getEvent();
       }
       return (T) this;
@@ -236,7 +213,7 @@ public class DashScopeResult extends Result {
                   req.getEncryptionConfig().getIv());
           this.output = JsonUtils.parse(plainOutput);
         } else {
-          this.output = jsonObject.get(ApiKeywords.OUTPUT).getAsJsonObject();
+          this.output = parseOutputField(jsonObject.get(ApiKeywords.OUTPUT));
         }
       } else {
         this.output = null;
@@ -282,7 +259,8 @@ public class DashScopeResult extends Result {
       return (T) this;
     }
 
-    // Fallback: server encrypted output but did not set X-DashScope-OutputEncrypted header
+    // Fallback: server encrypted output but did not set X-DashScope-OutputEncrypted header.
+    // Only attempt fallback decryption when encryption config is available to avoid false positives.
     if (protocol == Protocol.HTTP && req.getEncryptionConfig() != null) {
       try {
         JsonObject jsonObject = JsonUtils.parse(response.getMessage());
