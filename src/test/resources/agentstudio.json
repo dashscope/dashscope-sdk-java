@@ -1,0 +1,310 @@
+{
+  "agent_response": {
+    "id": "agent_xyz",
+    "type": "agent",
+    "name": "test-agent",
+    "description": "A test agent",
+    "model": {"id": "qwen-max"},
+    "system": "You are a helpful assistant.",
+    "tools": [{"type": "bash_tool"}],
+    "skills": [],
+    "mcp_servers": [],
+    "version": 2,
+    "metadata": {"env": "test"},
+    "workspace_id": "ws_001",
+    "archived_at": null,
+    "created_at": "2025-01-01T00:00:00Z",
+    "updated_at": "2025-01-01T01:00:00Z",
+    "request_id": "req-010"
+  },
+  "agent_list_response": {
+    "data": [
+      {
+        "id": "agent_001",
+        "type": "agent",
+        "name": "agent-one",
+        "version": 1,
+        "created_at": "2025-01-01T00:00:00Z"
+      },
+      {
+        "id": "agent_002",
+        "type": "agent",
+        "name": "agent-two",
+        "version": 3,
+        "created_at": "2025-01-02T00:00:00Z"
+      }
+    ],
+    "next_page": "cursor_agent",
+    "request_id": "req-011"
+  },
+  "agent_version_response": {
+    "data": [
+      {
+        "agent_id": "agent_xyz",
+        "version": 1,
+        "config": {"name": "test-agent", "model": {"id": "qwen-max"}},
+        "created_at": "2025-01-01T00:00:00Z"
+      },
+      {
+        "agent_id": "agent_xyz",
+        "version": 2,
+        "config": {"name": "test-agent-v2", "model": {"id": "qwen-plus"}},
+        "created_at": "2025-01-02T00:00:00Z"
+      }
+    ],
+    "next_page": null,
+    "request_id": "req-012"
+  },
+  "session_response": {
+    "id": "sess_abc123",
+    "type": "session",
+    "title": "Test Session",
+    "agent": {
+      "id": "agent_xyz",
+      "type": "agent",
+      "version": 1,
+      "name": "test-agent",
+      "description": null,
+      "model": {"id": "qwen-max"},
+      "system": "You are a test agent.",
+      "tools": []
+    },
+    "environment_id": "env_001",
+    "status": "idle",
+    "stop_reason": {
+      "type": "end_turn",
+      "event_ids": ["evt_1", "evt_2"]
+    },
+    "usage": {
+      "input_tokens": 100,
+      "output_tokens": 50,
+      "cache_creation": null,
+      "cache_read_input_tokens": 5,
+      "speed": 42.5
+    },
+    "vault_ids": [],
+    "metadata": {"env": "test"},
+    "created_at": "2025-01-01T00:00:00Z",
+    "updated_at": "2025-01-01T01:00:00Z",
+    "request_id": "req-001"
+  },
+  "session_list_response": {
+    "data": [
+      {
+        "id": "sess_1",
+        "status": "idle",
+        "agent": {"id": "agent_xyz", "type": "agent", "version": 1},
+        "created_at": "2025-01-01T00:00:00Z"
+      },
+      {
+        "id": "sess_2",
+        "status": "running",
+        "agent": {"id": "agent_xyz", "type": "agent", "version": 1},
+        "created_at": "2025-01-02T00:00:00Z"
+      }
+    ],
+    "next_page": "cursor_abc",
+    "request_id": "req-002"
+  },
+  "environment_response": {
+    "id": "env_001",
+    "type": "environment",
+    "name": "Test Environment",
+    "description": "A test env",
+    "status": "active",
+    "config": {
+      "type": "sandbox",
+      "networking": {"type": "public"},
+      "packages": {"pip": ["requests", "numpy"]}
+    },
+    "scope": "organization",
+    "metadata": {"team": "infra"},
+    "created_at": "2025-01-01T00:00:00Z",
+    "updated_at": "2025-01-01T01:00:00Z",
+    "request_id": "req-003"
+  },
+  "environment_list_response": {
+    "data": [
+      {
+        "id": "env_001",
+        "name": "Env1",
+        "status": "active"
+      },
+      {
+        "id": "env_002",
+        "name": "Env2",
+        "status": "archived"
+      }
+    ],
+    "next_page": null,
+    "request_id": "req-004"
+  },
+  "skill_response": {
+    "id": "skill_001",
+    "type": "skill",
+    "name": "bash_tool",
+    "description": "Execute bash commands",
+    "source": "customer",
+    "status": "active",
+    "latest_version": "1.0",
+    "created_at": "2025-01-01T00:00:00Z",
+    "updated_at": "2025-01-01T01:00:00Z",
+    "request_id": "req-005"
+  },
+  "skill_list_response": {
+    "data": [
+      {
+        "id": "skill_001",
+        "type": "skill",
+        "name": "bash_tool",
+        "description": "Execute bash commands",
+        "source": "customer",
+        "status": "active",
+        "latest_version": "1.0",
+        "created_at": "2025-01-01T00:00:00Z",
+        "updated_at": "2025-01-01T01:00:00Z"
+      }
+    ],
+    "next_page": null,
+    "request_id": "req-006"
+  },
+  "skill_version_response": {
+    "id": "sv_001",
+    "skill_id": "skill_001",
+    "version": "1",
+    "status": "active",
+    "created_at": "2025-01-01T00:00:00Z",
+    "request_id": "req-007"
+  },
+  "delete_response": {
+    "id": "sess_abc123",
+    "type": "session_deleted",
+    "request_id": "req-008"
+  },
+  "vault_response": {
+    "id": "vault_001",
+    "type": "vault",
+    "display_name": "Test Vault",
+    "metadata": {"team": "security"},
+    "archived_at": null,
+    "created_at": "2025-01-01T00:00:00Z",
+    "updated_at": "2025-01-01T01:00:00Z",
+    "request_id": "req-020"
+  },
+  "vault_list_response": {
+    "data": [
+      {
+        "id": "vault_001",
+        "type": "vault",
+        "display_name": "Vault One",
+        "created_at": "2025-01-01T00:00:00Z"
+      },
+      {
+        "id": "vault_002",
+        "type": "vault",
+        "display_name": "Vault Two",
+        "created_at": "2025-01-02T00:00:00Z"
+      }
+    ],
+    "next_page": "cursor_vault",
+    "request_id": "req-021"
+  },
+  "credential_response": {
+    "id": "cred_001",
+    "type": "vault_credential",
+    "vault_id": "vault_001",
+    "display_name": "Test Credential",
+    "auth": {"type": "environment_variable", "secret_name": "DASHSCOPE_API_KEY"},
+    "metadata": {"service": "openai"},
+    "archived_at": null,
+    "created_at": "2025-01-01T00:00:00Z",
+    "updated_at": "2025-01-01T01:00:00Z",
+    "request_id": "req-022"
+  },
+  "credential_list_response": {
+    "data": [
+      {
+        "id": "cred_001",
+        "type": "vault_credential",
+        "vault_id": "vault_001",
+        "display_name": "Cred One",
+        "created_at": "2025-01-01T00:00:00Z"
+      },
+      {
+        "id": "cred_002",
+        "type": "vault_credential",
+        "vault_id": "vault_001",
+        "display_name": "Cred Two",
+        "created_at": "2025-01-02T00:00:00Z"
+      }
+    ],
+    "next_page": null,
+    "request_id": "req-023"
+  },
+  "file_response": {
+    "id": "file_001",
+    "type": "file",
+    "filename": "test.pdf",
+    "downloadable": true,
+    "mime_type": "application/pdf",
+    "size_bytes": 12345,
+    "status": "completed",
+    "created_at": "2025-01-01T00:00:00Z"
+  },
+  "file_list_response": {
+    "data": [
+      {
+        "id": "file_001",
+        "type": "file",
+        "filename": "test.pdf",
+        "mime_type": "application/pdf",
+        "size_bytes": 12345,
+        "status": "completed",
+        "created_at": "2025-01-01T00:00:00Z"
+      },
+      {
+        "id": "file_002",
+        "type": "file",
+        "filename": "data.json",
+        "mime_type": "application/json",
+        "size_bytes": 256,
+        "status": "completed",
+        "created_at": "2025-01-02T00:00:00Z"
+      }
+    ],
+    "next_page": "cursor_file",
+    "request_id": "req-030"
+  },
+  "session_event_send_response": {
+    "id": "evt_send_001",
+    "type": "event",
+    "status": "completed",
+    "request_id": "req-031"
+  },
+  "event_list_response": {
+    "data": [
+      {
+        "id": "evt_1",
+        "object": "event",
+        "type": "message",
+        "status": "completed",
+        "role": "user",
+        "content": [{"type": "text", "text": "hello"}],
+        "sequence_number": 1,
+        "created_at": "2025-01-01T00:00:00Z"
+      },
+      {
+        "id": "evt_2",
+        "object": "event",
+        "type": "message",
+        "status": "completed",
+        "role": "assistant",
+        "content": [{"type": "text", "text": "hi there"}],
+        "sequence_number": 2,
+        "created_at": "2025-01-01T00:00:01Z"
+      }
+    ],
+    "next_page": null,
+    "request_id": "req-009"
+  }
+}
