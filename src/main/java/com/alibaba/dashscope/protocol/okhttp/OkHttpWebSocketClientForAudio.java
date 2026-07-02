@@ -2,17 +2,12 @@ package com.alibaba.dashscope.protocol.okhttp;
 
 import com.alibaba.dashscope.protocol.FullDuplexRequest;
 import com.alibaba.dashscope.utils.JsonUtils;
-import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.JsonObject;
-import io.reactivex.Flowable;
-import io.reactivex.functions.Action;
-import java.nio.ByteBuffer;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
-import okio.ByteString;
 
 /** @author songsong.shao */
 @Slf4j
@@ -45,101 +40,20 @@ public class OkHttpWebSocketClientForAudio extends OkHttpWebSocketClient {
   }
 
   @Override
+  protected void onBeforeSendStartMessage(JsonObject startMessage) {
+    log.info("send run-task request {}", JsonUtils.toJson(startMessage));
+  }
+
+  @Override
   protected CompletableFuture<Void> sendStreamRequest(FullDuplexRequest req) {
-    CompletableFuture<Void> future =
-        CompletableFuture.runAsync(
-            () -> {
-              try {
-                isFirstMessage.set(false);
-
-                JsonObject startMessage = req.getStartTaskMessage();
-                log.info("send run-task request {}", JsonUtils.toJson(startMessage));
-                String taskId =
-                    startMessage.get("header").getAsJsonObject().get("task_id").getAsString();
-                // send start message out.
-                sendTextWithRetry(
-                    req.getApiKey(),
-                    req.isSecurityCheck(),
-                    JsonUtils.toJson(startMessage),
-                    req.getWorkspace(),
-                    req.getHeaders(),
-                    req.getBaseWebSocketUrl());
-
-                Flowable<Object> streamingData = req.getStreamingData();
-                streamingData.subscribe(
-                    data -> {
-                      try {
-                        if (data instanceof String) {
-                          JsonObject continueData = req.getContinueMessage((String) data, taskId);
-                          sendTextWithRetry(
-                              req.getApiKey(),
-                              req.isSecurityCheck(),
-                              JsonUtils.toJson(continueData),
-                              req.getWorkspace(),
-                              req.getHeaders(),
-                              req.getBaseWebSocketUrl());
-                        } else if (data instanceof byte[]) {
-                          sendBinaryWithRetry(
-                              req.getApiKey(),
-                              req.isSecurityCheck(),
-                              ByteString.of((byte[]) data),
-                              req.getWorkspace(),
-                              req.getHeaders(),
-                              req.getBaseWebSocketUrl());
-                        } else if (data instanceof ByteBuffer) {
-                          sendBinaryWithRetry(
-                              req.getApiKey(),
-                              req.isSecurityCheck(),
-                              ByteString.of((ByteBuffer) data),
-                              req.getWorkspace(),
-                              req.getHeaders(),
-                              req.getBaseWebSocketUrl());
-                        } else {
-                          JsonObject continueData = req.getContinueMessage(data, taskId);
-                          sendTextWithRetry(
-                              req.getApiKey(),
-                              req.isSecurityCheck(),
-                              JsonUtils.toJson(continueData),
-                              req.getWorkspace(),
-                              req.getHeaders(),
-                              req.getBaseWebSocketUrl());
-                        }
-                      } catch (Throwable ex) {
-                        log.error(
-                            StringUtils.format("sendStreamData exception: %s", ex.getMessage()));
-                        responseEmitter.onError(ex);
-                      }
-                    },
-                    err -> {
-                      log.error(StringUtils.format("Get stream data error!"));
-                      responseEmitter.onError(err);
-                    },
-                    new Action() {
-                      @Override
-                      public void run() throws Exception {
-                        log.debug(StringUtils.format("Stream data send completed!"));
-                        sendTextWithRetry(
-                            req.getApiKey(),
-                            req.isSecurityCheck(),
-                            JsonUtils.toJson(req.getFinishedTaskMessage(taskId)),
-                            req.getWorkspace(),
-                            req.getHeaders(),
-                            req.getBaseWebSocketUrl());
-                      }
-                    });
-              } catch (Throwable ex) {
-                log.error(StringUtils.format("sendStreamData exception: %s", ex.getMessage()));
-                responseEmitter.onError(ex);
-              }
-            },
-            STREAMING_REQUEST_EXECUTOR);
-    return future;
+    return CompletableFuture.runAsync(() -> executeStreamRequest(req), STREAMING_REQUEST_EXECUTOR);
   }
 
   static { // auto close when jvm shutdown
     Runtime.getRuntime()
         .addShutdownHook(new Thread(OkHttpWebSocketClientForAudio::shutdownStreamingExecutor));
   }
+
   /**
    * Shutdown the streaming request executor gracefully. This method should be called when the
    * application is shutting down to ensure proper resource cleanup.
