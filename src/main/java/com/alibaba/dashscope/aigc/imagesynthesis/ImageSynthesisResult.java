@@ -41,12 +41,12 @@ public class ImageSynthesisResult {
           JsonUtils.fromJsonObject(
               dashScopeResult.getUsage().getAsJsonObject(), ImageSynthesisUsage.class));
     }
-    if (dashScopeResult.getOutput() != null) {
+    if (dashScopeResult.getOutput() instanceof JsonObject) {
       result.setOutput(
           JsonUtils.fromJsonObject(
               (JsonObject) dashScopeResult.getOutput(), ImageSynthesisOutput.class));
     } else {
-      log.error(StringUtils.format("Result no output: %s", dashScopeResult));
+      log.error(StringUtils.format("Result no output or output is not a JsonObject: %s", dashScopeResult));
     }
     return result;
   }

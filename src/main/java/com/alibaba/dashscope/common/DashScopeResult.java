@@ -16,7 +16,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class DashScopeResult extends Result {
@@ -242,6 +244,41 @@ public class DashScopeResult extends Result {
       }
       return (T) this;
     }
+
+    // Fallback: server encrypted output but did not set X-DashScope-OutputEncrypted header
+    if (protocol == Protocol.HTTP && req.getEncryptionConfig() != null) {
+      try {
+        JsonObject jsonObject = JsonUtils.parse(response.getMessage());
+        if (jsonObject.has(ApiKeywords.OUTPUT)
+            && !jsonObject.get(ApiKeywords.OUTPUT).isJsonNull()
+            && jsonObject.get(ApiKeywords.OUTPUT).isJsonPrimitive()
+            && jsonObject.get(ApiKeywords.OUTPUT).getAsJsonPrimitive().isString()) {
+          String encryptedOutput = jsonObject.get(ApiKeywords.OUTPUT).getAsString();
+          String plainOutput =
+              EncryptionUtils.AESDecrypt(
+                  encryptedOutput,
+                  req.getEncryptionConfig().getAESEncryptKey(),
+                  req.getEncryptionConfig().getIv());
+          this.output = JsonUtils.parse(plainOutput);
+          if (response.getHttpStatusCode() != null) {
+            this.setStatusCode(response.getHttpStatusCode());
+          }
+          if (jsonObject.has(ApiKeywords.USAGE)) {
+            this.setUsage(
+                jsonObject.get(ApiKeywords.USAGE).isJsonNull()
+                    ? null
+                    : jsonObject.get(ApiKeywords.USAGE).getAsJsonObject());
+          }
+          if (jsonObject.has(ApiKeywords.REQUEST_ID)) {
+            this.setRequestId(jsonObject.get(ApiKeywords.REQUEST_ID).getAsString());
+          }
+          return (T) this;
+        }
+      } catch (Exception e) {
+        log.debug("Fallback decryption failed, proceeding with normal parsing: {}", e.getMessage());
+      }
+    }
+
     return fromResponse(protocol, response, isFlattenResult);
   }
 

@@ -22,11 +22,15 @@ public final class ConversationResult {
     ConversationResult result = new ConversationResult();
     result.setRequestId(dashScopeResult.getRequestId());
     result.setHeaders(dashScopeResult.getHeaders());
-    result.setUsage(
-        JsonUtils.fromJsonObject(
-            dashScopeResult.getUsage().getAsJsonObject(), GenerationUsage.class));
-    result.setOutput(
-        JsonUtils.fromJsonObject((JsonObject) dashScopeResult.getOutput(), GenerationOutput.class));
+    if (dashScopeResult.getUsage() != null) {
+      result.setUsage(
+          JsonUtils.fromJsonObject(
+              dashScopeResult.getUsage().getAsJsonObject(), GenerationUsage.class));
+    }
+    if (dashScopeResult.getOutput() instanceof JsonObject) {
+      result.setOutput(
+          JsonUtils.fromJsonObject((JsonObject) dashScopeResult.getOutput(), GenerationOutput.class));
+    }
     return result;
   }
 }

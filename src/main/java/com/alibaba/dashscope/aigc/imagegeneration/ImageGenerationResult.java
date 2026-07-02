@@ -36,12 +36,12 @@ public class ImageGenerationResult {
           JsonUtils.fromJsonObject(
               dashScopeResult.getUsage().getAsJsonObject(), ImageGenerationUsage.class));
     }
-    if (dashScopeResult.getOutput() != null) {
+    if (dashScopeResult.getOutput() instanceof JsonObject) {
       result.setOutput(
           JsonUtils.fromJsonObject(
               (JsonObject) dashScopeResult.getOutput(), ImageGenerationOutput.class));
     } else {
-      log.error("Result no output: {}", dashScopeResult);
+      log.error("Result no output or output is not a JsonObject: {}", dashScopeResult);
     }
     return result;
   }
