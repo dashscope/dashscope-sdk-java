@@ -30,8 +30,8 @@ import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for {@link DashScopeResult} focusing on output field parsing type-safety, flatten
- * mode behavior, and encryption fallback decryption.
+ * Unit tests for {@link DashScopeResult} focusing on output field parsing type-safety, flatten mode
+ * behavior, and encryption fallback decryption.
  */
 public class TestDashScopeResult {
 
@@ -44,11 +44,7 @@ public class TestDashScopeResult {
   }
 
   private NetworkResponse buildHttpResponse(String body, Map<String, List<String>> headers) {
-    return NetworkResponse.builder()
-        .message(body)
-        .headers(headers)
-        .httpStatusCode(200)
-        .build();
+    return NetworkResponse.builder().message(body).headers(headers).httpStatusCode(200).build();
   }
 
   @Test

@@ -260,7 +260,8 @@ public class DashScopeResult extends Result {
     }
 
     // Fallback: server encrypted output but did not set X-DashScope-OutputEncrypted header.
-    // Only attempt fallback decryption when encryption config is available to avoid false positives.
+    // Only attempt fallback decryption when encryption config is available to avoid false
+    // positives.
     if (protocol == Protocol.HTTP && req.getEncryptionConfig() != null) {
       try {
         JsonObject jsonObject = JsonUtils.parse(response.getMessage());

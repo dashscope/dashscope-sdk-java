@@ -17,8 +17,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link OmniRealtimeConversation} focusing on WebSocket lifecycle: close()
- * idempotency, onFailure callback notification, and onClosing → checkStatus exception
- * information.
+ * idempotency, onFailure callback notification, and onClosing → checkStatus exception information.
  */
 public class TestOmniRealtimeConversation {
 

@@ -13,9 +13,9 @@ import com.google.gson.JsonPrimitive;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests that Result subclass {@code fromDashScopeResult} methods handle non-JsonObject output
- * (e.g. JsonPrimitive from encrypted or malformed responses) gracefully via the {@code
- * instanceof JsonObject} defensive check.
+ * Tests that Result subclass {@code fromDashScopeResult} methods handle non-JsonObject output (e.g.
+ * JsonPrimitive from encrypted or malformed responses) gracefully via the {@code instanceof
+ * JsonObject} defensive check.
  */
 public class TestResultTypeSafety {
 
