@@ -94,10 +94,13 @@ public class DashScopeResult extends Result {
         this.setStatusCode(response.getHttpStatusCode());
       }
       if (jsonObject.has(ApiKeywords.OUTPUT)) {
-        this.output =
-            jsonObject.get(ApiKeywords.OUTPUT).isJsonNull()
-                ? null
-                : jsonObject.get(ApiKeywords.OUTPUT).getAsJsonObject();
+        if (jsonObject.get(ApiKeywords.OUTPUT).isJsonNull()) {
+          this.output = null;
+        } else if (jsonObject.get(ApiKeywords.OUTPUT).isJsonObject()) {
+          this.output = jsonObject.get(ApiKeywords.OUTPUT).getAsJsonObject();
+        } else {
+          this.output = jsonObject.get(ApiKeywords.OUTPUT);
+        }
       }
       if (jsonObject.has(ApiKeywords.USAGE)) {
         this.setUsage(
@@ -183,17 +186,19 @@ public class DashScopeResult extends Result {
         this.setStatusCode(response.getHttpStatusCode());
       }
       JsonObject jsonObject = JsonUtils.parse(response.getMessage());
-      String encryptedOutput =
-          jsonObject.get(ApiKeywords.OUTPUT).isJsonNull()
-              ? null
-              : jsonObject.get(ApiKeywords.OUTPUT).getAsString();
-      if (encryptedOutput != null) {
-        String plainOutput =
-            EncryptionUtils.AESDecrypt(
-                encryptedOutput,
-                req.getEncryptionConfig().getAESEncryptKey(),
-                req.getEncryptionConfig().getIv());
-        this.output = JsonUtils.parse(plainOutput);
+      if (jsonObject.has(ApiKeywords.OUTPUT) && !jsonObject.get(ApiKeywords.OUTPUT).isJsonNull()) {
+        if (jsonObject.get(ApiKeywords.OUTPUT).isJsonPrimitive()
+            && jsonObject.get(ApiKeywords.OUTPUT).getAsJsonPrimitive().isString()) {
+          String encryptedOutput = jsonObject.get(ApiKeywords.OUTPUT).getAsString();
+          String plainOutput =
+              EncryptionUtils.AESDecrypt(
+                  encryptedOutput,
+                  req.getEncryptionConfig().getAESEncryptKey(),
+                  req.getEncryptionConfig().getIv());
+          this.output = JsonUtils.parse(plainOutput);
+        } else {
+          this.output = jsonObject.get(ApiKeywords.OUTPUT).getAsJsonObject();
+        }
       } else {
         this.output = null;
       }
