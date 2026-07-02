@@ -57,11 +57,16 @@ public class OmniRealtimeConversation extends WebSocketListener {
     if (this.isClosed.get()) {
       throw new RuntimeException("conversation is already closed!");
     }
+    if (!this.isOpen.get()) {
+      throw new RuntimeException("conversation is not connected!");
+    }
   }
 
   /** Connect to server, create session and return default session configuration */
   public void connect() throws NoApiKeyException, InterruptedException {
-    checkStatus();
+    if (isClosed.get()) {
+      throw new RuntimeException("conversation is already closed!");
+    }
     Request request =
         buildConnectionRequest(
             ApiKey.getApiKey(parameters.getApikey()),
@@ -250,9 +255,7 @@ public class OmniRealtimeConversation extends WebSocketListener {
 
   /** close the connection to server */
   public void close() {
-    checkStatus();
-    websocktetClient.close(1000, "bye");
-    isClosed.set(true);
+    close(1000, "bye");
   }
 
   /**
@@ -262,9 +265,13 @@ public class OmniRealtimeConversation extends WebSocketListener {
    * @param reason websocket close reason
    */
   public void close(int code, String reason) {
-    checkStatus();
-    websocktetClient.close(code, reason);
-    isClosed.set(true);
+    if (!isClosed.compareAndSet(false, true)) {
+      return;
+    }
+    if (websocktetClient != null) {
+      websocktetClient.close(code, reason);
+    }
+    isOpen.set(false);
   }
 
   /**
@@ -340,6 +347,9 @@ public class OmniRealtimeConversation extends WebSocketListener {
       log.debug("send message: " + message);
     }
     Boolean isOk = websocktetClient.send(message);
+    if (!isOk) {
+      throw new RuntimeException("failed to send message");
+    }
   }
 
   private void sendMessage(ByteString message) {
@@ -410,6 +420,7 @@ public class OmniRealtimeConversation extends WebSocketListener {
   @Override
   public void onClosed(WebSocket webSocket, int code, String reason) {
     isOpen.set(false);
+    isClosed.set(true);
     connectLatch.get().countDown();
     log.debug("WebSocket closed: " + code + ", " + reason);
     callback.onClose(code, reason);
@@ -417,14 +428,15 @@ public class OmniRealtimeConversation extends WebSocketListener {
 
   @Override
   public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+    isClosed.set(true);
+    isOpen.set(false);
     connectLatch.get().countDown();
     log.error("WebSocket failed: " + t.getMessage());
   }
 
   @Override
   public void onClosing(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
-    isClosed.set(true);
-    websocktetClient.close(code, reason);
+    close(code, reason);
     log.debug("WebSocket closing: " + code + ", " + reason);
   }
 }
