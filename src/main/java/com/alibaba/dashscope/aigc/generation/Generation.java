@@ -7,6 +7,7 @@ import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.common.Function;
 import com.alibaba.dashscope.common.OutputMode;
 import com.alibaba.dashscope.common.ResultCallback;
+import com.alibaba.dashscope.common.SearchInfo;
 import com.alibaba.dashscope.common.Task;
 import com.alibaba.dashscope.common.TaskGroup;
 import com.alibaba.dashscope.exception.ApiException;
@@ -315,6 +316,19 @@ public final class Generation {
         return null;
       }
 
+      // Handle searchInfo accumulation at output level
+      if (result.getOutput().getSearchInfo() != null) {
+        // Store in the first accumulated data entry
+        AccumulatedData firstAccumulated =
+            accumulatedData.computeIfAbsent(0, k -> new AccumulatedData());
+        firstAccumulated.searchInfo = result.getOutput().getSearchInfo();
+      }
+      // Always restore accumulated searchInfo to output
+      AccumulatedData firstAccumulatedData = accumulatedData.get(0);
+      if (firstAccumulatedData != null && firstAccumulatedData.searchInfo != null) {
+        result.getOutput().setSearchInfo(firstAccumulatedData.searchInfo);
+      }
+
       for (GenerationOutput.Choice choice : choices) {
         // Use the choice's index field for accumulation, fallback to 0
         Integer choiceIndex = choice.getIndex();
@@ -481,6 +495,11 @@ public final class Generation {
               }
             }
             output.setChoices(allChoices);
+            // Restore searchInfo at output level
+            AccumulatedData firstData = accumulatedData.get(0);
+            if (firstData != null && firstData.searchInfo != null) {
+              output.setSearchInfo(firstData.searchInfo);
+            }
             if (result.getUsage() != null && totalOutputTokens > 0) {
               result.getUsage().setOutputTokens(totalOutputTokens);
               if (result.getUsage().getInputTokens() != null) {
@@ -528,6 +547,13 @@ public final class Generation {
       // Always set the accumulated content if we have any
       if (accumulated.content.length() > 0) {
         result.getOutput().setText(accumulated.content.toString());
+      }
+      // Handle searchInfo accumulation for legacy format
+      if (result.getOutput().getSearchInfo() != null) {
+        accumulated.searchInfo = result.getOutput().getSearchInfo();
+      }
+      if (accumulated.searchInfo != null) {
+        result.getOutput().setSearchInfo(accumulated.searchInfo);
       }
     }
 
@@ -649,5 +675,6 @@ public final class Generation {
     boolean allChoicesSent = false;
     String role = null;
     Integer outputTokens = null;
+    SearchInfo searchInfo = null;
   }
 }
