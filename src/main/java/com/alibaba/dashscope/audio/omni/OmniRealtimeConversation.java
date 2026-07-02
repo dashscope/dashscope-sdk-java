@@ -67,6 +67,9 @@ public class OmniRealtimeConversation extends WebSocketListener {
     if (isClosed.get()) {
       throw new RuntimeException("conversation is already closed!");
     }
+    if (isOpen.get()) {
+      throw new RuntimeException("conversation is already connected!");
+    }
     Request request =
         buildConnectionRequest(
             ApiKey.getApiKey(parameters.getApikey()),
@@ -422,6 +425,10 @@ public class OmniRealtimeConversation extends WebSocketListener {
     isOpen.set(false);
     isClosed.set(true);
     connectLatch.get().countDown();
+    CountDownLatch latch = disconnectLatch.get();
+    if (latch != null) {
+      latch.countDown();
+    }
     log.debug("WebSocket closed: " + code + ", " + reason);
     callback.onClose(code, reason);
   }
@@ -431,6 +438,10 @@ public class OmniRealtimeConversation extends WebSocketListener {
     isClosed.set(true);
     isOpen.set(false);
     connectLatch.get().countDown();
+    CountDownLatch latch = disconnectLatch.get();
+    if (latch != null) {
+      latch.countDown();
+    }
     log.error("WebSocket failed: " + t.getMessage());
   }
 
