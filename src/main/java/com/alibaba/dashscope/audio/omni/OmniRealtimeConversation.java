@@ -39,6 +39,8 @@ public class OmniRealtimeConversation extends WebSocketListener {
   private long lastFirstAudioDelay = -1;
   private long lastFirstTextDelay = -1;
   private AtomicBoolean isClosed = new AtomicBoolean(false);
+  private volatile int closeCode = -1;
+  private volatile String closeReason = null;
   private final AtomicReference<CountDownLatch> disconnectLatch = new AtomicReference<>(null);
 
   /**
@@ -55,7 +57,11 @@ public class OmniRealtimeConversation extends WebSocketListener {
   /** Omni APIs */
   public void checkStatus() {
     if (this.isClosed.get()) {
-      throw new RuntimeException("conversation is already closed!");
+      String msg = "conversation is already closed!";
+      if (closeCode >= 0) {
+        msg = msg + " (code=" + closeCode + ", reason=" + closeReason + ")";
+      }
+      throw new RuntimeException(msg);
     }
     if (!this.isOpen.get()) {
       throw new RuntimeException("conversation is not connected!");
@@ -435,6 +441,8 @@ public class OmniRealtimeConversation extends WebSocketListener {
 
   @Override
   public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+    this.closeCode = -1;
+    this.closeReason = "failure: " + t.getMessage();
     isClosed.set(true);
     isOpen.set(false);
     connectLatch.get().countDown();
@@ -447,6 +455,8 @@ public class OmniRealtimeConversation extends WebSocketListener {
 
   @Override
   public void onClosing(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
+    this.closeCode = code;
+    this.closeReason = reason;
     close(code, reason);
     log.debug("WebSocket closing: " + code + ", " + reason);
   }
