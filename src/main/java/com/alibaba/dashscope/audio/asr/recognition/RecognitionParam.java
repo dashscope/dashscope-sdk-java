@@ -32,6 +32,8 @@ public class RecognitionParam extends FullDuplexServiceParam {
 
   private String vocabularyId;
 
+  private Map<String, Object> input;
+
   @Override
   public Map<String, Object> getParameters() {
     Map<String, Object> params = new HashMap<>();
@@ -43,6 +45,11 @@ public class RecognitionParam extends FullDuplexServiceParam {
     }
     params.putAll(parameters);
     return params;
+  }
+
+  @Override
+  public Map<String, Object> getInputs() {
+    return input;
   }
 
   @Override

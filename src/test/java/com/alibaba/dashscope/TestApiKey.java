@@ -29,8 +29,9 @@ public class TestApiKey {
   @Test
   @SetEnvironmentVariable(key = "DASHSCOPE_API_KEY", value = environmentValue)
   public void testSetWithEnvValue() throws NoApiKeyException {
+    Constants.apiKey = null; // Clear any previously set API key
     String apiKey = ApiKey.getApiKey(null);
-    assertEquals(apiKey, environmentValue);
+    assertEquals(environmentValue, apiKey);
   }
 
   @Test
@@ -49,9 +50,16 @@ public class TestApiKey {
 
   @Test
   public void testWithDefaultFile() throws NoApiKeyException, IOException {
+    Constants.apiKey = null; // Clear any previously set API key
     Path homePath = Paths.get(System.getProperty("user.home"));
     Path dashscopePath = homePath.resolve(".dashscope").resolve("api_key");
     String expectedValue = "4444";
+    // Delete if exists before creating
+    if (Files.exists(dashscopePath.getParent()) && Files.isDirectory(dashscopePath.getParent())) {
+      if (Files.exists(dashscopePath)) {
+        Files.delete(dashscopePath);
+      }
+    }
     Files.createDirectories(dashscopePath.getParent());
     Files.write(
         dashscopePath,
@@ -65,7 +73,9 @@ public class TestApiKey {
 
   @Test
   @SetEnvironmentVariable(key = "DASHSCOPE_API_KEY_FILE_PATH", value = environmentPath)
+  @ClearEnvironmentVariable(key = "DASHSCOPE_API_KEY")
   public void testWithEnvFile() throws NoApiKeyException, IOException {
+    Constants.apiKey = null; // Clear any previously set API key
     String expectedValue = "555";
     Files.write(
         Paths.get(environmentPath),

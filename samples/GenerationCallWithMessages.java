@@ -1,6 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import com.alibaba.dashscope.aigc.generation.Generation;
 import com.alibaba.dashscope.aigc.generation.GenerationParam;
@@ -11,7 +12,7 @@ import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.utils.JsonUtils;
-
+import io.reactivex.Flowable;
 
 
 public class GenerationCallWithMessages {
@@ -42,10 +43,27 @@ public class GenerationCallWithMessages {
     System.out.println(JsonUtils.toJson(result));
   }
 
+  public static void streamCallWithMessage()
+          throws NoApiKeyException, ApiException, InputRequiredException {
+    Generation gen = new Generation();
+    Message systemMsg =
+            Message.builder().role(Role.SYSTEM.getValue()).content("You are a helpful assistant.").build();
+    Message userMsg = Message.builder().role(Role.USER.getValue()).content("9.9和9.11谁大").build();
+    GenerationParam param = GenerationParam.builder().model("deepseek-r1")
+                    .messages(Arrays.asList(systemMsg, userMsg))
+                    .resultFormat(GenerationParam.ResultFormat.MESSAGE)
+                    .incrementalOutput(true)
+                    .build();
+    Flowable<GenerationResult> result = gen.streamCall(param);
+      result.blockingSubscribe( data -> {
+          System.out.println(JsonUtils.toJson(data));
+      });
+  }
 
   public static void main(String[] args){
         try {
-          callWithMessage();
+//          callWithMessage();
+            streamCallWithMessage();
         } catch (ApiException | NoApiKeyException | InputRequiredException e) {
           System.out.println(e.getMessage());
         }

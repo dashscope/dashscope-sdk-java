@@ -270,6 +270,7 @@ public class TestApplication {
     images.add("http://127.0.0.1:8080/www.png");
     images.add("http://127.0.0.1:8080/eee.png");
 
+    List<Integer> pageNumber = new ArrayList<>();
     ApplicationOutput output =
         ApplicationOutput.builder()
             .text("API接口说明中，通过parameters的topP属性设置，取值范围在(0,1.0)。")
@@ -286,6 +287,7 @@ public class TestApplication {
                         .text("topP取值范围在(0,1.0),取值越大,生成的随机性越高")
                         .bizId("2345")
                         .images(images)
+                        .pageNumber(pageNumber)
                         .build()))
             .thoughts(
                 Collections.singletonList(
@@ -377,6 +379,7 @@ public class TestApplication {
         Assertions.assertEquals(docReference.getTitle(), expectedDocReference.getTitle());
         Assertions.assertEquals(docReference.getText(), expectedDocReference.getText());
         Assertions.assertEquals(docReference.getBizId(), expectedDocReference.getBizId());
+        Assertions.assertEquals(docReference.getPageNumber(), expectedDocReference.getPageNumber());
         Assertions.assertEquals(
             JsonUtils.toJson(docReference.getImages()),
             JsonUtils.toJson(expectedDocReference.getImages()));

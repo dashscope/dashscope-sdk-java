@@ -21,11 +21,11 @@
     <distributionManagement>
         <snapshotRepository>
             <id>oss</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+            <url>https://ossrh-staging-api.central.sonatype.com/content/repositories/snapshots/</url>
         </snapshotRepository>
         <repository>
             <id>oss</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+            <url>https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/</url>
         </repository>
     </distributionManagement>
 
@@ -40,7 +40,7 @@
     <name>DashScope Java SDK</name>
     <groupId>com.alibaba</groupId>
     <artifactId>dashscope-sdk-java</artifactId>
-    <version>2.6.2</version>
+    <version>2.22.24</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -59,7 +59,7 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.26</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -72,13 +72,13 @@
             <artifactId>junit-jupiter-api</artifactId>
             <version>5.10.2</version>
             <scope>test</scope>
-        </dependency> 
+        </dependency>
         <dependency>
-	        <groupId>org.junit-pioneer</groupId>
-	        <artifactId>junit-pioneer</artifactId>
-	        <version>1.9.1</version>
-	        <scope>test</scope>
-        </dependency>   
+            <groupId>org.junit-pioneer</groupId>
+            <artifactId>junit-pioneer</artifactId>
+            <version>1.9.1</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>io.javalin</groupId>
             <artifactId>javalin</artifactId>
@@ -99,6 +99,7 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>2.0.7</version>
+            <scope>test</scope>
         </dependency>
         <!-- dependent by okhttp-->
         <dependency>
@@ -144,8 +145,18 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.8.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>central</publishingServerId>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-eclipse-plugin</artifactId>
+                <version>2.10</version>
                 <configuration>
                     <downloadSources>true</downloadSources>
                 </configuration>
@@ -214,24 +225,6 @@
                         <goals>
                             <goal>sign</goal>
                         </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.4.0</version>
-                <executions>
-                    <execution>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>samples</source>
-                            </sources>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>

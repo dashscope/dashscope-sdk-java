@@ -10,6 +10,7 @@ import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.EncryptionConfig;
 import com.alibaba.dashscope.utils.EncryptionUtils;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
@@ -80,7 +81,7 @@ public class HalfDuplexRequest {
   private String getEncryptionKeyHeader(EncryptionConfig encryptionConfig) throws ApiException {
     byte[] cipherBytes = encryptionConfig.getAESEncryptKey().getEncoded();
     String base64Cipher = Base64.getEncoder().encodeToString(cipherBytes);
-    return String.format(
+    return StringUtils.format(
         "{\"public_key_id\":\"%s\",\"encrypt_key\":\"%s\",\"iv\":\"%s\"}",
         encryptionConfig.getPublicKeyId(),
         EncryptionUtils.RSAEncrypt(base64Cipher, encryptionConfig.getBase64PublicKey()),
@@ -88,6 +89,13 @@ public class HalfDuplexRequest {
   }
 
   public HttpRequest getHttpRequest() throws NoApiKeyException, ApiException {
+    // Extract and filter custom user agent from param headers
+    Map<String, String> paramHeaders = param.getHeaders();
+    String customUserAgent = paramHeaders != null ? paramHeaders.get("user-agent") : null;
+    Map<String, String> filteredHeaders =
+        paramHeaders != null ? new java.util.HashMap<>(paramHeaders) : new java.util.HashMap<>();
+    filteredHeaders.remove("user-agent");
+
     Map<String, String> requestHeaders =
         DashScopeHeaders.buildHttpHeaders(
             param.getApiKey(),
@@ -96,7 +104,8 @@ public class HalfDuplexRequest {
             serviceOption.getIsSSE(),
             serviceOption.getIsAsyncTask(),
             param.getWorkspace(),
-            param.getHeaders());
+            filteredHeaders,
+            customUserAgent);
 
     if (getHttpMethod() == HttpMethod.GET) {
       return HttpRequest.builder()
@@ -171,7 +180,11 @@ public class HalfDuplexRequest {
   public JsonObject getStartTaskMessage() {
     JsonObject header = new JsonObject();
     header.addProperty(ApiKeywords.ACTION, WebSocketEventType.RUN_TASK.getValue());
-    header.addProperty(ApiKeywords.TASKID, UUID.randomUUID().toString());
+    if (param.getParameters() != null && param.getParameters().containsKey("pre_task_id")) {
+      header.addProperty(ApiKeywords.TASKID, (String) param.getParameters().get("pre_task_id"));
+    } else {
+      header.addProperty(ApiKeywords.TASKID, UUID.randomUUID().toString());
+    }
     header.addProperty(ApiKeywords.STREAMING, serviceOption.getStreamingMode().getValue());
     JsonObject wsMessage = new JsonObject();
     wsMessage.add(ApiKeywords.HEADER, header);

@@ -5,6 +5,7 @@ package com.alibaba.dashscope;
 import static org.junit.Assert.assertEquals;
 
 import com.alibaba.dashscope.audio.tts.SpeechSynthesisResult;
+import com.alibaba.dashscope.audio.ttsv2.ParamHotFix;
 import com.alibaba.dashscope.audio.ttsv2.SpeechSynthesisAudioFormat;
 import com.alibaba.dashscope.audio.ttsv2.SpeechSynthesisParam;
 import com.alibaba.dashscope.audio.ttsv2.SpeechSynthesizer;
@@ -35,7 +36,7 @@ public class TestTtsV2SpeechSynthesizer {
       new ResultCallback<SpeechSynthesisResult>() {
         @Override
         public void onEvent(SpeechSynthesisResult message) {
-          //            System.out.println("onEvent:" + message);
+          System.out.println("onEvent:" + message);
           if (message.getAudioFrame() != null) {
             for (byte b : message.getAudioFrame().array()) {
               audioBuffer.add(b);
@@ -75,22 +76,38 @@ public class TestTtsV2SpeechSynthesizer {
 
                   @Override
                   public void onMessage(WebSocket webSocket, String string) {
+                    System.out.println("mock server recv: " + string);
                     JsonObject req = JsonUtils.parse(string);
                     if (task_id == "") {
                       task_id = req.get("header").getAsJsonObject().get("task_id").getAsString();
                     }
                     if (string.contains("run-task")) {
+                      try {
+                        Thread.sleep(100);
+                      } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                      }
                       webSocket.send(
                           "{'header': {'task_id': '"
                               + task_id
                               + "', 'event': 'task-started', 'attributes': {}}, 'payload': {}}");
                     } else if (string.contains("finish-task")) {
+                      try {
+                        Thread.sleep(100);
+                      } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                      }
                       webSocket.send(
                           "{'header': {'task_id': '"
                               + task_id
                               + "', 'event': 'task-finished', 'attributes': {}}, 'payload': {'output': None, 'usage': {'characters': 7}}}");
                       webSocket.close(1000, "close by server");
                     } else if (string.contains("continue-task")) {
+                      try {
+                        Thread.sleep(100);
+                      } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                      }
                       byte[] binary = new byte[] {0x01, 0x01, 0x01};
                       webSocket.send(new ByteString(binary));
                     }
@@ -106,13 +123,23 @@ public class TestTtsV2SpeechSynthesizer {
   }
 
   @Test
-  public void testStreamingCall() throws InterruptedException {
+  public void testStreamingCall() {
     System.out.println("############ Start Test Streaming Call ############");
     int port = mockServer.getPort();
     Constants.baseWebsocketApiUrl = String.format("http://127.0.0.1:%s", port);
 
     // 获取 URL
     String url = mockServer.url("/binary").toString();
+    ParamHotFix hotFix = new ParamHotFix();
+    ArrayList<ParamHotFix.PronunciationItem> pronunciations = new ArrayList<>();
+    pronunciations.add(new ParamHotFix.PronunciationItem("今天", "jin1 tian1"));
+    pronunciations.add(new ParamHotFix.PronunciationItem("草地", "cao3 di4"));
+    hotFix.setPronunciation(pronunciations);
+
+    ArrayList<ParamHotFix.ReplaceItem> replaces = new ArrayList<>();
+    replaces.add(new ParamHotFix.ReplaceItem("草地", "草弟"));
+    replaces.add(new ParamHotFix.ReplaceItem("惠州", "汇州"));
+    hotFix.setReplace(replaces);
 
     // 在真实世界中，你会在这里做 HTTP 请求，并得到响应
     System.out.println("Mock Server is running at: " + url);
@@ -122,8 +149,11 @@ public class TestTtsV2SpeechSynthesizer {
             .model("cosyvoice-v1")
             .voice("longxiaochun")
             .format(SpeechSynthesisAudioFormat.MP3_16000HZ_MONO_128KBPS)
+            .hotFix(hotFix)
             .build();
     SpeechSynthesizer synthesizer = new SpeechSynthesizer(param, callback);
+    synthesizer.setStartedTimeout(1000);
+    synthesizer.setFirstAudioTimeout(2000);
     for (int i = 0; i < 3; i++) {
       synthesizer.streamingCall("今天天气怎么样？");
     }

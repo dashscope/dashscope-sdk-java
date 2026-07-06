@@ -9,6 +9,7 @@ import lombok.EqualsAndHashCode;
 public class ToolCallCodeInterpreter extends ToolCallBase {
   private String type = "code_interpreter";
   private String id;
+  private Integer index;
 
   static {
     registerToolCall("code_interpreter", ToolCallCodeInterpreter.class);

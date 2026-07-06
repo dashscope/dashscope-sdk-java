@@ -4,6 +4,7 @@ package com.alibaba.dashscope.exception;
 import com.alibaba.dashscope.common.ErrorType;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.utils.StringUtils;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,8 +20,8 @@ public class ApiException extends RuntimeException {
       this.status =
           Status.builder()
               .statusCode(-1)
-              .code(ErrorType.NETORK_ERROR.getValue())
-              .message(String.format("%s: %s", e.getClass().getSimpleName(), e.getMessage()))
+              .code(ErrorType.NETWORK_ERROR.getValue())
+              .message(StringUtils.format("%s: %s", e.getClass().getSimpleName(), e.getMessage()))
               .build();
     }
     this.setStackTrace(e.getStackTrace());
@@ -28,6 +29,11 @@ public class ApiException extends RuntimeException {
 
   public ApiException(Status status) {
     super();
+    this.status = status;
+  }
+
+  public ApiException(Status status, Throwable th) {
+    super(status.getMessage(), th);
     this.status = status;
   }
 

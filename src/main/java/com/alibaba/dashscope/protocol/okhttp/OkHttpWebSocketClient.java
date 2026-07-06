@@ -7,22 +7,17 @@ import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
-import com.alibaba.dashscope.protocol.DashScopeHeaders;
-import com.alibaba.dashscope.protocol.FullDuplexClient;
-import com.alibaba.dashscope.protocol.FullDuplexRequest;
-import com.alibaba.dashscope.protocol.HalfDuplexClient;
-import com.alibaba.dashscope.protocol.HalfDuplexRequest;
-import com.alibaba.dashscope.protocol.NetworkResponse;
+import com.alibaba.dashscope.protocol.*;
 import com.alibaba.dashscope.protocol.Protocol;
-import com.alibaba.dashscope.protocol.StreamingMode;
-import com.alibaba.dashscope.protocol.WebSocketResponse;
 import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.JsonObject;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.Observable;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Action;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -33,13 +28,8 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.Headers;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
+import okhttp3.*;
 import okhttp3.Request.Builder;
-import okhttp3.Response;
-import okhttp3.WebSocket;
-import okhttp3.WebSocketListener;
 import okio.ByteString;
 
 @Slf4j
@@ -51,16 +41,23 @@ public class OkHttpWebSocketClient extends WebSocketListener
   private WebSocket webSocketClient;
   // indicate the websocket connection is established.
   private AtomicBoolean isOpen = new AtomicBoolean(false);
+  protected AtomicBoolean isClosed = new AtomicBoolean(false);
   // indicate the first response is received.
-  private AtomicBoolean isFirstMessage = new AtomicBoolean(false);
+  protected AtomicBoolean isFirstMessage = new AtomicBoolean(false);
   // used for get request response
-  private FlowableEmitter<DashScopeResult> responseEmitter;
+  protected volatile FlowableEmitter<DashScopeResult> responseEmitter;
   // is the result is flatten format.
   private boolean isFlattenResult;
   private FlowableEmitter<DashScopeResult> connectionEmitter;
 
-  public OkHttpWebSocketClient(OkHttpClient client) {
+  private AtomicBoolean passTaskStarted = new AtomicBoolean(false);
+
+  // Disposable for the streaming data subscription, used to cancel upstream when stopping
+  protected volatile Disposable streamingDataDisposable;
+
+  public OkHttpWebSocketClient(OkHttpClient client, boolean passTaskStarted) {
     this.client = client;
+    this.passTaskStarted.set(passTaskStarted);
   }
 
   private Request buildConnectionRequest(
@@ -70,12 +67,18 @@ public class OkHttpWebSocketClient extends WebSocketListener
       Map<String, String> customHeaders,
       String baseWebSocketUrl)
       throws NoApiKeyException {
+    // Extract and filter custom user agent from param headers
+    String customUserAgent = customHeaders != null ? customHeaders.get("user-agent") : null;
+    Map<String, String> filteredHeaders =
+        customHeaders != null ? new java.util.HashMap<>(customHeaders) : new java.util.HashMap<>();
+    filteredHeaders.remove("user-agent");
+
     // build the request builder.
     Builder bd = new Request.Builder();
     bd.headers(
         Headers.of(
             DashScopeHeaders.buildWebSocketHeaders(
-                apiKey, isSecurityCheck, workspace, customHeaders)));
+                apiKey, isSecurityCheck, workspace, filteredHeaders, customUserAgent)));
     String url = Constants.baseWebsocketApiUrl;
     if (baseWebSocketUrl != null) {
       url = baseWebSocketUrl;
@@ -89,6 +92,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
      * close websocket connection see.
      * https://square.github.io/okhttp/3.x/okhttp/okhttp3/WebSocket.html
      */
+    isClosed.set(true);
     if (webSocketClient != null) {
       return webSocketClient.close(code, reason);
     } else {
@@ -97,6 +101,13 @@ public class OkHttpWebSocketClient extends WebSocketListener
   }
 
   public void cancel() {
+    // Set isClosed BEFORE cancel to suppress onFailure error propagation
+    isClosed.set(true);
+    // Dispose upstream subscription to stop sending data
+    Disposable d = streamingDataDisposable;
+    if (d != null && !d.isDisposed()) {
+      d.dispose();
+    }
     if (webSocketClient != null) {
       webSocketClient.cancel();
     }
@@ -111,6 +122,11 @@ public class OkHttpWebSocketClient extends WebSocketListener
     int reconnectionTimes = 0;
     String errorMessage = "";
     while (reconnectionTimes < MAX_CONNECTION_TIMES) {
+      // Bail out immediately if cancel() has been called
+      if (isClosed.get()) {
+        log.debug("Connection cancelled, stop reconnecting.");
+        return;
+      }
       try {
         Flowable<DashScopeResult> flowable =
             Flowable.<DashScopeResult>create(
@@ -133,7 +149,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
                 },
                 BackpressureStrategy.BUFFER);
         // wait for connection establish
-        flowable.blockingSubscribe();
+        flowable.timeout(60, TimeUnit.SECONDS).blockingSubscribe();
         return;
       } catch (Throwable ex) {
         reconnectionTimes += 1;
@@ -144,9 +160,17 @@ public class OkHttpWebSocketClient extends WebSocketListener
         } else if (errorMessage.contains(Constants.NO_API_KEY_ERROR)) {
           throw ex;
         }
+        // Check again before sleeping
+        if (isClosed.get()) {
+          log.debug("Connection cancelled during retry, stop reconnecting.");
+          return;
+        }
         try {
           Thread.sleep(10000);
-        } catch (InterruptedException e) {;
+        } catch (InterruptedException e) {
+          // Respect interruption - exit the loop
+          Thread.currentThread().interrupt();
+          return;
         }
       }
     }
@@ -164,7 +188,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
     // transmitted and the connection has been successfully released. No further
     // calls to this
     // listener will be made.
-    log.debug(String.format("WebSocket %s closed: %d, %s", webSocket.toString(), code, reason));
+    log.debug(
+        StringUtils.format("WebSocket %s closed: %d, %s", webSocket.toString(), code, reason));
     isOpen.set(false);
   }
 
@@ -188,7 +213,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
     // endpoint that understands only text data MAY send this if it receives a
     // binary message)
     webSocket.close(code, null);
-    log.debug(String.format("Websocket is closing, code: %s, reasion: %s", code, reason));
+    log.debug(StringUtils.format("Websocket is closing, code: %s, reasion: %s", code, reason));
     if (responseEmitter != null && !responseEmitter.isCancelled()) {
       responseEmitter.onComplete();
     } else { // close on idle, such as server close the connection.
@@ -203,6 +228,12 @@ public class OkHttpWebSocketClient extends WebSocketListener
     // Both outgoing and incoming messages may have been lost. No further calls to
     // this listener will be made.
 
+    if (isClosed.get()) {
+      log.debug("called close before but not working, close again in onFailure.");
+      close(1001, "call closed before");
+      return;
+    }
+
     String responseBody = "";
     // Get response body if there is.
     if (response != null) {
@@ -213,7 +244,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
       }
     }
     String failureMessage =
-        String.format(
+        StringUtils.format(
             "Websocket failure %s, cause: %s, body: %s",
             t.getMessage(), t.getCause(), responseBody);
     log.error(failureMessage);
@@ -230,6 +261,11 @@ public class OkHttpWebSocketClient extends WebSocketListener
 
   @Override
   public void onMessage(WebSocket webSocket, String text) {
+    if (isClosed.get()) {
+      log.debug("called close before but not working, close again in onMessage.");
+      close(1001, "call closed before");
+      return;
+    }
     log.debug(text);
     // Invoked when a text (type 0x1) message has been received.
     if (!isFirstMessage.get()) {
@@ -249,10 +285,19 @@ public class OkHttpWebSocketClient extends WebSocketListener
                         Protocol.WEBSOCKET,
                         NetworkResponse.builder().message(text).build(),
                         isFlattenResult));
+          } else if (passTaskStarted.get()) {
+            DashScopeResult start_message =
+                new DashScopeResult()
+                    .fromResponse(
+                        Protocol.WEBSOCKET,
+                        NetworkResponse.builder().message(text).build(),
+                        isFlattenResult);
+            start_message.setEvent(WebSocketEventType.TASK_STARTED.getValue());
+            responseEmitter.onNext(start_message);
           }
           break;
         case TASK_FAILED:
-          log.error(String.format("Receive task_failed message: %s", text));
+          log.error(StringUtils.format("Receive task_failed message: %s", text));
           Status st =
               Status.builder()
                   .code(response.header.code)
@@ -265,7 +310,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
           if (!responseEmitter.isCancelled()) {
             responseEmitter.onError(new ApiException(st));
           } else {
-            log.error(String.format("Something wrong, receive task failed message: %s", text));
+            log.error(StringUtils.format("Something wrong, receive task failed message: %s", text));
           }
         case TASK_FINISHED:
           // check the payload and usage is null.
@@ -290,13 +335,13 @@ public class OkHttpWebSocketClient extends WebSocketListener
           break;
         default:
           // throw new ApiException(Status.builder().code("")
-          // .message(String.format("Receive unknown message: %s", text))
+          // .message(StringUtils.format("Receive unknown message: %s", text))
           // .statusCode(Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE).build());
           responseEmitter.onError(
               new ApiException(
                   Status.builder()
                       .code("UnknownMessage")
-                      .message(String.format("Receive unknown message: %s", text))
+                      .message(StringUtils.format("Receive unknown message: %s", text))
                       .statusCode(Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE)
                       .build()));
       }
@@ -305,7 +350,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
           new ApiException(
               Status.builder()
                   .code("MessageFormatError")
-                  .message(String.format("Receive message: %s, json deserialize exception", text))
+                  .message(
+                      StringUtils.format("Receive message: %s, json deserialize exception", text))
                   .statusCode(Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE)
                   .build()));
     }
@@ -314,6 +360,11 @@ public class OkHttpWebSocketClient extends WebSocketListener
   @Override
   public void onMessage(WebSocket webSocket, ByteString bytes) {
     // Invoked when a binary (type 0x2) message has been received.
+    if (isClosed.get()) {
+      log.debug("called close before but not working, close again in onMessage.");
+      close(1001, "call closed before");
+      return;
+    }
     if (!isFirstMessage.get()) {
       log.debug("Receive first binary package.");
       isFirstMessage.set(true);
@@ -333,26 +384,59 @@ public class OkHttpWebSocketClient extends WebSocketListener
     // Invoked when a web socket has been accepted by the remote peer and may begin
     // transmitting
     // messages..
+    if (isClosed.get()) {
+      log.debug("called close before but not working, close again in onOpen.");
+      close(1001, "call closed before");
+      return;
+    }
     isOpen.set(true);
     if (connectionEmitter != null && !connectionEmitter.isCancelled()) {
       connectionEmitter.onComplete();
     }
   }
 
-  private void sendTextWithRetry(
+  protected void sendTextWithRetry(
       String apiKey,
       boolean isSecurityCheck,
       String message,
       String workspace,
       Map<String, String> customHeaders,
       String baseWebSocketUrl) {
+    // Guard: skip if already cancelled
+    if (isClosed.get()) {
+      log.debug("sendTextWithRetry skipped: connection already closed.");
+      return;
+    }
     // simple retry with fixed delay, no strategy
     if (!isOpen.get()) {
       establishWebSocketClient(apiKey, isSecurityCheck, workspace, customHeaders, baseWebSocketUrl);
     }
+    if (isClosed.get()) {
+      return;
+    }
     int maxRetries = 3;
+    if (passTaskStarted.get()) {
+      // when pass througn task started, no need to retry.
+      if (webSocketClient == null) {
+        log.warn("webSocketClient is null, cannot send message.");
+        return;
+      }
+      log.info("Sending message: " + message);
+      Boolean isOk = webSocketClient.send(message);
+      if (!isOk) {
+        log.warn("Send request failed, return without retry.");
+      }
+      return;
+    }
     int retryCount = 0;
     while (retryCount < maxRetries) {
+      if (isClosed.get()) {
+        return;
+      }
+      if (webSocketClient == null) {
+        log.warn("webSocketClient is null, cannot send message.");
+        return;
+      }
       log.debug("Sending message: " + message);
       Boolean isOk = webSocketClient.send(message);
       if (isOk) {
@@ -361,7 +445,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
         establishWebSocketClient(
             apiKey, isSecurityCheck, workspace, customHeaders, baseWebSocketUrl);
         log.warn(
-            String.format(
+            StringUtils.format(
                 "Send request failed, the connection may closed, will reconnect and send again"));
       }
       Observable.timer(5000, TimeUnit.MILLISECONDS).blockingSingle();
@@ -369,19 +453,33 @@ public class OkHttpWebSocketClient extends WebSocketListener
     }
   }
 
-  private void sendBinaryWithRetry(
+  protected void sendBinaryWithRetry(
       String apiKey,
       boolean isSecurityCheck,
       ByteString message,
       String workspace,
       Map<String, String> customHeaders,
       String baseWebSocketUrl) {
+    // Guard: skip if already cancelled
+    if (isClosed.get()) {
+      return;
+    }
     if (!isOpen.get()) {
       establishWebSocketClient(apiKey, isSecurityCheck, workspace, customHeaders, baseWebSocketUrl);
+    }
+    if (isClosed.get()) {
+      return;
     }
     int maxRetries = 3;
     int retryCount = 0;
     while (retryCount < maxRetries) {
+      if (isClosed.get()) {
+        return;
+      }
+      if (webSocketClient == null) {
+        log.warn("webSocketClient is null, cannot send binary message.");
+        return;
+      }
       Boolean isOk = webSocketClient.send(message);
       if (isOk) {
         break;
@@ -389,7 +487,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
         establishWebSocketClient(
             apiKey, isSecurityCheck, workspace, customHeaders, baseWebSocketUrl);
         log.warn(
-            String.format(
+            StringUtils.format(
                 "Send request failed, the connection may closed, will reconnect and send again"));
       }
       Observable.timer(5000, TimeUnit.MILLISECONDS).blockingSingle();
@@ -522,91 +620,115 @@ public class OkHttpWebSocketClient extends WebSocketListener
         });
   }
 
-  private CompletableFuture<Void> sendStreamRequest(FullDuplexRequest req) {
-    CompletableFuture<Void> future =
-        CompletableFuture.runAsync(
-            () -> {
-              try {
-                isFirstMessage.set(false);
+  /**
+   * Hook method called before sending the start message. Subclasses may override to add additional
+   * logging or pre-processing.
+   */
+  protected void onBeforeSendStartMessage(JsonObject startMessage) {
+    // no-op by default
+  }
 
-                JsonObject startMessage = req.getStartTaskMessage();
-                String taskId =
-                    startMessage.get("header").getAsJsonObject().get("task_id").getAsString();
-                // send start message out.
-                sendTextWithRetry(
-                    req.getApiKey(),
-                    req.isSecurityCheck(),
-                    JsonUtils.toJson(startMessage),
-                    req.getWorkspace(),
-                    req.getHeaders(),
-                    req.getBaseWebSocketUrl());
+  /** Core streaming request logic. Extracted to allow subclasses to use different executors. */
+  protected void executeStreamRequest(FullDuplexRequest req) {
+    try {
+      isClosed.set(false); // Reset for reuse across sessions
+      isFirstMessage.set(false);
 
-                Flowable<Object> streamingData = req.getStreamingData();
-                streamingData.subscribe(
-                    data -> {
-                      try {
-                        if (data instanceof String) {
-                          JsonObject continueData = req.getContinueMessage((String) data, taskId);
-                          sendTextWithRetry(
-                              req.getApiKey(),
-                              req.isSecurityCheck(),
-                              JsonUtils.toJson(continueData),
-                              req.getWorkspace(),
-                              req.getHeaders(),
-                              req.getBaseWebSocketUrl());
-                        } else if (data instanceof byte[]) {
-                          sendBinaryWithRetry(
-                              req.getApiKey(),
-                              req.isSecurityCheck(),
-                              ByteString.of((byte[]) data),
-                              req.getWorkspace(),
-                              req.getHeaders(),
-                              req.getBaseWebSocketUrl());
-                        } else if (data instanceof ByteBuffer) {
-                          sendBinaryWithRetry(
-                              req.getApiKey(),
-                              req.isSecurityCheck(),
-                              ByteString.of((ByteBuffer) data),
-                              req.getWorkspace(),
-                              req.getHeaders(),
-                              req.getBaseWebSocketUrl());
-                        } else {
-                          JsonObject continueData = req.getContinueMessage(data, taskId);
-                          sendTextWithRetry(
-                              req.getApiKey(),
-                              req.isSecurityCheck(),
-                              JsonUtils.toJson(continueData),
-                              req.getWorkspace(),
-                              req.getHeaders(),
-                              req.getBaseWebSocketUrl());
-                        }
-                      } catch (Throwable ex) {
-                        log.error(String.format("sendStreamData exception: %s", ex.getMessage()));
-                        responseEmitter.onError(ex);
-                      }
-                    },
-                    err -> {
-                      log.error(String.format("Get stream data error!"));
-                      responseEmitter.onError(err);
-                    },
-                    new Action() {
-                      @Override
-                      public void run() throws Exception {
-                        log.debug(String.format("Stream data send completed!"));
-                        sendTextWithRetry(
-                            req.getApiKey(),
-                            req.isSecurityCheck(),
-                            JsonUtils.toJson(req.getFinishedTaskMessage(taskId)),
-                            req.getWorkspace(),
-                            req.getHeaders(),
-                            req.getBaseWebSocketUrl());
-                      }
-                    });
-              } catch (Throwable ex) {
-                log.error(String.format("sendStreamData exception: %s", ex.getMessage()));
-                responseEmitter.onError(ex);
-              }
-            });
+      JsonObject startMessage = req.getStartTaskMessage();
+      onBeforeSendStartMessage(startMessage);
+      String taskId = startMessage.get("header").getAsJsonObject().get("task_id").getAsString();
+      // send start message out.
+      sendTextWithRetry(
+          req.getApiKey(),
+          req.isSecurityCheck(),
+          JsonUtils.toJson(startMessage),
+          req.getWorkspace(),
+          req.getHeaders(),
+          req.getBaseWebSocketUrl());
+
+      Flowable<Object> streamingData = req.getStreamingData();
+      Disposable d =
+          streamingData.subscribe(
+              data -> {
+                try {
+                  if (data instanceof String) {
+                    JsonObject continueData = req.getContinueMessage((String) data, taskId);
+                    sendTextWithRetry(
+                        req.getApiKey(),
+                        req.isSecurityCheck(),
+                        JsonUtils.toJson(continueData),
+                        req.getWorkspace(),
+                        req.getHeaders(),
+                        req.getBaseWebSocketUrl());
+                  } else if (data instanceof byte[]) {
+                    sendBinaryWithRetry(
+                        req.getApiKey(),
+                        req.isSecurityCheck(),
+                        ByteString.of((byte[]) data),
+                        req.getWorkspace(),
+                        req.getHeaders(),
+                        req.getBaseWebSocketUrl());
+                  } else if (data instanceof ByteBuffer) {
+                    sendBinaryWithRetry(
+                        req.getApiKey(),
+                        req.isSecurityCheck(),
+                        ByteString.of((ByteBuffer) data),
+                        req.getWorkspace(),
+                        req.getHeaders(),
+                        req.getBaseWebSocketUrl());
+                  } else {
+                    JsonObject continueData = req.getContinueMessage(data, taskId);
+                    sendTextWithRetry(
+                        req.getApiKey(),
+                        req.isSecurityCheck(),
+                        JsonUtils.toJson(continueData),
+                        req.getWorkspace(),
+                        req.getHeaders(),
+                        req.getBaseWebSocketUrl());
+                  }
+                } catch (Throwable ex) {
+                  log.error(StringUtils.format("sendStreamData exception: %s", ex.getMessage()));
+                  if (responseEmitter != null && !responseEmitter.isCancelled()) {
+                    responseEmitter.onError(ex);
+                  }
+                }
+              },
+              err -> {
+                log.error(StringUtils.format("Get stream data error!"));
+                if (responseEmitter != null && !responseEmitter.isCancelled()) {
+                  responseEmitter.onError(err);
+                }
+              },
+              new Action() {
+                @Override
+                public void run() throws Exception {
+                  log.debug(StringUtils.format("Stream data send completed!"));
+                  sendTextWithRetry(
+                      req.getApiKey(),
+                      req.isSecurityCheck(),
+                      JsonUtils.toJson(req.getFinishedTaskMessage(taskId)),
+                      req.getWorkspace(),
+                      req.getHeaders(),
+                      req.getBaseWebSocketUrl());
+                }
+              });
+      // Publish the disposable, then check if cancel() raced ahead.
+      // If isClosed is already true, cancel() has already run and missed
+      // this disposable, so we must dispose it ourselves.
+      streamingDataDisposable = d;
+      if (isClosed.get()) {
+        d.dispose();
+      }
+    } catch (Throwable ex) {
+      log.error(StringUtils.format("sendStreamData exception: %s", ex.getMessage()));
+      if (responseEmitter != null && !responseEmitter.isCancelled()) {
+        responseEmitter.onError(ex);
+      }
+    }
+  }
+
+  protected CompletableFuture<Void> sendStreamRequest(FullDuplexRequest req) {
+    CompletableFuture<Void> future = CompletableFuture.runAsync(() -> executeStreamRequest(req));
     return future;
   }
 

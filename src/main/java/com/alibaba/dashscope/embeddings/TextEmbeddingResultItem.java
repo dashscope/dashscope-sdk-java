@@ -10,4 +10,7 @@ public class TextEmbeddingResultItem {
   private Integer textIndex;
 
   private List<Double> embedding;
+
+  @SerializedName("sparse_embedding")
+  private List<TextEmbeddingSparseEmbedding> sparseEmbedding;
 }

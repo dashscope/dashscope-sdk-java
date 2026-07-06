@@ -2,10 +2,13 @@
 package com.alibaba.dashscope.app;
 
 import static com.alibaba.dashscope.utils.ApiKeywords.HISTORY;
+import static com.alibaba.dashscope.utils.ApiKeywords.MESSAGES;
 import static com.alibaba.dashscope.utils.ApiKeywords.PROMPT;
 
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.History;
+import com.alibaba.dashscope.common.Message;
+import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.JsonUtils;
@@ -41,6 +44,9 @@ public class ApplicationParam extends HalfDuplexParamBase {
 
   /** chat history */
   private List<History> history;
+
+  /** chat message */
+  private List<Message> messages;
 
   /** Session id for storing chat history note: this will be ignored if history passed */
   private String sessionId;
@@ -95,8 +101,38 @@ public class ApplicationParam extends HalfDuplexParamBase {
   /** image list */
   private List<String> images;
 
+  /** file list */
+  private List<String> files;
+
   /** rag options */
   private RagOptions ragOptions;
+
+  /** mcp server list */
+  private List<String> mcpServers;
+
+  /** enable web search */
+  private Boolean enableWebSearch;
+
+  /** enable system time */
+  private Boolean enableSystemTime;
+
+  /** enable prem model calling */
+  private Boolean enablePremium;
+
+  /** dialog round number */
+  private Integer dialogRound;
+
+  /** model ID */
+  private String modelId;
+
+  /** stream mode for flow agent */
+  private FlowStreamMode flowStreamMode;
+
+  /** enable thinking mode */
+  private Boolean enableThinking;
+
+  /** CIP service codes for content security check */
+  private CipServiceCodes cipServiceCodes;
 
   @Override
   public String getModel() {
@@ -126,6 +162,33 @@ public class ApplicationParam extends HalfDuplexParamBase {
     }
     if (ragOptions != null) {
       params.put("rag_options", ragOptions);
+    }
+    if (mcpServers != null) {
+      params.put(AppKeywords.MCP_SERVERS, mcpServers);
+    }
+    if (enableWebSearch != null) {
+      params.put(AppKeywords.ENABLE_WEB_SEARCH, enableWebSearch);
+    }
+    if (enableSystemTime != null) {
+      params.put(AppKeywords.ENABLE_SYSTEM_TIME, enableSystemTime);
+    }
+    if (enablePremium != null) {
+      params.put(AppKeywords.ENABLE_PREMIUM, enablePremium);
+    }
+    if (dialogRound != null) {
+      params.put(AppKeywords.DIALOG_ROUND, dialogRound);
+    }
+    if (modelId != null) {
+      params.put(AppKeywords.MODEL_ID, modelId);
+    }
+    if (flowStreamMode != null) {
+      params.put(AppKeywords.FLOW_STREAM_MODE, flowStreamMode.getValue());
+    }
+    if (enableThinking != null) {
+      params.put(AppKeywords.ENABLE_THINKING, enableThinking);
+    }
+    if (cipServiceCodes != null) {
+      params.put(AppKeywords.CIP_SERVICE_CODES, cipServiceCodes);
     }
 
     params.putAll(parameters);
@@ -164,13 +227,27 @@ public class ApplicationParam extends HalfDuplexParamBase {
   public JsonObject getInput() {
     JsonObject input = new JsonObject();
 
-    input.addProperty(PROMPT, getPrompt());
     input.addProperty(AppKeywords.SESSION_ID, getSessionId());
     input.addProperty(AppKeywords.MEMORY_ID, memoryId);
 
-    if (history != null && !history.isEmpty()) {
-      JsonArray historyJson = JsonUtils.toJsonElement(history).getAsJsonArray();
+    if (getMessages() != null && !getMessages().isEmpty()) {
+      JsonArray messagesJson = new JsonArray();
+      messagesJson.addAll(JsonUtils.toJsonArray(getMessages()));
+      if (getPrompt() != null) {
+        Message msg = Message.builder().role(Role.USER.getValue()).content(getPrompt()).build();
+        messagesJson.add(JsonUtils.toJsonElement(msg));
+      }
+      input.add(MESSAGES, messagesJson);
+    } else if (getHistory() != null && !getHistory().isEmpty()) {
+      JsonArray historyJson = JsonUtils.toJsonElement(getHistory()).getAsJsonArray();
       input.add(HISTORY, historyJson);
+      if (getPrompt() != null) {
+        input.addProperty(PROMPT, getPrompt());
+      }
+    } else {
+      if (getPrompt() != null) {
+        input.addProperty(PROMPT, getPrompt());
+      }
     }
 
     if (bizParams != null) {
@@ -180,6 +257,11 @@ public class ApplicationParam extends HalfDuplexParamBase {
     if (images != null && !images.isEmpty()) {
       JsonArray imagesJson = JsonUtils.toJsonElement(images).getAsJsonArray();
       input.add(AppKeywords.IMAGES, imagesJson);
+    }
+
+    if (files != null && !files.isEmpty()) {
+      JsonArray fileListJson = JsonUtils.toJsonElement(files).getAsJsonArray();
+      input.add(AppKeywords.FILE_LIST, fileListJson);
     }
 
     return input;
@@ -197,8 +279,8 @@ public class ApplicationParam extends HalfDuplexParamBase {
 
   @Override
   public void validate() throws InputRequiredException {
-    if (getPrompt() == null) {
-      throw new InputRequiredException("prompt must not be null");
+    if (getPrompt() == null && (getMessages() == null || getMessages().isEmpty())) {
+      throw new InputRequiredException("prompt or messages must not be null");
     }
   }
 }

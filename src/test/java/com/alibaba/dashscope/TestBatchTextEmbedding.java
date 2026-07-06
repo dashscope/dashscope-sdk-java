@@ -52,7 +52,7 @@ public class TestBatchTextEmbedding {
       throws ApiException, NoApiKeyException, IOException, InterruptedException,
           InputRequiredException {
     String responseBody =
-        "{\"request_id\":\"78a74ba9-b8eb-9ca5-ab34-5a56f453cf03\",\"output\":{\"task_id\":\"2a1d8589-7148-422a-b9e7-f41682f07160\",\"task_status\":\"PENDING\"}}";
+        "{\"request_id\":\"78a74ba9-b8eb-9ca5-ab34-5a56f453cf03\",\"output\":{\"task_id\":\"2a1d8589-7148-422a-b9e7-f41682f07160\",\"task_status\":\"PENDING\"},\"status_code\":200,\"code\":\"\",\"message\":\"\"}";
     server.enqueue(
         new MockResponse()
             .setBody(responseBody)
@@ -81,7 +81,7 @@ public class TestBatchTextEmbedding {
       throws ApiException, NoApiKeyException, IOException, InterruptedException,
           InputRequiredException {
     String responseBody =
-        "{\"request_id\":\"78a74ba9-b8eb-9ca5-ab34-5a56f453cf03\",\"output\":{\"task_id\":\"2a1d8589-7148-422a-b9e7-f41682f07160\",\"task_status\":\"PENDING\"}}";
+        "{\"request_id\":\"78a74ba9-b8eb-9ca5-ab34-5a56f453cf03\",\"output\":{\"task_id\":\"2a1d8589-7148-422a-b9e7-f41682f07160\",\"task_status\":\"PENDING\"},\"status_code\":200,\"code\":\"\",\"message\":\"\"}";
     server.enqueue(
         new MockResponse()
             .setBody(responseBody)
@@ -101,7 +101,7 @@ public class TestBatchTextEmbedding {
       throws ApiException, NoApiKeyException, IOException, InterruptedException,
           InputRequiredException {
     String responseBody =
-        "{\"request_id\":\"78a74ba9-b8eb-9ca5-ab34-5a56f453cf03\",\"output\":{\"task_id\":\"2a1d8589-7148-422a-b9e7-f41682f07160\",\"task_status\":\"PENDING\"}}";
+        "{\"request_id\":\"78a74ba9-b8eb-9ca5-ab34-5a56f453cf03\",\"output\":{\"task_id\":\"2a1d8589-7148-422a-b9e7-f41682f07160\",\"task_status\":\"PENDING\"},\"status_code\":200,\"code\":\"\",\"message\":\"\"}";
     server.enqueue(
         new MockResponse()
             .setBody(responseBody)
@@ -132,7 +132,7 @@ public class TestBatchTextEmbedding {
             .status("SUCCEEDED")
             .build();
     String responseBody =
-        "{\"request_id\":\"31a80745-990d-958b-ad1c-fd51f17a6996\",\"data\":[{\"api_key_id\":\"1\",\"caller_parent_id\":\"2\",\"caller_uid\":\"3\",\"end_time\":1691561396394,\"gmt_create\":1691561394828,\"model_name\":\"pre-offline-file-embedding\",\"region\":\"cn-beijing\",\"request_id\":\"5ddcdba0-9b22-93c1-946e-1eb152b77efa\",\"start_time\":1691561395295,\"status\":\"SUCCEEDED\",\"task_id\":\"bb7c1bdb-d8de-4619-83b8-9ad3c3313def\",\"user_api_unique_key\":\"apikey:v1:embeddings:text-embedding:text-embedding:pre-offline-file-embedding\"}],\"total\":1,\"total_page\":1,\"page_no\":1,\"page_size\":10}";
+        "{\"request_id\":\"31a80745-990d-958b-ad1c-fd51f17a6996\",\"data\":[{\"api_key_id\":\"1\",\"caller_parent_id\":\"2\",\"caller_uid\":\"3\",\"end_time\":1691561396394,\"gmt_create\":1691561394828,\"model_name\":\"pre-offline-file-embedding\",\"region\":\"cn-beijing\",\"request_id\":\"5ddcdba0-9b22-93c1-946e-1eb152b77efa\",\"start_time\":1691561395295,\"status\":\"SUCCEEDED\",\"task_id\":\"bb7c1bdb-d8de-4619-83b8-9ad3c3313def\",\"user_api_unique_key\":\"apikey:v1:embeddings:text-embedding:text-embedding:pre-offline-file-embedding\"}],\"total\":1,\"total_page\":1,\"page_no\":1,\"page_size\":10,\"status_code\":200,\"code\":\"\",\"message\":\"\"}";
     server.enqueue(
         new MockResponse()
             .setBody(responseBody)

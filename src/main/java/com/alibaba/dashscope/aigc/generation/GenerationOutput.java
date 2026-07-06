@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.aigc.generation;
 
 import com.alibaba.dashscope.common.Message;
+import com.alibaba.dashscope.common.SearchInfo;
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
 import lombok.Data;
@@ -17,6 +18,8 @@ public final class GenerationOutput {
     private Integer index;
 
     private Message message;
+
+    private GenerationLogprobs logprobs;
   }
   // output text
   private String text;
@@ -25,4 +28,11 @@ public final class GenerationOutput {
   private String finishReason;
 
   private List<Choice> choices;
+
+  /** 联网搜索到的信息，在设置search_options参数后会返回该参数。 */
+  @SerializedName("search_info")
+  private SearchInfo searchInfo;
+
+  @SerializedName("model_name")
+  private String modelName;
 }

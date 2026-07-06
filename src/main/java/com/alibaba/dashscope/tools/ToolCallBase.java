@@ -29,4 +29,6 @@ public abstract class ToolCallBase {
   public abstract String getType();
 
   public abstract String getId();
+
+  public abstract Integer getIndex();
 }

@@ -1,6 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.utils;
 
+import com.alibaba.dashscope.agentstudio.message.ContentBlock;
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationMessage;
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationMessageAdapter;
 import com.alibaba.dashscope.common.Message;
@@ -25,6 +26,7 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.ToNumberPolicy;
 import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -48,7 +50,9 @@ public class JsonUtils {
           .registerTypeAdapter(AnnotationBase.class, new AnnotationDeserializer())
           .registerTypeAdapter(StepDetailBase.class, new StepDetailDeserializer())
           .registerTypeAdapter(ToolCallBase.class, new ToolCallGsonDeserializer())
+          .registerTypeAdapter(ContentBlock.class, new ContentBlock.Deserializer())
           .addSerializationExclusionStrategy(new AnnotationExclusionStrategy())
+          .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
           .disableHtmlEscaping()
           .create();
 

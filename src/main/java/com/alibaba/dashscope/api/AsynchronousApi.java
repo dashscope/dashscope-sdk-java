@@ -6,12 +6,14 @@ import static com.alibaba.dashscope.utils.ApiKeywords.TASK_STATUS;
 
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.DashScopeResult;
+import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.common.TaskStatus;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.*;
 import com.alibaba.dashscope.task.AsyncTaskListParam;
 import com.alibaba.dashscope.task.AsyncTaskParam;
+import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.JsonObject;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
@@ -75,18 +77,23 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
    * @param apiKey The api-key.
    * @param baseUrl The base http url.
    * @param customHeaders The custom headers.
+   * @param timeoutSeconds The maximum time to wait in seconds.
    * @return The task result.
    * @throws NoApiKeyException Can not find api key
-   * @throws ApiException The request failed, possibly due to a network or data error.
+   * @throws ApiException The request failed, possibly due to a network or data error, or timeout.
    */
   public DashScopeResult wait(
-      String taskId, String apiKey, String baseUrl, Map<String, String> customHeaders)
+      String taskId,
+      String apiKey,
+      String baseUrl,
+      Map<String, String> customHeaders,
+      long timeoutSeconds)
       throws ApiException, NoApiKeyException {
     AsyncTaskOption serviceOption =
         AsyncTaskOption.builder()
             .protocol(Protocol.HTTP)
             .httpMethod(HttpMethod.GET)
-            .url(String.format("/tasks/%s", taskId))
+            .url(StringUtils.format("/tasks/%s", taskId))
             .baseHttpUrl(baseUrl)
             .build();
 
@@ -97,7 +104,23 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
     int maxWaitMilliseconds = 5 * 1000;
     int incrementSteps = 3;
     int step = 0;
+    long startTime = System.currentTimeMillis();
+    long timeoutMillis = timeoutSeconds > 0 ? timeoutSeconds * 1000L : -1L;
     while (true) {
+      if (timeoutMillis > 0) {
+        long elapsed = System.currentTimeMillis() - startTime;
+        if (elapsed >= timeoutMillis) {
+          throw new ApiException(
+              Status.builder()
+                  .statusCode(HttpURLConnection.HTTP_CLIENT_TIMEOUT)
+                  .code("TaskWaitTimeout")
+                  .message(
+                      StringUtils.format(
+                          "Waiting for task [%s] timed out after %d ms (timeoutSeconds=%d).",
+                          taskId, elapsed, timeoutSeconds))
+                  .build());
+        }
+      }
       try {
         DashScopeResult taskResult = client.send(req);
         JsonObject output = (JsonObject) taskResult.getOutput();
@@ -120,8 +143,18 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
                     ? maxWaitMilliseconds
                     : waitMilliseconds * 2;
           }
+          long sleepMs = waitMilliseconds;
+          if (timeoutMillis > 0) {
+            long remaining = timeoutMillis - (System.currentTimeMillis() - startTime);
+            if (remaining <= 0) {
+              continue;
+            }
+            if (remaining < sleepMs) {
+              sleepMs = remaining;
+            }
+          }
           try {
-            Thread.sleep(waitMilliseconds);
+            Thread.sleep(sleepMs);
           } catch (InterruptedException ignored) {
           }
         }
@@ -132,6 +165,23 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
         }
       }
     }
+  }
+
+  /**
+   * Wait for async task completed and return task result.
+   *
+   * @param taskId The async task id.
+   * @param apiKey The api-key.
+   * @param baseUrl The base http url.
+   * @param customHeaders The custom headers.
+   * @return The task result.
+   * @throws NoApiKeyException Can not find api key
+   * @throws ApiException The request failed, possibly due to a network or data error.
+   */
+  public DashScopeResult wait(
+      String taskId, String apiKey, String baseUrl, Map<String, String> customHeaders)
+      throws ApiException, NoApiKeyException {
+    return wait(taskId, apiKey, baseUrl, customHeaders, -1);
   }
 
   /**
@@ -173,7 +223,7 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
             .protocol(Protocol.HTTP)
             .httpMethod(HttpMethod.GET)
             .baseHttpUrl(baseUrl)
-            .url(String.format("/tasks/%s", taskId))
+            .url(StringUtils.format("/tasks/%s", taskId))
             .build();
 
     AsyncTaskParam getParam =
@@ -209,7 +259,7 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
     AsyncTaskOption taskOption =
         AsyncTaskOption.builder()
             .baseHttpUrl(baseUrl)
-            .url(String.format("/tasks/%s/cancel", taskId))
+            .url(StringUtils.format("/tasks/%s/cancel", taskId))
             .build();
     DashScopeResult result = client.send(new HalfDuplexRequest(param, taskOption));
     return result;

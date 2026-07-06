@@ -10,6 +10,9 @@ public class ToolCallGsonDeserializer implements JsonDeserializer<Object> {
   @Override
   public Object deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
       throws JsonParseException {
+    if (json.getAsJsonObject().get("type") == null) {
+      return json.toString();
+    }
     String toolTypeName = json.getAsJsonObject().get("type").getAsString();
     Type toolType = ToolCallBase.getToolCallClass(toolTypeName);
     if (toolType == null) {

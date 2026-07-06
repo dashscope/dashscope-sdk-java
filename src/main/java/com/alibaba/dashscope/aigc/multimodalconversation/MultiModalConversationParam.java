@@ -1,9 +1,13 @@
 package com.alibaba.dashscope.aigc.multimodalconversation;
 
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
+import com.alibaba.dashscope.common.ResponseFormat;
+import com.alibaba.dashscope.common.SearchOptions;
 import com.alibaba.dashscope.exception.InputRequiredException;
+import com.alibaba.dashscope.tools.ToolBase;
 import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.utils.ParamUtils;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -21,25 +25,44 @@ import lombok.experimental.SuperBuilder;
 public class MultiModalConversationParam extends HalfDuplexServiceParam {
 
   @Singular private List<Object> messages;
-  /* The maximum length of tokens to generate.
-  The token count of your prompt plus max_length
-  cannot exceed the model's context length. Most models
-  have a context length of 2000 tokens */
-  private Integer maxLength;
-  /* A sampling strategy, called nucleus
-  sampling, where the model considers the results of the
-  tokens with top_p probability mass. So 0.1 means only
-  the tokens comprising the top 10% probability mass are
-  considered */
+
+  /**
+   * The maximum length of tokens to generate. The token count of your prompt plus max_length cannot
+   * exceed the model's context length. Most models have a context length of 2000 tokens
+   */
+  @Deprecated private Integer maxLength;
+  /**
+   * A sampling strategy, called nucleus sampling, where the model considers the results of the
+   * tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10%
+   * probability mass are considered
+   */
   private Double topP;
 
-  /* A sampling strategy, the k largest elements of the
-  given mass are  considered */
+  /** A sampling strategy, the k largest elements of the given mass are considered */
   private Integer topK;
+
+  /**
+   * Used to control the repetitiveness of the model when generating text. Increasing the
+   * repetition_penalty can reduce the repetitiveness of the model's output. A value of 1.0
+   * indicates no penalty. Default value: 1.0
+   */
+  private Float repetitionPenalty;
+
+  /**
+   * A parameter that controls the repetitiveness of words. It reduces the probability of the same
+   * word appearing repeatedly by penalizing words that have already been generated, thus increasing
+   * the diversity of the generated text. A value of 0 indicates no penalty. Default value: 0.0
+   */
+  private Float presencePenalty;
+
   /* Whether to enable web search(quark).
   Currently works best only on the first round of conversation.
   Default to False */
   @Builder.Default private Boolean enableSearch = false;
+
+  /** 联网搜索的策略。仅当enable_search为true时生效。 */
+  private SearchOptions searchOptions;
+
   /*
    * When generating, the seed of the random number is used to control the randomness of the model generation.
    * If you use the same seed, each run will generate the same results;
@@ -55,9 +78,15 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
    * distribution, allowing more low-probability words to be selected, and the generated results
    * will be more diverse; while a lower temperature value will enhance the peak value of the
    * probability distribution, making it easier for high-probability words to be selected, the
-   * generated results are more deterministic, range(0, 2).
+   * generated results are more deterministic, range(0, 2). Default value: 1.0
    */
   private Float temperature;
+
+  /**
+   * The maximum length of tokens to generate. The token count of your prompt plus max_length cannot
+   * exceed the model's context length.
+   */
+  private Integer maxTokens;
 
   /**
    * Used to control the streaming output mode. If true, the subsequent output will include the
@@ -74,7 +103,64 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
    * apple
    * </pre>
    */
-  @Builder.Default private Boolean incrementalOutput = false;
+  @Builder.Default private Boolean incrementalOutput;
+
+  /** Output format of the model including "text" and "audio". Default value: ["text"] */
+  private List<String> modalities;
+
+  /** audio output parameters */
+  private AudioParameters audio;
+
+  /** ocr options */
+  private OcrOptions ocrOptions;
+
+  /** text input */
+  private String text;
+
+  /** voice of tts */
+  private AudioParameters.Voice voice;
+
+  /** Specify which tools the model can use. */
+  private List<ToolBase> tools;
+
+  /** Specify tool choice */
+  protected Object toolChoice;
+
+  /** enable parallel tool calls */
+  protected Boolean parallelToolCalls;
+
+  /** enable vl_high_resolution_images */
+  protected Boolean vlHighResolutionImages;
+
+  /** enable vl_enable_image_hw_output */
+  protected Boolean vlEnableImageHwOutput;
+
+  /** response format */
+  private ResponseFormat responseFormat;
+
+  /** negative prompt */
+  private String negativePrompt;
+
+  /** prompt extend */
+  private Boolean promptExtend;
+
+  /** watermark */
+  private Boolean watermark;
+
+  /** picture size */
+  private String size;
+
+  /** number of images */
+  private Integer n;
+
+  /** language type for tts */
+  private String languageType;
+
+  /** enable thinking */
+  private Boolean enableThinking;
+
+  /** thinking budget */
+  private Integer thinkingBudget;
 
   @Override
   public JsonObject getHttpBody() {
@@ -92,6 +178,23 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
   public JsonObject getInput() {
     JsonObject jsonObject = new JsonObject();
     jsonObject.add(ApiKeywords.MESSAGES, JsonUtils.toJsonArray(messages));
+
+    if (text != null) {
+      jsonObject.addProperty(ApiKeywords.TEXT, text);
+    }
+
+    if (voice != null) {
+      jsonObject.addProperty(ApiKeywords.VOICE, voice.getValue());
+    }
+
+    if (parameters != null && !parameters.isEmpty() && parameters.containsKey(ApiKeywords.VOICE)) {
+      jsonObject.addProperty(ApiKeywords.VOICE, (String) parameters.get(ApiKeywords.VOICE));
+    }
+
+    if (languageType != null) {
+      jsonObject.addProperty(ApiKeywords.LANGUAGE_TYPE, languageType);
+    }
+
     return jsonObject;
   }
 
@@ -99,24 +202,122 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
   public Map<String, Object> getParameters() {
     Map<String, Object> params = new HashMap<>();
     if (maxLength != null) {
-      params.put("max_length", maxLength);
+      params.put(ApiKeywords.MAX_LENGTH, maxLength);
     }
+
+    if (maxTokens != null) {
+      params.put(ApiKeywords.MAX_TOKENS, maxTokens);
+    }
+
     if (topP != null) {
-      params.put("top_p", topP);
+      params.put(ApiKeywords.TOP_P, topP);
     }
+
     if (topK != null) {
-      params.put("top_k", topK);
+      params.put(ApiKeywords.TOP_K, topK);
     }
+
     params.put("enable_search", enableSearch);
+
+    if (searchOptions != null) {
+      params.put("search_options", searchOptions);
+    }
+
     if (seed != null) {
-      params.put("seed", seed);
+      params.put(ApiKeywords.SEED, seed);
     }
+
     if (temperature != null) {
-      params.put("temperature", temperature);
+      params.put(ApiKeywords.TEMPERATURE, temperature);
     }
-    if (incrementalOutput) {
-      params.put("incremental_output", incrementalOutput);
+
+    if (repetitionPenalty != null) {
+      params.put(ApiKeywords.REPETITION_PENALTY, repetitionPenalty);
     }
+
+    if (presencePenalty != null) {
+      params.put(ApiKeywords.PRESENCE_PENALTY, presencePenalty);
+    }
+
+    // Apply different logic based on model version
+    if (ParamUtils.isQwenVersionThreeOrHigher(getModel())) {
+      if (incrementalOutput != null) {
+        params.put(ApiKeywords.INCREMENTAL_OUTPUT, incrementalOutput);
+      }
+    } else {
+      if (Boolean.TRUE.equals(incrementalOutput)) {
+        params.put(ApiKeywords.INCREMENTAL_OUTPUT, incrementalOutput);
+      }
+    }
+
+    if (modalities != null) {
+      params.put(ApiKeywords.MODALITIES, modalities);
+    }
+
+    if (audio != null) {
+      params.put(ApiKeywords.AUDIO, audio);
+    }
+
+    if (ocrOptions != null) {
+      params.put(ApiKeywords.OCR_OPTIONS, ocrOptions);
+    }
+
+    if (tools != null && !tools.isEmpty()) {
+      params.put("tools", tools);
+    }
+
+    if (toolChoice != null) {
+      if (toolChoice instanceof String) {
+        params.put("tool_choice", (String) toolChoice);
+      } else {
+        params.put("tool_choice", JsonUtils.toJsonObject(toolChoice));
+      }
+    }
+
+    if (parallelToolCalls != null) {
+      params.put("parallel_tool_calls", parallelToolCalls);
+    }
+
+    if (vlHighResolutionImages != null) {
+      params.put("vl_high_resolution_images", vlHighResolutionImages);
+    }
+
+    if (vlEnableImageHwOutput != null) {
+      params.put("vl_enable_image_hw_output", vlEnableImageHwOutput);
+    }
+
+    if (responseFormat != null) {
+      params.put("response_format", responseFormat);
+    }
+
+    if (negativePrompt != null) {
+      params.put("negative_prompt", negativePrompt);
+    }
+
+    if (promptExtend != null) {
+      params.put("prompt_extend", promptExtend);
+    }
+
+    if (watermark != null) {
+      params.put("watermark", watermark);
+    }
+
+    if (size != null) {
+      params.put("size", size);
+    }
+
+    if (n != null) {
+      params.put("n", n);
+    }
+
+    if (enableThinking != null) {
+      params.put("enable_thinking", enableThinking);
+    }
+
+    if (thinkingBudget != null) {
+      params.put("thinking_budget", thinkingBudget);
+    }
+
     params.putAll(parameters);
     return params;
   }
@@ -128,8 +329,8 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
 
   @Override
   public void validate() throws InputRequiredException {
-    if (messages == null || messages.isEmpty()) {
-      throw new InputRequiredException("Message must not null or empty!");
+    if (messages == null || messages.isEmpty() && (text == null || text.isEmpty())) {
+      throw new InputRequiredException("Message or text must not null or empty!");
     }
   }
 }

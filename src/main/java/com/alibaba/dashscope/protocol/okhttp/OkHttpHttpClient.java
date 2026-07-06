@@ -17,12 +17,17 @@ import com.alibaba.dashscope.protocol.NetworkResponse;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.JsonObject;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -38,10 +43,13 @@ import okhttp3.ResponseBody;
 import okhttp3.sse.EventSource;
 import okhttp3.sse.EventSourceListener;
 import okhttp3.sse.EventSources;
+import org.jetbrains.annotations.NotNull;
 
 @Slf4j
 public final class OkHttpHttpClient implements HalfDuplexClient {
   private final OkHttpClient client;
+  private final Set<EventSource> activeEventSources =
+      Collections.newSetFromMap(new ConcurrentHashMap<>());
   private static final MediaType MEDIA_TYPE_APPLICATION_JSON =
       MediaType.parse("application/json; charset=utf-8");
 
@@ -109,12 +117,14 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
     }
   }
 
-  private Status parseFailed(Response response) {
+  private Status parseFailed(Response response, Throwable th) {
     if (response == null) {
+      String message = th == null ? "Get response failed!" : th.getMessage();
+
       return Status.builder()
           .statusCode(-1)
-          .code(ErrorType.NETORK_ERROR.getValue())
-          .message("Get response failed!")
+          .code(ErrorType.NETWORK_ERROR.getValue())
+          .message(message)
           .isJson(false)
           .build();
     }
@@ -216,7 +226,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
           Status.builder()
               .statusCode(400)
               .code("BadRequest")
-              .message(String.format("Unsupported method: %s", req.getHttpMethod()))
+              .message(StringUtils.format("Unsupported method: %s", req.getHttpMethod()))
               .build();
       throw new ApiException(status);
     }
@@ -232,7 +242,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       Request request = buildRequest(req.getHttpRequest());
       Response response = client.newCall(request).execute();
       if (!response.isSuccessful()) {
-        Status status = parseFailed(response);
+        Status status = parseFailed(response, null);
         throw new ApiException(status);
       }
       return new DashScopeResult()
@@ -241,6 +251,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
               NetworkResponse.builder()
                   .headers(response.headers().toMultimap())
                   .message(response.body().string())
+                  .httpStatusCode(response.code())
                   .build(),
               req.getIsFlatten(),
               req);
@@ -266,7 +277,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
               public void onResponse(Call call, Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
                   if (!response.isSuccessful()) {
-                    Status status = parseFailed(response);
+                    Status status = parseFailed(response, null);
                     callback.onError(new ApiException(status));
                   } else {
                     callback.onEvent(
@@ -276,6 +287,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                                 NetworkResponse.builder()
                                     .headers(response.headers().toMultimap())
                                     .message(response.body().string())
+                                    .httpStatusCode(response.code())
                                     .build(),
                                 req.getIsFlatten(),
                                 req));
@@ -294,7 +306,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       boolean isFlattenResult,
       Response response,
       HalfDuplexRequest req) {
-    log.debug(String.format("Event: id %s, type: %s, data: %s", id, eventType, data));
+    log.debug(StringUtils.format("Event: id %s, type: %s, data: %s", id, eventType, data));
     if (SSEEventType.ERROR.equals(eventType)) {
       Status st = parseStreamEventData(data);
       emitter.onError(new ApiException(st));
@@ -307,11 +319,12 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                       .headers(response.headers().toMultimap())
                       .message(data)
                       .event(eventType)
+                      .httpStatusCode(response.code())
                       .build(),
                   isFlattenResult,
                   req));
     } else if (SSEEventType.DONE.equals(eventType)) { // event done ignore message
-      log.debug(String.format("Ignore event id: %s, type: %s, data: %s", id, eventType, data));
+      log.debug(StringUtils.format("Ignore event id: %s, type: %s, data: %s", id, eventType, data));
     } else if (eventType != null) {
       // process assistant events.
       emitter.onNext(
@@ -322,6 +335,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                       .headers(response.headers().toMultimap())
                       .message(data)
                       .event(eventType)
+                      .httpStatusCode(response.code())
                       .build(),
                   isFlattenResult,
                   req));
@@ -337,6 +351,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                   NetworkResponse.builder()
                       .headers(response.headers().toMultimap())
                       .message(data)
+                      .httpStatusCode(response.code())
                       .build(),
                   isFlattenResult,
                   req));
@@ -350,42 +365,64 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
         Flowable.<DashScopeResult>create(
             emitter -> {
               Request request = buildRequest(req.getHttpRequest());
-              EventSources.createFactory(client)
-                  .newEventSource(
-                      request,
-                      new EventSourceListener() {
-                        private Response response;
+              AtomicBoolean terminated = new AtomicBoolean(false);
+              EventSource eventSource =
+                  EventSources.createFactory(client)
+                      .newEventSource(
+                          request,
+                          new EventSourceListener() {
+                            private Response response;
 
-                        @java.lang.Override
-                        public void onEvent(
-                            EventSource eventSource,
-                            java.lang.String id,
-                            java.lang.String type,
-                            java.lang.String data) {
-                          handleSSEEvent(
-                              emitter, id, type, data, req.getIsFlatten(), response, req);
-                        }
+                            @java.lang.Override
+                            public void onEvent(
+                                EventSource eventSource,
+                                java.lang.String id,
+                                java.lang.String type,
+                                java.lang.String data) {
+                              handleSSEEvent(
+                                  emitter, id, type, data, req.getIsFlatten(), response, req);
+                            }
 
-                        @java.lang.Override
-                        public void onOpen(EventSource eventSource, Response response) {
-                          this.response = response;
-                          super.onOpen(eventSource, response);
-                        }
+                            @java.lang.Override
+                            public void onOpen(
+                                @NotNull EventSource eventSource, @NotNull Response response) {
+                              this.response = response;
+                              super.onOpen(eventSource, response);
+                            }
 
-                        @java.lang.Override
-                        public void onFailure(
-                            EventSource eventSource, java.lang.Throwable t, Response response) {
-                          this.response = response;
-                          super.onFailure(eventSource, t, response);
-                          emitter.onError(new ApiException(parseFailed(response)));
-                        }
+                            @java.lang.Override
+                            public void onFailure(
+                                @NotNull EventSource eventSource,
+                                java.lang.Throwable t,
+                                Response response) {
+                              this.response = response;
+                              terminated.set(true);
+                              activeEventSources.remove(eventSource);
+                              super.onFailure(eventSource, t, response);
+                              emitter.onError(new ApiException(parseFailed(response, t), t));
+                            }
 
-                        @java.lang.Override
-                        public void onClosed(EventSource eventSource) {
-                          super.onClosed(eventSource);
-                          emitter.onComplete();
-                        }
-                      });
+                            @java.lang.Override
+                            public void onClosed(@NotNull EventSource eventSource) {
+                              terminated.set(true);
+                              activeEventSources.remove(eventSource);
+                              super.onClosed(eventSource);
+                              emitter.onComplete();
+                            }
+                          });
+              if (terminated.get()) {
+                activeEventSources.remove(eventSource);
+              } else {
+                activeEventSources.add(eventSource);
+                if (terminated.get()) {
+                  activeEventSources.remove(eventSource);
+                }
+              }
+              emitter.setCancellable(
+                  () -> {
+                    activeEventSources.remove(eventSource);
+                    eventSource.cancel();
+                  });
             },
             BackpressureStrategy.BUFFER);
     return flowable;
@@ -414,7 +451,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                   java.lang.String id,
                   java.lang.String type,
                   java.lang.String data) {
-                log.debug(String.format("Event: id %s, type: %s, data: %s", id, type, data));
+                log.debug(StringUtils.format("Event: id %s, type: %s, data: %s", id, type, data));
                 if (SSEEventType.ERROR.equals(type)) {
                   Status st = parseStreamEventData(data);
                   callback.onError(new ApiException(st));
@@ -427,6 +464,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                                   .headers(response.headers().toMultimap())
                                   .message(data)
                                   .event(type)
+                                  .httpStatusCode(response.code())
                                   .build(),
                               req.getIsFlatten(),
                               req));
@@ -439,6 +477,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                                   .headers(response.headers().toMultimap())
                                   .message(data)
                                   .event(type)
+                                  .httpStatusCode(response.code())
                                   .build(),
                               req.getIsFlatten(),
                               req));
@@ -450,6 +489,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                               NetworkResponse.builder()
                                   .headers(response.headers().toMultimap())
                                   .message(data)
+                                  .httpStatusCode(response.code())
                                   .build(),
                               req.getIsFlatten(),
                               req));
@@ -457,16 +497,16 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
               }
 
               @java.lang.Override
-              public void onOpen(EventSource eventSource, Response response) {
+              public void onOpen(@NotNull EventSource eventSource, @NotNull Response response) {
                 this.response = response;
                 callback.onOpen(null);
               }
 
               @java.lang.Override
               public void onFailure(
-                  EventSource eventSource, java.lang.Throwable t, Response response) {
+                  @NotNull EventSource eventSource, java.lang.Throwable t, Response response) {
                 this.response = response;
-                callback.onError(new ApiException(parseFailed(response)));
+                callback.onError(new ApiException(parseFailed(response, t), t));
               }
 
               @java.lang.Override
@@ -478,6 +518,13 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
 
   @Override
   public boolean close(int code, String reason) {
-    return false;
+    if (activeEventSources.isEmpty()) {
+      return false;
+    }
+    for (EventSource es : activeEventSources) {
+      es.cancel();
+    }
+    activeEventSources.clear();
+    return true;
   }
 }

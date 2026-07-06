@@ -24,7 +24,16 @@ public abstract class Result {
   private JsonElement usage;
 
   /** The headers of response */
-  private Map<String, String> headers;
+  private Map<String, Object> headers;
+
+  /** The HTTP status code from server response */
+  private Integer statusCode;
+
+  /** The error code from server response */
+  private String code;
+
+  /** The message from server response */
+  private String message;
 
   /**
    * Load data from the server output.

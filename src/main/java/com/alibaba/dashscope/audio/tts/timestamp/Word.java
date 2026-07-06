@@ -16,6 +16,12 @@ public class Word {
   @SerializedName("end_time")
   int endTime;
 
+  @SerializedName("begin_index")
+  int beginIndex;
+
+  @SerializedName("end_index")
+  int endIndex;
+
   /** Word. */
   String text;
 

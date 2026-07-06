@@ -11,6 +11,9 @@ import com.alibaba.dashscope.utils.EncryptionUtils;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -28,6 +31,7 @@ public class DashScopeResult extends Result {
   @SuppressWarnings("unchecked")
   protected <T extends Result> T fromResponse(Protocol protocol, NetworkResponse response)
       throws ApiException {
+    this.setHeaders(changeHeaders(response.getHeaders()));
     if (protocol == Protocol.WEBSOCKET) {
       if (response.getBinary() == null) {
         JsonObject jsonObject = JsonUtils.parse(response.getMessage());
@@ -35,6 +39,34 @@ public class DashScopeResult extends Result {
           JsonObject headers = jsonObject.get(ApiKeywords.HEADER).getAsJsonObject();
           if (headers.has(ApiKeywords.TASKID)) {
             this.setRequestId(headers.get(ApiKeywords.TASKID).getAsString());
+          }
+          // Extract status_code, code and message from header
+          if (headers.has(ApiKeywords.STATUS_CODE)) {
+            this.setStatusCode(
+                headers.get(ApiKeywords.STATUS_CODE).isJsonNull()
+                    ? null
+                    : headers.get(ApiKeywords.STATUS_CODE).getAsInt());
+          } else {
+            // Set default status code
+            this.setStatusCode(200);
+          }
+          if (headers.has(ApiKeywords.ERROR_CODE)) {
+            this.setCode(
+                headers.get(ApiKeywords.ERROR_CODE).isJsonNull()
+                    ? ""
+                    : headers.get(ApiKeywords.ERROR_CODE).getAsString());
+          } else {
+            // Set default empty string for successful responses
+            this.setCode("");
+          }
+          if (headers.has(ApiKeywords.ERROR_MESSAGE)) {
+            this.setMessage(
+                headers.get(ApiKeywords.ERROR_MESSAGE).isJsonNull()
+                    ? ""
+                    : headers.get(ApiKeywords.ERROR_MESSAGE).getAsString());
+          } else {
+            // Set default empty string for successful responses
+            this.setMessage("");
           }
         }
         if (jsonObject.has(ApiKeywords.PAYLOAD)) {
@@ -57,6 +89,10 @@ public class DashScopeResult extends Result {
       }
     } else {
       JsonObject jsonObject = JsonUtils.parse(response.getMessage());
+      // Set HTTP status code if available
+      if (response.getHttpStatusCode() != null) {
+        this.setStatusCode(response.getHttpStatusCode());
+      }
       if (jsonObject.has(ApiKeywords.OUTPUT)) {
         this.output =
             jsonObject.get(ApiKeywords.OUTPUT).isJsonNull()
@@ -71,6 +107,30 @@ public class DashScopeResult extends Result {
       }
       if (jsonObject.has(ApiKeywords.REQUEST_ID)) {
         this.setRequestId(jsonObject.get(ApiKeywords.REQUEST_ID).getAsString());
+      }
+      if (jsonObject.has(ApiKeywords.STATUS_CODE)) {
+        this.setStatusCode(
+            jsonObject.get(ApiKeywords.STATUS_CODE).isJsonNull()
+                ? null
+                : jsonObject.get(ApiKeywords.STATUS_CODE).getAsInt());
+      }
+      if (jsonObject.has(ApiKeywords.CODE)) {
+        this.setCode(
+            jsonObject.get(ApiKeywords.CODE).isJsonNull()
+                ? ""
+                : jsonObject.get(ApiKeywords.CODE).getAsString());
+      } else {
+        // Set default empty string for successful responses
+        this.setCode("");
+      }
+      if (jsonObject.has(ApiKeywords.MESSAGE)) {
+        this.setMessage(
+            jsonObject.get(ApiKeywords.MESSAGE).isJsonNull()
+                ? ""
+                : jsonObject.get(ApiKeywords.MESSAGE).getAsString());
+      } else {
+        // Set default empty string for successful responses
+        this.setMessage("");
       }
       if (jsonObject.has(ApiKeywords.DATA)) {
         if (jsonObject.has(ApiKeywords.REQUEST_ID)) {
@@ -89,6 +149,7 @@ public class DashScopeResult extends Result {
     if (!isFlattenResult) {
       return fromResponse(protocol, response);
     } else {
+      this.setHeaders(changeHeaders(response.getHeaders()));
       // flatten not support websocket.
       if (protocol == Protocol.WEBSOCKET) {
         if (response.getBinary() == null) {
@@ -112,10 +173,15 @@ public class DashScopeResult extends Result {
   public <T extends Result> T fromResponse(
       Protocol protocol, NetworkResponse response, boolean isFlattenResult, HalfDuplexRequest req)
       throws ApiException {
+    this.setHeaders(changeHeaders(response.getHeaders()));
     // check it's encrypted output
     if ((response.getHeaders().containsKey("X-DashScope-OutputEncrypted".toLowerCase())
             || req.isEncryptRequest())
         && protocol == Protocol.HTTP) {
+      // Set HTTP status code if available
+      if (response.getHttpStatusCode() != null) {
+        this.setStatusCode(response.getHttpStatusCode());
+      }
       JsonObject jsonObject = JsonUtils.parse(response.getMessage());
       String encryptedOutput =
           jsonObject.get(ApiKeywords.OUTPUT).isJsonNull()
@@ -140,6 +206,30 @@ public class DashScopeResult extends Result {
       if (jsonObject.has(ApiKeywords.REQUEST_ID)) {
         this.setRequestId(jsonObject.get(ApiKeywords.REQUEST_ID).getAsString());
       }
+      if (jsonObject.has(ApiKeywords.STATUS_CODE)) {
+        this.setStatusCode(
+            jsonObject.get(ApiKeywords.STATUS_CODE).isJsonNull()
+                ? null
+                : jsonObject.get(ApiKeywords.STATUS_CODE).getAsInt());
+      }
+      if (jsonObject.has(ApiKeywords.CODE)) {
+        this.setCode(
+            jsonObject.get(ApiKeywords.CODE).isJsonNull()
+                ? ""
+                : jsonObject.get(ApiKeywords.CODE).getAsString());
+      } else {
+        // Set default empty string for successful responses
+        this.setCode("");
+      }
+      if (jsonObject.has(ApiKeywords.MESSAGE)) {
+        this.setMessage(
+            jsonObject.get(ApiKeywords.MESSAGE).isJsonNull()
+                ? ""
+                : jsonObject.get(ApiKeywords.MESSAGE).getAsString());
+      } else {
+        // Set default empty string for successful responses
+        this.setMessage("");
+      }
       if (jsonObject.has(ApiKeywords.DATA)) {
         if (jsonObject.has(ApiKeywords.REQUEST_ID)) {
           jsonObject.remove(ApiKeywords.REQUEST_ID);
@@ -148,5 +238,22 @@ public class DashScopeResult extends Result {
       return (T) this;
     }
     return fromResponse(protocol, response, isFlattenResult);
+  }
+
+  private Map<String, Object> changeHeaders(Map<String, List<String>> headers) {
+    if (headers == null || headers.isEmpty()) {
+      return null;
+    }
+    return headers.entrySet().stream()
+        .filter(entry -> entry.getKey() != null)
+        .collect(
+            Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> {
+                  List<String> values = entry.getValue();
+                  return (values == null || values.isEmpty()) ? "" : String.join(",", values);
+                },
+                (v1, v2) -> v1,
+                java.util.LinkedHashMap::new));
   }
 }

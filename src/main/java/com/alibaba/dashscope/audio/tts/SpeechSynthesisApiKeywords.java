@@ -6,6 +6,9 @@ public class SpeechSynthesisApiKeywords {
   public static final String TEXT_TYPE = "text_type";
 
   public static final String FORMAT = "format";
+
+  public static final String BIT_RATE = "bit_rate";
+
   public static final String VOICE = "voice";
 
   public static final String SAMPLE_RATE = "sample_rate";
@@ -20,6 +23,12 @@ public class SpeechSynthesisApiKeywords {
 
   public static final String PHONEME_TIMESTAMP = "phoneme_timestamp_enabled";
 
+  public static final String HOT_FIX = "hot_fix";
+
+  public static final String PRONUNCIATION = "pronunciation";
+
+  public static final String REPLACE = "replace";
+
   public static final String SENTENCE = "sentence";
 
   public static final String WORDS = "words";
@@ -33,4 +42,12 @@ public class SpeechSynthesisApiKeywords {
   public static final String TIMESTAMP_TEXT = "text";
 
   public static final String TONE = "tone";
+
+  public static final String INSTRUCTION = "instruction";
+
+  public static final String SEED = "seed";
+
+  public static final String LANGUAGE_HINTS = "language_hints";
+
+  public static final String STYLE = "style";
 }

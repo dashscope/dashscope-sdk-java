@@ -29,6 +29,10 @@ public final class Constants {
   public static final String DASHSCOPE_HTTP_BASE_URL_ENV = "DASHSCOPE_HTTP_BASE_URL";
 
   public static final String DASHSCOPE_WEBSOCKET_BASE_URL_ENV = "DASHSCOPE_WEBSOCKET_BASE_URL";
+  public static final String DASHSCOPE_WEBSOCKET_OMNI_BASE_URL_ENV =
+      "DASHSCOPE_WEBSOCKET_OMNI_BASE_URL";
+  public static final String DASHSCOPE_WEBSOCKET_QWEN_TTS_REALTIME_BASE_URL_ENV =
+      "DASHSCOPE_WEBSOCKET_QWEN_TTS_REALTIME_BASE_URL";
   // Setting network layer logging, support: [NONE, BASIC, HEADERS, BODY]
   public static final String DASHSCOPE_NETWORK_LOGGING_LEVEL_ENV =
       "DASHSCOPE_NETWORK_LOGGING_LEVEL";
@@ -72,8 +76,10 @@ public final class Constants {
       System.getenv()
           .getOrDefault(
               DASHSCOPE_WEBSOCKET_BASE_URL_ENV,
-              String.format("wss://dashscope.aliyuncs.com/api-ws/%s/inference/", apiVersion));
+              StringUtils.format("wss://dashscope.aliyuncs.com/api-ws/%s/inference/", apiVersion));
   public static ConnectionConfigurations connectionConfigurations = null;
+
+  public static final int MAX_PROMPT_LENGTH = 500;
 
   public static void init() {}
 

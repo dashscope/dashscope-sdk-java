@@ -17,6 +17,7 @@ import com.alibaba.dashscope.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
+import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.reflect.TypeToken;
 import io.reactivex.Flowable;
 import java.lang.reflect.Type;
@@ -67,7 +68,7 @@ public final class Runs {
       throw new InvalidateParameter("Request with stream=true should use createStream");
     }
     serviceOption.setHttpMethod(HttpMethod.POST);
-    serviceOption.setPath(String.format("threads/%s/runs", threadId));
+    serviceOption.setPath(StringUtils.format("threads/%s/runs", threadId));
     DashScopeResult result = api.call(param, serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, Run.class);
   }
@@ -92,7 +93,7 @@ public final class Runs {
       throw new InvalidateParameter("Request with stream=false should use create");
     }
     serviceOption.setHttpMethod(HttpMethod.POST);
-    serviceOption.setPath(String.format("threads/%s/runs", threadId));
+    serviceOption.setPath(StringUtils.format("threads/%s/runs", threadId));
     Flowable<DashScopeResult> result = api.streamCall(param, serviceOption);
     return result.map(
         item -> FlattenResultBase.fromDashScopeResult(item, AssistantStreamMessage.class, true));
@@ -118,7 +119,7 @@ public final class Runs {
       throw new InvalidateParameter("Request with stream=false should use create");
     }
     serviceOption.setHttpMethod(HttpMethod.POST);
-    serviceOption.setPath(String.format("threads/%s/runs", threadId));
+    serviceOption.setPath(StringUtils.format("threads/%s/runs", threadId));
 
     api.streamCall(param, serviceOption, new StreamEventProcessingCallback(handler));
   }
@@ -138,7 +139,7 @@ public final class Runs {
       throw new InvalidateParameter("Request with stream=false should use create");
     }
     serviceOption.setHttpMethod(HttpMethod.POST);
-    serviceOption.setPath(String.format("threads/runs"));
+    serviceOption.setPath(StringUtils.format("threads/runs"));
     DashScopeResult result = api.call(param, serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, Run.class);
   }
@@ -158,7 +159,7 @@ public final class Runs {
       throw new InvalidateParameter("Request with stream=false should use create");
     }
     serviceOption.setHttpMethod(HttpMethod.POST);
-    serviceOption.setPath(String.format("threads/runs"));
+    serviceOption.setPath(StringUtils.format("threads/runs"));
     return api.streamCall(param, serviceOption)
         .map(
             dashscopeResult ->
@@ -181,7 +182,7 @@ public final class Runs {
       throw new InvalidateParameter("Request with stream=false should use create");
     }
     serviceOption.setHttpMethod(HttpMethod.POST);
-    serviceOption.setPath(String.format("threads/runs"));
+    serviceOption.setPath(StringUtils.format("threads/runs"));
     api.streamCall(param, serviceOption, new StreamEventProcessingCallback(handler));
   }
 
@@ -202,7 +203,7 @@ public final class Runs {
       throw new InputRequiredException("threadId and runId are required!");
     }
     serviceOption.setHttpMethod(HttpMethod.POST);
-    serviceOption.setPath(String.format("threads/%s/runs/%s", threadId, runId));
+    serviceOption.setPath(StringUtils.format("threads/%s/runs/%s", threadId, runId));
     DashScopeResult result = api.call(param, serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, Run.class);
   }
@@ -219,7 +220,7 @@ public final class Runs {
   public ListResult<Run> list(String threadId, GeneralListParam listParam)
       throws ApiException, NoApiKeyException {
     serviceOption.setHttpMethod(HttpMethod.GET);
-    serviceOption.setPath(String.format("threads/%s/runs", threadId));
+    serviceOption.setPath(StringUtils.format("threads/%s/runs", threadId));
     DashScopeResult result = api.get(listParam, serviceOption);
     Type typeOfT = new TypeToken<ListResult<Run>>() {}.getType();
     return FlattenResultBase.fromDashScopeResult(result, typeOfT);
@@ -238,7 +239,7 @@ public final class Runs {
   public ListResult<RunStep> listSteps(String threadId, String runId, GeneralListParam listParam)
       throws ApiException, NoApiKeyException {
     serviceOption.setHttpMethod(HttpMethod.GET);
-    serviceOption.setPath(String.format("threads/%s/runs/%s/steps", threadId, runId));
+    serviceOption.setPath(StringUtils.format("threads/%s/runs/%s/steps", threadId, runId));
     DashScopeResult result = api.get(listParam, serviceOption);
     Type typeOfT = new TypeToken<ListResult<RunStep>>() {}.getType();
     return FlattenResultBase.fromDashScopeResult(result, typeOfT);
@@ -275,7 +276,7 @@ public final class Runs {
   public Run retrieve(String threadId, String runId, String apiKey, Map<String, String> headers)
       throws ApiException, NoApiKeyException {
     serviceOption.setHttpMethod(HttpMethod.GET);
-    serviceOption.setPath(String.format("threads/%s/runs/%s", threadId, runId));
+    serviceOption.setPath(StringUtils.format("threads/%s/runs/%s", threadId, runId));
     DashScopeResult result =
         api.get(GeneralGetParam.builder().headers(headers).apiKey(apiKey).build(), serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, Run.class);
@@ -316,7 +317,8 @@ public final class Runs {
       String threadId, String runId, String stepId, String apiKey, Map<String, String> headers)
       throws ApiException, NoApiKeyException {
     serviceOption.setHttpMethod(HttpMethod.GET);
-    serviceOption.setPath(String.format("threads/%s/runs/%s/steps/%s", threadId, runId, stepId));
+    serviceOption.setPath(
+        StringUtils.format("threads/%s/runs/%s/steps/%s", threadId, runId, stepId));
     DashScopeResult result =
         api.get(GeneralGetParam.builder().headers(headers).apiKey(apiKey).build(), serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, RunStep.class);
@@ -340,7 +342,8 @@ public final class Runs {
     }
     param.validate();
     serviceOption.setHttpMethod(HttpMethod.POST);
-    serviceOption.setPath(String.format("threads/%s/runs/%s/submit_tool_outputs", threadId, runId));
+    serviceOption.setPath(
+        StringUtils.format("threads/%s/runs/%s/submit_tool_outputs", threadId, runId));
     DashScopeResult result = api.call(param, serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, Run.class);
   }
@@ -364,7 +367,8 @@ public final class Runs {
     }
     param.validate();
     serviceOption.setHttpMethod(HttpMethod.POST);
-    serviceOption.setPath(String.format("threads/%s/runs/%s/submit_tool_outputs", threadId, runId));
+    serviceOption.setPath(
+        StringUtils.format("threads/%s/runs/%s/submit_tool_outputs", threadId, runId));
     return api.streamCall(param, serviceOption)
         .map(
             dashscopeResult ->
@@ -391,7 +395,8 @@ public final class Runs {
     }
     param.validate();
     serviceOption.setHttpMethod(HttpMethod.POST);
-    serviceOption.setPath(String.format("threads/%s/runs/%s/submit_tool_outputs", threadId, runId));
+    serviceOption.setPath(
+        StringUtils.format("threads/%s/runs/%s/submit_tool_outputs", threadId, runId));
     api.streamCall(param, serviceOption, new StreamEventProcessingCallback(handler));
   }
 }

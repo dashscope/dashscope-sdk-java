@@ -3,7 +3,9 @@ package com.alibaba.dashscope.aigc.codegeneration;
 
 import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.JsonObject;
+import java.util.Map;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -13,12 +15,14 @@ public final class CodeGenerationResult {
   private String requestId;
   private CodeGenerationUsage usage;
   private CodeGenerationOutput output;
+  private Map<String, Object> headers;
 
   private CodeGenerationResult() {}
 
   public static CodeGenerationResult fromDashScopeResult(DashScopeResult dashScopeResult) {
     CodeGenerationResult result = new CodeGenerationResult();
     result.setRequestId(dashScopeResult.getRequestId());
+    result.setHeaders(dashScopeResult.getHeaders());
     if (dashScopeResult.getUsage() != null) {
       result.setUsage(
           JsonUtils.fromJsonObject(
@@ -29,7 +33,7 @@ public final class CodeGenerationResult {
           JsonUtils.fromJsonObject(
               (JsonObject) dashScopeResult.getOutput(), CodeGenerationOutput.class));
     } else {
-      log.error(String.format("Result no output: %s", dashScopeResult));
+      log.error(StringUtils.format("Result no output: %s", dashScopeResult));
     }
     return result;
   }

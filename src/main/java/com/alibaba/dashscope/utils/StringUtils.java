@@ -3,8 +3,18 @@ package com.alibaba.dashscope.utils;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
 public class StringUtils {
+  /**
+   * Locale-independent String.format using Locale.ROOT to guarantee ASCII output for numeric format
+   * specifiers (%d, %f, etc.), preventing non-ASCII characters in HTTP headers, URLs, and other
+   * protocol-sensitive strings.
+   */
+  public static String format(String format, Object... args) {
+    return String.format(Locale.ROOT, format, args);
+  }
+
   /*
    * * Split src with spliter, return the every part of include spliter eg: src
    * "<|im_start|>system", spliter: <|im_start|> the result is: ["<|im_start|>",

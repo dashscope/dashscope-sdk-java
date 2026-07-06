@@ -16,6 +16,7 @@ import com.alibaba.dashscope.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
+import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -48,7 +49,7 @@ public final class Messages {
   public ThreadMessage create(String threadId, MessageParamBase param)
       throws ApiException, NoApiKeyException, InputRequiredException {
     serviceOption.setHttpMethod(HttpMethod.POST);
-    serviceOption.setPath(String.format("threads/%s/messages", threadId));
+    serviceOption.setPath(StringUtils.format("threads/%s/messages", threadId));
     if (threadId == null || threadId.equals("")) {
       throw new InputRequiredException("The threadId is required.");
     }
@@ -63,7 +64,7 @@ public final class Messages {
       throw new InputRequiredException("threadId  and messageId  are required!");
     }
     serviceOption.setHttpMethod(HttpMethod.POST);
-    serviceOption.setPath(String.format("threads/%s/messages/%s", threadId, messageId));
+    serviceOption.setPath(StringUtils.format("threads/%s/messages/%s", threadId, messageId));
     DashScopeResult result = api.call(param, serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, ThreadMessage.class);
   }
@@ -71,7 +72,7 @@ public final class Messages {
   public ListResult<ThreadMessage> list(String threadId, GeneralListParam listParam)
       throws ApiException, NoApiKeyException, InputRequiredException {
     serviceOption.setHttpMethod(HttpMethod.GET);
-    serviceOption.setPath(String.format("threads/%s/messages", threadId));
+    serviceOption.setPath(StringUtils.format("threads/%s/messages", threadId));
     if (threadId == null || threadId.equals("")) {
       throw new InputRequiredException("The threadId is required.");
     }
@@ -97,7 +98,7 @@ public final class Messages {
       throw new InputRequiredException("The threadId and messageId are required.");
     }
     serviceOption.setHttpMethod(HttpMethod.GET);
-    serviceOption.setPath(String.format("threads/%s/messages/%s", threadId, messageId));
+    serviceOption.setPath(StringUtils.format("threads/%s/messages/%s", threadId, messageId));
     DashScopeResult result =
         api.get(GeneralGetParam.builder().apiKey(apiKey).build(), serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, ThreadMessage.class);
@@ -126,7 +127,7 @@ public final class Messages {
     }
     serviceOption.setHttpMethod(HttpMethod.GET);
     serviceOption.setPath(
-        String.format("threads/%s/messages/%s/files/%s", threadId, messageId, fileId));
+        StringUtils.format("threads/%s/messages/%s/files/%s", threadId, messageId, fileId));
     DashScopeResult result =
         api.get(GeneralGetParam.builder().headers(headers).apiKey(apiKey).build(), serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, MessageFile.class);
@@ -139,7 +140,7 @@ public final class Messages {
       throw new InputRequiredException("The threadId and messageId are required.");
     }
     serviceOption.setHttpMethod(HttpMethod.GET);
-    serviceOption.setPath(String.format("threads/%s/messages/%s/files", threadId, messageId));
+    serviceOption.setPath(StringUtils.format("threads/%s/messages/%s/files", threadId, messageId));
     DashScopeResult result = api.get(listParam, serviceOption);
     Type typeOfT = new TypeToken<ListResult<MessageFile>>() {}.getType();
     return FlattenResultBase.fromDashScopeResult(result, typeOfT);

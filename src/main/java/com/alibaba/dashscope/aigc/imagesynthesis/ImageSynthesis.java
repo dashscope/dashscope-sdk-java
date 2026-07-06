@@ -2,10 +2,12 @@
 package com.alibaba.dashscope.aigc.imagesynthesis;
 
 import com.alibaba.dashscope.api.AsynchronousApi;
+import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
 import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
+import com.alibaba.dashscope.exception.UploadFileException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
 import com.alibaba.dashscope.protocol.Protocol;
@@ -13,27 +15,50 @@ import com.alibaba.dashscope.protocol.StreamingMode;
 import com.alibaba.dashscope.task.AsyncTaskListParam;
 
 public final class ImageSynthesis {
+  /** default task, function & taskGroup */
+  private String task = "text2image";
+
+  private final String function = "image-synthesis";
+  private final String taskGroup = "aigc";
+
   private final AsynchronousApi<HalfDuplexServiceParam> asyncApi;
+  private final GeneralApi<HalfDuplexServiceParam> syncApi;
   private final ApiServiceOption createServiceOptions;
   private final String baseUrl;
 
   public static class Models {
     public static final String WANX_V1 = "wanx-v1";
     public static final String WANX_SKETCH_TO_IMAGE_V1 = "wanx-sketch-to-image-v1";
+
+    public static final String WANX_2_1_IMAGEEDIT = "wanx2.1-imageedit";
+  }
+
+  /** Image edit function */
+  public static class ImageEditFunction {
+    public static final String STYLIZATION_ALL = "stylization_all";
+    public static final String STYLIZATION_LOCAL = "stylization_local";
+    public static final String DESCRIPTION_EDIT = "description_edit";
+    public static final String DESCRIPTION_EDIT_WITH_MASK = "description_edit_with_mask";
+    public static final String DOODLE = "doodle";
+    public static final String REMOVE_WATERMAKER = "remove_watermaker";
+    public static final String EXPAND = "expand";
+    public static final String SUPER_RESOLUTION = "super_resolution";
+    public static final String COLORIZATION = "colorization";
   }
 
   /** Default test2image */
   public ImageSynthesis() {
     // only support http
     asyncApi = new AsynchronousApi<HalfDuplexServiceParam>();
+    syncApi = new GeneralApi<HalfDuplexServiceParam>();
     createServiceOptions =
         ApiServiceOption.builder()
             .protocol(Protocol.HTTP)
             .httpMethod(HttpMethod.POST)
             .streamingMode(StreamingMode.NONE)
-            .taskGroup("aigc")
-            .task("text2image")
-            .function("image-synthesis")
+            .taskGroup(taskGroup)
+            .task(task)
+            .function(function)
             .isAsyncTask(true)
             .build();
     this.baseUrl = null;
@@ -47,14 +72,15 @@ public final class ImageSynthesis {
   public ImageSynthesis(String task) {
     // only support http
     asyncApi = new AsynchronousApi<HalfDuplexServiceParam>();
+    syncApi = new GeneralApi<HalfDuplexServiceParam>();
     createServiceOptions =
         ApiServiceOption.builder()
             .protocol(Protocol.HTTP)
             .httpMethod(HttpMethod.POST)
             .streamingMode(StreamingMode.NONE)
-            .taskGroup("aigc")
+            .taskGroup(taskGroup)
             .task(task)
-            .function("image-synthesis")
+            .function(function)
             .isAsyncTask(true)
             .build();
     this.baseUrl = null;
@@ -69,15 +95,16 @@ public final class ImageSynthesis {
   public ImageSynthesis(String task, String baseUrl) {
     // only support http
     asyncApi = new AsynchronousApi<HalfDuplexServiceParam>();
+    syncApi = new GeneralApi<HalfDuplexServiceParam>();
     createServiceOptions =
         ApiServiceOption.builder()
             .protocol(Protocol.HTTP)
             .httpMethod(HttpMethod.POST)
             .baseHttpUrl(baseUrl)
             .streamingMode(StreamingMode.NONE)
-            .taskGroup("aigc")
+            .taskGroup(taskGroup)
             .task(task)
-            .function("image-synthesis")
+            .function(function)
             .isAsyncTask(true)
             .build();
     this.baseUrl = baseUrl;
@@ -85,8 +112,34 @@ public final class ImageSynthesis {
 
   public ImageSynthesisResult asyncCall(ImageSynthesisParam param)
       throws ApiException, NoApiKeyException {
-    return ImageSynthesisResult.fromDashScopeResult(
-        asyncApi.asyncCall(param, createServiceOptions));
+    // add local file support
+    try {
+      param.checkAndUpload();
+    } catch (UploadFileException e) {
+      throw new ApiException(e);
+    }
+    ApiServiceOption serviceOption = createServiceOptions;
+    if (param.getModel().contains("imageedit") || param.getModel().contains("wan2.5-i2i")) {
+      serviceOption.setTask("image2image");
+    }
+    return ImageSynthesisResult.fromDashScopeResult(asyncApi.asyncCall(param, serviceOption));
+  }
+
+  /**
+   * Note: This method currently now only supports wan2.2-t2i-flash and wan2.2-t2i-plus. Using other
+   * models will result in an error，More raw image models may be added for use later
+   */
+  public ImageSynthesisResult syncCall(ImageSynthesisParam param)
+      throws ApiException, NoApiKeyException {
+    // add local file support
+    try {
+      param.checkAndUpload();
+    } catch (UploadFileException e) {
+      throw new ApiException(e);
+    }
+    ApiServiceOption serviceOption = createServiceOptions;
+    serviceOption.setIsAsyncTask(false);
+    return ImageSynthesisResult.fromDashScopeResult(syncApi.call(param, serviceOption));
   }
 
   /**
@@ -99,7 +152,17 @@ public final class ImageSynthesis {
    */
   public ImageSynthesisResult call(ImageSynthesisParam param)
       throws ApiException, NoApiKeyException {
-    return ImageSynthesisResult.fromDashScopeResult(asyncApi.call(param, createServiceOptions));
+    // add local file support
+    try {
+      param.checkAndUpload();
+    } catch (UploadFileException e) {
+      throw new ApiException(e);
+    }
+    ApiServiceOption serviceOption = createServiceOptions;
+    if (param.getModel().contains("imageedit") || param.getModel().contains("wan2.5-i2i")) {
+      serviceOption.setTask("image2image");
+    }
+    return ImageSynthesisResult.fromDashScopeResult(asyncApi.call(param, serviceOption));
   }
 
   /**

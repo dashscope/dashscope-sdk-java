@@ -23,6 +23,8 @@ public class TextEmbedding {
   public final class Models {
     public static final String TEXT_EMBEDDING_V1 = "text-embedding-v1";
     public static final String TEXT_EMBEDDING_V2 = "text-embedding-v2";
+    public static final String TEXT_EMBEDDING_V3 = "text-embedding-v3";
+    public static final String TEXT_EMBEDDING_V4 = "text-embedding-v4";
   }
 
   private ApiServiceOption defaulApiServiceOption() {

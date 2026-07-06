@@ -31,6 +31,7 @@ public final class ConnectionOptions {
   private Duration connectTimeout;
   private Duration writeTimeout;
   private Duration readTimeout;
+  private boolean useDefaultClient = true;
 
   public Duration getConnectTimeout() {
     return getDuration(connectTimeout, DEFAULT_CONNECT_TIMEOUT, CONNECTION_TIMEOUT_ENV);
@@ -83,5 +84,13 @@ public final class ConnectionOptions {
       return new Proxy(Proxy.Type.HTTP, new InetSocketAddress(host, getProxyPort()));
     }
     return null;
+  }
+
+  public boolean isUseDefaultClient() {
+    return useDefaultClient;
+  }
+
+  public void setUseDefaultClient(boolean useDefaultClient) {
+    this.useDefaultClient = useDefaultClient;
   }
 }

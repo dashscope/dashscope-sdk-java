@@ -264,6 +264,128 @@ public class ApplicationCalls {
 
     }
 
+    public static void ragCallWithDocReference()
+            throws ApiException, NoApiKeyException, InputRequiredException {
+        ApplicationParam param = ApplicationParam.builder()
+                .appId(APP_ID)
+                .prompt("ChatDev的亮点是什么？")
+                .topP(0.2)
+                .build();
+
+        Application application = new Application();
+        ApplicationResult result = application.call(param);
+
+        System.out.printf("requestId: %s, text: %s, finishReason: %s\n",
+                result.getRequestId(), result.getOutput().getText(), result.getOutput().getFinishReason());
+
+        if (result.getOutput().getDocReferences() != null && !result.getOutput().getDocReferences().isEmpty()) {
+            for (ApplicationOutput.DocReference docReference : result.getOutput().getDocReferences()) {
+                System.out.println(docReference.toString());
+            }
+        }
+    }
+
+    public static void callWithMoreParameters() throws NoApiKeyException, InputRequiredException {
+        ApplicationParam param = ApplicationParam.builder()
+                .appId(APP_ID)
+//                .enablePremium(true)
+                .enableSystemTime(true)
+                .enableWebSearch(true)
+                .mcpServers(Arrays.asList("amap-maps", "Meitu"))
+                .dialogRound(2)
+                .modelId("qwen-plus")
+                .prompt("从杭州西湖到杭州东站，打车多少钱?")
+                .topP(0.8)
+                .incrementalOutput(true)
+                .build();
+
+        Application application = new Application();
+        Flowable<ApplicationResult> result = application.streamCall(param);
+        result.blockingForEach(data -> System.out.printf("result: %s%n", data));
+//        result.blockingForEach(data -> System.out.printf(data.getOutput().getText()));
+        System.out.print("\n");
+    }
+
+    public static void callWithThinking() throws NoApiKeyException, InputRequiredException {
+        ApplicationParam param = ApplicationParam.builder()
+                .appId(APP_ID)
+                .prompt("1.1和0.9哪个大?")
+                .enableThinking(true)
+                .hasThoughts(true)
+                .incrementalOutput(true)
+                .build();
+
+        Application application = new Application();
+        Flowable<ApplicationResult> result = application.streamCall(param);
+        result.blockingForEach(data -> System.out.printf("result: %s%n", data));
+        System.out.print("\n");
+    }
+
+    /**
+     * Call with file list sample
+     *
+     * @throws NoApiKeyException      Can not find api key
+     * @throws ApiException           The request failed, possibly
+     *                                due to a network or data error.
+     * @throws InputRequiredException Missing inputs.
+     */
+    public static void callWithFileList()
+            throws ApiException, NoApiKeyException, InputRequiredException {
+        ApplicationParam param = ApplicationParam.builder()
+                .appId(APP_ID)
+                .prompt("总结文件内容")
+                .files(Collections.singletonList(
+                    "https://dashscope.oss-cn-beijing.aliyuncs.com/audios/welcome.mp3"))
+                .build();
+
+        Application application = new Application();
+        ApplicationResult result = application.call(param);
+
+        System.out.println(JsonUtils.toJson(result));
+    }
+
+    /**
+     * Stream call with CIP (Content Integrity Protection) parameters
+     * sample
+     *
+     * @throws NoApiKeyException      Can not find api key
+     * @throws InputRequiredException Missing inputs.
+     */
+    public static void streamCallWithCIP()
+            throws NoApiKeyException, InputRequiredException {
+        // Build CIP service codes for content security check
+        CipServiceCodes.Text textCheck =
+            CipServiceCodes.Text.builder()
+                .input("query_security_check")
+                .output("response_security_check")
+                .build();
+
+        CipServiceCodes.Image imageCheck =
+            CipServiceCodes.Image.builder()
+                .input("img_query_security_check")
+                .build();
+
+        CipServiceCodes cipServiceCodes = CipServiceCodes.builder()
+            .text(textCheck)
+            .image(imageCheck)
+            .build();
+
+        ApplicationParam param = ApplicationParam.builder()
+                .appId(APP_ID)
+                .prompt("图片里是什么内容")
+                .images(Collections.singletonList("https://yutai007.oss-cn-beijing.aliyuncs.com/documentsForTest/image/%E7%BE%BD%E7%BB%92%E6%9C%8D-wgggc.jpg"))
+                .cipServiceCodes(cipServiceCodes)
+//                .incrementalOutput(true)
+                .build();
+
+        Application application = new Application();
+//        Flowable<ApplicationResult> result = application.streamCall(param);
+//        result.blockingForEach(data ->
+//            System.out.println(JsonUtils.toJson(data)));
+        ApplicationResult result = application.call(param);
+        System.out.println(JsonUtils.toJson(result));
+    }
+
 
     public static void main(String[] args) {
         try {
@@ -274,7 +396,13 @@ public class ApplicationCalls {
 //        streamCall();
 //        callWithWorkspace();
 //            callWithMemory();
-            callWithAssistantServing();
+//            callWithAssistantServing();
+//            ragCallWithDocReference();
+//            callWithMoreParameters();
+//            callWithThinking();
+//            callWithFileList();
+//            streamCallWithFileList();
+            streamCallWithCIP();
         } catch (ApiException | NoApiKeyException | InputRequiredException e) {
             System.out.printf("Exception: %s", e.getMessage());
         }

@@ -3,6 +3,7 @@ package com.alibaba.dashscope.app;
 
 import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
@@ -32,9 +33,24 @@ public class ApplicationResult {
   @SerializedName("usage")
   private ApplicationUsage usage;
 
+  /** HTTP status code from server response */
+  @SerializedName("status_code")
+  private Integer statusCode;
+
+  /** Error code from server response */
+  @SerializedName("code")
+  private String code;
+
+  /** Message from server response */
+  @SerializedName("message")
+  private String message;
+
   public static ApplicationResult fromDashScopeResult(DashScopeResult dashScopeResult) {
     ApplicationResult result = new ApplicationResult();
     result.setRequestId(dashScopeResult.getRequestId());
+    result.setStatusCode(dashScopeResult.getStatusCode());
+    result.setCode(dashScopeResult.getCode());
+    result.setMessage(dashScopeResult.getMessage());
     if (dashScopeResult.getUsage() != null) {
       result.setUsage(
           JsonUtils.fromJsonObject(
@@ -45,7 +61,7 @@ public class ApplicationResult {
           JsonUtils.fromJsonObject(
               (JsonObject) dashScopeResult.getOutput(), ApplicationOutput.class));
     } else {
-      log.error(String.format("Result no output: %s", dashScopeResult));
+      log.error(StringUtils.format("Result no output: %s", dashScopeResult));
     }
 
     return result;

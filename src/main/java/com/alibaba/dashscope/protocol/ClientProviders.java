@@ -5,6 +5,7 @@ package com.alibaba.dashscope.protocol;
 import com.alibaba.dashscope.protocol.okhttp.OkHttpClientFactory;
 import com.alibaba.dashscope.protocol.okhttp.OkHttpHttpClient;
 import com.alibaba.dashscope.protocol.okhttp.OkHttpWebSocketClient;
+import com.alibaba.dashscope.protocol.okhttp.OkHttpWebSocketClientForAudio;
 
 public class ClientProviders {
   public static HalfDuplexClient getHalfDuplexClient(String protocol) {
@@ -12,7 +13,7 @@ public class ClientProviders {
   }
 
   public static FullDuplexClient getFullDuplexClient() {
-    return getFullDuplexClient(null);
+    return getFullDuplexClient(null, false);
   }
 
   /**
@@ -31,13 +32,13 @@ public class ClientProviders {
       if (protocol.toLowerCase().startsWith("http")) {
         return new OkHttpHttpClient(OkHttpClientFactory.getOkHttpClient());
       } else {
-        return new OkHttpWebSocketClient(OkHttpClientFactory.getOkHttpClient());
+        return new OkHttpWebSocketClient(OkHttpClientFactory.getOkHttpClient(), false);
       }
     } else {
       if (protocol.toLowerCase().startsWith("http")) {
         return new OkHttpHttpClient(OkHttpClientFactory.getNewOkHttpClient(options));
       } else {
-        return new OkHttpWebSocketClient(OkHttpClientFactory.getNewOkHttpClient(options));
+        return new OkHttpWebSocketClient(OkHttpClientFactory.getNewOkHttpClient(options), false);
       }
     }
   }
@@ -48,12 +49,20 @@ public class ClientProviders {
    * @param connectionOptions The client options.
    * @return The full duplex client.
    */
-  public static FullDuplexClient getFullDuplexClient(ConnectionOptions connectionOptions) {
+  public static FullDuplexClient getFullDuplexClient(
+      ConnectionOptions connectionOptions, boolean passTaskStarted) {
     if (connectionOptions == null) {
       // create default config client, create default http client.
-      return new OkHttpWebSocketClient(OkHttpClientFactory.getOkHttpClient());
+      return new OkHttpWebSocketClient(OkHttpClientFactory.getOkHttpClient(), passTaskStarted);
     } else {
-      return new OkHttpWebSocketClient(OkHttpClientFactory.getNewOkHttpClient(connectionOptions));
+      if (connectionOptions.isUseDefaultClient()) {
+        return new OkHttpWebSocketClient(
+            OkHttpClientFactory.getNewOkHttpClient(connectionOptions), passTaskStarted);
+      } else {
+        // create custom client for audio models
+        return new OkHttpWebSocketClientForAudio(
+            OkHttpClientFactory.getNewOkHttpClient(connectionOptions), passTaskStarted);
+      }
     }
   }
 }

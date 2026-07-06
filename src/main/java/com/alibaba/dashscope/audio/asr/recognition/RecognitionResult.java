@@ -24,7 +24,14 @@ public class RecognitionResult {
 
   private boolean isCompleteResult = false;
 
+  public boolean isSentenceBegin() {
+    return sentence.isSentenceBegin();
+  }
+
   public boolean isSentenceEnd() {
+    if (sentence.isSentenceEnd()) {
+      return true;
+    }
     return sentence.getEndTime() != null;
   }
 
@@ -41,6 +48,12 @@ public class RecognitionResult {
           JsonUtils.fromJsonObject(
               dashScopeResult.getUsage().getAsJsonObject(), RecognitionUsage.class));
     }
+    if (dashScopeResult.getOutput() == null
+        || !(dashScopeResult.getOutput() instanceof JsonObject)) {
+      result.isCompleteResult = true;
+      result.sentence = new Sentence();
+      return result;
+    }
     JsonObject jsonDashScopeResult = (JsonObject) dashScopeResult.getOutput();
     if (jsonDashScopeResult.has(RecognitionApiKeywords.SENTENCE)) {
       JsonObject timestampObject =
@@ -49,6 +62,7 @@ public class RecognitionResult {
         result.sentence = Sentence.from(timestampObject);
       } else {
         result.isCompleteResult = true;
+        result.sentence = new Sentence();
       }
     } else {
       result.isCompleteResult = true;

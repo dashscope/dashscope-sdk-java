@@ -42,6 +42,12 @@ public class RunParam extends FlattenHalfDuplexParamBase {
 
   protected Float temperature;
 
+  protected Float topP;
+
+  protected Integer topK;
+
+  protected Integer maxTokens;
+
   @Default protected Boolean stream = false;
 
   @SerializedName("max_prompt_tokens")
@@ -97,6 +103,15 @@ public class RunParam extends FlattenHalfDuplexParamBase {
     }
     if (temperature != null) {
       requestObject.addProperty("temperature", temperature);
+    }
+    if (topP != null) {
+      requestObject.addProperty("top_p", topP);
+    }
+    if (topK != null) {
+      requestObject.addProperty("top_k", topK);
+    }
+    if (maxTokens != null) {
+      requestObject.addProperty("max_tokens", maxTokens);
     }
     if (maxPromptTokens != null) {
       requestObject.addProperty("max_prompt_tokens", maxPromptTokens);

@@ -16,14 +16,19 @@ import com.alibaba.dashscope.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
+import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class Assistants {
   private final GeneralApi<HalfDuplexParamBase> api;
   private final GeneralServiceOption serviceOption;
+
+  // Connection pre-warming mechanism
+  private static final AtomicBoolean connectionPreWarmed = new AtomicBoolean(false);
 
   private GeneralServiceOption defaultServiceOption() {
     return GeneralServiceOption.builder()
@@ -37,17 +42,21 @@ public final class Assistants {
   public Assistants() {
     serviceOption = defaultServiceOption();
     api = new GeneralApi<>();
+    // Pre-warm connection on first instance creation
+    preWarmConnection();
   }
 
   public Assistants(String baseUrl, ConnectionOptions connectionOptions) {
     serviceOption = defaultServiceOption();
     serviceOption.setBaseHttpUrl(baseUrl);
     api = new GeneralApi<>(connectionOptions);
+    // Pre-warm connection on first instance creation
+    preWarmConnection();
   }
 
   public Assistant create(AssistantParam param) throws ApiException, NoApiKeyException {
     serviceOption.setHttpMethod(HttpMethod.POST);
-    serviceOption.setPath(String.format("assistants"));
+    serviceOption.setPath(StringUtils.format("assistants"));
     DashScopeResult result = api.call(param, serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, Assistant.class);
   }
@@ -58,7 +67,7 @@ public final class Assistants {
       throw new InputRequiredException("assistantId is required!");
     }
     serviceOption.setHttpMethod(HttpMethod.POST);
-    serviceOption.setPath(String.format("assistants/%s", assistantId));
+    serviceOption.setPath(StringUtils.format("assistants/%s", assistantId));
     DashScopeResult result = api.call(param, serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, Assistant.class);
   }
@@ -88,7 +97,7 @@ public final class Assistants {
       throw new InputRequiredException("assistantId is required!");
     }
     serviceOption.setHttpMethod(HttpMethod.GET);
-    serviceOption.setPath(String.format("assistants/%s", assistantId));
+    serviceOption.setPath(StringUtils.format("assistants/%s", assistantId));
     DashScopeResult result =
         api.get(GeneralGetParam.builder().headers(headers).apiKey(apiKey).build(), serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, Assistant.class);
@@ -110,7 +119,7 @@ public final class Assistants {
       throw new InputRequiredException("assistantId is required!");
     }
     serviceOption.setHttpMethod(HttpMethod.DELETE);
-    serviceOption.setPath(String.format("assistants/%s", assistantId));
+    serviceOption.setPath(StringUtils.format("assistants/%s", assistantId));
     DashScopeResult result =
         api.delete(
             GeneralGetParam.builder().headers(headers).apiKey(apiKey).build(), serviceOption);
@@ -123,7 +132,7 @@ public final class Assistants {
       throw new InputRequiredException("assistantId is required!");
     }
     serviceOption.setHttpMethod(HttpMethod.POST);
-    serviceOption.setPath(String.format("assistants/%s/files", assistantId));
+    serviceOption.setPath(StringUtils.format("assistants/%s/files", assistantId));
     DashScopeResult result = api.call(param, serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, AssistantFile.class);
   }
@@ -134,7 +143,7 @@ public final class Assistants {
       throw new InputRequiredException("assistantId is required!");
     }
     serviceOption.setHttpMethod(HttpMethod.GET);
-    serviceOption.setPath(String.format("assistants/%s/files", assistantId));
+    serviceOption.setPath(StringUtils.format("assistants/%s/files", assistantId));
     DashScopeResult result = api.get(listParam, serviceOption);
     Type typeOfT = new TypeToken<ListResult<AssistantFile>>() {}.getType();
     return FlattenResultBase.fromDashScopeResult(result, typeOfT);
@@ -157,9 +166,37 @@ public final class Assistants {
       throw new InputRequiredException("assistantId and fileId are required!");
     }
     serviceOption.setHttpMethod(HttpMethod.GET);
-    serviceOption.setPath(String.format("assistants/%s/files/%s", assistantId, fileId));
+    serviceOption.setPath(StringUtils.format("assistants/%s/files/%s", assistantId, fileId));
     DashScopeResult result =
         api.get(GeneralGetParam.builder().headers(headers).apiKey(apiKey).build(), serviceOption);
     return FlattenResultBase.fromDashScopeResult(result, AssistantFile.class);
+  }
+
+  /**
+   * Pre-warm the HTTP connection to reduce latency for first API call. Uses a lightweight list
+   * request to establish connection pool.
+   */
+  private void preWarmConnection() {
+    if (connectionPreWarmed.compareAndSet(false, true)) {
+      try {
+        // Lightweight GET request to establish connection
+        GeneralServiceOption warmupOption =
+            GeneralServiceOption.builder()
+                .protocol(Protocol.HTTP)
+                .httpMethod(HttpMethod.GET)
+                .streamingMode(StreamingMode.OUT)
+                .path("assistants")
+                .build();
+
+        if (serviceOption.getBaseHttpUrl() != null) {
+          warmupOption.setBaseHttpUrl(serviceOption.getBaseHttpUrl());
+        }
+
+        api.get(GeneralListParam.builder().limit(1L).build(), warmupOption);
+      } catch (Exception e) {
+        // Reset flag to allow retry if pre-warming failed
+        connectionPreWarmed.set(false);
+      }
+    }
   }
 }

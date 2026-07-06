@@ -9,6 +9,8 @@ public class ApiKeywords {
 
   public static final String CODE = "code";
 
+  public static final String STATUS_CODE = "status_code";
+
   public static final String DATA = "data";
 
   public static final String MESSAGE = "message";
@@ -27,6 +29,8 @@ public class ApiKeywords {
 
   public static final String TEXT = "text";
 
+  public static final String VOICE = "voice";
+
   public static final String TEXTS = "texts";
 
   public static final String MODEL = "model";
@@ -39,12 +43,15 @@ public class ApiKeywords {
 
   public static final String PROMPT = "prompt";
   public static final String NEGATIVE_PROMPT = "negative_prompt";
+  public static final String TEMPLATE = "template";
 
   public static final String SKETCH_IMAGE_URL = "sketch_image_url";
   public static final String SKETCH_WEIGHT = "sketch_weight";
   public static final String REALISTICNESS = "realisticness";
 
   public static final String TOP_P = "top_p";
+
+  public static final String TOP_K = "top_k";
 
   public static final String MAX_LENGTH = "max_length";
 
@@ -61,6 +68,10 @@ public class ApiKeywords {
   public static final String SCALE = "scale";
 
   public static final String SEED = "seed";
+
+  public static final String TEMPERATURE = "temperature";
+
+  public static final String INCREMENTAL_OUTPUT = "incremental_output";
 
   public static final String STYLE = "style";
 
@@ -88,6 +99,8 @@ public class ApiKeywords {
 
   public static final String ERROR_NAME = "error_name";
 
+  public static final String ERROR_CODE = "error_code";
+
   public static final String ERROR_MESSAGE = "error_message";
 
   public static final String OUTPUT = "output";
@@ -97,8 +110,16 @@ public class ApiKeywords {
   public static final String ROLE = "role";
 
   public static final String CONTENT = "content";
+
+  public static final String REASONING_CONTENT = "reasoning_content";
+
   public static final String CONTENT_TYPE_TEXT = "text";
+
   public static final String CONTENT_TYPE_IMAGE_URL = "image_url";
+
+  public static final String CONTENT_TYPE_DOC_URL = "doc_url";
+
+  public static final String CONTENT_TYPE_CACHE_CONTROL = "cache_control";
 
   public static final String RESOURCE_ID = "resource_id";
 
@@ -116,7 +137,11 @@ public class ApiKeywords {
   public static final String FILE_PATH_SCHEMA = "file://";
 
   public static final String STOP = "stop";
+
   public static final String REPETITION_PENALTY = "repetition_penalty";
+
+  public static final String PRESENCE_PENALTY = "presence_penalty";
+
   public static final String MAX_TOKENS = "max_tokens";
 
   public static final String TOOL_CALLS = "tool_calls";
@@ -124,4 +149,66 @@ public class ApiKeywords {
   public static final String TOOL_CALL_ID = "tool_call_id";
 
   public static final String NAME = "name";
+
+  public static final String DURATION = "duration";
+
+  public static final String EXTEND_PROMPT = "extend_prompt";
+
+  public static final String IMG_URL = "img_url";
+
+  public static final String AUDIO_URL = "audio_url";
+
+  public static final String REF_IMG = "ref_img";
+
+  public static final String MODALITIES = "modalities";
+
+  public static final String AUDIO = "audio";
+
+  public static final String OCR_OPTIONS = "ocr_options";
+
+  public static final String PARTIAL = "partial";
+
+  public static final String BASE_IMAGE_URL = "base_image_url";
+
+  public static final String MASK_IMAGE_URL = "mask_image_url";
+
+  public static final String FIRST_FRAME_URL = "first_frame_url";
+
+  public static final String LAST_FRAME_URL = "last_frame_url";
+
+  public static final String HEAD_FRAME = "head_frame";
+
+  public static final String TAIL_FRAME = "tail_frame";
+
+  public static final String RESOLUTION = "resolution";
+
+  public static final String WITH_AUDIO = "with_audio";
+
+  public static final String PROMPT_EXTEND = "prompt_extend";
+
+  public static final String WATERMARK = "watermark";
+
+  public static final String ANNOTATIONS = "annotations";
+
+  public static final String LANGUAGE_TYPE = "language_type";
+
+  public static final String IMAGES = "images";
+
+  public static final String REFERENCE_VIDEO_URLS = "reference_video_urls";
+
+  public static final String REFERENCE_URLS = "reference_urls";
+
+  public static final String MEDIA_URLS = "media";
+
+  public static final String REFERENCE_URL = "reference_url";
+
+  public static final String RATIO = "ratio";
+
+  public static final String AUDIO_SETTING = "audio_setting";
+
+  public static final String REFERENCE_VIDEO_DESCRIPTION = "reference_video_description";
+
+  public static final String SHOT_TYPE = "shot_type";
+
+  public static final String ENABLE_OVERLAYS = "enable_overlays";
 }

@@ -31,6 +31,10 @@ public class ApplicationOutput {
   @SerializedName("session_id")
   private String sessionId;
 
+  /** Reject status indicates whether the response was rejected */
+  @SerializedName("reject_status")
+  private Boolean rejectStatus;
+
   /** Thoughts of model planning for app */
   @SerializedName("thoughts")
   private List<Thought> thoughts;
@@ -38,6 +42,10 @@ public class ApplicationOutput {
   /** Doc references for retrieval result */
   @SerializedName("doc_references")
   private List<DocReference> docReferences;
+
+  /** workflow output message */
+  @SerializedName("workflow_message")
+  private WorkflowMessage workflowMessage;
 
   @SuperBuilder
   @Data
@@ -111,5 +119,9 @@ public class ApplicationOutput {
     /** List of referenced image URLs */
     @SerializedName("images")
     private List<String> images;
+
+    /** List of referenced page number */
+    @SerializedName("page_number")
+    private List<Integer> pageNumber;
   }
 }

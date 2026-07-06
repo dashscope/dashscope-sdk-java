@@ -24,4 +24,7 @@ public class NetworkResponse {
 
   /** The binary type response. */
   private ByteBuffer binary;
+
+  /** The HTTP status code */
+  private Integer httpStatusCode;
 }

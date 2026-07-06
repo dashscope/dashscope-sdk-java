@@ -3,9 +3,11 @@ package com.alibaba.dashscope.audio.ttsv2.enrollment;
 import com.alibaba.dashscope.base.HalfDuplexServiceParam;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.utils.ApiKeywords;
+import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
 import java.security.InvalidParameterException;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
@@ -19,9 +21,12 @@ public class VoiceEnrollmentParam extends HalfDuplexServiceParam {
   private VoiceEnrollmentOperationType operationType;
   private String url;
   private String voiceId;
+  private List<String> languageHints = null;
 
   private int pageIndex;
   private int pageSize;
+  /** Maximum length of prompt audio in seconds. */
+  private float maxPromptAudioLength = 10.0f;
 
   protected VoiceEnrollmentParam(HalfDuplexServiceParamBuilder<?, ?> b) {
     super(b);
@@ -44,6 +49,21 @@ public class VoiceEnrollmentParam extends HalfDuplexServiceParam {
         input.addProperty("target_model", targetModel);
         input.addProperty("prefix", prefix);
         input.addProperty("url", url);
+        if (languageHints != null) {
+          input.add("language_hints", JsonUtils.toJsonArray(languageHints));
+        }
+        if (maxPromptAudioLength > 0) {
+          input.addProperty("max_prompt_audio_length", maxPromptAudioLength);
+        }
+        // add parameters into input
+        if (parameters != null) {
+          for (String key : parameters.keySet()) {
+            Object value = parameters.get(key);
+            if (key != null && value != null) {
+              input.add(key, JsonUtils.toJsonElement(value));
+            }
+          }
+        }
         break;
       case LIST:
         input.addProperty(ApiKeywords.ACTION, operationType.getValue());

@@ -10,10 +10,14 @@ import static com.alibaba.dashscope.utils.ApiKeywords.REPETITION_PENALTY;
 import static com.alibaba.dashscope.utils.ApiKeywords.STOP;
 
 import com.alibaba.dashscope.common.Message;
+import com.alibaba.dashscope.common.ResponseFormat;
 import com.alibaba.dashscope.common.Role;
+import com.alibaba.dashscope.common.SearchOptions;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.tools.ToolBase;
+import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.utils.ParamUtils;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
@@ -92,35 +96,52 @@ public class GenerationParam extends GenerationParamBase {
    * apple
    * </pre>
    */
-  @Builder.Default private Boolean incrementalOutput = false;
+  @Builder.Default private Boolean incrementalOutput;
 
-  /*
-   * Maximum tokens to generate.
-   */
+  /** Maximum tokens to generate. */
   private Integer maxTokens;
-  /*
-   * repetition penalty
-   */
+  /** repetition penalty */
   private Float repetitionPenalty;
 
-  /*
-   * stopString and token are mutually exclusive.
-   */
+  /** stopString and token are mutually exclusive. */
   @Singular("stopString")
   private List<String> stopStrings;
 
   @Singular private List<List<Integer>> stopTokens;
 
-  /*
-   * Specify which tools the model can use.
-   */
+  /** Specify which tools the model can use. */
   private List<ToolBase> tools;
 
-  /*
-   * Specify tool choice
-   */
+  /** Specify tool choice */
   @SerializedName("tool_choice")
   protected Object toolChoice;
+
+  /** enable parallel tool calls */
+  protected Boolean parallelToolCalls;
+
+  /** 联网搜索的策略。仅当enable_search为true时生效。 */
+  private SearchOptions searchOptions;
+
+  /** 返回内容的格式。 */
+  private ResponseFormat responseFormat;
+
+  /** 是否开启推理 */
+  private Boolean enableThinking;
+
+  /** 推理生成的最大tokens数 */
+  private Integer thinkingBudget;
+
+  /** 返回每个输出token的对数概率 */
+  private Boolean logprobs;
+
+  /** 指定在每个token位置返回的最可能token的数量 */
+  private Integer topLogprobs;
+
+  /** 生成响应的个数 */
+  private Integer n;
+
+  /** 翻译参数 */
+  private TranslationOptions translationOptions;
 
   @Override
   public JsonObject getInput() {
@@ -172,9 +193,17 @@ public class GenerationParam extends GenerationParamBase {
     if (temperature != null) {
       params.put("temperature", temperature);
     }
-    if (incrementalOutput) {
-      params.put("incremental_output", incrementalOutput);
+    // Apply different logic based on model version
+    if (ParamUtils.isQwenVersionThreeOrHigher(getModel())) {
+      if (incrementalOutput != null) {
+        params.put("incremental_output", incrementalOutput);
+      }
+    } else {
+      if (Boolean.TRUE.equals(incrementalOutput)) {
+        params.put(ApiKeywords.INCREMENTAL_OUTPUT, incrementalOutput);
+      }
     }
+
     if (repetitionPenalty != null) {
       params.put(REPETITION_PENALTY, repetitionPenalty);
     }
@@ -196,6 +225,43 @@ public class GenerationParam extends GenerationParamBase {
         params.put("tool_choice", JsonUtils.toJsonObject(toolChoice));
       }
     }
+
+    if (parallelToolCalls != null) {
+      params.put("parallel_tool_calls", parallelToolCalls);
+    }
+
+    if (searchOptions != null) {
+      params.put("search_options", searchOptions);
+    }
+
+    if (responseFormat != null) {
+      params.put("response_format", responseFormat);
+    }
+
+    if (enableThinking != null) {
+      params.put("enable_thinking", enableThinking);
+    }
+
+    if (thinkingBudget != null) {
+      params.put("thinking_budget", thinkingBudget);
+    }
+
+    if (logprobs != null) {
+      params.put("logprobs", logprobs);
+    }
+
+    if (topLogprobs != null) {
+      params.put("top_logprobs", topLogprobs);
+    }
+
+    if (n != null) {
+      params.put("n", n);
+    }
+
+    if (translationOptions != null) {
+      params.put("translation_options", translationOptions);
+    }
+
     params.putAll(parameters);
     return params;
   }
