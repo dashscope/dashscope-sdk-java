@@ -336,6 +336,12 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
       params.put("thinking_budget", thinkingBudget);
     }
 
+    if (stopStrings != null
+        && !stopStrings.isEmpty()
+        && stopTokens != null
+        && !stopTokens.isEmpty()) {
+      throw new IllegalArgumentException("Only one of stopStrings or stopTokens can be specified.");
+    }
     if (stopStrings != null && !stopStrings.isEmpty()) {
       params.put(ApiKeywords.STOP, stopStrings);
     } else if (stopTokens != null && !stopTokens.isEmpty()) {
