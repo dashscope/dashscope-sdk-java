@@ -36,6 +36,18 @@ public class SketchImageSynthesisParam extends HalfDuplexServiceParam {
   @lombok.NonNull
   private String sketchImageUrl;
 
+  @SerializedName("style")
+  @Builder.Default
+  private String style = null;
+
+  @SerializedName("sketch_extraction")
+  @Builder.Default
+  private Boolean sketchExtraction = null;
+
+  @SerializedName("sketch_color")
+  @Builder.Default
+  private String sketchColor = null;
+
   @lombok.NonNull private String prompt;
 
   @Override
@@ -60,6 +72,15 @@ public class SketchImageSynthesisParam extends HalfDuplexServiceParam {
     }
     if (realisticness != null) {
       params.put(REALISTICNESS, realisticness);
+    }
+    if (style != null) {
+      params.put("style", style);
+    }
+    if (sketchExtraction != null) {
+      params.put("sketch_extraction", sketchExtraction);
+    }
+    if (sketchColor != null) {
+      params.put("sketch_color", sketchColor);
     }
     params.putAll(super.getParameters());
     return params;

@@ -83,6 +83,15 @@ public class ImageGenerationParam extends HalfDuplexServiceParam {
    */
   @Builder.Default private List<List<List<Integer>>> bboxList = null;
 
+  /**
+   * Thinking mode for image generation. Controls the level of reasoning and planning in the
+   * generation process.
+   */
+  private String thinkingMode;
+
+  /** Color palette configuration for controlling color distribution in generated images. */
+  private List<ColorPalette> colorPalette;
+
   @Override
   public JsonObject getHttpBody() {
     JsonObject requestObject = new JsonObject();
@@ -165,6 +174,14 @@ public class ImageGenerationParam extends HalfDuplexServiceParam {
 
     if (bboxList != null) {
       params.put("bbox_list", bboxList);
+    }
+
+    if (thinkingMode != null) {
+      params.put("thinking_mode", thinkingMode);
+    }
+
+    if (colorPalette != null) {
+      params.put("color_palette", colorPalette);
     }
 
     params.putAll(parameters);

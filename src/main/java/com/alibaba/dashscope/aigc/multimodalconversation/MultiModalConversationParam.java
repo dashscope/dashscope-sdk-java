@@ -103,7 +103,7 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
    * apple
    * </pre>
    */
-  @Builder.Default private Boolean incrementalOutput;
+  @Builder.Default private Boolean incrementalOutput = false;
 
   /** Output format of the model including "text" and "audio". Default value: ["text"] */
   private List<String> modalities;
@@ -161,6 +161,24 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
 
   /** thinking budget */
   private Integer thinkingBudget;
+
+  /** stop words or token ids to stop generation */
+  @Singular("stopString")
+  private List<String> stopStrings;
+
+  @Singular private List<List<Integer>> stopTokens;
+
+  /**
+   * whether to return log probabilities of output tokens, supported for qwen-vl-ocr-2025-04-13 and
+   * later
+   */
+  private Boolean logprobs;
+
+  /**
+   * number of top candidate tokens to return log probabilities for, range [0,5], only effective
+   * when logprobs is true
+   */
+  private Integer topLogprobs;
 
   @Override
   public JsonObject getHttpBody() {
@@ -316,6 +334,20 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
 
     if (thinkingBudget != null) {
       params.put("thinking_budget", thinkingBudget);
+    }
+
+    if (stopStrings != null && !stopStrings.isEmpty()) {
+      params.put(ApiKeywords.STOP, stopStrings);
+    } else if (stopTokens != null && !stopTokens.isEmpty()) {
+      params.put(ApiKeywords.STOP, stopTokens);
+    }
+
+    if (logprobs != null) {
+      params.put("logprobs", logprobs);
+    }
+
+    if (topLogprobs != null) {
+      params.put("top_logprobs", topLogprobs);
     }
 
     params.putAll(parameters);

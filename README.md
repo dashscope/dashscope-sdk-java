@@ -173,4 +173,3 @@ public class Main {
 ```
 
 The `call` method accepts a `GenerationParam`, and returns a `GenerationResult`, you can also catch the exception with a try-catch block.
-
