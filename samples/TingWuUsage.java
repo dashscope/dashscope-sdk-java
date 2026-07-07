@@ -25,9 +25,8 @@ public class TingWuUsage {
 
     public static void main(String[] args) {
         try {
-            String baseWebsocketApiUrl = "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation";
             // 创建任务
-            TingWu tingwu = new TingWu(Protocol.HTTP.getValue(),baseWebsocketApiUrl);
+            TingWu tingwu = new TingWu();
             TingWuParam param = TingWuParam.builder().
                     model("tingwu-automotive-service-inspection")
                     .input(buildCreateTask("123456"))
