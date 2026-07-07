@@ -12,15 +12,15 @@ import com.alibaba.dashscope.protocol.*;
 public final class TingWu {
   private final SynchronizeHalfDuplexApi<HalfDuplexServiceParam> syncApi;
   private final ApiServiceOption serviceOption;
-  private final String DEFAULT_BASE_HTTP_URL =
-      "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation";
 
   private ApiServiceOption defaultApiServiceOption() {
     return ApiServiceOption.builder()
         .protocol(Protocol.HTTP)
         .httpMethod(HttpMethod.POST)
-        .isService(false)
-        .baseHttpUrl(DEFAULT_BASE_HTTP_URL)
+        .isService(true)
+        .taskGroup(TaskGroup.AIGC.getValue())
+        .task(Task.MULTIMODAL_GENERATION.getValue())
+        .function(Function.GENERATION.getValue())
         .build();
   }
 
