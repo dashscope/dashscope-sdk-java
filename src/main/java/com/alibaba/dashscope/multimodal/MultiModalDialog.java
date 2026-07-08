@@ -411,6 +411,9 @@ public class MultiModalDialog {
     if (updateParams != null && updateParams.bizParams != null) {
       requestParamWithStream.setBizParams(updateParams.bizParams);
     }
+    if (updateParams != null && updateParams.parameters != null) {
+      requestParamWithStream.setExtraParameters(updateParams.parameters);
+    }
     sendTextFrame("RequestToRespond");
   }
 
@@ -441,6 +444,9 @@ public class MultiModalDialog {
     }
     if (updateParams != null && updateParams.downStream != null) {
       requestParamWithStream.setDownStream(updateParams.downStream);
+    }
+    if (updateParams != null && updateParams.parameters != null) {
+      requestParamWithStream.setExtraParameters(updateParams.parameters);
     }
     sendTextFrame("UpdateInfo");
   }

@@ -417,6 +417,7 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
       connect();
     } else {
       startStreamTimeStamp = System.currentTimeMillis();
+      canceled.set(false);
     }
 
     checkConnectStatus(); // check websocket connection， if socket is closed.
