@@ -694,7 +694,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
                 }
               },
               err -> {
-                log.error(StringUtils.format("Get stream data error!"));
+                log.error(StringUtils.format("Get stream data error: %s", err.getMessage()));
                 if (responseEmitter != null && !responseEmitter.isCancelled()) {
                   responseEmitter.onError(err);
                 }

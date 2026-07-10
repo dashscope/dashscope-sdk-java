@@ -25,7 +25,7 @@ public abstract class HalfDuplexServiceParam extends HalfDuplexParamBase {
 
   @Override
   public Map<String, Object> getParameters() {
-    return parameters;
+    return parameters != null ? parameters : new HashMap<>();
   }
 
   @Override
