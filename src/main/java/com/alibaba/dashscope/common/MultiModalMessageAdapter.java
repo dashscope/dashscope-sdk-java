@@ -13,9 +13,12 @@ import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,14 +40,18 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
       out.nullValue();
     } else if (value instanceof String) {
       out.value((String) value);
-    } else if (value instanceof Integer) {
-      out.value((Integer) value);
-    } else if (value instanceof Long) {
-      out.value((Long) value);
-    } else if (value instanceof Double) {
-      out.value((Double) value);
-    } else if (value instanceof Float) {
-      out.value((Float) value);
+    } else if (value instanceof Integer || value instanceof Long) {
+      out.value(((Number) value).longValue());
+    } else if (value instanceof Float || value instanceof Double) {
+      out.value(((Number) value).doubleValue());
+    } else if (value instanceof Short || value instanceof Byte) {
+      out.value(((Number) value).intValue());
+    } else if (value instanceof BigDecimal) {
+      // Use jsonValue to write as JSON number, not string
+      out.jsonValue(((BigDecimal) value).toPlainString());
+    } else if (value instanceof BigInteger) {
+      // Use jsonValue to write as JSON number, not string
+      out.jsonValue(((BigInteger) value).toString());
     } else if (value instanceof Boolean) {
       out.value((Boolean) value);
     } else if (value instanceof Character) {
@@ -59,8 +66,9 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
     } else if (value instanceof Map) {
       writeMapObject(out, (Map<String, Object>) value);
     } else {
-      // Fallback for other types
-      out.value(value.toString());
+      // For unsupported types, serialize using Gson to JSON string
+      String jsonStr = JsonUtils.toJson(value);
+      out.jsonValue(jsonStr);
     }
   }
 
@@ -95,8 +103,8 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
       }
       writer.endObject();
     } else if (toolCallBase instanceof ToolCallCodeInterpreter) {
-      // For ToolCallCodeInterpreter no extra fields besides id and type
-      // Any additional fields specific to this should be written here.
+      // ToolCallCodeInterpreter only has id, type, and index fields
+      // id and type are already written above, index is handled in common fields
     }
 
     writer.endObject();
@@ -113,10 +121,13 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
         callFunction.setName(fc.get("name").toString());
       }
       if (fc.containsKey("arguments")) {
-        callFunction.setArguments(fc.get("arguments").toString());
+        Object args = fc.get("arguments");
+        callFunction.setArguments(args instanceof String ? (String) args : JsonUtils.toJson(args));
       }
       if (fc.containsKey("output")) {
-        callFunction.setOutput(fc.get("output").toString());
+        Object output = fc.get("output");
+        callFunction.setOutput(
+            output instanceof String ? (String) output : JsonUtils.toJson(output));
       }
       functionCall.setFunction(callFunction);
     }
@@ -133,18 +144,89 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
     return functionCall;
   }
 
+  // Convert LinkedTreeMap to ToolCallQuarkSearch
+  @SuppressWarnings("unchecked")
+  private ToolCallQuarkSearch convertToQuarkSearch(LinkedTreeMap<String, Object> toolCall) {
+    ToolCallQuarkSearch quarkSearch = new ToolCallQuarkSearch();
+    if (toolCall.containsKey("quark_search")) {
+      LinkedTreeMap<String, Object> qs =
+          (LinkedTreeMap<String, Object>) toolCall.get("quark_search");
+      Map<String, String> searchParams = new HashMap<>();
+      for (Map.Entry<String, Object> entry : qs.entrySet()) {
+        Object val = entry.getValue();
+        if (val instanceof String) {
+          searchParams.put(entry.getKey(), (String) val);
+        } else {
+          // For non-string types, serialize to JSON string
+          searchParams.put(entry.getKey(), JsonUtils.toJson(val));
+        }
+      }
+      quarkSearch.setQuarkSearch(searchParams);
+    }
+    quarkSearch.setType(toolCall.get("type").toString());
+    if (toolCall.containsKey("id")) {
+      quarkSearch.setId(toolCall.get("id").toString());
+    }
+    if (toolCall.containsKey("index")) {
+      Object indexObj = toolCall.get("index");
+      if (indexObj instanceof Number) {
+        quarkSearch.setIndex(((Number) indexObj).intValue());
+      }
+    }
+    return quarkSearch;
+  }
+
+  // Convert LinkedTreeMap to ToolCallCodeInterpreter
+  @SuppressWarnings("unchecked")
+  private ToolCallCodeInterpreter convertToCodeInterpreter(LinkedTreeMap<String, Object> toolCall) {
+    ToolCallCodeInterpreter codeInterpreter = new ToolCallCodeInterpreter();
+    codeInterpreter.setType(toolCall.get("type").toString());
+    if (toolCall.containsKey("id")) {
+      codeInterpreter.setId(toolCall.get("id").toString());
+    }
+    if (toolCall.containsKey("index")) {
+      Object indexObj = toolCall.get("index");
+      if (indexObj instanceof Number) {
+        codeInterpreter.setIndex(((Number) indexObj).intValue());
+      }
+    }
+    return codeInterpreter;
+  }
+
+  // Generic method to convert LinkedTreeMap to appropriate ToolCallBase subclass
+  @SuppressWarnings("unchecked")
+  private ToolCallBase convertToToolCall(LinkedTreeMap<String, Object> toolCall) {
+    if (!toolCall.containsKey("type")) {
+      throw new IllegalArgumentException("Tool call must contain 'type' field");
+    }
+
+    String type = toolCall.get("type").toString();
+    switch (type) {
+      case "function":
+        return convertToCallFunction(toolCall);
+      case "quark_search":
+        return convertToQuarkSearch(toolCall);
+      case "code_interpreter":
+        return convertToCodeInterpreter(toolCall);
+      default:
+        throw new IllegalArgumentException("Unknown tool call type: " + type);
+    }
+  }
+
   @Override
   public void write(JsonWriter out, MultiModalMessage value) throws IOException {
     out.beginObject();
     out.name(ApiKeywords.ROLE);
     out.value(value.getRole());
 
-    out.name(ApiKeywords.CONTENT);
-    out.beginArray();
-    for (Map<String, Object> item : value.getContent()) {
-      writeMapObject(out, item);
+    if (value.getContent() != null) {
+      out.name(ApiKeywords.CONTENT);
+      out.beginArray();
+      for (Map<String, Object> item : value.getContent()) {
+        writeMapObject(out, item);
+      }
+      out.endArray();
     }
-    out.endArray();
 
     if (value.getAnnotations() != null) {
       out.name(ApiKeywords.ANNOTATIONS);
@@ -164,8 +246,7 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
       out.name(ApiKeywords.TOOL_CALLS);
       out.beginArray();
       List<ToolCallBase> toolCalls = value.getToolCalls();
-      for (ToolCallBase tc :
-          JsonUtils.fromJson(JsonUtils.toJson(toolCalls), ToolCallBase[].class)) {
+      for (ToolCallBase tc : toolCalls) {
         writeToolCallBase(out, tc);
       }
       out.endArray();
@@ -199,20 +280,37 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
       Object content = objectMap.get(ApiKeywords.CONTENT);
       if (content instanceof String) {
         msg.setContent(Arrays.asList(Collections.singletonMap("text", (String) content)));
-      } else {
+      } else if (content instanceof List) {
         msg.setContent((List<Map<String, Object>>) content);
+      } else {
+        throw new IllegalArgumentException(
+            "Content must be String or List, got: "
+                + (content != null ? content.getClass().getName() : "null"));
       }
       objectMap.remove(ApiKeywords.CONTENT);
     }
 
     if (objectMap.containsKey(ApiKeywords.ANNOTATIONS)) {
-      msg.setAnnotations((List<Map<String, Object>>) objectMap.get(ApiKeywords.ANNOTATIONS));
+      Object annotations = objectMap.get(ApiKeywords.ANNOTATIONS);
+      if (annotations instanceof List) {
+        msg.setAnnotations((List<Map<String, Object>>) annotations);
+      } else {
+        throw new IllegalArgumentException(
+            "Annotations must be List, got: "
+                + (annotations != null ? annotations.getClass().getName() : "null"));
+      }
       objectMap.remove(ApiKeywords.ANNOTATIONS);
     }
 
     if (objectMap.containsKey(ApiKeywords.REASONING_CONTENT)) {
-      String reasoningContent = (String) objectMap.get(ApiKeywords.REASONING_CONTENT);
-      msg.setReasoningContent(reasoningContent);
+      Object reasoningContent = objectMap.get(ApiKeywords.REASONING_CONTENT);
+      if (reasoningContent instanceof String) {
+        msg.setReasoningContent((String) reasoningContent);
+      } else {
+        throw new IllegalArgumentException(
+            "Reasoning content must be String, got: "
+                + (reasoningContent != null ? reasoningContent.getClass().getName() : "null"));
+      }
       objectMap.remove(ApiKeywords.REASONING_CONTENT);
     }
 
@@ -223,22 +321,15 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
         // Check if need conversion for function type
         boolean needConversion = false;
         if (!toolCallsList.isEmpty() && toolCallsList.get(0) instanceof LinkedTreeMap) {
-          LinkedTreeMap<String, Object> firstToolCall =
-              (LinkedTreeMap<String, Object>) toolCallsList.get(0);
-          if (firstToolCall.containsKey("type")) {
-            String type = firstToolCall.get("type").toString();
-            if (type.equals("function")) {
-              needConversion = true;
-            }
-          }
+          needConversion = true;
         }
 
         if (needConversion) {
-          // Convert LinkedTreeMap to ToolCallFunction
+          // Convert LinkedTreeMap to appropriate ToolCallBase subclass
           msg.toolCalls = new ArrayList<ToolCallBase>();
           List<LinkedTreeMap> toolCalls = (List<LinkedTreeMap>) toolCallsObj;
           for (LinkedTreeMap<String, Object> toolCall : toolCalls) {
-            msg.toolCalls.add(convertToCallFunction(toolCall));
+            msg.toolCalls.add(convertToToolCall(toolCall));
           }
         } else {
           // Use original method for non-function types
