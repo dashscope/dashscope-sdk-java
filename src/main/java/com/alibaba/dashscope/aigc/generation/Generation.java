@@ -351,19 +351,20 @@ public final class Generation {
           if (currentContent != null && !currentContent.isEmpty()) {
             accumulated.content.append(currentContent);
           }
-          // Always set the accumulated content if we have any
-          if (accumulated.content.length() > 0) {
-            choice.getMessage().setContent(accumulated.content.toString());
-          }
 
           // Handle reasoning_content accumulation
           String currentReasoningContent = choice.getMessage().getReasoningContent();
           if (currentReasoningContent != null && !currentReasoningContent.isEmpty()) {
             accumulated.reasoningContent.append(currentReasoningContent);
           }
-          // Always set the accumulated reasoning_content if we have any
+
+          // Apply mutual exclusion rule: when reasoningContent exists, content should be empty
           if (accumulated.reasoningContent.length() > 0) {
             choice.getMessage().setReasoningContent(accumulated.reasoningContent.toString());
+            // Clear content when reasoningContent is present
+            choice.getMessage().setContent(null);
+          } else if (accumulated.content.length() > 0) {
+            choice.getMessage().setContent(accumulated.content.toString());
           }
 
           // Handle tool_calls accumulation
@@ -474,11 +475,13 @@ public final class Generation {
               com.alibaba.dashscope.common.Message message =
                   new com.alibaba.dashscope.common.Message();
               message.setRole("assistant");
-              if (data.content.length() > 0) {
-                message.setContent(data.content.toString());
-              }
+              // Apply mutual exclusion rule: when reasoningContent exists, content should be empty
               if (data.reasoningContent.length() > 0) {
                 message.setReasoningContent(data.reasoningContent.toString());
+                // Clear content when reasoningContent is present
+                message.setContent(null);
+              } else if (data.content.length() > 0) {
+                message.setContent(data.content.toString());
               }
               if (!data.toolCalls.isEmpty()) {
                 message.setToolCalls(data.toolCalls);

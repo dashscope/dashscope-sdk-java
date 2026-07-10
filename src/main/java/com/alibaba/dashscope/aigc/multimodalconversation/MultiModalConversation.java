@@ -328,22 +328,21 @@ public final class MultiModalConversation {
           if (currentContent != null && !currentContent.isEmpty()) {
             mergeTextContent(currentContent, accumulated);
           }
-          // Always set the accumulated content if we have any
-          if (!accumulated.content.isEmpty()) {
-            choice.getMessage().setContent(accumulated.content);
-          }
 
           // Handle reasoning_content accumulation
           String currentReasoningContent = choice.getMessage().getReasoningContent();
           if (currentReasoningContent != null && !currentReasoningContent.isEmpty()) {
             accumulated.reasoningContent.append(currentReasoningContent);
           }
-          // Always set the accumulated reasoning_content if we have any
+
+          // Apply mutual exclusion rule: when reasoningContent exists, content should be empty
           if (accumulated.reasoningContent.length() > 0) {
             choice.getMessage().setReasoningContent(accumulated.reasoningContent.toString());
+            // Clear content when reasoningContent is present
+            choice.getMessage().setContent(null);
+          } else if (!accumulated.content.isEmpty()) {
+            choice.getMessage().setContent(accumulated.content);
           }
-
-          // Handle tool_calls accumulation
           List<ToolCallBase> currentToolCalls = choice.getMessage().getToolCalls();
           if (currentToolCalls != null && !currentToolCalls.isEmpty()) {
             mergeToolCalls(currentToolCalls, accumulated.toolCalls);
