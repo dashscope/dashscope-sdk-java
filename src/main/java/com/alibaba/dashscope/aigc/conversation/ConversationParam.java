@@ -177,7 +177,14 @@ public class ConversationParam extends GenerationParamBase {
     } else if (stopTokens != null && !stopTokens.isEmpty()) {
       params.put(STOP, stopTokens);
     }
-    params.putAll(parameters);
+    if (parameters != null) {
+      parameters.forEach(
+          (k, v) -> {
+            if (v != null) {
+              params.put(k, v);
+            }
+          });
+    }
     return params;
   }
 
