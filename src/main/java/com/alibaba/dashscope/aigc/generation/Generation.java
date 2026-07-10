@@ -358,12 +358,11 @@ public final class Generation {
             accumulated.reasoningContent.append(currentReasoningContent);
           }
 
-          // Apply mutual exclusion rule: when reasoningContent exists, content should be empty
+          // Accumulate both reasoning_content and content independently
           if (accumulated.reasoningContent.length() > 0) {
             choice.getMessage().setReasoningContent(accumulated.reasoningContent.toString());
-            // Clear content when reasoningContent is present
-            choice.getMessage().setContent(null);
-          } else if (accumulated.content.length() > 0) {
+          }
+          if (accumulated.content.length() > 0) {
             choice.getMessage().setContent(accumulated.content.toString());
           }
 
@@ -475,12 +474,11 @@ public final class Generation {
               com.alibaba.dashscope.common.Message message =
                   new com.alibaba.dashscope.common.Message();
               message.setRole("assistant");
-              // Apply mutual exclusion rule: when reasoningContent exists, content should be empty
+              // Set both reasoning_content and content independently
               if (data.reasoningContent.length() > 0) {
                 message.setReasoningContent(data.reasoningContent.toString());
-                // Clear content when reasoningContent is present
-                message.setContent(null);
-              } else if (data.content.length() > 0) {
+              }
+              if (data.content.length() > 0) {
                 message.setContent(data.content.toString());
               }
               if (!data.toolCalls.isEmpty()) {
