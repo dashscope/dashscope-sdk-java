@@ -6,7 +6,6 @@ import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.utils.GsonExclude;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
 import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
@@ -28,7 +27,7 @@ public abstract class HalfDuplexParamBase {
   @GsonExclude @Builder.Default private Boolean enableEncrypt = false;
 
   /** The extra parameters. */
-  @GsonExclude @Builder.Default protected Map<String, Object> parameters = new HashMap<>();
+  @GsonExclude @Singular protected Map<String, Object> parameters;
 
   public abstract String getModel();
   /**
@@ -39,7 +38,7 @@ public abstract class HalfDuplexParamBase {
   public abstract Map<String, Object> getParameters();
 
   /** The custom http header. */
-  @GsonExclude @Builder.Default protected Map<String, Object> headers = new HashMap<>();
+  @GsonExclude @Singular protected Map<String, Object> headers;
 
   /**
    * The custom http header.
