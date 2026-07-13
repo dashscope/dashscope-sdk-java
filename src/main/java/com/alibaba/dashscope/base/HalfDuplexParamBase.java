@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Singular;
 import lombok.experimental.SuperBuilder;
 
 /** The user input and parameter. */
@@ -28,7 +27,7 @@ public abstract class HalfDuplexParamBase {
   @GsonExclude @Builder.Default private Boolean enableEncrypt = false;
 
   /** The extra parameters. */
-  @GsonExclude @Singular protected Map<String, Object> parameters = new HashMap<>();
+  @GsonExclude @Builder.Default protected Map<String, Object> parameters = new HashMap<>();
 
   public abstract String getModel();
   /**
@@ -39,7 +38,7 @@ public abstract class HalfDuplexParamBase {
   public abstract Map<String, Object> getParameters();
 
   /** The custom http header. */
-  @GsonExclude @Singular protected Map<String, Object> headers = new HashMap<>();
+  @GsonExclude @Builder.Default protected Map<String, Object> headers = new HashMap<>();
 
   /**
    * The custom http header.
