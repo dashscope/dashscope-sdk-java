@@ -88,7 +88,7 @@ public class ConversationParam extends GenerationParamBase {
    * apple
    * </pre>
    */
-  private Boolean incrementalOutput = null;
+  @Builder.Default private Boolean incrementalOutput = false;
   /*
    * Maximum tokens to generate.
    */

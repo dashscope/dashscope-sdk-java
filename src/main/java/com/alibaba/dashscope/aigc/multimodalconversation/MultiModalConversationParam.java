@@ -91,7 +91,7 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
   /**
    * Used to control the streaming output mode. If true, the subsequent output will include the
    * previously input content by default. Otherwise, the subsequent output will not include the
-   * previously output content. Default: null eg(false):
+   * previously output content. Default: false eg(false):
    *
    * <pre>
    * I
@@ -103,7 +103,7 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
    * apple
    * </pre>
    */
-  private Boolean incrementalOutput = null;
+  @Builder.Default private Boolean incrementalOutput = false;
 
   /** Output format of the model including "text" and "audio". Default value: ["text"] */
   private List<String> modalities;

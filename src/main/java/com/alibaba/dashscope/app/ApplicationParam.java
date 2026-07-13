@@ -89,9 +89,9 @@ public class ApplicationParam extends HalfDuplexParamBase {
   /**
    * Used to control the streaming output mode. If true, the subsequent output will include the
    * previously input content by default. Otherwise, the subsequent output will not include the
-   * previously output content. Default: null.
+   * previously output content. Default: false.
    */
-  private Boolean incrementalOutput = null;
+  @Builder.Default private Boolean incrementalOutput = false;
 
   /**
    * Long term memory id is used to store long term context summary between end users and assistant.
