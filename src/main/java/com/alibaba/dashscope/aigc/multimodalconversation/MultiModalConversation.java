@@ -280,19 +280,24 @@ public final class MultiModalConversation {
   /**
    * Modifies the parameters for internal streaming optimization. If incrementalOutput is false,
    * modifies the MultiModalConversationParam object to set incrementalOutput to true for internal
-   * streaming optimization.
+   * streaming optimization. If incrementalOutput is true or null, keeps the original value to
+   * return real incremental content.
    *
    * @param param The parameter object to modify
-   * @return true if the parameter was modified, false otherwise
+   * @return true if the parameter was modified (needs local merge), false otherwise (real
+   *     incremental)
    */
   private boolean modifyIncrementalOutput(MultiModalConversationParam param) {
     Boolean incrementalOutput = param.getIncrementalOutput();
+    // Only modify when user explicitly sets incrementalOutput to false
+    // If user sets true or null, respect their choice and return real incremental content
     if (ParamUtils.shouldModifyIncrementalOutput(param.getModel())
         && Boolean.FALSE.equals(incrementalOutput)) {
       // Modify the MultiModalConversationParam object to enable incremental output
       param.setIncrementalOutput(true);
       return true;
     }
+    // User wants real incremental content (incrementalOutput=true or null)
     return false;
   }
 
