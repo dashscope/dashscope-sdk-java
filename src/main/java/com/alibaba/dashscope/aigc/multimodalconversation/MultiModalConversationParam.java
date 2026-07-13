@@ -91,11 +91,10 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
   /**
    * Used to control the streaming output mode. If true, the subsequent output will include the
    * previously input content by default. Otherwise, the subsequent output will not include the
-   * previously output content. Default: false eg(false):
-  /**
-   * Used to control the streaming output mode. If true, each chunk contains only incremental
-   * content without accumulation. If false, SDK accumulates chunks locally and returns full
-   * content in each chunk. Must be explicitly set - no default value.
+   * previously output content. Default: false eg(false): /** Used to control the streaming output
+   * mode. If true, each chunk contains only incremental content without accumulation. If false, SDK
+   * accumulates chunks locally and returns full content in each chunk. Must be explicitly set - no
+   * default value.
    *
    * <pre>
    * incrementalOutput=true (incremental):
