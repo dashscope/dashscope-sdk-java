@@ -92,18 +92,24 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
    * Used to control the streaming output mode. If true, the subsequent output will include the
    * previously input content by default. Otherwise, the subsequent output will not include the
    * previously output content. Default: false eg(false):
+  /**
+   * Used to control the streaming output mode. If true, each chunk contains only incremental
+   * content without accumulation. If false, SDK accumulates chunks locally and returns full
+   * content in each chunk. Must be explicitly set - no default value.
    *
    * <pre>
-   * I
-   * I like
-   * I like apple
-   * when true:
-   * I
-   * like
-   * apple
+   * incrementalOutput=true (incremental):
+   * Chunk1: reasoning="让我先分析", content=[]
+   * Chunk2: reasoning="看起来是羊", content=[{text="这张图片"}]
+   * Chunk3: reasoning="", content=[{text="和一辆车"}]
+   *
+   * incrementalOutput=false (full):
+   * Chunk1: reasoning="让我先分析", content=[]
+   * Chunk2: reasoning="让我先分析看起来是羊", content=[{text="这张图片"}]
+   * Chunk3: reasoning="让我先分析看起来是羊", content=[{text="这张图片和一辆车"}]
    * </pre>
    */
-  @Builder.Default private Boolean incrementalOutput = false;
+  private Boolean incrementalOutput;
 
   /** Output format of the model including "text" and "audio". Default value: ["text"] */
   private List<String> modalities;
