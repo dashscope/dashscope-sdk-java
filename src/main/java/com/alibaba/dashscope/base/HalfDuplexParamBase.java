@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Singular;
 import lombok.experimental.SuperBuilder;
 
 /** The user input and parameter. */
