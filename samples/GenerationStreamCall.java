@@ -41,12 +41,7 @@ public class GenerationStreamCall {
                         .repetitionPenalty((float) 1.0)
                         .topK(50)
                         .build();
-        JsonObject body = param.getHttpBody();
-        if (body != null) {
-            System.out.println(body.toString());
-        } else {
-            System.out.println("param body is null");
-        }
+        System.out.println(param.getHttpBody().toString());
         Generation generation = new Generation();
         Flowable<GenerationResult> flowable = generation.streamCall(param);
         flowable.blockingForEach(message -> {
