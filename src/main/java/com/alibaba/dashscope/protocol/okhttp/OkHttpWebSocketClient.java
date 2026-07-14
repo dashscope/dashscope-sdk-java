@@ -740,8 +740,13 @@ public class OkHttpWebSocketClient extends WebSocketListener
         future.cancel(true);
         future.join();
       }
-    } catch (CancellationException | CompletionException ex) {
+    } catch (CancellationException ex) {
+      log.error("Sending streaming data cancelled", ex.getMessage());
+    } catch (CompletionException ex) {
       log.error("Sending streaming data exception", ex.getMessage());
+      if (responseEmitter != null && !responseEmitter.isCancelled()) {
+        responseEmitter.onError(ex.getCause() != null ? ex.getCause() : ex);
+      }
     }
   }
 

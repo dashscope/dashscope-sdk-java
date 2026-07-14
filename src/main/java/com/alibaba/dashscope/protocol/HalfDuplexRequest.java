@@ -59,7 +59,12 @@ public class HalfDuplexRequest {
     if (baseUrl.endsWith("/")) {
       baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
     }
-    return baseUrl + serviceOption.httpUrl();
+    String path = serviceOption.httpUrl();
+    // Avoid duplicate path when baseUrl already contains the full path
+    if (path != null && !path.isEmpty() && baseUrl.endsWith(path)) {
+      return baseUrl;
+    }
+    return baseUrl + path;
   }
 
   public boolean isSecurityCheck() {

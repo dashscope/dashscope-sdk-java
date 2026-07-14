@@ -80,6 +80,45 @@ public class ChatCompletionParam extends FlattenHalfDuplexParamBase {
   @SerializedName("parallel_tool_calls")
   private Boolean parallelToolCalls;
 
+  /**
+   * Whether to preserve thinking/reasoning content in the response. When enabled, the model will
+   * include reasoning process in the output.
+   */
+  @SerializedName("preserve_thinking")
+  private Boolean preserveThinking;
+
+  /**
+   * Controls the reasoning effort level for models that support it. Possible values: "low",
+   * "medium", "high"
+   */
+  @SerializedName("reasoning_effort")
+  private String reasoningEffort;
+
+  /**
+   * The maximum number of tokens to generate for completion. This is an alternative to max_tokens
+   * following OpenAI's newer API convention.
+   */
+  @SerializedName("max_completion_tokens")
+  private Integer maxCompletionTokens;
+
+  /**
+   * Whether to stream tool calls as they are generated. When true, tool calls will be sent
+   * incrementally rather than all at once.
+   */
+  @SerializedName("tool_stream")
+  private Boolean toolStream;
+
+  /**
+   * Enable high resolution image processing for vision-language models. Improves image
+   * understanding quality at the cost of more tokens.
+   */
+  @SerializedName("vl_high_resolution_images")
+  private Boolean vlHighResolutionImages;
+
+  /** Enable hardware-accelerated image output for vision-language models. */
+  @SerializedName("vl_enable_image_hw_output")
+  private Boolean vlEnableImageHwOutput;
+
   private String user;
 
   @Override
@@ -141,6 +180,24 @@ public class ChatCompletionParam extends FlattenHalfDuplexParamBase {
     }
     if (parallelToolCalls != null) {
       requestObject.addProperty("parallel_tool_calls", parallelToolCalls);
+    }
+    if (preserveThinking != null) {
+      requestObject.addProperty("preserve_thinking", preserveThinking);
+    }
+    if (reasoningEffort != null) {
+      requestObject.addProperty("reasoning_effort", reasoningEffort);
+    }
+    if (maxCompletionTokens != null) {
+      requestObject.addProperty("max_completion_tokens", maxCompletionTokens);
+    }
+    if (toolStream != null) {
+      requestObject.addProperty("tool_stream", toolStream);
+    }
+    if (vlHighResolutionImages != null) {
+      requestObject.addProperty("vl_high_resolution_images", vlHighResolutionImages);
+    }
+    if (vlEnableImageHwOutput != null) {
+      requestObject.addProperty("vl_enable_image_hw_output", vlEnableImageHwOutput);
     }
     if (user != null) {
       requestObject.addProperty("user", user);
