@@ -396,25 +396,33 @@ public class MultiModalDialog {
    */
   public void requestToRespond(
       String type, String text, MultiModalRequestParam.UpdateParams updateParams) {
-    requestParamWithStream.clearParameters();
-    MultiModalRequestParam.CustomInput customInput =
-        MultiModalRequestParam.CustomInput.builder()
-            .directive("RequestToRespond")
-            .dialogId(currentDialogId)
-            .type(type)
-            .text(text)
-            .build();
-    requestParamWithStream.setCustomInput(customInput);
-    if (updateParams != null && updateParams.images != null) {
-      requestParamWithStream.setImages(updateParams.images);
+    // Synchronize the whole "mutate requestParamWithStream + send" sequence on the same
+    // monitor used by sendTextFrame/sendAudioData/sendFinishTaskMessage. Without this,
+    // concurrent calls to requestToRespond/updateInfo could interleave their
+    // clearParameters()/setXxx() mutations before either one reaches sendTextFrame,
+    // causing one caller's payload to be sent with another caller's data (race condition).
+    // synchronized is reentrant, so the nested lock acquired inside sendTextFrame is safe.
+    synchronized (MultiModalDialog.this) {
+      requestParamWithStream.clearParameters();
+      MultiModalRequestParam.CustomInput customInput =
+          MultiModalRequestParam.CustomInput.builder()
+              .directive("RequestToRespond")
+              .dialogId(currentDialogId)
+              .type(type)
+              .text(text)
+              .build();
+      requestParamWithStream.setCustomInput(customInput);
+      if (updateParams != null && updateParams.images != null) {
+        requestParamWithStream.setImages(updateParams.images);
+      }
+      if (updateParams != null && updateParams.bizParams != null) {
+        requestParamWithStream.setBizParams(updateParams.bizParams);
+      }
+      if (updateParams != null && updateParams.parameters != null) {
+        requestParamWithStream.setExtraParameters(updateParams.parameters);
+      }
+      sendTextFrame("RequestToRespond");
     }
-    if (updateParams != null && updateParams.bizParams != null) {
-      requestParamWithStream.setBizParams(updateParams.bizParams);
-    }
-    if (updateParams != null && updateParams.parameters != null) {
-      requestParamWithStream.setExtraParameters(updateParams.parameters);
-    }
-    sendTextFrame("RequestToRespond");
   }
 
   /**
@@ -423,32 +431,37 @@ public class MultiModalDialog {
    * <p>param: updateParams Update parameters
    */
   public void updateInfo(MultiModalRequestParam.UpdateParams updateParams) {
-    requestParamWithStream.clearParameters();
-    MultiModalRequestParam.CustomInput customInput =
-        MultiModalRequestParam.CustomInput.builder()
-            .directive("UpdateInfo")
-            .dialogId(currentDialogId)
-            .build();
-    requestParamWithStream.setCustomInput(customInput);
-    if (updateParams != null && updateParams.clientInfo != null) {
-      requestParamWithStream.setClientInfo(updateParams.clientInfo);
+    // See requestToRespond() for why this whole block must be synchronized on the same
+    // monitor as sendTextFrame: mutation of requestParamWithStream and the subsequent send
+    // must be atomic with respect to concurrent requestToRespond/updateInfo callers.
+    synchronized (MultiModalDialog.this) {
+      requestParamWithStream.clearParameters();
+      MultiModalRequestParam.CustomInput customInput =
+          MultiModalRequestParam.CustomInput.builder()
+              .directive("UpdateInfo")
+              .dialogId(currentDialogId)
+              .build();
+      requestParamWithStream.setCustomInput(customInput);
+      if (updateParams != null && updateParams.clientInfo != null) {
+        requestParamWithStream.setClientInfo(updateParams.clientInfo);
+      }
+      if (updateParams != null && updateParams.bizParams != null) {
+        requestParamWithStream.setBizParams(updateParams.bizParams);
+      }
+      if (updateParams != null && updateParams.images != null) {
+        requestParamWithStream.setImages(updateParams.images);
+      }
+      if (updateParams != null && updateParams.upStream != null) {
+        requestParamWithStream.setUpStream(updateParams.upStream);
+      }
+      if (updateParams != null && updateParams.downStream != null) {
+        requestParamWithStream.setDownStream(updateParams.downStream);
+      }
+      if (updateParams != null && updateParams.parameters != null) {
+        requestParamWithStream.setExtraParameters(updateParams.parameters);
+      }
+      sendTextFrame("UpdateInfo");
     }
-    if (updateParams != null && updateParams.bizParams != null) {
-      requestParamWithStream.setBizParams(updateParams.bizParams);
-    }
-    if (updateParams != null && updateParams.images != null) {
-      requestParamWithStream.setImages(updateParams.images);
-    }
-    if (updateParams != null && updateParams.upStream != null) {
-      requestParamWithStream.setUpStream(updateParams.upStream);
-    }
-    if (updateParams != null && updateParams.downStream != null) {
-      requestParamWithStream.setDownStream(updateParams.downStream);
-    }
-    if (updateParams != null && updateParams.parameters != null) {
-      requestParamWithStream.setExtraParameters(updateParams.parameters);
-    }
-    sendTextFrame("UpdateInfo");
   }
 
   /**
