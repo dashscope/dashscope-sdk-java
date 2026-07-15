@@ -17,4 +17,13 @@ public abstract class OmniRealtimeCallback {
 
   /** Will be called when the connection is closed. */
   public abstract void onClose(int code, String reason);
+
+  /**
+   * Will be called when the websocket connection fails, e.g. network disconnected, connect timeout,
+   * or other io exceptions. Default implementation does nothing, override it to be notified of such
+   * errors.
+   *
+   * @param throwable the exception that caused the failure.
+   */
+  public void onError(Throwable throwable) {}
 }

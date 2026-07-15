@@ -350,7 +350,10 @@ public class OmniRealtimeConversation extends WebSocketListener {
   @Override
   public void onOpen(WebSocket webSocket, Response response) {
     isOpen.set(true);
-    connectLatch.get().countDown();
+    CountDownLatch latch = connectLatch.get();
+    if (latch != null && latch.getCount() > 0) {
+      latch.countDown();
+    }
     log.debug("WebSocket opened");
     callback.onOpen();
   }
@@ -410,15 +413,28 @@ public class OmniRealtimeConversation extends WebSocketListener {
   @Override
   public void onClosed(WebSocket webSocket, int code, String reason) {
     isOpen.set(false);
-    connectLatch.get().countDown();
+    CountDownLatch latch = connectLatch.get();
+    if (latch != null && latch.getCount() > 0) {
+      latch.countDown();
+    }
     log.debug("WebSocket closed: " + code + ", " + reason);
     callback.onClose(code, reason);
   }
 
   @Override
   public void onFailure(WebSocket webSocket, Throwable t, Response response) {
-    connectLatch.get().countDown();
-    log.error("WebSocket failed: " + t.getMessage());
+    isOpen.set(false);
+    isClosed.set(true);
+    CountDownLatch cLatch = connectLatch.get();
+    if (cLatch != null) {
+      cLatch.countDown();
+    }
+    CountDownLatch dLatch = disconnectLatch.get();
+    if (dLatch != null) {
+      dLatch.countDown();
+    }
+    log.error("WebSocket failed: " + t.getMessage(), t);
+    callback.onError(t);
   }
 
   @Override
