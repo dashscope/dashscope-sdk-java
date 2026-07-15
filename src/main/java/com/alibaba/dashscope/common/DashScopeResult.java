@@ -71,7 +71,7 @@ public class DashScopeResult extends Result {
           if (this.getCode() != null && !this.getCode().isEmpty()) {
             throw new ApiException(
                 Status.builder()
-                    .statusCode(this.getStatusCode())
+                    .statusCode(this.getStatusCode() == null ? 200 : this.getStatusCode())
                     .code(this.getCode())
                     .message(this.getMessage())
                     .requestId(this.getRequestId())
@@ -144,7 +144,7 @@ public class DashScopeResult extends Result {
       if (this.getCode() != null && !this.getCode().isEmpty()) {
         throw new ApiException(
             Status.builder()
-                .statusCode(this.getStatusCode())
+                .statusCode(this.getStatusCode() == null ? 200 : this.getStatusCode())
                 .code(this.getCode())
                 .message(this.getMessage())
                 .requestId(this.getRequestId())
@@ -251,7 +251,7 @@ public class DashScopeResult extends Result {
       if (this.getCode() != null && !this.getCode().isEmpty()) {
         throw new ApiException(
             Status.builder()
-                .statusCode(this.getStatusCode())
+                .statusCode(this.getStatusCode() == null ? 200 : this.getStatusCode())
                 .code(this.getCode())
                 .message(this.getMessage())
                 .requestId(this.getRequestId())

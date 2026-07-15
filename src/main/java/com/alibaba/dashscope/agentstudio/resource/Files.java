@@ -232,7 +232,10 @@ public final class Files implements Closeable {
                   if (!r.isSuccessful()) {
                     future.completeExceptionally(
                         new ApiException(
-                            Status.builder().statusCode(r.code()).message(body).build()));
+                            Status.builder()
+                                .statusCode(r.code())
+                                .message(body.isEmpty() ? r.message() : body)
+                                .build()));
                     return;
                   }
                   future.complete(

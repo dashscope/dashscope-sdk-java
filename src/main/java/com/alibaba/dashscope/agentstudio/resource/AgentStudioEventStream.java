@@ -98,7 +98,7 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
 
     // Try to extract original error code and message from response body
     String apiCode = "";
-    String apiMessage = body;
+    String apiMessage = body.isEmpty() ? response.message() : body;
     try {
       com.google.gson.JsonObject json = com.alibaba.dashscope.utils.JsonUtils.parse(body);
       if (json.has("code")) {

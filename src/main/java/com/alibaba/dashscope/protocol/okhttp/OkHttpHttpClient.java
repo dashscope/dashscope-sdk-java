@@ -171,7 +171,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
         return Status.builder()
             .statusCode(response.code())
             .code("")
-            .message(body)
+            .message(body.isEmpty() ? response.message() : body)
             .isJson(false)
             .build();
       } catch (IOException e) {

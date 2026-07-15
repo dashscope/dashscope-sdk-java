@@ -162,7 +162,15 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
           }
           try {
             Thread.sleep(sleepMs);
-          } catch (InterruptedException ignored) {
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ApiException(
+                Status.builder()
+                    .statusCode(-1)
+                    .code("Interrupted")
+                    .message("Thread was interrupted while waiting for task.")
+                    .build(),
+                e);
           }
         }
       } catch (ApiException e) {
@@ -199,7 +207,15 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
         }
         try {
           Thread.sleep(sleepMs);
-        } catch (InterruptedException ignored) {
+        } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
+          throw new ApiException(
+              Status.builder()
+                  .statusCode(-1)
+                  .code("Interrupted")
+                  .message("Thread was interrupted while waiting for task.")
+                  .build(),
+              ie);
         }
         transientBackoffMs = Math.min(transientBackoffMs * 2, MAX_TRANSIENT_BACKOFF_MS);
       }
