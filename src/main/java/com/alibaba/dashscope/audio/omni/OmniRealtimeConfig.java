@@ -22,12 +22,34 @@ public class OmniRealtimeConfig {
   /** voice to be used in session ,not need in qwen-asr-realtime */
   @Builder.Default String voice = null;
 
-  /** input audio format */
+  /**
+   * input audio format (legacy). Only supports pcm16/pcm24. Ignored when {@link #inputAudio} is
+   * set.
+   */
   @Builder.Default
   OmniRealtimeAudioFormat inputAudioFormat = OmniRealtimeAudioFormat.PCM_16000HZ_MONO_16BIT;
-  /** output audio format */
+  /**
+   * output audio format (legacy). Only supports pcm16/pcm24. Ignored when {@link #outputAudio} is
+   * set.
+   */
   @Builder.Default
   OmniRealtimeAudioFormat outputAudioFormat = OmniRealtimeAudioFormat.PCM_24000HZ_MONO_16BIT;
+  /**
+   * New-style input(upstream) audio format, supports "pcm"/"wav" format and 8k/16k/24k/48k sample
+   * rate, e.g. {@code new OmniRealtimeAudioFormatConfig("pcm", 16000)}. When set, this takes
+   * precedence over the legacy {@link #inputAudioFormat} and will be serialized as the nested
+   * {@code audio.input.format} structure instead of the legacy flat {@code input_audio_format}
+   * field. Setting only one of {@link #inputAudio}/{@link #outputAudio} is fine, the other side
+   * falls back to its legacy field value.
+   */
+  @Builder.Default OmniRealtimeAudioFormatConfig inputAudio = null;
+  /**
+   * New-style output(downstream) audio format, see {@link #inputAudio}. When set, this takes
+   * precedence over the legacy {@link #outputAudioFormat} and will be serialized as the nested
+   * {@code audio.output.format} structure instead of the legacy flat {@code output_audio_format}
+   * field.
+   */
+  @Builder.Default OmniRealtimeAudioFormatConfig outputAudio = null;
   /** enable transcription for input audio */
   @Builder.Default boolean enableInputAudioTranscription = true;
   /** model used for input audio transcription */
@@ -61,8 +83,29 @@ public class OmniRealtimeConfig {
     if (voice != null) {
       config.put(OmniRealtimeConstants.VOICE, voice);
     }
-    config.put(OmniRealtimeConstants.INPUT_AUDIO_FORMAT, inputAudioFormat);
-    config.put(OmniRealtimeConstants.OUTPUT_AUDIO_FORMAT, outputAudioFormat);
+    if (inputAudio != null || outputAudio != null) {
+      // New-style nested audio format, takes precedence over the legacy flat fields. The side
+      // that is not explicitly set falls back to the legacy inputAudioFormat/outputAudioFormat
+      // value so that the resulting "audio" node is always complete and consistent.
+      OmniRealtimeAudioFormatConfig effectiveInputAudio =
+          inputAudio != null
+              ? inputAudio
+              : new OmniRealtimeAudioFormatConfig(
+                  OmniRealtimeAudioCodec.PCM, inputAudioFormat.getSampleRate());
+      OmniRealtimeAudioFormatConfig effectiveOutputAudio =
+          outputAudio != null
+              ? outputAudio
+              : new OmniRealtimeAudioFormatConfig(
+                  OmniRealtimeAudioCodec.PCM, outputAudioFormat.getSampleRate());
+      Map<String, Object> audio = new HashMap<>();
+      audio.put(OmniRealtimeConstants.AUDIO_INPUT, buildAudioDirectionNode(effectiveInputAudio));
+      audio.put(OmniRealtimeConstants.AUDIO_OUTPUT, buildAudioDirectionNode(effectiveOutputAudio));
+      config.put(OmniRealtimeConstants.AUDIO, audio);
+    } else {
+      // Legacy flat fields, kept unchanged for full backward compatibility.
+      config.put(OmniRealtimeConstants.INPUT_AUDIO_FORMAT, inputAudioFormat);
+      config.put(OmniRealtimeConstants.OUTPUT_AUDIO_FORMAT, outputAudioFormat);
+    }
     if (enableInputAudioTranscription) {
       Map<String, Object> inputTranscriptionConfig = new HashMap<>();
       inputTranscriptionConfig.put(
@@ -139,5 +182,23 @@ public class OmniRealtimeConfig {
     Gson gson = builder.create();
     JsonObject jsonObject = gson.toJsonTree(config).getAsJsonObject();
     return jsonObject;
+  }
+
+  /**
+   * Builds the {@code { "format": { "type": ..., "sample_rate": ... } } } node used under {@code
+   * audio.input} / {@code audio.output}.
+   */
+  private Map<String, Object> buildAudioDirectionNode(OmniRealtimeAudioFormatConfig config) {
+    Map<String, Object> format = new HashMap<>();
+    // Merge extra parameters first so that the typed fields below always take precedence and
+    // can't be accidentally overridden by reserved keys (type/sample_rate).
+    if (config.getParameters() != null) {
+      format.putAll(config.getParameters());
+    }
+    format.put(OmniRealtimeConstants.AUDIO_FORMAT_TYPE, config.getType());
+    format.put(OmniRealtimeConstants.SAMPLE_RATE, config.getSampleRate());
+    Map<String, Object> direction = new HashMap<>();
+    direction.put(OmniRealtimeConstants.AUDIO_FORMAT, format);
+    return direction;
   }
 }

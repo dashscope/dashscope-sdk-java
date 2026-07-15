@@ -8,6 +8,14 @@ public class OmniRealtimeConstants {
   public static final String VOICE = "voice";
   public static final String INPUT_AUDIO_FORMAT = "input_audio_format";
   public static final String OUTPUT_AUDIO_FORMAT = "output_audio_format";
+  // New-style nested upstream/downstream audio format constants, see session.update:
+  // { "audio": { "input": { "format": { "type": "pcm", "sample_rate": 16000 } },
+  //              "output": { "format": { "type": "pcm", "sample_rate": 24000 } } } }
+  public static final String AUDIO = "audio";
+  public static final String AUDIO_INPUT = "input";
+  public static final String AUDIO_OUTPUT = "output";
+  public static final String AUDIO_FORMAT = "format";
+  public static final String AUDIO_FORMAT_TYPE = "type";
   public static final String INPUT_AUDIO_TRANSCRIPTION = "input_audio_transcription";
   public static final String INPUT_AUDIO_TRANSCRIPTION_MODEL = "model";
   public static final String INPUT_AUDIO_TRANSCRIPTION_CORPUS = "corpus";
