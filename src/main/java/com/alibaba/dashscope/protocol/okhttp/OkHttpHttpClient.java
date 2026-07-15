@@ -53,7 +53,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
   private static final MediaType MEDIA_TYPE_APPLICATION_JSON =
       MediaType.parse("application/json; charset=utf-8");
 
-  private Status parseStreamEventData(String data) {
+  private Status parseStreamEventData(String data, int httpStatusCode) {
     try {
       JsonObject jsonResponse = JsonUtils.parse(data);
       String code = "";
@@ -69,7 +69,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
         message = jsonResponse.get(ApiKeywords.MESSAGE).getAsString();
       }
       return Status.builder()
-          .statusCode(400)
+          .statusCode(httpStatusCode)
           .code(code)
           .message(message)
           .requestId(requestId)
@@ -77,8 +77,8 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
           .build();
     } catch (Throwable e) {
       return Status.builder()
-          .statusCode(400)
-          .code(ErrorType.RESPONSE_ERROR.getValue())
+          .statusCode(httpStatusCode)
+          .code("")
           .message(data)
           .isJson(false)
           .build();
@@ -108,11 +108,26 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
           .isJson(true)
           .build();
     } catch (Throwable e) {
+      // Try to extract code/message even if standard parsing failed
+      String extractedCode = "";
+      String extractedMessage = body;
+      try {
+        JsonObject json = JsonUtils.parse(body);
+        if (json.has(ApiKeywords.CODE)) {
+          extractedCode = json.get(ApiKeywords.CODE).getAsString();
+        }
+        if (json.has(ApiKeywords.MESSAGE)) {
+          extractedMessage = json.get(ApiKeywords.MESSAGE).getAsString();
+        }
+      } catch (Exception ex) {
+        // Parsing failed, use defaults
+      }
+
       return Status.builder()
           .statusCode(statusCode)
-          .code(ErrorType.RESPONSE_ERROR.getValue())
-          .message(body)
-          .isJson(true)
+          .code(extractedCode.isEmpty() ? "" : extractedCode)
+          .message(extractedMessage)
+          .isJson(!extractedCode.isEmpty())
           .build();
     }
   }
@@ -137,9 +152,9 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       } catch (IOException e) {
         return Status.builder()
             .statusCode(response.code())
-            .code(ErrorType.RESPONSE_ERROR.getValue())
-            .message("Failed read response body: " + e.getMessage())
-            .isJson(true)
+            .code("")
+            .message("[SDK] Failed to read response body: " + e.getMessage())
+            .isJson(false)
             .build();
       }
       return parseFailedJson(response.code(), body);
@@ -155,24 +170,47 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
         }
         return Status.builder()
             .statusCode(response.code())
-            .code(ErrorType.RESPONSE_ERROR.getValue())
+            .code("")
             .message(body)
             .isJson(false)
             .build();
       } catch (IOException e) {
         return Status.builder()
             .statusCode(response.code())
-            .code(ErrorType.RESPONSE_ERROR.getValue())
-            .message("Failed read response body: " + e.getMessage())
-            .isJson(true)
+            .code("")
+            .message("[SDK] Failed to read SSE response body: " + e.getMessage())
+            .isJson(false)
             .build();
       }
     } else {
+      String body = "";
+      try {
+        body = response.body().string();
+      } catch (IOException e) {
+        log.debug("Failed to read non-JSON response body", e);
+      }
+
+      // Try to extract code/message from body even if Content-Type is not application/json
+      String extractedCode = "";
+      String extractedMessage = body.isEmpty() ? response.message() : body;
+
+      try {
+        JsonObject json = JsonUtils.parse(body);
+        if (json.has(ApiKeywords.CODE)) {
+          extractedCode = json.get(ApiKeywords.CODE).getAsString();
+        }
+        if (json.has(ApiKeywords.MESSAGE)) {
+          extractedMessage = json.get(ApiKeywords.MESSAGE).getAsString();
+        }
+      } catch (Exception ex) {
+        // Parsing failed, use defaults
+      }
+
       return Status.builder()
           .statusCode(response.code())
-          .code(ErrorType.RESPONSE_ERROR.getValue())
-          .message(response.message())
-          .isJson(false)
+          .code(extractedCode.isEmpty() ? "" : extractedCode)
+          .message(extractedMessage)
+          .isJson(!extractedCode.isEmpty())
           .build();
     }
   }
@@ -255,6 +293,10 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                   .build(),
               req.getIsFlatten(),
               req);
+    } catch (ApiException e) {
+      throw e;
+    } catch (NoApiKeyException e) {
+      throw e;
     } catch (Throwable e) {
       throw new ApiException(e);
     }
@@ -308,7 +350,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       HalfDuplexRequest req) {
     log.debug(StringUtils.format("Event: id %s, type: %s, data: %s", id, eventType, data));
     if (SSEEventType.ERROR.equals(eventType)) {
-      Status st = parseStreamEventData(data);
+      Status st = parseStreamEventData(data, response.code());
       emitter.onError(new ApiException(st));
     } else if (SSEEventType.DATA.equals(eventType) || SSEEventType.RESULT.equals(eventType)) {
       emitter.onNext(
@@ -453,7 +495,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                   java.lang.String data) {
                 log.debug(StringUtils.format("Event: id %s, type: %s, data: %s", id, type, data));
                 if (SSEEventType.ERROR.equals(type)) {
-                  Status st = parseStreamEventData(data);
+                  Status st = parseStreamEventData(data, response.code());
                   callback.onError(new ApiException(st));
                 } else if (SSEEventType.DATA.equals(type) || SSEEventType.RESULT.equals(type)) {
                   callback.onEvent(

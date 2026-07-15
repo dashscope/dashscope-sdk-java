@@ -6,6 +6,7 @@ import static com.alibaba.dashscope.utils.ApiKeywords.TASK_STATUS;
 
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.DashScopeResult;
+import com.alibaba.dashscope.common.ErrorType;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.common.TaskStatus;
 import com.alibaba.dashscope.exception.ApiException;
@@ -18,8 +19,10 @@ import com.google.gson.JsonObject;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
 /** Support DashScope async task CRUD. */
+@Slf4j
 public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
   final HalfDuplexClient client;
   ConnectionOptions connectionOptions;
@@ -104,6 +107,10 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
     int maxWaitMilliseconds = 5 * 1000;
     int incrementSteps = 3;
     int step = 0;
+    int transientErrorCount = 0;
+    final int MAX_TRANSIENT_ERRORS = 20;
+    int transientBackoffMs = 1000;
+    final int MAX_TRANSIENT_BACKOFF_MS = 10000;
     long startTime = System.currentTimeMillis();
     long timeoutMillis = timeoutSeconds > 0 ? timeoutSeconds * 1000L : -1L;
     while (true) {
@@ -113,11 +120,11 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
           throw new ApiException(
               Status.builder()
                   .statusCode(HttpURLConnection.HTTP_CLIENT_TIMEOUT)
-                  .code("TaskWaitTimeout")
+                  .code(ErrorType.TASK_WAIT_TIMEOUT.getValue())
                   .message(
                       StringUtils.format(
-                          "Waiting for task [%s] timed out after %d ms (timeoutSeconds=%d).",
-                          taskId, elapsed, timeoutSeconds))
+                          "Waiting for task [%s] timed out after %d ms (timeoutSeconds=%d). Encountered %d transient errors (503/504) during polling.",
+                          taskId, elapsed, timeoutSeconds, transientErrorCount))
                   .build());
         }
       }
@@ -163,6 +170,38 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
             && e.getStatus().getStatusCode() != HttpURLConnection.HTTP_GATEWAY_TIMEOUT) {
           throw e;
         }
+        transientErrorCount++;
+        log.warn(
+            "Transient error during async task polling [taskId={}]: status={}, message={}, retry_count={}, backoff_ms={}",
+            taskId,
+            e.getStatus().getStatusCode(),
+            e.getMessage(),
+            transientErrorCount,
+            transientBackoffMs);
+        if (transientErrorCount >= MAX_TRANSIENT_ERRORS) {
+          throw new ApiException(
+              Status.builder()
+                  .statusCode(e.getStatus().getStatusCode())
+                  .code("TooManyTransientErrors")
+                  .message(
+                      StringUtils.format(
+                          "Encountered %d transient errors (503/504) while waiting for task [%s]. The service may be experiencing issues. Last error: %s",
+                          transientErrorCount, taskId, e.getMessage()))
+                  .build());
+        }
+        long sleepMs = transientBackoffMs;
+        if (timeoutMillis > 0) {
+          long remaining = timeoutMillis - (System.currentTimeMillis() - startTime);
+          if (remaining <= 0) {
+            continue;
+          }
+          sleepMs = Math.min(sleepMs, remaining);
+        }
+        try {
+          Thread.sleep(sleepMs);
+        } catch (InterruptedException ignored) {
+        }
+        transientBackoffMs = Math.min(transientBackoffMs * 2, MAX_TRANSIENT_BACKOFF_MS);
       }
     }
   }

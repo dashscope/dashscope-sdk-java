@@ -68,6 +68,15 @@ public class DashScopeResult extends Result {
             // Set default empty string for successful responses
             this.setMessage("");
           }
+          if (this.getCode() != null && !this.getCode().isEmpty()) {
+            throw new ApiException(
+                Status.builder()
+                    .statusCode(this.getStatusCode())
+                    .code(this.getCode())
+                    .message(this.getMessage())
+                    .requestId(this.getRequestId())
+                    .build());
+          }
         }
         if (jsonObject.has(ApiKeywords.PAYLOAD)) {
           JsonObject payload = jsonObject.getAsJsonObject(ApiKeywords.PAYLOAD);
@@ -131,6 +140,15 @@ public class DashScopeResult extends Result {
       } else {
         // Set default empty string for successful responses
         this.setMessage("");
+      }
+      if (this.getCode() != null && !this.getCode().isEmpty()) {
+        throw new ApiException(
+            Status.builder()
+                .statusCode(this.getStatusCode())
+                .code(this.getCode())
+                .message(this.getMessage())
+                .requestId(this.getRequestId())
+                .build());
       }
       if (jsonObject.has(ApiKeywords.DATA)) {
         if (jsonObject.has(ApiKeywords.REQUEST_ID)) {
@@ -229,6 +247,15 @@ public class DashScopeResult extends Result {
       } else {
         // Set default empty string for successful responses
         this.setMessage("");
+      }
+      if (this.getCode() != null && !this.getCode().isEmpty()) {
+        throw new ApiException(
+            Status.builder()
+                .statusCode(this.getStatusCode())
+                .code(this.getCode())
+                .message(this.getMessage())
+                .requestId(this.getRequestId())
+                .build());
       }
       if (jsonObject.has(ApiKeywords.DATA)) {
         if (jsonObject.has(ApiKeywords.REQUEST_ID)) {

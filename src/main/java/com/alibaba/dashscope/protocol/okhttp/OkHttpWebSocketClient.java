@@ -3,6 +3,7 @@
 package com.alibaba.dashscope.protocol.okhttp;
 
 import com.alibaba.dashscope.common.DashScopeResult;
+import com.alibaba.dashscope.common.ErrorType;
 import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.exception.ApiException;
@@ -176,7 +177,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
     }
     throw new ApiException(
         Status.builder()
-            .code("ConnectionError")
+            .code(ErrorType.CONNECTION_ERROR.getValue())
             .message(errorMessage)
             .statusCode(Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE)
             .build());
@@ -312,6 +313,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
           } else {
             log.error(StringUtils.format("Something wrong, receive task failed message: %s", text));
           }
+          break;
         case TASK_FINISHED:
           // check the payload and usage is null.
           if (response.payload.output != null || response.payload.usage != null) {
@@ -334,9 +336,9 @@ public class OkHttpWebSocketClient extends WebSocketListener
                       isFlattenResult));
           break;
         default:
-          // throw new ApiException(Status.builder().code("")
-          // .message(StringUtils.format("Receive unknown message: %s", text))
-          // .statusCode(Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE).build());
+          // Protocol layer error: received undefined event type.
+          // This is SDK-level handling, not an API standard error code.
+          // Kept as hardcoded string to avoid polluting global ErrorType enum.
           responseEmitter.onError(
               new ApiException(
                   Status.builder()
@@ -346,6 +348,9 @@ public class OkHttpWebSocketClient extends WebSocketListener
                       .build()));
       }
     } catch (Throwable ex) {
+      // Protocol layer error: JSON deserialization failed.
+      // This is SDK-level handling for malformed messages, not an API standard error.
+      // Kept as hardcoded string to maintain separation from business-layer errors.
       responseEmitter.onError(
           new ApiException(
               Status.builder()

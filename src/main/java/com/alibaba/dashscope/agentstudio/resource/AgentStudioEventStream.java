@@ -95,12 +95,23 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
     } catch (IOException e) {
       log.debug("Failed to read SSE failure response body", e);
     }
-    Status status =
-        Status.builder()
-            .statusCode(code)
-            .code(code >= 500 ? "server_error" : code == 401 ? "auth_error" : "http_error")
-            .message(body.isEmpty() ? "HTTP " + code : body)
-            .build();
+
+    // Try to extract original error code and message from response body
+    String apiCode = "";
+    String apiMessage = body;
+    try {
+      com.google.gson.JsonObject json = com.alibaba.dashscope.utils.JsonUtils.parse(body);
+      if (json.has("code")) {
+        apiCode = json.get("code").getAsString();
+      }
+      if (json.has("message")) {
+        apiMessage = json.get("message").getAsString();
+      }
+    } catch (Exception e) {
+      log.debug("Failed to parse error response body as JSON", e);
+    }
+
+    Status status = Status.builder().statusCode(code).code(apiCode).message(apiMessage).build();
     return new ApiException(status, t);
   }
 

@@ -1,7 +1,6 @@
 package com.alibaba.dashscope.utils;
 
 import com.alibaba.dashscope.common.DashScopeResult;
-import com.alibaba.dashscope.common.ErrorType;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
@@ -191,16 +190,22 @@ public final class OSSUtils {
       } catch (Throwable e) {
         return Status.builder()
             .statusCode(response.code())
-            .code(ErrorType.RESPONSE_ERROR.getValue())
+            .code("")
             .message(response.message())
             .isJson(isJson)
             .build();
       }
     } else {
+      String body = "";
+      try {
+        body = response.body().string();
+      } catch (IOException e) {
+        log.debug("Failed to read non-JSON response body", e);
+      }
       return Status.builder()
           .statusCode(response.code())
-          .code(ErrorType.RESPONSE_ERROR.getValue())
-          .message(response.message())
+          .code("")
+          .message(body.isEmpty() ? response.message() : body)
           .isJson(isJson)
           .build();
     }
