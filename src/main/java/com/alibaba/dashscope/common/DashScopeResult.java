@@ -69,9 +69,10 @@ public class DashScopeResult extends Result {
             this.setMessage("");
           }
           if (this.getCode() != null && !this.getCode().isEmpty()) {
+            int resolvedStatusCode = resolveStatusCode(this.getStatusCode(), response.getHttpStatusCode(), this.getCode());
             throw new ApiException(
                 Status.builder()
-                    .statusCode(this.getStatusCode() == null ? 200 : this.getStatusCode())
+                    .statusCode(resolvedStatusCode)
                     .code(this.getCode())
                     .message(this.getMessage())
                     .requestId(this.getRequestId())
@@ -142,9 +143,10 @@ public class DashScopeResult extends Result {
         this.setMessage("");
       }
       if (this.getCode() != null && !this.getCode().isEmpty()) {
+        int resolvedStatusCode = resolveStatusCode(this.getStatusCode(), response.getHttpStatusCode(), this.getCode());
         throw new ApiException(
             Status.builder()
-                .statusCode(this.getStatusCode() == null ? 200 : this.getStatusCode())
+                .statusCode(resolvedStatusCode)
                 .code(this.getCode())
                 .message(this.getMessage())
                 .requestId(this.getRequestId())
@@ -249,9 +251,10 @@ public class DashScopeResult extends Result {
         this.setMessage("");
       }
       if (this.getCode() != null && !this.getCode().isEmpty()) {
+        int resolvedStatusCode = resolveStatusCode(this.getStatusCode(), response.getHttpStatusCode(), this.getCode());
         throw new ApiException(
             Status.builder()
-                .statusCode(this.getStatusCode() == null ? 200 : this.getStatusCode())
+                .statusCode(resolvedStatusCode)
                 .code(this.getCode())
                 .message(this.getMessage())
                 .requestId(this.getRequestId())
@@ -282,5 +285,35 @@ public class DashScopeResult extends Result {
                 },
                 (v1, v2) -> v1,
                 java.util.LinkedHashMap::new));
+  }
+
+  /**
+   * Resolve the appropriate HTTP status code for an API exception.
+   * Priority: 1) Body status_code, 2) HTTP response status code, 3) Infer from error code.
+   */
+  private int resolveStatusCode(Integer bodyStatusCode, Integer httpStatusCode, String errorCode) {
+    if (bodyStatusCode != null && bodyStatusCode != 200) {
+      return bodyStatusCode;
+    }
+    if (httpStatusCode != null && httpStatusCode != 200) {
+      return httpStatusCode;
+    }
+    // Infer status code from business error code when both are 200 or null
+    if (errorCode != null) {
+      if (errorCode.contains("InvalidParameter") || errorCode.contains("BadRequest")) {
+        return 400;
+      } else if (errorCode.contains("Unauthorized") || errorCode.contains("ApiKey")) {
+        return 401;
+      } else if (errorCode.contains("Forbidden") || errorCode.contains("AccessDenied")) {
+        return 403;
+      } else if (errorCode.contains("NotFound")) {
+        return 404;
+      } else if (errorCode.contains("Throttling") || errorCode.contains("RateLimit")) {
+        return 429;
+      } else if (errorCode.contains("InternalError") || errorCode.contains("SystemError")) {
+        return 500;
+      }
+    }
+    return bodyStatusCode != null ? bodyStatusCode : (httpStatusCode != null ? httpStatusCode : 200);
   }
 }
