@@ -154,7 +154,7 @@ public class TestHalfDuplexWebSocketApi {
     // Add timeout to avoid indefinite blocking due to race conditions
     boolean acquired = semaphore.tryAcquire(5, TimeUnit.SECONDS);
     if (!acquired) {
-        throw new AssertionError("Timeout waiting for callback - results size: " + results.size());
+      throw new AssertionError("Timeout waiting for callback - results size: " + results.size());
     }
     serverListener.assertHalfDuplexRequest(param, StreamingMode.NONE.getValue());
     assertEquals(results.get(0).getOutput(), textOutput);
@@ -207,7 +207,7 @@ public class TestHalfDuplexWebSocketApi {
     // Add timeout to avoid indefinite blocking due to race conditions
     boolean acquired = semaphore.tryAcquire(5, TimeUnit.SECONDS);
     if (!acquired) {
-        throw new AssertionError("Timeout waiting for callback - results size: " + results.size());
+      throw new AssertionError("Timeout waiting for callback - results size: " + results.size());
     }
     serverListener.assertResources(resources);
   }
@@ -253,7 +253,7 @@ public class TestHalfDuplexWebSocketApi {
     // Add timeout to avoid indefinite blocking due to race conditions
     boolean acquired = semaphore.tryAcquire(5, TimeUnit.SECONDS);
     if (!acquired) {
-        throw new AssertionError("Timeout waiting for callback - results size: " + results.size());
+      throw new AssertionError("Timeout waiting for callback - results size: " + results.size());
     }
     serverListener.assertHalfDuplexRequest(param, StreamingMode.NONE.getValue());
     assertEquals(results.get(0).getOutput(), textOutput);
@@ -301,7 +301,7 @@ public class TestHalfDuplexWebSocketApi {
     // Add timeout to avoid indefinite blocking due to race conditions
     boolean acquired = semaphore.tryAcquire(2, 5, TimeUnit.SECONDS);
     if (!acquired) {
-        throw new AssertionError("Timeout waiting for callback - results size: " + results.size());
+      throw new AssertionError("Timeout waiting for callback - results size: " + results.size());
     }
     serverListener.assertHalfDuplexRequest(param, StreamingMode.NONE.getValue());
     assertEquals((ByteBuffer) results.get(0).getOutput(), binaryOutput.position(0));
@@ -349,7 +349,7 @@ public class TestHalfDuplexWebSocketApi {
     // Add timeout to avoid indefinite blocking due to race conditions
     boolean acquired = semaphore.tryAcquire(2, 5, TimeUnit.SECONDS);
     if (!acquired) {
-        throw new AssertionError("Timeout waiting for callback - results size: " + results.size());
+      throw new AssertionError("Timeout waiting for callback - results size: " + results.size());
     }
     serverListener.assertHalfDuplexRequest(param, StreamingMode.NONE.getValue());
     assertEquals((ByteBuffer) results.get(0).getOutput(), binaryOutput.position(0));
@@ -400,7 +400,7 @@ public class TestHalfDuplexWebSocketApi {
     // Add timeout to avoid indefinite blocking due to race conditions
     boolean acquired = semaphore.tryAcquire(3, 5, TimeUnit.SECONDS);
     if (!acquired) {
-        throw new AssertionError("Timeout waiting for callback - results size: " + results.size());
+      throw new AssertionError("Timeout waiting for callback - results size: " + results.size());
     }
     serverListener.assertHalfDuplexRequest(param, StreamingMode.NONE.getValue());
     assertEquals((ByteBuffer) results.get(0).getOutput(), binaryOutput.position(0));

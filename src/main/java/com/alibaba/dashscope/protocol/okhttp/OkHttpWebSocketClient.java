@@ -599,25 +599,26 @@ public class OkHttpWebSocketClient extends WebSocketListener
                 this.isFlattenResult = req.getIsFlatten();
               },
               BackpressureStrategy.BUFFER);
-      
+
       // Subscribe first to initialize responseEmitter
-      Disposable subscription = flowable.subscribe(
-          msg -> {
-            callback.onEvent(msg);
-          },
-          err -> {
-            callback.onError(new ApiException(err));
-          },
-          new Action() {
-            @Override
-            public void run() throws Exception {
-              callback.onComplete();
-            }
-          });
-      
+      Disposable subscription =
+          flowable.subscribe(
+              msg -> {
+                callback.onEvent(msg);
+              },
+              err -> {
+                callback.onError(new ApiException(err));
+              },
+              new Action() {
+                @Override
+                public void run() throws Exception {
+                  callback.onComplete();
+                }
+              });
+
       // Now send the request - responseEmitter is already initialized and active
       sendBatchRequest(req);
-      
+
       // Note: Don't dispose here - let the WebSocket lifecycle manage the subscription
       // The subscription will be completed when onClosing/onFailure is called
     } else {
