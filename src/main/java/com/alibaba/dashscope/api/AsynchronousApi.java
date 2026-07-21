@@ -6,7 +6,7 @@ import static com.alibaba.dashscope.utils.ApiKeywords.TASK_STATUS;
 
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.DashScopeResult;
-import com.alibaba.dashscope.common.ErrorType;
+import com.alibaba.dashscope.common.PublicErrorDef;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.common.TaskStatus;
 import com.alibaba.dashscope.exception.ApiException;
@@ -119,12 +119,16 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
         if (elapsed >= timeoutMillis) {
           throw new ApiException(
               Status.builder()
-                  .statusCode(HttpURLConnection.HTTP_CLIENT_TIMEOUT)
-                  .code(ErrorType.TASK_WAIT_TIMEOUT.getValue())
+                  .statusCode(PublicErrorDef.REQUEST_TIMEOUT.getStatusCode())
+                  .code(PublicErrorDef.REQUEST_TIMEOUT.getErrorCode())
                   .message(
                       StringUtils.format(
-                          "Waiting for task [%s] timed out after %d ms (timeoutSeconds=%d). Encountered %d transient errors (503/504) during polling.",
-                          taskId, elapsed, timeoutSeconds, transientErrorCount))
+                          "%s [taskId=%s, elapsed=%d ms, timeoutSeconds=%d, transientErrors=%d]",
+                          PublicErrorDef.REQUEST_TIMEOUT.getErrorMsg(),
+                          taskId,
+                          elapsed,
+                          timeoutSeconds,
+                          transientErrorCount))
                   .build());
         }
       }
@@ -166,9 +170,12 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
             Thread.currentThread().interrupt();
             throw new ApiException(
                 Status.builder()
-                    .statusCode(-1)
-                    .code("Interrupted")
-                    .message("Thread was interrupted while waiting for task.")
+                    .statusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode())
+                    .code(PublicErrorDef.INTERNAL_ERROR.getErrorCode())
+                    .message(
+                        StringUtils.format(
+                            "%s [taskId=%s, reason=thread_interrupted]",
+                            PublicErrorDef.INTERNAL_ERROR.getErrorMsg(), taskId))
                     .build(),
                 e);
           }
@@ -189,35 +196,34 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
         if (transientErrorCount >= MAX_TRANSIENT_ERRORS) {
           throw new ApiException(
               Status.builder()
-                  .statusCode(e.getStatus().getStatusCode())
-                  .code("TooManyTransientErrors")
+                  .statusCode(PublicErrorDef.SERVICE_UNAVAILABLE.getStatusCode())
+                  .code(PublicErrorDef.SERVICE_UNAVAILABLE.getErrorCode())
                   .message(
                       StringUtils.format(
-                          "Encountered %d transient errors (503/504) while waiting for task [%s]. The service may be experiencing issues. Last error: %s",
-                          transientErrorCount, taskId, e.getMessage()))
+                          "%s [taskId=%s, transientErrors=%d, lastError=%s]",
+                          PublicErrorDef.SERVICE_UNAVAILABLE.getErrorMsg(),
+                          taskId,
+                          transientErrorCount,
+                          e.getMessage()))
                   .build());
         }
-        long sleepMs = transientBackoffMs;
-        if (timeoutMillis > 0) {
-          long remaining = timeoutMillis - (System.currentTimeMillis() - startTime);
-          if (remaining <= 0) {
-            continue;
-          }
-          sleepMs = Math.min(sleepMs, remaining);
-        }
+        transientBackoffMs = Math.min(transientBackoffMs * 2, MAX_TRANSIENT_BACKOFF_MS);
         try {
-          Thread.sleep(sleepMs);
+          Thread.sleep(transientBackoffMs);
         } catch (InterruptedException ie) {
           Thread.currentThread().interrupt();
           throw new ApiException(
               Status.builder()
-                  .statusCode(-1)
-                  .code("Interrupted")
-                  .message("Thread was interrupted while waiting for task.")
+                  .statusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode())
+                  .code(PublicErrorDef.INTERNAL_ERROR.getErrorCode())
+                  .message(
+                      StringUtils.format(
+                          "%s [taskId=%s, reason=thread_interrupted]",
+                          PublicErrorDef.INTERNAL_ERROR.getErrorMsg(), taskId))
                   .build(),
               ie);
         }
-        transientBackoffMs = Math.min(transientBackoffMs * 2, MAX_TRANSIENT_BACKOFF_MS);
+        continue;
       }
     }
   }

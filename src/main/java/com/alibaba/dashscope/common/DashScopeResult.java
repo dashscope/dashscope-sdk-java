@@ -11,6 +11,7 @@ import com.alibaba.dashscope.utils.EncryptionUtils;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -68,15 +69,29 @@ public class DashScopeResult extends Result {
             // Set default empty string for successful responses
             this.setMessage("");
           }
-          if (this.getCode() != null && !this.getCode().isEmpty()) {
-            int resolvedStatusCode =
-                resolveStatusCode(
-                    this.getStatusCode(), response.getHttpStatusCode(), this.getCode());
+          String errorCode = this.getCode();
+          if (errorCode != null && !errorCode.isEmpty()) {
+            int statusCode =
+                resolveStatusCode(this.getStatusCode(), response.getHttpStatusCode(), errorCode);
             throw new ApiException(
                 Status.builder()
-                    .statusCode(resolvedStatusCode)
-                    .code(this.getCode())
-                    .message(this.getMessage())
+                    .statusCode(statusCode > 0 ? statusCode : 500)
+                    .code(errorCode)
+                    .message(this.getMessage() != null ? this.getMessage() : "Unknown error")
+                    .requestId(this.getRequestId())
+                    .build());
+          } else if (response.getHttpStatusCode() >= 400) {
+            throw new ApiException(
+                Status.builder()
+                    .statusCode(response.getHttpStatusCode())
+                    .code(ErrorType.NON_JSON_RESPONSE.getValue())
+                    .message(
+                        "HTTP "
+                            + response.getHttpStatusCode()
+                            + ": "
+                            + (response.getMessage() != null
+                                ? response.getMessage()
+                                : "No message"))
                     .requestId(this.getRequestId())
                     .build());
           }
@@ -156,9 +171,7 @@ public class DashScopeResult extends Result {
                 .build());
       }
       if (jsonObject.has(ApiKeywords.DATA)) {
-        if (jsonObject.has(ApiKeywords.REQUEST_ID)) {
-          jsonObject.remove(ApiKeywords.REQUEST_ID);
-        }
+        jsonObject.remove(ApiKeywords.REQUEST_ID);
         this.output = jsonObject;
       }
     }
@@ -291,9 +304,30 @@ public class DashScopeResult extends Result {
                 java.util.LinkedHashMap::new));
   }
 
+  /** Keyword-to-status mapping for legacy / non-standard error codes. */
+  private static final Map<String, Integer> LEGACY_ERROR_KEYWORDS = new LinkedHashMap<>();
+
+  static {
+    LEGACY_ERROR_KEYWORDS.put("InvalidParameter", 400);
+    LEGACY_ERROR_KEYWORDS.put("BadRequest", 400);
+    LEGACY_ERROR_KEYWORDS.put("Unauthorized", 401);
+    LEGACY_ERROR_KEYWORDS.put("ApiKey", 401);
+    LEGACY_ERROR_KEYWORDS.put("Forbidden", 403);
+    LEGACY_ERROR_KEYWORDS.put("AccessDenied", 403);
+    LEGACY_ERROR_KEYWORDS.put("NotFound", 404);
+    LEGACY_ERROR_KEYWORDS.put("Throttling", 429);
+    LEGACY_ERROR_KEYWORDS.put("RateLimit", 429);
+    LEGACY_ERROR_KEYWORDS.put("InternalError", 500);
+    LEGACY_ERROR_KEYWORDS.put("SystemError", 500);
+  }
+
   /**
    * Resolve the appropriate HTTP status code for an API exception. Priority: 1) Body status_code,
-   * 2) HTTP response status code, 3) Infer from error code.
+   * 2) HTTP response status code, 3) Exact match in PublicErrorDef, 4) Keyword match for legacy
+   * error codes, 5) Default to bodyStatusCode/httpStatusCode/200.
+   *
+   * <p>This method is null-safe: all parameters accept {@code null} values and will never cause
+   * NullPointerException. Returns a primitive {@code int}, safe for direct use in builders.
    */
   private int resolveStatusCode(Integer bodyStatusCode, Integer httpStatusCode, String errorCode) {
     if (bodyStatusCode != null && bodyStatusCode != 200) {
@@ -302,20 +336,21 @@ public class DashScopeResult extends Result {
     if (httpStatusCode != null && httpStatusCode != 200) {
       return httpStatusCode;
     }
-    // Infer status code from business error code when both are 200 or null
     if (errorCode != null) {
-      if (errorCode.contains("InvalidParameter") || errorCode.contains("BadRequest")) {
-        return 400;
-      } else if (errorCode.contains("Unauthorized") || errorCode.contains("ApiKey")) {
-        return 401;
-      } else if (errorCode.contains("Forbidden") || errorCode.contains("AccessDenied")) {
-        return 403;
-      } else if (errorCode.contains("NotFound")) {
-        return 404;
-      } else if (errorCode.contains("Throttling") || errorCode.contains("RateLimit")) {
-        return 429;
-      } else if (errorCode.contains("InternalError") || errorCode.contains("SystemError")) {
-        return 500;
+      // Exact match against PublicErrorDef
+      for (PublicErrorDef def : PublicErrorDef.values()) {
+        if (def.getErrorCode().equals(errorCode)) {
+          return def.getStatusCode();
+        }
+      }
+      // Fallback: exact match first, then keyword match for non-standard / legacy error codes
+      if (LEGACY_ERROR_KEYWORDS.containsKey(errorCode)) {
+        return LEGACY_ERROR_KEYWORDS.get(errorCode);
+      }
+      for (Map.Entry<String, Integer> entry : LEGACY_ERROR_KEYWORDS.entrySet()) {
+        if (errorCode.contains(entry.getKey())) {
+          return entry.getValue();
+        }
       }
     }
     return bodyStatusCode != null

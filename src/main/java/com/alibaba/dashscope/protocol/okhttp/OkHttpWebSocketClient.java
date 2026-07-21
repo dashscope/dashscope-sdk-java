@@ -3,7 +3,7 @@
 package com.alibaba.dashscope.protocol.okhttp;
 
 import com.alibaba.dashscope.common.DashScopeResult;
-import com.alibaba.dashscope.common.ErrorType;
+import com.alibaba.dashscope.common.PublicErrorDef;
 import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.exception.ApiException;
@@ -177,9 +177,12 @@ public class OkHttpWebSocketClient extends WebSocketListener
     }
     throw new ApiException(
         Status.builder()
-            .code(ErrorType.CONNECTION_ERROR.getValue())
-            .message(errorMessage)
-            .statusCode(Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE)
+            .statusCode(PublicErrorDef.SERVICE_UNAVAILABLE.getStatusCode())
+            .code(PublicErrorDef.SERVICE_UNAVAILABLE.getErrorCode())
+            .message(
+                StringUtils.format(
+                    "%s [originalError=%s]",
+                    PublicErrorDef.SERVICE_UNAVAILABLE.getErrorMsg(), errorMessage))
             .build());
   }
 
@@ -801,7 +804,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
               this.isFlattenResult = req.getIsFlatten();
             },
             BackpressureStrategy.BUFFER);
-    flowable.subscribe().dispose();
+    // No need to subscribe here: sendStreamRequest() handles the actual WebSocket connection
+    // and the returned flowable will be subscribed by the caller
     CompletableFuture<Void> future = sendStreamRequest(req);
 
     return flowable

@@ -1,6 +1,7 @@
 package com.alibaba.dashscope.utils;
 
 import com.alibaba.dashscope.common.DashScopeResult;
+import com.alibaba.dashscope.common.PublicErrorDef;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
@@ -32,6 +33,16 @@ import okhttp3.Response;
 
 @Slf4j
 public final class OSSUtils {
+
+  /** Pre-built mapping from HTTP status code to PublicErrorDef for fast lookup. */
+  private static final Map<Integer, PublicErrorDef> STATUS_CODE_TO_DEF = new HashMap<>();
+
+  static {
+    for (PublicErrorDef def : PublicErrorDef.values()) {
+      STATUS_CODE_TO_DEF.putIfAbsent(def.getStatusCode(), def);
+    }
+  }
+
   /**
    * Upload file to OSS without certificate reuse.
    *
@@ -188,10 +199,11 @@ public final class OSSUtils {
             .isJson(isJson)
             .build();
       } catch (Throwable e) {
+        PublicErrorDef matchedDef = STATUS_CODE_TO_DEF.get(response.code());
         return Status.builder()
             .statusCode(response.code())
-            .code("")
-            .message(response.message())
+            .code(matchedDef != null ? matchedDef.getErrorCode() : "")
+            .message(matchedDef != null ? matchedDef.getErrorMsg() : response.message())
             .isJson(isJson)
             .build();
       }
@@ -202,10 +214,14 @@ public final class OSSUtils {
       } catch (IOException e) {
         log.debug("Failed to read non-JSON response body", e);
       }
+      PublicErrorDef matchedDef = STATUS_CODE_TO_DEF.get(response.code());
       return Status.builder()
           .statusCode(response.code())
-          .code("")
-          .message(body.isEmpty() ? response.message() : body)
+          .code(matchedDef != null ? matchedDef.getErrorCode() : "")
+          .message(
+              matchedDef != null
+                  ? matchedDef.getErrorMsg()
+                  : (body.isEmpty() ? response.message() : body))
           .isJson(isJson)
           .build();
     }

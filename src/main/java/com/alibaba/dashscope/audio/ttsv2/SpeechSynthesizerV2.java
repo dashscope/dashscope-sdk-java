@@ -354,6 +354,7 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
     if (callback != null) {
       String errorCode = "";
       String errorMessage = "";
+      int statusCode = -1;
       if (message.has("header")) {
         JsonObject header = message.getAsJsonObject("header");
         if (header.has("error_code")) {
@@ -362,11 +363,14 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
         if (header.has("error_message")) {
           errorMessage = header.get("error_message").getAsString();
         }
+        if (header.has("status_code") && !header.get("status_code").isJsonNull()) {
+          statusCode = header.get("status_code").getAsInt();
+        }
       }
 
       com.alibaba.dashscope.common.Status status =
           com.alibaba.dashscope.common.Status.builder()
-              .statusCode(-1)
+              .statusCode(statusCode)
               .code(errorCode)
               .message(errorMessage)
               .build();

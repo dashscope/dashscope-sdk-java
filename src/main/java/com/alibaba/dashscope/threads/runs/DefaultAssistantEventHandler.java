@@ -6,10 +6,8 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 
 /** An sample assistant event handler. */
-@Slf4j
 @Data
 public class DefaultAssistantEventHandler implements AssistantEventHandler {
   private AssistantThread assistantThread;
@@ -190,7 +188,7 @@ public class DefaultAssistantEventHandler implements AssistantEventHandler {
 
   @Override
   public void onUnknown(String msg) {
-    log.warn("Received unknown message: {}", msg);
+    // Unknown message type received, no action needed
   }
 
   @Override

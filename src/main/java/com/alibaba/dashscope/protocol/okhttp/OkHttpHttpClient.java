@@ -62,7 +62,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       if (jsonResponse.has(ApiKeywords.REQUEST_ID)) {
         requestId = jsonResponse.get(ApiKeywords.REQUEST_ID).getAsString();
       }
-      if (jsonResponse.has(ApiKeywords.CODE)) {
+      if (jsonResponse.has(ApiKeywords.CODE) && !jsonResponse.get(ApiKeywords.CODE).isJsonNull()) {
         code = jsonResponse.get(ApiKeywords.CODE).getAsString();
       }
       if (jsonResponse.has(ApiKeywords.MESSAGE)) {
@@ -94,7 +94,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       if (jsonResponse.has(ApiKeywords.REQUEST_ID)) {
         requestId = jsonResponse.get(ApiKeywords.REQUEST_ID).getAsString();
       }
-      if (jsonResponse.has(ApiKeywords.CODE)) {
+      if (jsonResponse.has(ApiKeywords.CODE) && !jsonResponse.get(ApiKeywords.CODE).isJsonNull()) {
         code = jsonResponse.get(ApiKeywords.CODE).getAsString();
       }
       if (jsonResponse.has(ApiKeywords.MESSAGE)) {
@@ -152,7 +152,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       } catch (IOException e) {
         return Status.builder()
             .statusCode(response.code())
-            .code("")
+            .code(ErrorType.BODY_READ_ERROR.getValue())
             .message("[SDK] Failed to read response body: " + e.getMessage())
             .isJson(false)
             .build();
@@ -170,14 +170,14 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
         }
         return Status.builder()
             .statusCode(response.code())
-            .code("")
+            .code(ErrorType.NON_JSON_RESPONSE.getValue())
             .message(body.isEmpty() ? response.message() : body)
             .isJson(false)
             .build();
       } catch (IOException e) {
         return Status.builder()
             .statusCode(response.code())
-            .code("")
+            .code(ErrorType.BODY_READ_ERROR.getValue())
             .message("[SDK] Failed to read SSE response body: " + e.getMessage())
             .isJson(false)
             .build();
@@ -208,7 +208,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
 
       return Status.builder()
           .statusCode(response.code())
-          .code(extractedCode.isEmpty() ? "" : extractedCode)
+          .code(extractedCode.isEmpty() ? ErrorType.NON_JSON_RESPONSE.getValue() : extractedCode)
           .message(extractedMessage)
           .isJson(!extractedCode.isEmpty())
           .build();
