@@ -283,21 +283,35 @@ public class OkHttpWebSocketClient extends WebSocketListener
         case TASK_STARTED:
           // if has payload, call onNext.
           if (response.payload.output != null || response.payload.usage != null) {
-            responseEmitter.onNext(
-                new DashScopeResult()
-                    .fromResponse(
-                        Protocol.WEBSOCKET,
-                        NetworkResponse.builder().message(text).build(),
-                        isFlattenResult));
+            try {
+              responseEmitter.onNext(
+                  new DashScopeResult()
+                      .fromResponse(
+                          Protocol.WEBSOCKET,
+                          NetworkResponse.builder().message(text).httpStatusCode(200).build(),
+                          isFlattenResult));
+            } catch (Exception e) {
+              log.error("Failed to create result for TASK_STARTED", e);
+              if (!responseEmitter.isCancelled()) {
+                responseEmitter.onError(e);
+              }
+            }
           } else if (passTaskStarted.get()) {
-            DashScopeResult start_message =
-                new DashScopeResult()
-                    .fromResponse(
-                        Protocol.WEBSOCKET,
-                        NetworkResponse.builder().message(text).build(),
-                        isFlattenResult);
-            start_message.setEvent(WebSocketEventType.TASK_STARTED.getValue());
-            responseEmitter.onNext(start_message);
+            try {
+              DashScopeResult start_message =
+                  new DashScopeResult()
+                      .fromResponse(
+                          Protocol.WEBSOCKET,
+                          NetworkResponse.builder().message(text).httpStatusCode(200).build(),
+                          isFlattenResult);
+              start_message.setEvent(WebSocketEventType.TASK_STARTED.getValue());
+              responseEmitter.onNext(start_message);
+            } catch (Exception e) {
+              log.error("Failed to create start_message for TASK_STARTED", e);
+              if (!responseEmitter.isCancelled()) {
+                responseEmitter.onError(e);
+              }
+            }
           }
           break;
         case TASK_FAILED:
@@ -320,23 +334,37 @@ public class OkHttpWebSocketClient extends WebSocketListener
         case TASK_FINISHED:
           // check the payload and usage is null.
           if (response.payload.output != null || response.payload.usage != null) {
-            responseEmitter.onNext(
-                new DashScopeResult()
-                    .fromResponse(
-                        Protocol.WEBSOCKET,
-                        NetworkResponse.builder().message(text).build(),
-                        isFlattenResult));
+            try {
+              responseEmitter.onNext(
+                  new DashScopeResult()
+                      .fromResponse(
+                          Protocol.WEBSOCKET,
+                          NetworkResponse.builder().message(text).httpStatusCode(200).build(),
+                          isFlattenResult));
+            } catch (Exception e) {
+              log.error("[DEBUG] Failed to create result for TASK_FINISHED", e);
+              if (!responseEmitter.isCancelled()) {
+                responseEmitter.onError(e);
+              }
+            }
           }
           responseEmitter.onComplete();
           break;
         case RESULT_GENERATED:
           // get payload and usage.
-          responseEmitter.onNext(
-              new DashScopeResult()
-                  .fromResponse(
-                      Protocol.WEBSOCKET,
-                      NetworkResponse.builder().message(text).build(),
-                      isFlattenResult));
+          try {
+            responseEmitter.onNext(
+                new DashScopeResult()
+                    .fromResponse(
+                        Protocol.WEBSOCKET,
+                        NetworkResponse.builder().message(text).httpStatusCode(200).build(),
+                        isFlattenResult));
+          } catch (Exception e) {
+            log.error("Failed to create result for RESULT_GENERATED", e);
+            if (!responseEmitter.isCancelled()) {
+              responseEmitter.onError(e);
+            }
+          }
           break;
         default:
           // Protocol layer error: received undefined event type.
@@ -562,6 +590,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
   public void send(HalfDuplexRequest req, ResultCallback<DashScopeResult> callback) {
     if (req.getStreamingMode() == StreamingMode.NONE
         || req.getStreamingMode() == StreamingMode.IN) {
+      // Create flowable and subscribe with callback directly
+      // No need for the initial subscribe().dispose() pattern which causes emitter to be disposed
       Flowable<DashScopeResult> flowable =
           Flowable.<DashScopeResult>create(
               emitter -> {
@@ -569,9 +599,9 @@ public class OkHttpWebSocketClient extends WebSocketListener
                 this.isFlattenResult = req.getIsFlatten();
               },
               BackpressureStrategy.BUFFER);
-      flowable.subscribe().dispose();
-      sendBatchRequest(req);
-      flowable.subscribe(
+      
+      // Subscribe first to initialize responseEmitter
+      Disposable subscription = flowable.subscribe(
           msg -> {
             callback.onEvent(msg);
           },
@@ -584,6 +614,12 @@ public class OkHttpWebSocketClient extends WebSocketListener
               callback.onComplete();
             }
           });
+      
+      // Now send the request - responseEmitter is already initialized and active
+      sendBatchRequest(req);
+      
+      // Note: Don't dispose here - let the WebSocket lifecycle manage the subscription
+      // The subscription will be completed when onClosing/onFailure is called
     } else {
       throw new ApiException(
           Status.builder()

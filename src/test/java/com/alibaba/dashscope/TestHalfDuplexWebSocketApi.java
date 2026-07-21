@@ -151,7 +151,11 @@ public class TestHalfDuplexWebSocketApi {
         wsServer,
         JsonUtils.toJson(WebSocketServerMessage.getTaskGeneratedMessage(textOutput, usage)));
     wsServer.close(1000, "bye");
-    semaphore.acquire();
+    // Add timeout to avoid indefinite blocking due to race conditions
+    boolean acquired = semaphore.tryAcquire(5, TimeUnit.SECONDS);
+    if (!acquired) {
+        throw new AssertionError("Timeout waiting for callback - results size: " + results.size());
+    }
     serverListener.assertHalfDuplexRequest(param, StreamingMode.NONE.getValue());
     assertEquals(results.get(0).getOutput(), textOutput);
     assertEquals(results.get(0).getUsage(), usage);
@@ -200,7 +204,11 @@ public class TestHalfDuplexWebSocketApi {
         wsServer,
         JsonUtils.toJson(WebSocketServerMessage.getTaskGeneratedMessage(textOutput, usage)));
     wsServer.close(1000, "bye");
-    semaphore.acquire();
+    // Add timeout to avoid indefinite blocking due to race conditions
+    boolean acquired = semaphore.tryAcquire(5, TimeUnit.SECONDS);
+    if (!acquired) {
+        throw new AssertionError("Timeout waiting for callback - results size: " + results.size());
+    }
     serverListener.assertResources(resources);
   }
 
@@ -242,7 +250,11 @@ public class TestHalfDuplexWebSocketApi {
         wsServer,
         JsonUtils.toJson(WebSocketServerMessage.getTaskGeneratedMessage(textOutput, usage)));
     wsServer.close(1000, "bye");
-    semaphore.acquire();
+    // Add timeout to avoid indefinite blocking due to race conditions
+    boolean acquired = semaphore.tryAcquire(5, TimeUnit.SECONDS);
+    if (!acquired) {
+        throw new AssertionError("Timeout waiting for callback - results size: " + results.size());
+    }
     serverListener.assertHalfDuplexRequest(param, StreamingMode.NONE.getValue());
     assertEquals(results.get(0).getOutput(), textOutput);
     assertEquals(results.get(0).getUsage(), usage);
@@ -286,7 +298,11 @@ public class TestHalfDuplexWebSocketApi {
     sendTextWithRetry(
         wsServer, JsonUtils.toJson(WebSocketServerMessage.getTaskGeneratedMessage(null, usage)));
     wsServer.close(1000, "bye");
-    semaphore.acquire(2);
+    // Add timeout to avoid indefinite blocking due to race conditions
+    boolean acquired = semaphore.tryAcquire(2, 5, TimeUnit.SECONDS);
+    if (!acquired) {
+        throw new AssertionError("Timeout waiting for callback - results size: " + results.size());
+    }
     serverListener.assertHalfDuplexRequest(param, StreamingMode.NONE.getValue());
     assertEquals((ByteBuffer) results.get(0).getOutput(), binaryOutput.position(0));
     assertEquals(results.get(1).getUsage(), usage);
@@ -330,7 +346,11 @@ public class TestHalfDuplexWebSocketApi {
     sendTextWithRetry(
         wsServer, JsonUtils.toJson(WebSocketServerMessage.getTaskGeneratedMessage(null, usage)));
     wsServer.close(1000, "bye");
-    semaphore.acquire(2);
+    // Add timeout to avoid indefinite blocking due to race conditions
+    boolean acquired = semaphore.tryAcquire(2, 5, TimeUnit.SECONDS);
+    if (!acquired) {
+        throw new AssertionError("Timeout waiting for callback - results size: " + results.size());
+    }
     serverListener.assertHalfDuplexRequest(param, StreamingMode.NONE.getValue());
     assertEquals((ByteBuffer) results.get(0).getOutput(), binaryOutput.position(0));
     assertEquals(results.get(1).getUsage(), usage);
@@ -377,7 +397,11 @@ public class TestHalfDuplexWebSocketApi {
     sendTextWithRetry(
         wsServer, JsonUtils.toJson(WebSocketServerMessage.getTaskGeneratedMessage(null, usage)));
     wsServer.close(1000, "bye");
-    semaphore.acquire(3);
+    // Add timeout to avoid indefinite blocking due to race conditions
+    boolean acquired = semaphore.tryAcquire(3, 5, TimeUnit.SECONDS);
+    if (!acquired) {
+        throw new AssertionError("Timeout waiting for callback - results size: " + results.size());
+    }
     serverListener.assertHalfDuplexRequest(param, StreamingMode.NONE.getValue());
     assertEquals((ByteBuffer) results.get(0).getOutput(), binaryOutput.position(0));
     assertEquals(results.get(1).getOutput(), textOutput);
