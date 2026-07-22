@@ -188,7 +188,7 @@ public class DefaultAssistantEventHandler implements AssistantEventHandler {
 
   @Override
   public void onUnknown(String msg) {
-    System.out.println(msg);
+    // Ignored
   }
 
   @Override

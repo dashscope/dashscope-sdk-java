@@ -88,7 +88,27 @@ public class DashScopeResult extends Result {
         this.output = response.getBinary();
       }
     } else {
-      JsonObject jsonObject = JsonUtils.parse(response.getMessage());
+      String message = response.getMessage();
+      if (message == null || message.isEmpty()) {
+        this.output = null;
+        this.setStatusCode(
+            response.getHttpStatusCode() != null ? response.getHttpStatusCode() : 500);
+        this.setCode("EmptyResponse");
+        this.setMessage("Response message is empty");
+        return (T) this;
+      }
+      JsonObject jsonObject;
+      try {
+        jsonObject = JsonUtils.parse(message);
+      } catch (Exception e) {
+        // Non-JSON response (e.g., plain text from cancel async task)
+        this.output = null;
+        this.setStatusCode(
+            response.getHttpStatusCode() != null ? response.getHttpStatusCode() : 200);
+        this.setCode("");
+        this.setMessage(message);
+        return (T) this;
+      }
       // Set HTTP status code if available
       if (response.getHttpStatusCode() != null) {
         this.setStatusCode(response.getHttpStatusCode());
