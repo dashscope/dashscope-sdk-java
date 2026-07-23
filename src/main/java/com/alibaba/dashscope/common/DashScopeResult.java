@@ -9,6 +9,7 @@ import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.EncryptionUtils;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
@@ -83,15 +84,14 @@ public class DashScopeResult extends Result {
           } else if (response.getHttpStatusCode() >= 400) {
             throw new ApiException(
                 Status.builder()
-                    .statusCode(response.getHttpStatusCode())
-                    .code(ErrorType.NON_JSON_RESPONSE.getValue())
+                    .statusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode())
+                    .code(PublicErrorDef.INTERNAL_ERROR.getErrorCode())
                     .message(
-                        "HTTP "
-                            + response.getHttpStatusCode()
-                            + ": "
-                            + (response.getMessage() != null
-                                ? response.getMessage()
-                                : "No message"))
+                        StringUtils.format(
+                            "%s [http_status=%d, original_message=%s]",
+                            PublicErrorDef.INTERNAL_ERROR.getErrorMsg(),
+                            response.getHttpStatusCode(),
+                            (response.getMessage() != null ? response.getMessage() : "No message")))
                     .requestId(this.getRequestId())
                     .build());
           }

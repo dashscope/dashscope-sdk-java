@@ -200,9 +200,9 @@ public class HttpSpeechSynthesizer {
       if (!completed) {
         Status timeoutStatus =
             Status.builder()
-                .statusCode(408)
-                .code(ErrorType.REQUEST_TIMEOUT.getValue())
-                .message("Timeout waiting for audio data from server.")
+                .statusCode(PublicErrorDef.REQUEST_TIMEOUT.getStatusCode())
+                .code(PublicErrorDef.REQUEST_TIMEOUT.getErrorCode())
+                .message(PublicErrorDef.REQUEST_TIMEOUT.getErrorMsg())
                 .build();
         throw new ApiException(timeoutStatus);
       }

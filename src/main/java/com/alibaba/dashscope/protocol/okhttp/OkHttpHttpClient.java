@@ -4,7 +4,7 @@ package com.alibaba.dashscope.protocol.okhttp;
 
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.DashScopeResult;
-import com.alibaba.dashscope.common.ErrorType;
+import com.alibaba.dashscope.common.PublicErrorDef;
 import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.exception.ApiException;
@@ -137,9 +137,13 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       String message = th == null ? "Get response failed!" : th.getMessage();
 
       return Status.builder()
-          .statusCode(-1)
-          .code(ErrorType.NETWORK_ERROR.getValue())
-          .message(message)
+          .statusCode(PublicErrorDef.SERVICE_UNAVAILABLE.getStatusCode())
+          .code(PublicErrorDef.SERVICE_UNAVAILABLE.getErrorCode())
+          .message(
+              StringUtils.format(
+                  "%s [reason=no_response, detail=%s]",
+                  PublicErrorDef.SERVICE_UNAVAILABLE.getErrorMsg(),
+                  (message != null ? message : "Unknown")))
           .isJson(false)
           .build();
     }
@@ -151,9 +155,12 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
         body = response.body().string();
       } catch (IOException e) {
         return Status.builder()
-            .statusCode(response.code())
-            .code(ErrorType.BODY_READ_ERROR.getValue())
-            .message("[SDK] Failed to read response body: " + e.getMessage())
+            .statusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode())
+            .code(PublicErrorDef.INTERNAL_ERROR.getErrorCode())
+            .message(
+                StringUtils.format(
+                    "%s [http_status=%d, reason=body_read_failed, detail=%s]",
+                    PublicErrorDef.INTERNAL_ERROR.getErrorMsg(), response.code(), e.getMessage()))
             .isJson(false)
             .build();
       }
@@ -169,16 +176,24 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
           }
         }
         return Status.builder()
-            .statusCode(response.code())
-            .code(ErrorType.NON_JSON_RESPONSE.getValue())
-            .message(body.isEmpty() ? response.message() : body)
+            .statusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode())
+            .code(PublicErrorDef.INTERNAL_ERROR.getErrorCode())
+            .message(
+                StringUtils.format(
+                    "%s [http_status=%d, content_type=text/event-stream, body=%s]",
+                    PublicErrorDef.INTERNAL_ERROR.getErrorMsg(),
+                    response.code(),
+                    (body.isEmpty() ? response.message() : body)))
             .isJson(false)
             .build();
       } catch (IOException e) {
         return Status.builder()
-            .statusCode(response.code())
-            .code(ErrorType.BODY_READ_ERROR.getValue())
-            .message("[SDK] Failed to read SSE response body: " + e.getMessage())
+            .statusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode())
+            .code(PublicErrorDef.INTERNAL_ERROR.getErrorCode())
+            .message(
+                StringUtils.format(
+                    "%s [http_status=%d, reason=sse_body_read_failed, detail=%s]",
+                    PublicErrorDef.INTERNAL_ERROR.getErrorMsg(), response.code(), e.getMessage()))
             .isJson(false)
             .build();
       }
@@ -208,7 +223,10 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
 
       return Status.builder()
           .statusCode(response.code())
-          .code(extractedCode.isEmpty() ? ErrorType.NON_JSON_RESPONSE.getValue() : extractedCode)
+          .code(
+              extractedCode.isEmpty()
+                  ? PublicErrorDef.INTERNAL_ERROR.getErrorCode()
+                  : extractedCode)
           .message(extractedMessage)
           .isJson(!extractedCode.isEmpty())
           .build();
