@@ -9,6 +9,7 @@ import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.EncryptionUtils;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -36,7 +37,15 @@ public class DashScopeResult extends Result {
     this.setHeaders(changeHeaders(response.getHeaders()));
     if (protocol == Protocol.WEBSOCKET) {
       if (response.getBinary() == null) {
-        fromWebSocketMessage(response.getMessage());
+        String message = response.getMessage();
+        if (message == null || message.isEmpty()) {
+          log.warn(
+              "WebSocket response message is null or empty, httpStatusCode: {}",
+              response.getHttpStatusCode());
+          setInternalError();
+          return (T) this;
+        }
+        fromWebSocketMessage(message);
       } else {
         this.output = response.getBinary();
       }
@@ -50,11 +59,15 @@ public class DashScopeResult extends Result {
         return (T) this;
       }
       JsonObject jsonObject = parseJson(message, "Failed to parse HTTP response as JSON: {}");
-      if (jsonObject == null) return (T) this;
+      if (jsonObject == null) {
+        return (T) this;
+      }
       if (response.getHttpStatusCode() != null) {
         this.setStatusCode(response.getHttpStatusCode());
       }
+      handleOutputField(jsonObject);
       populateFromHttpJson(jsonObject);
+      handleDataField(jsonObject);
     }
     return (T) this;
   }
@@ -102,7 +115,9 @@ public class DashScopeResult extends Result {
       }
       JsonObject jsonObject =
           parseJson(encryptedMessage, "Failed to parse encrypted HTTP response message");
-      if (jsonObject == null) return (T) this;
+      if (jsonObject == null) {
+        return (T) this;
+      }
       String encryptedOutput =
           jsonObject.get(ApiKeywords.OUTPUT).isJsonNull()
               ? null
@@ -114,9 +129,15 @@ public class DashScopeResult extends Result {
                 req.getEncryptionConfig().getAESEncryptKey(),
                 req.getEncryptionConfig().getIv());
         this.output = parseJson(plainOutput, "Failed to parse decrypted output");
-        if (this.output == null) return (T) this;
+        if (this.output == null) {
+          return (T) this;
+        }
+      } else {
+        this.output = null;
       }
+      handleOutputField(jsonObject);
       populateFromHttpJson(jsonObject);
+      handleDataField(jsonObject);
       return (T) this;
     }
     return fromResponse(protocol, response, isFlattenResult);
@@ -124,7 +145,9 @@ public class DashScopeResult extends Result {
 
   private void fromWebSocketMessage(String message) {
     JsonObject jsonObject = parseJson(message, "Failed to parse WebSocket message");
-    if (jsonObject == null) return;
+    if (jsonObject == null) {
+      return;
+    }
     if (jsonObject.has(ApiKeywords.HEADER)) {
       JsonObject headers = jsonObject.get(ApiKeywords.HEADER).getAsJsonObject();
       if (headers.has(ApiKeywords.TASKID)) {
@@ -157,13 +180,23 @@ public class DashScopeResult extends Result {
     }
   }
 
-  private void populateFromHttpJson(JsonObject jsonObject) {
-    if (jsonObject.has(ApiKeywords.OUTPUT)) {
-      this.output =
-          jsonObject.get(ApiKeywords.OUTPUT).isJsonNull()
-              ? null
-              : jsonObject.get(ApiKeywords.OUTPUT).getAsJsonObject();
+  private void handleOutputField(JsonObject jsonObject) {
+    // Handle OUTPUT field first
+    if (this.output == null && jsonObject.has(ApiKeywords.OUTPUT)) {
+      JsonElement outputElement = jsonObject.get(ApiKeywords.OUTPUT);
+      this.output = (outputElement == null || outputElement.isJsonNull()) ? null : outputElement;
     }
+  }
+
+  private void handleDataField(JsonObject jsonObject) {
+    // Handle DATA field only if OUTPUT was not present
+    if (this.output == null && jsonObject.has(ApiKeywords.DATA)) {
+      jsonObject.remove(ApiKeywords.REQUEST_ID);
+      this.output = jsonObject;
+    }
+  }
+
+  private void populateFromHttpJson(JsonObject jsonObject) {
     if (jsonObject.has(ApiKeywords.USAGE)) {
       this.setUsage(
           jsonObject.get(ApiKeywords.USAGE).isJsonNull()
@@ -187,10 +220,6 @@ public class DashScopeResult extends Result {
         jsonObject.has(ApiKeywords.MESSAGE) && !jsonObject.get(ApiKeywords.MESSAGE).isJsonNull()
             ? jsonObject.get(ApiKeywords.MESSAGE).getAsString()
             : "");
-    if (jsonObject.has(ApiKeywords.DATA)) {
-      jsonObject.remove(ApiKeywords.REQUEST_ID);
-      this.output = jsonObject;
-    }
   }
 
   private JsonObject parseJson(String raw, String logMsg) {
