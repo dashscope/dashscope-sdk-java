@@ -129,15 +129,10 @@ public class DashScopeResult extends Result {
                 req.getEncryptionConfig().getAESEncryptKey(),
                 req.getEncryptionConfig().getIv());
         this.output = parseJson(plainOutput, "Failed to parse decrypted output");
-        if (this.output == null) {
-          return (T) this;
-        }
       } else {
         this.output = null;
       }
-      handleOutputField(jsonObject);
       populateFromHttpJson(jsonObject);
-      handleDataField(jsonObject);
       return (T) this;
     }
     return fromResponse(protocol, response, isFlattenResult);
