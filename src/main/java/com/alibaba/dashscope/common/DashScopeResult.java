@@ -43,7 +43,9 @@ public class DashScopeResult extends Result {
     } else {
       String message = response.getMessage();
       if (message == null || message.isEmpty()) {
-        log.warn("HTTP response message is null or empty, httpStatusCode: {}", response.getHttpStatusCode());
+        log.warn(
+            "HTTP response message is null or empty, httpStatusCode: {}",
+            response.getHttpStatusCode());
         setInternalError();
         return (T) this;
       }
@@ -92,11 +94,14 @@ public class DashScopeResult extends Result {
       }
       String encryptedMessage = response.getMessage();
       if (encryptedMessage == null || encryptedMessage.isEmpty()) {
-        log.warn("Encrypted HTTP response message is null or empty, httpStatusCode: {}", response.getHttpStatusCode());
+        log.warn(
+            "Encrypted HTTP response message is null or empty, httpStatusCode: {}",
+            response.getHttpStatusCode());
         setInternalError();
         return (T) this;
       }
-      JsonObject jsonObject = parseJson(encryptedMessage, "Failed to parse encrypted HTTP response message");
+      JsonObject jsonObject =
+          parseJson(encryptedMessage, "Failed to parse encrypted HTTP response message");
       if (jsonObject == null) return (T) this;
       String encryptedOutput =
           jsonObject.get(ApiKeywords.OUTPUT).isJsonNull()
@@ -134,17 +139,20 @@ public class DashScopeResult extends Result {
               ? headers.get(ApiKeywords.ERROR_CODE).getAsString()
               : "");
       this.setMessage(
-          headers.has(ApiKeywords.ERROR_MESSAGE) && !headers.get(ApiKeywords.ERROR_MESSAGE).isJsonNull()
+          headers.has(ApiKeywords.ERROR_MESSAGE)
+                  && !headers.get(ApiKeywords.ERROR_MESSAGE).isJsonNull()
               ? headers.get(ApiKeywords.ERROR_MESSAGE).getAsString()
               : "");
     }
     if (jsonObject.has(ApiKeywords.PAYLOAD)) {
       JsonObject payload = jsonObject.getAsJsonObject(ApiKeywords.PAYLOAD);
       if (payload.has(ApiKeywords.OUTPUT)) {
-        this.output = payload.get(ApiKeywords.OUTPUT).isJsonNull() ? null : payload.get(ApiKeywords.OUTPUT);
+        this.output =
+            payload.get(ApiKeywords.OUTPUT).isJsonNull() ? null : payload.get(ApiKeywords.OUTPUT);
       }
       if (payload.has(ApiKeywords.USAGE)) {
-        this.setUsage(payload.get(ApiKeywords.USAGE).isJsonNull() ? null : payload.get(ApiKeywords.USAGE));
+        this.setUsage(
+            payload.get(ApiKeywords.USAGE).isJsonNull() ? null : payload.get(ApiKeywords.USAGE));
       }
     }
   }

@@ -6,61 +6,107 @@ import java.util.Map;
 
 /** Customer-facing error definitions. */
 public enum PublicErrorDef {
-    INVALID_REQUEST(400, "BadRequestError",
-            "The request is invalid. Please check the request and try again.", "invalid_request_error"),
-    MISSING_PARAMETER(400, "BadRequestError",
-            "Missing required parameter: {parameter}.", "invalid_request_error"),
-    CONTENT_POLICY_VIOLATION(400, "BadRequestError",
-            "The request was rejected by content policy.", "invalid_request_error"),
-    INVALID_URL(400, "BadRequestError",
-            "The provided URL is invalid or cannot be accessed.", "invalid_request_error"),
-    INVALID_FILE(400, "BadRequestError",
-            "The provided file is invalid.", "invalid_request_error"),
-    AUTH_FAILED(401, "AuthenticationError",
-            "Authentication failed. Please provide valid authentication credentials.", "authentication_error"),
-    INVALID_API_KEY(401, "AuthenticationError",
-            "Incorrect API key provided.", "authentication_error"),
-    PERMISSION_DENIED(403, "PermissionDeniedError",
-            "You do not have permission to access this resource.", "permission_error"),
-    RESOURCE_NOT_FOUND(404, "NotFoundError",
-            "The requested resource was not found: {resource}.", "not_found_error"),
-    REQUEST_TOO_LARGE(413, "RequestTooLargeError",
-            "The request exceeds the maximum allowed size of {limit}.", "request_too_large"),
-    RATE_LIMIT_EXCEEDED(429, "RateLimitError",
-            "Rate limit exceeded. Please slow down your requests.", "rate_limit_error"),
-    CONCURRENCY_LIMIT_EXCEEDED(429, "RateLimitError",
-            "Too many concurrent requests. Please reduce concurrency and try again.", "rate_limit_error"),
-    INSUFFICIENT_QUOTA(429, "RateLimitError",
-            "You exceeded your current quota. Please check your plan and billing details.", "billing_error"),
-    INTERNAL_ERROR(500, "InternalServerError",
-            "The server encountered an internal error. Please try again later.", "api_error"),
-    SERVICE_UNAVAILABLE(503, "ServiceUnavailableError",
-            "The service is temporarily unavailable. Please try again later.", "overloaded_error"),
-    REQUEST_TIMEOUT(504, "GatewayTimeoutError",
-            "The request timed out. Please try again later.", "timeout_error");
+  INVALID_REQUEST(
+      400,
+      "BadRequestError",
+      "The request is invalid. Please check the request and try again.",
+      "invalid_request_error"),
+  MISSING_PARAMETER(
+      400, "BadRequestError", "Missing required parameter: {parameter}.", "invalid_request_error"),
+  CONTENT_POLICY_VIOLATION(
+      400,
+      "BadRequestError",
+      "The request was rejected by content policy.",
+      "invalid_request_error"),
+  INVALID_URL(
+      400,
+      "BadRequestError",
+      "The provided URL is invalid or cannot be accessed.",
+      "invalid_request_error"),
+  INVALID_FILE(400, "BadRequestError", "The provided file is invalid.", "invalid_request_error"),
+  AUTH_FAILED(
+      401,
+      "AuthenticationError",
+      "Authentication failed. Please provide valid authentication credentials.",
+      "authentication_error"),
+  INVALID_API_KEY(
+      401, "AuthenticationError", "Incorrect API key provided.", "authentication_error"),
+  PERMISSION_DENIED(
+      403,
+      "PermissionDeniedError",
+      "You do not have permission to access this resource.",
+      "permission_error"),
+  RESOURCE_NOT_FOUND(
+      404, "NotFoundError", "The requested resource was not found: {resource}.", "not_found_error"),
+  REQUEST_TOO_LARGE(
+      413,
+      "RequestTooLargeError",
+      "The request exceeds the maximum allowed size of {limit}.",
+      "request_too_large"),
+  RATE_LIMIT_EXCEEDED(
+      429,
+      "RateLimitError",
+      "Rate limit exceeded. Please slow down your requests.",
+      "rate_limit_error"),
+  CONCURRENCY_LIMIT_EXCEEDED(
+      429,
+      "RateLimitError",
+      "Too many concurrent requests. Please reduce concurrency and try again.",
+      "rate_limit_error"),
+  INSUFFICIENT_QUOTA(
+      429,
+      "RateLimitError",
+      "You exceeded your current quota. Please check your plan and billing details.",
+      "billing_error"),
+  INTERNAL_ERROR(
+      500,
+      "InternalServerError",
+      "The server encountered an internal error. Please try again later.",
+      "api_error"),
+  SERVICE_UNAVAILABLE(
+      503,
+      "ServiceUnavailableError",
+      "The service is temporarily unavailable. Please try again later.",
+      "overloaded_error"),
+  REQUEST_TIMEOUT(
+      504,
+      "GatewayTimeoutError",
+      "The request timed out. Please try again later.",
+      "timeout_error");
 
-    private final int statusCode;
-    private final String errorCode;
-    private final String errorMsg;
-    private final String anthropicErrorCode;
+  private final int statusCode;
+  private final String errorCode;
+  private final String errorMsg;
+  private final String anthropicErrorCode;
 
-    PublicErrorDef(int statusCode, String errorCode, String errorMsg, String anthropicErrorCode) {
-        this.statusCode = statusCode;
-        this.errorCode = errorCode;
-        this.errorMsg = errorMsg;
-        this.anthropicErrorCode = anthropicErrorCode;
+  PublicErrorDef(int statusCode, String errorCode, String errorMsg, String anthropicErrorCode) {
+    this.statusCode = statusCode;
+    this.errorCode = errorCode;
+    this.errorMsg = errorMsg;
+    this.anthropicErrorCode = anthropicErrorCode;
+  }
+
+  public int getStatusCode() {
+    return statusCode;
+  }
+
+  public String getErrorCode() {
+    return errorCode;
+  }
+
+  public String getErrorMsg() {
+    return errorMsg;
+  }
+
+  public String getAnthropicErrorCode() {
+    return anthropicErrorCode;
+  }
+
+  public String formatMsg(Map<String, String> vars) {
+    String msg = errorMsg;
+    for (Map.Entry<String, String> entry : vars.entrySet()) {
+      msg = msg.replace("{" + entry.getKey() + "}", entry.getValue());
     }
-
-    public int getStatusCode() { return statusCode; }
-    public String getErrorCode() { return errorCode; }
-    public String getErrorMsg() { return errorMsg; }
-    public String getAnthropicErrorCode() { return anthropicErrorCode; }
-
-    public String formatMsg(Map<String, String> vars) {
-        String msg = errorMsg;
-        for (Map.Entry<String, String> entry : vars.entrySet()) {
-            msg = msg.replace("{" + entry.getKey() + "}", entry.getValue());
-        }
-        return msg;
-    }
+    return msg;
+  }
 }
