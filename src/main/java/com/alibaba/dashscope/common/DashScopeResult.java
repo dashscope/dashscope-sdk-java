@@ -16,7 +16,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class DashScopeResult extends Result {
@@ -34,7 +36,17 @@ public class DashScopeResult extends Result {
     this.setHeaders(changeHeaders(response.getHeaders()));
     if (protocol == Protocol.WEBSOCKET) {
       if (response.getBinary() == null) {
-        JsonObject jsonObject = JsonUtils.parse(response.getMessage());
+        JsonObject jsonObject;
+        try {
+          jsonObject = JsonUtils.parse(response.getMessage());
+        } catch (Exception e) {
+          log.error("Failed to parse WebSocket message", e);
+          this.output = null;
+          this.setStatusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode());
+          this.setCode(PublicErrorDef.INTERNAL_ERROR.getErrorCode());
+          this.setMessage(PublicErrorDef.INTERNAL_ERROR.getErrorMsg());
+          return (T) this;
+        }
         if (jsonObject.has(ApiKeywords.HEADER)) {
           JsonObject headers = jsonObject.get(ApiKeywords.HEADER).getAsJsonObject();
           if (headers.has(ApiKeywords.TASKID)) {
@@ -91,10 +103,9 @@ public class DashScopeResult extends Result {
       String message = response.getMessage();
       if (message == null || message.isEmpty()) {
         this.output = null;
-        this.setStatusCode(
-            response.getHttpStatusCode() != null ? response.getHttpStatusCode() : 500);
-        this.setCode("EmptyResponse");
-        this.setMessage("Response message is empty");
+        this.setStatusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode());
+        this.setCode(PublicErrorDef.INTERNAL_ERROR.getErrorCode());
+        this.setMessage(PublicErrorDef.INTERNAL_ERROR.getErrorMsg());
         return (T) this;
       }
       JsonObject jsonObject;
@@ -102,11 +113,11 @@ public class DashScopeResult extends Result {
         jsonObject = JsonUtils.parse(message);
       } catch (Exception e) {
         // Non-JSON response (e.g., plain text from cancel async task)
+        log.warn("Failed to parse HTTP response as JSON: {}", message, e);
         this.output = null;
-        this.setStatusCode(
-            response.getHttpStatusCode() != null ? response.getHttpStatusCode() : 200);
-        this.setCode("");
-        this.setMessage(message);
+        this.setStatusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode());
+        this.setCode(PublicErrorDef.INTERNAL_ERROR.getErrorCode());
+        this.setMessage(PublicErrorDef.INTERNAL_ERROR.getErrorMsg());
         return (T) this;
       }
       // Set HTTP status code if available
@@ -173,15 +184,29 @@ public class DashScopeResult extends Result {
       // flatten not support websocket.
       if (protocol == Protocol.WEBSOCKET) {
         if (response.getBinary() == null) {
-          JsonObject jsonObject = JsonUtils.parse(response.getMessage());
-          this.output = jsonObject;
+          try {
+            this.output = JsonUtils.parse(response.getMessage());
+          } catch (Exception e) {
+            log.error("Failed to parse WebSocket message", e);
+            this.output = null;
+            this.setStatusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode());
+            this.setCode(PublicErrorDef.INTERNAL_ERROR.getErrorCode());
+            this.setMessage(PublicErrorDef.INTERNAL_ERROR.getErrorMsg());
+          }
           // convert to the result
         } else {
           this.output = response.getBinary();
         }
       } else { // HTTP
-        JsonObject jsonObject = JsonUtils.parse(response.getMessage());
-        this.output = jsonObject;
+        try {
+          this.output = JsonUtils.parse(response.getMessage());
+        } catch (Exception e) {
+          log.error("Failed to parse HTTP response message", e);
+          this.output = null;
+          this.setStatusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode());
+          this.setCode(PublicErrorDef.INTERNAL_ERROR.getErrorCode());
+          this.setMessage(PublicErrorDef.INTERNAL_ERROR.getErrorMsg());
+        }
         this.event = response.getEvent();
       }
       return (T) this;
@@ -202,7 +227,25 @@ public class DashScopeResult extends Result {
       if (response.getHttpStatusCode() != null) {
         this.setStatusCode(response.getHttpStatusCode());
       }
-      JsonObject jsonObject = JsonUtils.parse(response.getMessage());
+      String encryptedMessage = response.getMessage();
+      if (encryptedMessage == null || encryptedMessage.isEmpty()) {
+        this.output = null;
+        this.setStatusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode());
+        this.setCode(PublicErrorDef.INTERNAL_ERROR.getErrorCode());
+        this.setMessage(PublicErrorDef.INTERNAL_ERROR.getErrorMsg());
+        return (T) this;
+      }
+      JsonObject jsonObject;
+      try {
+        jsonObject = JsonUtils.parse(encryptedMessage);
+      } catch (Exception e) {
+        log.error("Failed to parse encrypted HTTP response message", e);
+        this.output = null;
+        this.setStatusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode());
+        this.setCode(PublicErrorDef.INTERNAL_ERROR.getErrorCode());
+        this.setMessage(PublicErrorDef.INTERNAL_ERROR.getErrorMsg());
+        return (T) this;
+      }
       String encryptedOutput =
           jsonObject.get(ApiKeywords.OUTPUT).isJsonNull()
               ? null
@@ -213,7 +256,16 @@ public class DashScopeResult extends Result {
                 encryptedOutput,
                 req.getEncryptionConfig().getAESEncryptKey(),
                 req.getEncryptionConfig().getIv());
-        this.output = JsonUtils.parse(plainOutput);
+        try {
+          this.output = JsonUtils.parse(plainOutput);
+        } catch (Exception e) {
+          log.error("Failed to parse decrypted output", e);
+          this.output = null;
+          this.setStatusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode());
+          this.setCode(PublicErrorDef.INTERNAL_ERROR.getErrorCode());
+          this.setMessage(PublicErrorDef.INTERNAL_ERROR.getErrorMsg());
+          return (T) this;
+        }
       } else {
         this.output = null;
       }
