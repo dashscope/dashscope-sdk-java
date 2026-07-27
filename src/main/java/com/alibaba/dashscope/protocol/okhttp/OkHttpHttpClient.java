@@ -68,8 +68,9 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       if (jsonResponse.has(ApiKeywords.MESSAGE)) {
         message = jsonResponse.get(ApiKeywords.MESSAGE).getAsString();
       }
+      int finalStatusCode = resolveErrorStatusCode(httpStatusCode, code);
       return Status.builder()
-          .statusCode(httpStatusCode)
+          .statusCode(finalStatusCode)
           .code(code)
           .message(message)
           .requestId(requestId)
@@ -85,7 +86,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
     }
   }
 
-  private Status parseFailedJson(int statusCode, String body) {
+  private Status parseFailedJson(int httpStatusCode, String body) {
     try {
       JsonObject jsonResponse = JsonUtils.parse(body);
       String code = "";
@@ -100,8 +101,12 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       if (jsonResponse.has(ApiKeywords.MESSAGE)) {
         message = jsonResponse.get(ApiKeywords.MESSAGE).getAsString();
       }
+
+      // If we have a business error code, try to map it to the correct status code
+      int finalStatusCode = resolveErrorStatusCode(httpStatusCode, code);
+
       return Status.builder()
-          .statusCode(statusCode)
+          .statusCode(finalStatusCode)
           .code(code)
           .message(message)
           .requestId(requestId)
@@ -123,13 +128,83 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
         // Parsing failed, use defaults
       }
 
+      // If we have a business error code, try to map it to the correct status code
+      int finalStatusCode = resolveErrorStatusCode(httpStatusCode, extractedCode);
+
       return Status.builder()
-          .statusCode(statusCode)
+          .statusCode(finalStatusCode)
           .code(extractedCode.isEmpty() ? "" : extractedCode)
           .message(extractedMessage)
           .isJson(!extractedCode.isEmpty())
           .build();
     }
+  }
+
+  /**
+   * Resolve the appropriate HTTP status code when a business error code is present. If
+   * httpStatusCode is already a non-200 error, use it directly. Otherwise, try to map the business
+   * error code to a proper status code.
+   */
+  private int resolveErrorStatusCode(int httpStatusCode, String errorCode) {
+    // If HTTP status is already an error code, use it
+    if (httpStatusCode >= 400) {
+      return httpStatusCode;
+    }
+    // HTTP status is 2xx (e.g., SSE stream connected with 200) but we have a business error
+    if (errorCode != null && !errorCode.isEmpty()) {
+      // Try exact match against PublicErrorDef
+      PublicErrorDef errorDef = PublicErrorDef.fromErrorCode(errorCode);
+      if (errorDef != null) {
+        return errorDef.getStatusCode();
+      }
+      // Try keyword match for legacy/non-standard error codes
+      for (Map.Entry<String, Integer> entry : LEGACY_ERROR_KEYWORDS.entrySet()) {
+        if (errorCode.contains(entry.getKey())) {
+          return entry.getValue();
+        }
+      }
+      // Has error code but no mapping found - default to 400 (client-side business error)
+      return 400;
+    }
+    return httpStatusCode;
+  }
+
+  /** Keyword-to-status mapping for legacy / non-standard error codes. */
+  private static final Map<String, Integer> LEGACY_ERROR_KEYWORDS = new java.util.LinkedHashMap<>();
+
+  static {
+    LEGACY_ERROR_KEYWORDS.put("InvalidParameter", 400);
+    LEGACY_ERROR_KEYWORDS.put("BadRequest", 400);
+    LEGACY_ERROR_KEYWORDS.put("DataInspection", 400);
+    LEGACY_ERROR_KEYWORDS.put("Inspection", 400);
+    LEGACY_ERROR_KEYWORDS.put("Unauthorized", 401);
+    LEGACY_ERROR_KEYWORDS.put("ApiKey", 401);
+    LEGACY_ERROR_KEYWORDS.put("Forbidden", 403);
+    LEGACY_ERROR_KEYWORDS.put("AccessDenied", 403);
+    LEGACY_ERROR_KEYWORDS.put("NotFound", 404);
+    LEGACY_ERROR_KEYWORDS.put("Throttling", 429);
+    LEGACY_ERROR_KEYWORDS.put("RateLimit", 429);
+    LEGACY_ERROR_KEYWORDS.put("InternalError", 500);
+    LEGACY_ERROR_KEYWORDS.put("SystemError", 500);
+  }
+
+  /**
+   * Map HTTP status code to corresponding PublicErrorDef. Falls back to INTERNAL_ERROR if no
+   * specific mapping found.
+   */
+  private PublicErrorDef mapStatusCodeToErrorDef(int statusCode) {
+    for (PublicErrorDef errorDef : PublicErrorDef.values()) {
+      if (errorDef.getStatusCode() == statusCode) {
+        return errorDef;
+      }
+    }
+    // Default fallback based on status code ranges
+    if (statusCode >= 400 && statusCode < 500) {
+      return PublicErrorDef.INVALID_REQUEST;
+    } else if (statusCode >= 500) {
+      return PublicErrorDef.INTERNAL_ERROR;
+    }
+    return PublicErrorDef.INTERNAL_ERROR;
   }
 
   private Status parseFailed(Response response, Throwable th) {
@@ -154,13 +229,14 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       try {
         body = response.body().string();
       } catch (IOException e) {
+        PublicErrorDef errorDef = mapStatusCodeToErrorDef(response.code());
         return Status.builder()
-            .statusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode())
-            .code(PublicErrorDef.INTERNAL_ERROR.getErrorCode())
+            .statusCode(errorDef.getStatusCode())
+            .code(errorDef.getErrorCode())
             .message(
                 StringUtils.format(
                     "%s [http_status=%d, reason=body_read_failed, detail=%s]",
-                    PublicErrorDef.INTERNAL_ERROR.getErrorMsg(), response.code(), e.getMessage()))
+                    errorDef.getErrorMsg(), response.code(), e.getMessage()))
             .isJson(false)
             .build();
       }
@@ -175,25 +251,27 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
             return parseFailedJson(response.code(), body);
           }
         }
+        PublicErrorDef errorDef = mapStatusCodeToErrorDef(response.code());
         return Status.builder()
-            .statusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode())
-            .code(PublicErrorDef.INTERNAL_ERROR.getErrorCode())
+            .statusCode(errorDef.getStatusCode())
+            .code(errorDef.getErrorCode())
             .message(
                 StringUtils.format(
                     "%s [http_status=%d, content_type=text/event-stream, body=%s]",
-                    PublicErrorDef.INTERNAL_ERROR.getErrorMsg(),
+                    errorDef.getErrorMsg(),
                     response.code(),
                     (body.isEmpty() ? response.message() : body)))
             .isJson(false)
             .build();
       } catch (IOException e) {
+        PublicErrorDef errorDef = mapStatusCodeToErrorDef(response.code());
         return Status.builder()
-            .statusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode())
-            .code(PublicErrorDef.INTERNAL_ERROR.getErrorCode())
+            .statusCode(errorDef.getStatusCode())
+            .code(errorDef.getErrorCode())
             .message(
                 StringUtils.format(
                     "%s [http_status=%d, reason=sse_body_read_failed, detail=%s]",
-                    PublicErrorDef.INTERNAL_ERROR.getErrorMsg(), response.code(), e.getMessage()))
+                    errorDef.getErrorMsg(), response.code(), e.getMessage()))
             .isJson(false)
             .build();
       }
@@ -221,12 +299,10 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
         // Parsing failed, use defaults
       }
 
+      PublicErrorDef errorDef = mapStatusCodeToErrorDef(response.code());
       return Status.builder()
           .statusCode(response.code())
-          .code(
-              extractedCode.isEmpty()
-                  ? PublicErrorDef.INTERNAL_ERROR.getErrorCode()
-                  : extractedCode)
+          .code(extractedCode.isEmpty() ? errorDef.getErrorCode() : extractedCode)
           .message(extractedMessage)
           .isJson(!extractedCode.isEmpty())
           .build();
@@ -239,9 +315,33 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
 
   private <T extends HalfDuplexParamBase> Request buildRequest(HttpRequest req)
       throws NoApiKeyException, ApiException {
+    // Validate URL before building request to provide clear error message
+    String url = req.getUrl();
+    if (url == null || url.isEmpty()) {
+      throw new ApiException(
+          Status.builder()
+              .statusCode(PublicErrorDef.INVALID_URL.getStatusCode())
+              .code(PublicErrorDef.INVALID_URL.getErrorCode())
+              .message(
+                  StringUtils.format(
+                      "%s [detail=URL is null or empty]", PublicErrorDef.INVALID_URL.getErrorMsg()))
+              .build());
+    }
+    HttpUrl parsedUrl = HttpUrl.parse(url);
+    if (parsedUrl == null) {
+      throw new ApiException(
+          Status.builder()
+              .statusCode(PublicErrorDef.INVALID_URL.getStatusCode())
+              .code(PublicErrorDef.INVALID_URL.getErrorCode())
+              .message(
+                  StringUtils.format(
+                      "%s [detail=%s]", PublicErrorDef.INVALID_URL.getErrorMsg(), url))
+              .build());
+    }
+
     Request request = null;
     if (req.getHttpMethod() == HttpMethod.GET) {
-      HttpUrl.Builder httpBuilder = HttpUrl.parse(req.getUrl()).newBuilder();
+      HttpUrl.Builder httpBuilder = parsedUrl.newBuilder();
       if (req.getParameters() != null) {
         for (Map.Entry<String, Object> entry : req.getParameters().entrySet()) {
           String key = entry.getKey();
@@ -256,7 +356,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
               .build();
     } else if (req.getHttpMethod() == HttpMethod.POST) {
       Builder requestBuilder = new Request.Builder();
-      requestBuilder.url(req.getUrl()).headers(Headers.of(req.getHeaders()));
+      requestBuilder.url(parsedUrl).headers(Headers.of(req.getHeaders()));
       if (req.getBody() != null) {
         // compatible with okhttp3.x
         // RequestBody.create((String) (req.getBody()), MEDIA_TYPE_APPLICATION_JSON));
@@ -268,7 +368,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       request = requestBuilder.build();
     } else if (req.getHttpMethod() == HttpMethod.DELETE) {
       Builder requestBuilder = new Request.Builder();
-      requestBuilder.url(req.getUrl()).headers(Headers.of(req.getHeaders()));
+      requestBuilder.url(parsedUrl).headers(Headers.of(req.getHeaders()));
       if (req.getBody() != null) {
         requestBuilder.delete(
             // RequestBody.create((String) (req.getBody()), MEDIA_TYPE_APPLICATION_JSON));

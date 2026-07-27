@@ -84,6 +84,37 @@ public class OkHttpWebSocketClient extends WebSocketListener
     if (baseWebSocketUrl != null) {
       url = baseWebSocketUrl;
     }
+    // Validate URL before building request to provide clear error message
+    if (url == null || url.isEmpty()) {
+      throw new ApiException(
+          Status.builder()
+              .statusCode(PublicErrorDef.INVALID_URL.getStatusCode())
+              .code(PublicErrorDef.INVALID_URL.getErrorCode())
+              .message(
+                  StringUtils.format(
+                      "%s [detail=URL is null or empty]", PublicErrorDef.INVALID_URL.getErrorMsg()))
+              .build());
+    }
+    // HttpUrl.parse() only supports http/https schemes.
+    // WebSocket URLs use ws/wss schemes, so we convert them for validation.
+    String urlForValidation = url;
+    if (urlForValidation.startsWith("ws://")) {
+      urlForValidation = "http://" + urlForValidation.substring("ws://".length());
+    } else if (urlForValidation.startsWith("wss://")) {
+      urlForValidation = "https://" + urlForValidation.substring("wss://".length());
+    }
+    HttpUrl parsedUrl = HttpUrl.parse(urlForValidation);
+    if (parsedUrl == null) {
+      throw new ApiException(
+          Status.builder()
+              .statusCode(PublicErrorDef.INVALID_URL.getStatusCode())
+              .code(PublicErrorDef.INVALID_URL.getErrorCode())
+              .message(
+                  StringUtils.format(
+                      "%s [detail=%s]", PublicErrorDef.INVALID_URL.getErrorMsg(), url))
+              .build());
+    }
+    // Use bd.url(String) which handles ws:// and wss:// schemes internally
     Request request = bd.url(url).build();
     return request;
   }

@@ -310,6 +310,8 @@ public class DashScopeResult extends Result {
   static {
     LEGACY_ERROR_KEYWORDS.put("InvalidParameter", 400);
     LEGACY_ERROR_KEYWORDS.put("BadRequest", 400);
+    LEGACY_ERROR_KEYWORDS.put("DataInspection", 400);
+    LEGACY_ERROR_KEYWORDS.put("Inspection", 400);
     LEGACY_ERROR_KEYWORDS.put("Unauthorized", 401);
     LEGACY_ERROR_KEYWORDS.put("ApiKey", 401);
     LEGACY_ERROR_KEYWORDS.put("Forbidden", 403);
@@ -353,8 +355,8 @@ public class DashScopeResult extends Result {
         }
       }
     }
-    return bodyStatusCode != null
+    return bodyStatusCode != null && bodyStatusCode != 200
         ? bodyStatusCode
-        : (httpStatusCode != null ? httpStatusCode : 200);
+        : (httpStatusCode != null && httpStatusCode != 200 ? httpStatusCode : 400);
   }
 }

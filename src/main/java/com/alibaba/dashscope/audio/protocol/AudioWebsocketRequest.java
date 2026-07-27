@@ -1,10 +1,14 @@
 package com.alibaba.dashscope.audio.protocol;
 
+import com.alibaba.dashscope.common.PublicErrorDef;
+import com.alibaba.dashscope.common.Status;
+import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.DashScopeHeaders;
 import com.alibaba.dashscope.protocol.okhttp.OkHttpClientFactory;
 import com.alibaba.dashscope.utils.ApiKey;
 import com.alibaba.dashscope.utils.Constants;
+import com.alibaba.dashscope.utils.StringUtils;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -77,6 +81,31 @@ public class AudioWebsocketRequest extends WebSocketListener {
     String url = Constants.baseWebsocketApiUrl;
     if (baseWebSocketUrl != null) {
       url = baseWebSocketUrl;
+    }
+    // Validate URL before building request to provide clear error message
+    if (url == null || url.isEmpty()) {
+      throw new ApiException(
+          Status.builder()
+              .statusCode(PublicErrorDef.INVALID_URL.getStatusCode())
+              .code(PublicErrorDef.INVALID_URL.getErrorCode())
+              .message(
+                  StringUtils.format(
+                      "%s [detail=URL is null or empty]", PublicErrorDef.INVALID_URL.getErrorMsg()))
+              .build());
+    }
+    // HttpUrl.parse() only supports http/https, convert ws/wss for validation
+    String urlForValidation =
+        url.replaceFirst("^ws://", "http://").replaceFirst("^wss://", "https://");
+    HttpUrl parsedUrl = HttpUrl.parse(urlForValidation);
+    if (parsedUrl == null) {
+      throw new ApiException(
+          Status.builder()
+              .statusCode(PublicErrorDef.INVALID_URL.getStatusCode())
+              .code(PublicErrorDef.INVALID_URL.getErrorCode())
+              .message(
+                  StringUtils.format(
+                      "%s [detail=%s]", PublicErrorDef.INVALID_URL.getErrorMsg(), url))
+              .build());
     }
     Request request = bd.url(url).build();
     return request;
