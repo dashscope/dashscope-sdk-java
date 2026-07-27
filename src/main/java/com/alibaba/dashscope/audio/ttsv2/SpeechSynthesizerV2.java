@@ -212,7 +212,11 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
   }
 
   public void stopSynthesizer() {
-    sendTaskMessage("finish-task", new JsonObject());
+    JsonObject input = new JsonObject();
+    if (canceled.get()) {
+      input.addProperty("directive", "cancel");
+    }
+    sendTaskMessage("finish-task", input);
   }
 
   @Override
@@ -423,6 +427,7 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
       connect();
     } else {
       startStreamTimeStamp = System.currentTimeMillis();
+      canceled.set(false);
     }
 
     checkConnectStatus(); // check websocket connection， if socket is closed.

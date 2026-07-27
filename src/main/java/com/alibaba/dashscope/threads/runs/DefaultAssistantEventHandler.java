@@ -188,7 +188,7 @@ public class DefaultAssistantEventHandler implements AssistantEventHandler {
 
   @Override
   public void onUnknown(String msg) {
-    // Unknown message type received, no action needed
+    // Ignored
   }
 
   @Override

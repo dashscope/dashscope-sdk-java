@@ -9,7 +9,7 @@ import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.EncryptionUtils;
 import com.alibaba.dashscope.utils.JsonUtils;
-import com.alibaba.dashscope.utils.StringUtils;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
@@ -18,7 +18,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class DashScopeResult extends Result {
@@ -36,144 +38,37 @@ public class DashScopeResult extends Result {
     this.setHeaders(changeHeaders(response.getHeaders()));
     if (protocol == Protocol.WEBSOCKET) {
       if (response.getBinary() == null) {
-        JsonObject jsonObject = JsonUtils.parse(response.getMessage());
-        if (jsonObject.has(ApiKeywords.HEADER)) {
-          JsonObject headers = jsonObject.get(ApiKeywords.HEADER).getAsJsonObject();
-          if (headers.has(ApiKeywords.TASKID)) {
-            this.setRequestId(headers.get(ApiKeywords.TASKID).getAsString());
-          }
-          // Extract status_code, code and message from header
-          if (headers.has(ApiKeywords.STATUS_CODE)) {
-            this.setStatusCode(
-                headers.get(ApiKeywords.STATUS_CODE).isJsonNull()
-                    ? null
-                    : headers.get(ApiKeywords.STATUS_CODE).getAsInt());
-          } else {
-            // Set default status code
-            this.setStatusCode(200);
-          }
-          if (headers.has(ApiKeywords.ERROR_CODE)) {
-            this.setCode(
-                headers.get(ApiKeywords.ERROR_CODE).isJsonNull()
-                    ? ""
-                    : headers.get(ApiKeywords.ERROR_CODE).getAsString());
-          } else {
-            // Set default empty string for successful responses
-            this.setCode("");
-          }
-          if (headers.has(ApiKeywords.ERROR_MESSAGE)) {
-            this.setMessage(
-                headers.get(ApiKeywords.ERROR_MESSAGE).isJsonNull()
-                    ? ""
-                    : headers.get(ApiKeywords.ERROR_MESSAGE).getAsString());
-          } else {
-            // Set default empty string for successful responses
-            this.setMessage("");
-          }
-          String errorCode = this.getCode();
-          if (errorCode != null && !errorCode.isEmpty()) {
-            int statusCode =
-                resolveStatusCode(this.getStatusCode(), response.getHttpStatusCode(), errorCode);
-            throw new ApiException(
-                Status.builder()
-                    .statusCode(statusCode > 0 ? statusCode : 500)
-                    .code(errorCode)
-                    .message(this.getMessage() != null ? this.getMessage() : "Unknown error")
-                    .requestId(this.getRequestId())
-                    .build());
-          } else if (response.getHttpStatusCode() >= 400) {
-            throw new ApiException(
-                Status.builder()
-                    .statusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode())
-                    .code(PublicErrorDef.INTERNAL_ERROR.getErrorCode())
-                    .message(
-                        StringUtils.format(
-                            "%s [http_status=%d, original_message=%s]",
-                            PublicErrorDef.INTERNAL_ERROR.getErrorMsg(),
-                            response.getHttpStatusCode(),
-                            (response.getMessage() != null ? response.getMessage() : "No message")))
-                    .requestId(this.getRequestId())
-                    .build());
-          }
+        String message = response.getMessage();
+        if (message == null || message.isEmpty()) {
+          log.warn(
+              "WebSocket response message is null or empty, httpStatusCode: {}",
+              response.getHttpStatusCode());
+          setInternalError();
+          return (T) this;
         }
-        if (jsonObject.has(ApiKeywords.PAYLOAD)) {
-          JsonObject payload = jsonObject.getAsJsonObject(ApiKeywords.PAYLOAD);
-          if (payload.has(ApiKeywords.OUTPUT)) {
-            this.output =
-                payload.get(ApiKeywords.OUTPUT).isJsonNull()
-                    ? null
-                    : payload.get(ApiKeywords.OUTPUT);
-          }
-          if (payload.has(ApiKeywords.USAGE)) {
-            this.setUsage(
-                payload.get(ApiKeywords.USAGE).isJsonNull()
-                    ? null
-                    : payload.get(ApiKeywords.USAGE));
-          }
-        }
+        fromWebSocketMessage(message);
       } else {
         this.output = response.getBinary();
       }
     } else {
-      JsonObject jsonObject = JsonUtils.parse(response.getMessage());
-      // Set HTTP status code if available
+      String message = response.getMessage();
+      if (message == null || message.isEmpty()) {
+        log.warn(
+            "HTTP response message is null or empty, httpStatusCode: {}",
+            response.getHttpStatusCode());
+        setInternalError();
+        return (T) this;
+      }
+      JsonObject jsonObject = parseJson(message, "Failed to parse HTTP response as JSON: {}");
+      if (jsonObject == null) {
+        return (T) this;
+      }
       if (response.getHttpStatusCode() != null) {
         this.setStatusCode(response.getHttpStatusCode());
       }
-      if (jsonObject.has(ApiKeywords.OUTPUT)) {
-        this.output =
-            jsonObject.get(ApiKeywords.OUTPUT).isJsonNull()
-                ? null
-                : jsonObject.get(ApiKeywords.OUTPUT).getAsJsonObject();
-      }
-      if (jsonObject.has(ApiKeywords.USAGE)) {
-        this.setUsage(
-            jsonObject.get(ApiKeywords.USAGE).isJsonNull()
-                ? null
-                : jsonObject.get(ApiKeywords.USAGE).getAsJsonObject());
-      }
-      if (jsonObject.has(ApiKeywords.REQUEST_ID)) {
-        this.setRequestId(jsonObject.get(ApiKeywords.REQUEST_ID).getAsString());
-      }
-      if (jsonObject.has(ApiKeywords.STATUS_CODE)) {
-        this.setStatusCode(
-            jsonObject.get(ApiKeywords.STATUS_CODE).isJsonNull()
-                ? null
-                : jsonObject.get(ApiKeywords.STATUS_CODE).getAsInt());
-      }
-      if (jsonObject.has(ApiKeywords.CODE)) {
-        this.setCode(
-            jsonObject.get(ApiKeywords.CODE).isJsonNull()
-                ? ""
-                : jsonObject.get(ApiKeywords.CODE).getAsString());
-      } else {
-        // Set default empty string for successful responses
-        this.setCode("");
-      }
-      if (jsonObject.has(ApiKeywords.MESSAGE)) {
-        this.setMessage(
-            jsonObject.get(ApiKeywords.MESSAGE).isJsonNull()
-                ? ""
-                : jsonObject.get(ApiKeywords.MESSAGE).getAsString());
-      } else {
-        // Set default empty string for successful responses
-        this.setMessage("");
-      }
-      if (this.getCode() != null && !this.getCode().isEmpty()) {
-        int resolvedStatusCode =
-            resolveStatusCode(this.getStatusCode(), response.getHttpStatusCode(), this.getCode());
-        throw new ApiException(
-            Status.builder()
-                .statusCode(resolvedStatusCode)
-                .code(this.getCode())
-                .message(this.getMessage())
-                .requestId(this.getRequestId())
-                .build());
-      }
-      if (jsonObject.has(ApiKeywords.DATA)) {
-        jsonObject.remove(ApiKeywords.REQUEST_ID);
-        this.output = jsonObject;
-      }
+      handleOutputField(jsonObject);
+      populateFromHttpJson(jsonObject);
+      handleDataField(jsonObject);
     }
     return (T) this;
   }
@@ -184,24 +79,19 @@ public class DashScopeResult extends Result {
       Protocol protocol, NetworkResponse response, boolean isFlattenResult) throws ApiException {
     if (!isFlattenResult) {
       return fromResponse(protocol, response);
-    } else {
-      this.setHeaders(changeHeaders(response.getHeaders()));
-      // flatten not support websocket.
-      if (protocol == Protocol.WEBSOCKET) {
-        if (response.getBinary() == null) {
-          JsonObject jsonObject = JsonUtils.parse(response.getMessage());
-          this.output = jsonObject;
-          // convert to the result
-        } else {
-          this.output = response.getBinary();
-        }
-      } else { // HTTP
-        JsonObject jsonObject = JsonUtils.parse(response.getMessage());
-        this.output = jsonObject;
-        this.event = response.getEvent();
-      }
-      return (T) this;
     }
+    this.setHeaders(changeHeaders(response.getHeaders()));
+    if (protocol == Protocol.WEBSOCKET) {
+      if (response.getBinary() == null) {
+        this.output = parseJson(response.getMessage(), "Failed to parse WebSocket message");
+      } else {
+        this.output = response.getBinary();
+      }
+    } else {
+      this.output = parseJson(response.getMessage(), "Failed to parse HTTP response message");
+      this.event = response.getEvent();
+    }
+    return (T) this;
   }
 
   @Override
@@ -210,15 +100,25 @@ public class DashScopeResult extends Result {
       Protocol protocol, NetworkResponse response, boolean isFlattenResult, HalfDuplexRequest req)
       throws ApiException {
     this.setHeaders(changeHeaders(response.getHeaders()));
-    // check it's encrypted output
     if ((response.getHeaders().containsKey("X-DashScope-OutputEncrypted".toLowerCase())
             || req.isEncryptRequest())
         && protocol == Protocol.HTTP) {
-      // Set HTTP status code if available
       if (response.getHttpStatusCode() != null) {
         this.setStatusCode(response.getHttpStatusCode());
       }
-      JsonObject jsonObject = JsonUtils.parse(response.getMessage());
+      String encryptedMessage = response.getMessage();
+      if (encryptedMessage == null || encryptedMessage.isEmpty()) {
+        log.warn(
+            "Encrypted HTTP response message is null or empty, httpStatusCode: {}",
+            response.getHttpStatusCode());
+        setInternalError();
+        return (T) this;
+      }
+      JsonObject jsonObject =
+          parseJson(encryptedMessage, "Failed to parse encrypted HTTP response message");
+      if (jsonObject == null) {
+        return (T) this;
+      }
       String encryptedOutput =
           jsonObject.get(ApiKeywords.OUTPUT).isJsonNull()
               ? null
@@ -229,62 +129,110 @@ public class DashScopeResult extends Result {
                 encryptedOutput,
                 req.getEncryptionConfig().getAESEncryptKey(),
                 req.getEncryptionConfig().getIv());
-        this.output = JsonUtils.parse(plainOutput);
+        this.output = parseJson(plainOutput, "Failed to parse decrypted output");
       } else {
         this.output = null;
       }
-      if (jsonObject.has(ApiKeywords.USAGE)) {
-        this.setUsage(
-            jsonObject.get(ApiKeywords.USAGE).isJsonNull()
-                ? null
-                : jsonObject.get(ApiKeywords.USAGE).getAsJsonObject());
-      }
-      if (jsonObject.has(ApiKeywords.REQUEST_ID)) {
-        this.setRequestId(jsonObject.get(ApiKeywords.REQUEST_ID).getAsString());
-      }
-      if (jsonObject.has(ApiKeywords.STATUS_CODE)) {
-        this.setStatusCode(
-            jsonObject.get(ApiKeywords.STATUS_CODE).isJsonNull()
-                ? null
-                : jsonObject.get(ApiKeywords.STATUS_CODE).getAsInt());
-      }
-      if (jsonObject.has(ApiKeywords.CODE)) {
-        this.setCode(
-            jsonObject.get(ApiKeywords.CODE).isJsonNull()
-                ? ""
-                : jsonObject.get(ApiKeywords.CODE).getAsString());
-      } else {
-        // Set default empty string for successful responses
-        this.setCode("");
-      }
-      if (jsonObject.has(ApiKeywords.MESSAGE)) {
-        this.setMessage(
-            jsonObject.get(ApiKeywords.MESSAGE).isJsonNull()
-                ? ""
-                : jsonObject.get(ApiKeywords.MESSAGE).getAsString());
-      } else {
-        // Set default empty string for successful responses
-        this.setMessage("");
-      }
-      if (this.getCode() != null && !this.getCode().isEmpty()) {
-        int resolvedStatusCode =
-            resolveStatusCode(this.getStatusCode(), response.getHttpStatusCode(), this.getCode());
-        throw new ApiException(
-            Status.builder()
-                .statusCode(resolvedStatusCode)
-                .code(this.getCode())
-                .message(this.getMessage())
-                .requestId(this.getRequestId())
-                .build());
-      }
-      if (jsonObject.has(ApiKeywords.DATA)) {
-        if (jsonObject.has(ApiKeywords.REQUEST_ID)) {
-          jsonObject.remove(ApiKeywords.REQUEST_ID);
-        }
-      }
+      populateFromHttpJson(jsonObject);
       return (T) this;
     }
     return fromResponse(protocol, response, isFlattenResult);
+  }
+
+  private void fromWebSocketMessage(String message) {
+    JsonObject jsonObject = parseJson(message, "Failed to parse WebSocket message");
+    if (jsonObject == null) {
+      return;
+    }
+    if (jsonObject.has(ApiKeywords.HEADER)) {
+      JsonObject headers = jsonObject.get(ApiKeywords.HEADER).getAsJsonObject();
+      if (headers.has(ApiKeywords.TASKID)) {
+        this.setRequestId(headers.get(ApiKeywords.TASKID).getAsString());
+      }
+      this.setStatusCode(
+          headers.has(ApiKeywords.STATUS_CODE) && !headers.get(ApiKeywords.STATUS_CODE).isJsonNull()
+              ? headers.get(ApiKeywords.STATUS_CODE).getAsInt()
+              : 200);
+      this.setCode(
+          headers.has(ApiKeywords.ERROR_CODE) && !headers.get(ApiKeywords.ERROR_CODE).isJsonNull()
+              ? headers.get(ApiKeywords.ERROR_CODE).getAsString()
+              : "");
+      this.setMessage(
+          headers.has(ApiKeywords.ERROR_MESSAGE)
+                  && !headers.get(ApiKeywords.ERROR_MESSAGE).isJsonNull()
+              ? headers.get(ApiKeywords.ERROR_MESSAGE).getAsString()
+              : "");
+    }
+    if (jsonObject.has(ApiKeywords.PAYLOAD)) {
+      JsonObject payload = jsonObject.getAsJsonObject(ApiKeywords.PAYLOAD);
+      if (payload.has(ApiKeywords.OUTPUT)) {
+        this.output =
+            payload.get(ApiKeywords.OUTPUT).isJsonNull() ? null : payload.get(ApiKeywords.OUTPUT);
+      }
+      if (payload.has(ApiKeywords.USAGE)) {
+        this.setUsage(
+            payload.get(ApiKeywords.USAGE).isJsonNull() ? null : payload.get(ApiKeywords.USAGE));
+      }
+    }
+  }
+
+  private void handleOutputField(JsonObject jsonObject) {
+    // Handle OUTPUT field first
+    if (this.output == null && jsonObject.has(ApiKeywords.OUTPUT)) {
+      JsonElement outputElement = jsonObject.get(ApiKeywords.OUTPUT);
+      this.output = (outputElement == null || outputElement.isJsonNull()) ? null : outputElement;
+    }
+  }
+
+  private void handleDataField(JsonObject jsonObject) {
+    // Handle DATA field only if OUTPUT was not present
+    if (this.output == null && jsonObject.has(ApiKeywords.DATA)) {
+      jsonObject.remove(ApiKeywords.REQUEST_ID);
+      this.output = jsonObject;
+    }
+  }
+
+  private void populateFromHttpJson(JsonObject jsonObject) {
+    if (jsonObject.has(ApiKeywords.USAGE)) {
+      this.setUsage(
+          jsonObject.get(ApiKeywords.USAGE).isJsonNull()
+              ? null
+              : jsonObject.get(ApiKeywords.USAGE).getAsJsonObject());
+    }
+    if (jsonObject.has(ApiKeywords.REQUEST_ID)) {
+      this.setRequestId(jsonObject.get(ApiKeywords.REQUEST_ID).getAsString());
+    }
+    if (jsonObject.has(ApiKeywords.STATUS_CODE)) {
+      this.setStatusCode(
+          jsonObject.get(ApiKeywords.STATUS_CODE).isJsonNull()
+              ? null
+              : jsonObject.get(ApiKeywords.STATUS_CODE).getAsInt());
+    }
+    this.setCode(
+        jsonObject.has(ApiKeywords.CODE) && !jsonObject.get(ApiKeywords.CODE).isJsonNull()
+            ? jsonObject.get(ApiKeywords.CODE).getAsString()
+            : "");
+    this.setMessage(
+        jsonObject.has(ApiKeywords.MESSAGE) && !jsonObject.get(ApiKeywords.MESSAGE).isJsonNull()
+            ? jsonObject.get(ApiKeywords.MESSAGE).getAsString()
+            : "");
+  }
+
+  private JsonObject parseJson(String raw, String logMsg) {
+    try {
+      return JsonUtils.parse(raw);
+    } catch (Exception e) {
+      log.error(logMsg, e);
+      setInternalError();
+      return null;
+    }
+  }
+
+  private void setInternalError() {
+    this.output = null;
+    this.setStatusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode());
+    this.setCode(PublicErrorDef.INTERNAL_ERROR.getErrorCode());
+    this.setMessage(PublicErrorDef.INTERNAL_ERROR.getErrorMsg());
   }
 
   private Map<String, Object> changeHeaders(Map<String, List<String>> headers) {
