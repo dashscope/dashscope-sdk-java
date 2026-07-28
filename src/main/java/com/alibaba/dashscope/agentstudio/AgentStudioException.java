@@ -115,7 +115,8 @@ public class AgentStudioException extends ApiException {
     int statusCode = status.getStatusCode();
     String unifiedCode = unifyCode(statusCode, status.getCode());
     String message = resolveMessage(statusCode, status.getMessage());
-    return new AgentStudioException(status, classify(statusCode), unifiedCode, message, e.getCause());
+    return new AgentStudioException(
+        status, classify(statusCode), unifiedCode, message, e.getCause());
   }
 
   @Override
@@ -162,8 +163,8 @@ public class AgentStudioException extends ApiException {
   }
 
   /**
-   * Resolve the unified code: a recognized server code wins, else the per-status registry row,
-   * else the kind default.
+   * Resolve the unified code: a recognized server code wins, else the per-status registry row, else
+   * the kind default.
    */
   static String unifyCode(int statusCode, String serverCode) {
     String normalized = normalizeServerCode(serverCode);

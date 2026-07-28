@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.agentstudio.AgentStudioClient;
+import com.alibaba.dashscope.agentstudio.AgentStudioException;
 import com.alibaba.dashscope.agentstudio.message.ClientEvents;
 import com.alibaba.dashscope.agentstudio.message.ContentBlock;
 import com.alibaba.dashscope.agentstudio.message.Message;
@@ -40,7 +41,6 @@ import com.alibaba.dashscope.agentstudio.param.SkillListParam;
 import com.alibaba.dashscope.agentstudio.param.VaultCreateParam;
 import com.alibaba.dashscope.agentstudio.param.VaultListParam;
 import com.alibaba.dashscope.agentstudio.param.VaultUpdateParam;
-import com.alibaba.dashscope.agentstudio.AgentStudioException;
 import com.alibaba.dashscope.agentstudio.resource.Agents;
 import com.alibaba.dashscope.agentstudio.resource.Environments;
 import com.alibaba.dashscope.agentstudio.resource.Sessions;
