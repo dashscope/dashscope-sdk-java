@@ -1,6 +1,7 @@
 package com.alibaba.dashscope;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -39,6 +40,7 @@ import com.alibaba.dashscope.agentstudio.param.SkillListParam;
 import com.alibaba.dashscope.agentstudio.param.VaultCreateParam;
 import com.alibaba.dashscope.agentstudio.param.VaultListParam;
 import com.alibaba.dashscope.agentstudio.param.VaultUpdateParam;
+import com.alibaba.dashscope.agentstudio.AgentStudioException;
 import com.alibaba.dashscope.agentstudio.resource.Agents;
 import com.alibaba.dashscope.agentstudio.resource.Environments;
 import com.alibaba.dashscope.agentstudio.resource.Sessions;
@@ -132,6 +134,48 @@ public class TestAgentStudio {
     assertTrue(req.getPath().contains("/agents/agent_xyz"));
     assertEquals("A test agent", agent.getDescription());
     assertEquals("ws_001", agent.getWorkspaceId());
+  }
+
+  // ======================== Error normalization ========================
+
+  @Test
+  public void testAgentRetrieveErrorNormalizesServerCode() throws Exception {
+    mockServer.enqueue(
+        TestUtils.createMockResponse(
+            "{\"code\":\"NotFoundError\",\"message\":\"agent not found\",\"request_id\":\"r1\"}",
+            404));
+    AgentStudioException ex =
+        assertThrows(
+            AgentStudioException.class, () -> new Agents(null, null, null).retrieve("nope"));
+    assertEquals("GET", mockServer.takeRequest().getMethod());
+    assertEquals("not_found_error", ex.getCode());
+    assertEquals(AgentStudioException.Kind.NOT_FOUND, ex.getKind());
+    assertEquals("agent not found", ex.getErrorMessage());
+  }
+
+  @Test
+  public void testAgentRetrieveErrorLegacyPermissionNormalized() throws Exception {
+    mockServer.enqueue(
+        TestUtils.createMockResponse(
+            "{\"code\":\"permission_denied_error\",\"message\":\"forbidden\"}", 403));
+    AgentStudioException ex =
+        assertThrows(
+            AgentStudioException.class, () -> new Agents(null, null, null).retrieve("nope"));
+    mockServer.takeRequest();
+    assertEquals("permission_error", ex.getCode());
+    assertEquals(AgentStudioException.Kind.PERMISSION_DENIED, ex.getKind());
+  }
+
+  @Test
+  public void testAgentRetrieveErrorDefaultMessageNoPlaceholder() throws Exception {
+    mockServer.enqueue(TestUtils.createMockResponse("{}", 404));
+    AgentStudioException ex =
+        assertThrows(
+            AgentStudioException.class, () -> new Agents(null, null, null).retrieve("nope"));
+    mockServer.takeRequest();
+    assertEquals("not_found_error", ex.getCode());
+    assertEquals("The requested resource was not found.", ex.getErrorMessage());
+    assertFalse(ex.getErrorMessage().contains("{"));
   }
 
   @Test

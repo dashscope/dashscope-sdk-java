@@ -1,6 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.agentstudio.resource;
 
+import com.alibaba.dashscope.agentstudio.AgentStudioException;
 import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.DashScopeResult;
@@ -32,13 +33,18 @@ final class AsyncHelper {
 
             @Override
             public void onError(Exception e) {
-              future.completeExceptionally(e);
+              future.completeExceptionally(normalize(e));
             }
           });
     } catch (Exception e) {
-      future.completeExceptionally(e);
+      future.completeExceptionally(normalize(e));
     }
     return future;
+  }
+
+  /** Wrap {@link ApiException}s as the unified {@link AgentStudioException}. */
+  private static Throwable normalize(Throwable e) {
+    return e instanceof ApiException ? AgentStudioException.wrap((ApiException) e) : e;
   }
 
   static <T> CompletableFuture<T> failedFuture(Throwable ex) {
@@ -52,9 +58,6 @@ final class AsyncHelper {
       return future.join();
     } catch (CompletionException e) {
       Throwable cause = e.getCause();
-      if (cause instanceof ApiException) {
-        throw (ApiException) cause;
-      }
       if (cause instanceof RuntimeException) {
         throw (RuntimeException) cause;
       }
