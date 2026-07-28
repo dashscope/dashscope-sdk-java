@@ -96,7 +96,12 @@ public final class SpeechSynthesizer {
             .baseWebSocketUrl(baseUrl)
             .passTaskStarted(true)
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
+    ConnectionOptions thisOptions = connectionOptions;
+    if (connectionOptions == null) {
+      thisOptions = ConnectionOptions.builder().build();
+      thisOptions.setUseDefaultClient(false);
+    }
+    duplexApi = new SynchronizeFullDuplexApi<>(thisOptions, serviceOption);
     this.callback = callback;
     this.asyncCall = this.callback != null;
   }
@@ -120,7 +125,12 @@ public final class SpeechSynthesizer {
             .baseWebSocketUrl(baseUrl)
             .passTaskStarted(true)
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
+    ConnectionOptions thisOptions = connectionOptions;
+    if (connectionOptions == null) {
+      thisOptions = ConnectionOptions.builder().build();
+      thisOptions.setUseDefaultClient(false);
+    }
+    duplexApi = new SynchronizeFullDuplexApi<>(thisOptions, serviceOption);
     this.callback = null;
   }
 
@@ -137,7 +147,9 @@ public final class SpeechSynthesizer {
             .function(Function.SPEECH_SYNTHESIZER.getValue())
             .passTaskStarted(true)
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
+    ConnectionOptions connectionOptions = ConnectionOptions.builder().build();
+    connectionOptions.setUseDefaultClient(false);
+    duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
     this.callback = null;
   }
 
@@ -186,7 +198,9 @@ public final class SpeechSynthesizer {
             .baseWebSocketUrl(baseUrl)
             .passTaskStarted(true)
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
+    ConnectionOptions connectionOptions = ConnectionOptions.builder().build();
+    connectionOptions.setUseDefaultClient(false);
+    duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
     this.callback = callback;
     this.asyncCall = this.callback != null;
   }
@@ -215,7 +229,9 @@ public final class SpeechSynthesizer {
             .function(Function.SPEECH_SYNTHESIZER.getValue())
             .passTaskStarted(true)
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
+    ConnectionOptions connectionOptions = ConnectionOptions.builder().build();
+    connectionOptions.setUseDefaultClient(false);
+    duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
     this.callback = callback;
     this.asyncCall = this.callback != null;
   }

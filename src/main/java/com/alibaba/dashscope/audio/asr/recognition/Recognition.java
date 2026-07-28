@@ -104,7 +104,9 @@ public final class Recognition {
             .task(Task.ASR.getValue())
             .function(Function.RECOGNITION.getValue())
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
+    ConnectionOptions connectionOptions = ConnectionOptions.builder().build();
+    connectionOptions.setUseDefaultClient(false);
+    duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
   }
 
   public Recognition(ConnectionOptions connectionOptions) {
@@ -117,7 +119,12 @@ public final class Recognition {
             .task(Task.ASR.getValue())
             .function(Function.RECOGNITION.getValue())
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
+    ConnectionOptions thisOptions = connectionOptions;
+    if (connectionOptions == null) {
+      thisOptions = ConnectionOptions.builder().build();
+      thisOptions.setUseDefaultClient(false);
+    }
+    duplexApi = new SynchronizeFullDuplexApi<>(thisOptions, serviceOption);
   }
 
   public Recognition(ConnectionOptions connectionOptions, String baseUrl) {
@@ -131,7 +138,12 @@ public final class Recognition {
             .baseWebSocketUrl(baseUrl)
             .function(Function.RECOGNITION.getValue())
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
+    ConnectionOptions thisOptions = connectionOptions;
+    if (connectionOptions == null) {
+      thisOptions = ConnectionOptions.builder().build();
+      thisOptions.setUseDefaultClient(false);
+    }
+    duplexApi = new SynchronizeFullDuplexApi<>(thisOptions, serviceOption);
   }
 
   public Flowable<RecognitionResult> streamCall(
