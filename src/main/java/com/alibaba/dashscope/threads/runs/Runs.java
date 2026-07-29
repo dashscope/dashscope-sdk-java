@@ -25,9 +25,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @deprecated The runs API is deprecated and will be removed in a future version.
- *             Please use the Responses API instead.
- *             See <a href="https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference">Responses API documentation</a>
+ * @deprecated The runs API is deprecated and will be removed in a future version. Please use the
+ *     Responses API instead. See <a
+ *     href="https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference">Responses API
+ *     documentation</a>
  */
 @Deprecated
 public final class Runs {

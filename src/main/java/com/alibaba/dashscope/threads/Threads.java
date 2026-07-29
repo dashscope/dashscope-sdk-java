@@ -18,9 +18,10 @@ import com.alibaba.dashscope.protocol.StreamingMode;
 import com.alibaba.dashscope.utils.StringUtils;
 
 /**
- * @deprecated The threads API is deprecated and will be removed in a future version.
- *             Please use the Responses API instead.
- *             See <a href="https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference">Responses API documentation</a>
+ * @deprecated The threads API is deprecated and will be removed in a future version. Please use the
+ *     Responses API instead. See <a
+ *     href="https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference">Responses API
+ *     documentation</a>
  */
 @Deprecated
 public final class Threads {
