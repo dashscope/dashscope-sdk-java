@@ -378,10 +378,9 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
               .build();
       callback.onError(new ApiException(status));
     }
-    CountDownLatch stopLatch = this.stopLatch.get();
-    if (stopLatch != null) {
-      stopLatch.countDown();
-    }
+    // Release both latches: the task may fail before task-started, in which case the
+    // thread blocked in startStream() should fail fast instead of waiting for timeout.
+    releaseLatches();
   }
 
   private void handleResultGenerated(JsonObject message) {

@@ -29,8 +29,8 @@ public class OmniRealtimeAudioFormatConfig {
   /** audio format type, supports "pcm" and "wav", defaults to "pcm". */
   private OmniRealtimeAudioCodec type = OmniRealtimeAudioCodec.PCM;
 
-  /** sample rate in Hz, supports 8000/16000/24000/48000. */
-  private int sampleRate;
+  /** sample rate in Hz, supports 8000/16000/24000/48000, defaults to 16000. */
+  private int sampleRate = 16000;
 
   /**
    * Extra format parameters for future extension (e.g. speech rate). These entries are merged into
