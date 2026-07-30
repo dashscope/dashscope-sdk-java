@@ -220,6 +220,34 @@ public class TestHalfDuplexHttpApi {
   }
 
   @Test
+  public void testHttpSendNestedResponseError()
+      throws ApiException, NoApiKeyException, IOException {
+    MockWebServer server = new MockWebServer();
+    String errorCode = "NotFound";
+    String errorMessage = "Agent not found!";
+    JsonObject error = new JsonObject();
+    error.addProperty(ApiKeywords.CODE, errorCode);
+    error.addProperty(ApiKeywords.MESSAGE, errorMessage);
+    JsonObject rsp = new JsonObject();
+    rsp.addProperty("requestId", "req-nested-error");
+    rsp.add(ApiKeywords.ERROR, error);
+    server.enqueue(
+        new MockResponse()
+            .setBody(JsonUtils.toJson(rsp))
+            .setResponseCode(404)
+            .setHeader("content-type", MEDIA_TYPE_APPLICATION_JSON));
+    Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", server.getPort());
+    HalfDuplexTestParam param =
+        HalfDuplexTestParam.builder().model("qwen-turbo").parameter("k1", "v1").build();
+
+    ApiException exception = assertThrows(ApiException.class, () -> syncApi.call(param));
+    assertEquals(errorCode, exception.getStatus().getCode());
+    assertEquals(errorMessage, exception.getStatus().getMessage());
+    assertEquals("req-nested-error", exception.getStatus().getRequestId());
+    server.close();
+  }
+
+  @Test
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "BODY")
   public void testHttpSSE() throws ApiException, NoApiKeyException, IOException {
     MockWebServer server = new MockWebServer();
