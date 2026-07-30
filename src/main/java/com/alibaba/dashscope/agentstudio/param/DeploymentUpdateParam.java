@@ -6,6 +6,7 @@ import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.Builder.Default;
@@ -84,7 +85,7 @@ public class DeploymentUpdateParam extends FlattenHalfDuplexParamBase {
       body.add("vault_ids", vaultItems);
     }
     if (metadata != null) {
-      body.add("metadata", JsonUtils.toJsonElement(metadata));
+      body.add("metadata", JsonUtils.toJsonElement(new LinkedHashMap<>(metadata)));
     }
     addExtraBody(body);
     return body;

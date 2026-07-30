@@ -111,6 +111,7 @@ public class TestAgentStudioDeployments {
             .clearEnvironment(true)
             .clearSchedule(true)
             .resources(Collections.emptyList())
+            .metadata(Collections.emptyMap())
             .build();
     assertTrue(updateParam.getClearEnvironment());
     assertTrue(updateParam.getClearSchedule());
@@ -127,6 +128,7 @@ public class TestAgentStudioDeployments {
     assertTrue(body.has("schedule"), body.toString());
     assertTrue(body.get("schedule").isJsonNull());
     assertEquals(0, body.getAsJsonArray("resources").size());
+    assertEquals(0, body.getAsJsonObject("metadata").size());
   }
 
   @Test
