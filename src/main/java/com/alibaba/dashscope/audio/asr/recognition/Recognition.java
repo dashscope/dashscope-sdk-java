@@ -94,6 +94,19 @@ public final class Recognition {
     }
   }
 
+  /**
+   * Returns the given options, or a default instance routed to the dedicated audio client
+   * (useDefaultClient=false) when null.
+   */
+  private static ConnectionOptions defaultAudioOptionsIfNull(ConnectionOptions connectionOptions) {
+    if (connectionOptions != null) {
+      return connectionOptions;
+    }
+    ConnectionOptions defaultOptions = ConnectionOptions.builder().build();
+    defaultOptions.setUseDefaultClient(false);
+    return defaultOptions;
+  }
+
   public Recognition() {
     serviceOption =
         ApiServiceOption.builder()
@@ -104,7 +117,7 @@ public final class Recognition {
             .task(Task.ASR.getValue())
             .function(Function.RECOGNITION.getValue())
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
+    duplexApi = new SynchronizeFullDuplexApi<>(defaultAudioOptionsIfNull(null), serviceOption);
   }
 
   public Recognition(ConnectionOptions connectionOptions) {
@@ -117,7 +130,8 @@ public final class Recognition {
             .task(Task.ASR.getValue())
             .function(Function.RECOGNITION.getValue())
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
+    duplexApi =
+        new SynchronizeFullDuplexApi<>(defaultAudioOptionsIfNull(connectionOptions), serviceOption);
   }
 
   public Recognition(ConnectionOptions connectionOptions, String baseUrl) {
@@ -131,7 +145,8 @@ public final class Recognition {
             .baseWebSocketUrl(baseUrl)
             .function(Function.RECOGNITION.getValue())
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
+    duplexApi =
+        new SynchronizeFullDuplexApi<>(defaultAudioOptionsIfNull(connectionOptions), serviceOption);
   }
 
   public Flowable<RecognitionResult> streamCall(

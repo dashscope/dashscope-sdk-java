@@ -34,7 +34,7 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
   private SpeechSynthesisState state = SpeechSynthesisState.IDLE;
   private ResultCallback<SpeechSynthesisResult> callback;
 
-  private AtomicReference<CountDownLatch> stopLatch = new AtomicReference<>(null);
+  private final AtomicReference<CountDownLatch> stopLatch = new AtomicReference<>(null);
 
   private SpeechSynthesisParam parameters;
 
@@ -48,7 +48,7 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
   private double recvAudioLength = 0;
   @Getter @Setter private long startedTimeout = 5000;
   @Getter @Setter private long firstAudioTimeout = -1;
-  private AtomicReference<CountDownLatch> startLatch = new AtomicReference<>(null);
+  private final AtomicReference<CountDownLatch> startLatch = new AtomicReference<>(null);
   private AudioWebsocketRequest websocketRequest;
   private String websocketUrl = Constants.baseWebsocketApiUrl;
   private JsonObject bailianHeader = new JsonObject();
@@ -102,8 +102,8 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
     this.canceled.set(false);
 
     // reset inner params
-    this.stopLatch = new AtomicReference<>(null);
-    this.startLatch = new AtomicReference<>(null);
+    this.stopLatch.set(null);
+    this.startLatch.set(null);
     this.firstAudioTimeout = -1;
     this.isFirst = true;
     this.audioStream = new ByteArrayOutputStream();
@@ -167,6 +167,20 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
       } catch (Exception e) {
         log.warn("Failed to close websocket connection: " + e.getMessage());
       }
+    }
+    releaseLatches();
+  }
+
+  /** Release startLatch and stopLatch to unblock any waiting threads. */
+  private void releaseLatches() {
+    CountDownLatch startLatch = this.startLatch.get();
+    if (startLatch != null && startLatch.getCount() > 0) {
+      startLatch.countDown();
+    }
+
+    CountDownLatch stopLatch = this.stopLatch.get();
+    if (stopLatch != null && stopLatch.getCount() > 0) {
+      stopLatch.countDown();
     }
   }
 
@@ -308,16 +322,7 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
       // callback error first
       callback.onError(new ApiException(t));
     }
-
-    CountDownLatch startLatch = this.startLatch.get();
-    if (startLatch != null && startLatch.getCount() > 0) {
-      startLatch.countDown();
-    }
-
-    CountDownLatch stopLatch = this.stopLatch.get();
-    if (stopLatch != null && stopLatch.getCount() > 0) {
-      stopLatch.countDown();
-    }
+    releaseLatches();
 
     if (audioStream != null) {
       audioStream.reset();
@@ -327,21 +332,24 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
   @Override
   public void onClose(int code, String reason) {
     log.warn("WebSocket connection closed: " + reason + " (" + code + ")");
+    releaseLatches();
   }
 
   private void handleTaskStarted(JsonObject message) {
     log.info("Task started");
     state = SpeechSynthesisState.TTS_STARTED;
     firstPackageTimeStamp = -1;
-    if (startLatch.get() != null) {
-      startLatch.get().countDown();
+    CountDownLatch startLatch = this.startLatch.get();
+    if (startLatch != null) {
+      startLatch.countDown();
     }
   }
 
   private void handleTaskFinished(JsonObject message) {
     log.info("Task finished");
-    if (stopLatch.get() != null) {
-      stopLatch.get().countDown();
+    CountDownLatch stopLatch = this.stopLatch.get();
+    if (stopLatch != null) {
+      stopLatch.countDown();
     }
     if (callback != null) {
       callback.onComplete();
@@ -370,9 +378,9 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
               .build();
       callback.onError(new ApiException(status));
     }
-    if (stopLatch.get() != null) {
-      stopLatch.get().countDown();
-    }
+    // Release both latches: the task may fail before task-started, in which case the
+    // thread blocked in startStream() should fail fast instead of waiting for timeout.
+    releaseLatches();
   }
 
   private void handleResultGenerated(JsonObject message) {
@@ -421,9 +429,10 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
     }
 
     checkConnectStatus(); // check websocket connection， if socket is closed.
-    startLatch = new AtomicReference<>(new CountDownLatch(1));
+    CountDownLatch startLatch = new CountDownLatch(1);
+    this.startLatch.set(startLatch);
     startSynthesizer(enableSsml);
-    boolean startResult = startLatch.get().await(startedTimeout, TimeUnit.MILLISECONDS);
+    boolean startResult = startLatch.await(startedTimeout, TimeUnit.MILLISECONDS);
     if (!startResult) {
       throw new RuntimeException(
           "TimeoutError: waiting for task started more than " + startedTimeout + " ms.");
@@ -458,25 +467,24 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
                 "State invalid: expect stream input tts state is started but " + state.getValue()));
       }
     }
-    stopLatch = new AtomicReference<>(new CountDownLatch(1));
+    CountDownLatch stopLatch = new CountDownLatch(1);
+    this.stopLatch.set(stopLatch);
     stopSynthesizer();
 
-    if (stopLatch.get() != null) {
-      try {
-        if (completeTimeoutMillis > 0) {
-          log.debug("start waiting for stopLatch");
-          if (!stopLatch.get().await(completeTimeoutMillis, TimeUnit.MILLISECONDS)) {
-            throw new RuntimeException("TimeoutError: waiting for streaming complete");
-          }
-        } else {
-          log.debug("start waiting for stopLatch");
-          stopLatch.get().await();
+    try {
+      if (completeTimeoutMillis > 0) {
+        log.debug("start waiting for stopLatch");
+        if (!stopLatch.await(completeTimeoutMillis, TimeUnit.MILLISECONDS)) {
+          throw new RuntimeException("TimeoutError: waiting for streaming complete");
         }
-        log.debug("stopLatch is done");
-      } catch (InterruptedException ignored) {
-        log.error("Interrupted while waiting for streaming complete");
-        Thread.currentThread().interrupt();
+      } else {
+        log.debug("start waiting for stopLatch");
+        stopLatch.await();
       }
+      log.debug("stopLatch is done");
+    } catch (InterruptedException ignored) {
+      log.error("Interrupted while waiting for streaming complete");
+      Thread.currentThread().interrupt();
     }
   }
 

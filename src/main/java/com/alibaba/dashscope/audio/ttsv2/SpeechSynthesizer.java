@@ -96,7 +96,8 @@ public final class SpeechSynthesizer {
             .baseWebSocketUrl(baseUrl)
             .passTaskStarted(true)
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
+    duplexApi =
+        new SynchronizeFullDuplexApi<>(defaultAudioOptionsIfNull(connectionOptions), serviceOption);
     this.callback = callback;
     this.asyncCall = this.callback != null;
   }
@@ -120,7 +121,8 @@ public final class SpeechSynthesizer {
             .baseWebSocketUrl(baseUrl)
             .passTaskStarted(true)
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
+    duplexApi =
+        new SynchronizeFullDuplexApi<>(defaultAudioOptionsIfNull(connectionOptions), serviceOption);
     this.callback = null;
   }
 
@@ -137,7 +139,7 @@ public final class SpeechSynthesizer {
             .function(Function.SPEECH_SYNTHESIZER.getValue())
             .passTaskStarted(true)
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
+    duplexApi = new SynchronizeFullDuplexApi<>(defaultAudioOptionsIfNull(null), serviceOption);
     this.callback = null;
   }
 
@@ -186,7 +188,7 @@ public final class SpeechSynthesizer {
             .baseWebSocketUrl(baseUrl)
             .passTaskStarted(true)
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
+    duplexApi = new SynchronizeFullDuplexApi<>(defaultAudioOptionsIfNull(null), serviceOption);
     this.callback = callback;
     this.asyncCall = this.callback != null;
   }
@@ -215,13 +217,26 @@ public final class SpeechSynthesizer {
             .function(Function.SPEECH_SYNTHESIZER.getValue())
             .passTaskStarted(true)
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
+    duplexApi = new SynchronizeFullDuplexApi<>(defaultAudioOptionsIfNull(null), serviceOption);
     this.callback = callback;
     this.asyncCall = this.callback != null;
   }
 
   public String getLastRequestId() {
     return preRequestId;
+  }
+
+  /**
+   * Returns the given options, or a default instance routed to the dedicated audio client
+   * (useDefaultClient=false) when null.
+   */
+  private static ConnectionOptions defaultAudioOptionsIfNull(ConnectionOptions connectionOptions) {
+    if (connectionOptions != null) {
+      return connectionOptions;
+    }
+    ConnectionOptions defaultOptions = ConnectionOptions.builder().build();
+    defaultOptions.setUseDefaultClient(false);
+    return defaultOptions;
   }
 
   /**
