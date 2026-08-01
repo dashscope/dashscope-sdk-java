@@ -43,7 +43,7 @@ public class Deployment extends FlattenResultBase {
   private List<String> vaultIds;
 
   @SerializedName("metadata")
-  private Map<String, Object> metadata;
+  private Map<String, String> metadata;
 
   @SerializedName("status")
   private String status;

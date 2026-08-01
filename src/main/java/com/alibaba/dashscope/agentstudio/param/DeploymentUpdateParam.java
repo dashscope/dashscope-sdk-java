@@ -28,7 +28,7 @@ public class DeploymentUpdateParam extends FlattenHalfDuplexParamBase {
   @Default private List<JsonObject> initialEvents = null;
   @Default private List<DeploymentResourceParam> resources = null;
   @Default private List<String> vaultIds = null;
-  @Default private Map<String, Object> metadata = null;
+  @Default private Map<String, String> metadata = null;
 
   @Override
   public boolean shouldSerializeExplicitNulls() {

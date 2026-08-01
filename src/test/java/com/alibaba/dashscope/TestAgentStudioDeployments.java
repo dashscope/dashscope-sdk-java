@@ -93,6 +93,7 @@ public class TestAgentStudioDeployments {
     assertEquals(
         "message",
         body.getAsJsonArray("initial_events").get(0).getAsJsonObject().get("type").getAsString());
+    assertEquals("summary", body.getAsJsonObject("metadata").get("biz").getAsString());
 
     assertEquals("depl_01", deployment.getId());
     assertEquals(Integer.valueOf(12), deployment.getAgent().getVersion());
@@ -100,6 +101,7 @@ public class TestAgentStudioDeployments {
     assertEquals("Asia/Shanghai", deployment.getSchedule().getTimezone());
     assertEquals("file_01", deployment.getResources().get(0).getFileId());
     assertEquals("RUN_FAILED", deployment.getPausedReason().getError().getCode());
+    assertEquals("summary", deployment.getMetadata().get("biz"));
     assertEquals("req-depl-01", deployment.getRequestId());
   }
 

@@ -26,7 +26,7 @@ public class DeploymentCreateParam extends FlattenHalfDuplexParamBase {
   @NonNull private List<JsonObject> initialEvents;
   @Default private List<DeploymentResourceParam> resources = null;
   @Default private List<String> vaultIds = null;
-  @Default private Map<String, Object> metadata = null;
+  @Default private Map<String, String> metadata = null;
 
   @Override
   public JsonObject getHttpBody() {
