@@ -10,6 +10,7 @@ import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.*;
 import com.alibaba.dashscope.protocol.Protocol;
+import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.alibaba.dashscope.utils.StringUtils;
@@ -184,6 +185,23 @@ public class OkHttpWebSocketClient extends WebSocketListener
         flowable.timeout(60, TimeUnit.SECONDS).blockingSubscribe();
         return;
       } catch (Throwable ex) {
+        // Unwrap RxJava-wrapped exceptions to find the original ApiException.
+        Throwable unwrapped = ex;
+        while (unwrapped != null && !(unwrapped instanceof ApiException)) {
+          unwrapped = unwrapped.getCause();
+        }
+
+        // Client-side errors (e.g. invalid URL, invalid API key) should not be retried or wrapped.
+        // Rethrow immediately so the caller sees the original error code.
+        if (unwrapped instanceof ApiException) {
+          ApiException apiEx = (ApiException) unwrapped;
+          // Only rethrow 4xx errors directly; 5xx errors should still be retried.
+          if (apiEx.getStatus() != null
+              && apiEx.getStatus().getStatusCode() >= 400
+              && apiEx.getStatus().getStatusCode() < 500) {
+            throw apiEx;
+          }
+        }
         reconnectionTimes += 1;
         errorMessage = ex.getMessage();
         log.error(errorMessage);
@@ -256,6 +274,51 @@ public class OkHttpWebSocketClient extends WebSocketListener
     }
   }
 
+  /**
+   * Parse WebSocket handshake failure response body to extract error details. Returns an
+   * ApiException with the original error code/message if parsing succeeds, otherwise returns null.
+   */
+  private ApiException parseWebSocketHandshakeError(
+      int httpStatusCode, String responseBody, Throwable cause) {
+    if (responseBody == null || responseBody.isEmpty()) {
+      return null;
+    }
+
+    try {
+      JsonObject jsonResponse = JsonUtils.parse(responseBody);
+      String code = "";
+      String message = "";
+      String requestId = "";
+
+      if (jsonResponse.has(ApiKeywords.REQUEST_ID)) {
+        requestId = jsonResponse.get(ApiKeywords.REQUEST_ID).getAsString();
+      }
+      if (jsonResponse.has(ApiKeywords.CODE) && !jsonResponse.get(ApiKeywords.CODE).isJsonNull()) {
+        code = jsonResponse.get(ApiKeywords.CODE).getAsString();
+      }
+      if (jsonResponse.has(ApiKeywords.MESSAGE)) {
+        message = jsonResponse.get(ApiKeywords.MESSAGE).getAsString();
+      }
+
+      // If we have a business error code, use it directly with the HTTP status code
+      if (!code.isEmpty()) {
+        Status status =
+            Status.builder()
+                .statusCode(httpStatusCode)
+                .code(code)
+                .message(message)
+                .requestId(requestId)
+                .isJson(true)
+                .build();
+        return new ApiException(status, cause);
+      }
+    } catch (Throwable e) {
+      log.debug("Failed to parse WebSocket handshake error response as JSON", e);
+    }
+
+    return null;
+  }
+
   @Override
   public void onFailure(WebSocket webSocket, Throwable t, Response response) {
     // Invoked when a web socket has been closed due to an error reading from or
@@ -270,8 +333,10 @@ public class OkHttpWebSocketClient extends WebSocketListener
     }
 
     String responseBody = "";
+    int httpStatusCode = 0;
     // Get response body if there is.
     if (response != null) {
+      httpStatusCode = response.code();
       try {
         responseBody = response.body().string();
       } catch (IOException ex) {
@@ -284,11 +349,23 @@ public class OkHttpWebSocketClient extends WebSocketListener
             t.getMessage(), t.getCause(), responseBody);
     log.error(failureMessage);
     isOpen.set(false);
+
+    // Try to parse the response body for structured error information
+    ApiException parsedException = parseWebSocketHandshakeError(httpStatusCode, responseBody, t);
+
     if (connectionEmitter != null && !connectionEmitter.isCancelled()) {
-      connectionEmitter.onError(new Exception(failureMessage, t));
+      if (parsedException != null) {
+        connectionEmitter.onError(parsedException);
+      } else {
+        connectionEmitter.onError(new Exception(failureMessage, t));
+      }
     } else if (responseEmitter != null && !responseEmitter.isCancelled()) {
       // error on request
-      responseEmitter.onError(new Exception(failureMessage, t));
+      if (parsedException != null) {
+        responseEmitter.onError(parsedException);
+      } else {
+        responseEmitter.onError(new Exception(failureMessage, t));
+      }
     } else {
       log.error(failureMessage);
     }
