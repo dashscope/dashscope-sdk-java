@@ -24,6 +24,12 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @deprecated The Assistants API (com.alibaba.dashscope.threads.runs) is deprecated and will be
+ *     removed in a future release. Please migrate to the Responses API. See
+ *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration details.
+ */
+@Deprecated
 public final class Runs {
   private final GeneralApi<HalfDuplexParamBase> api;
   private final GeneralServiceOption serviceOption;
@@ -58,7 +64,12 @@ public final class Runs {
    * @throws NoApiKeyException Can not find a valid api key
    * @throws InputRequiredException The threadId must input.
    * @throws InvalidateParameter The input parameter is invalid.
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
    */
+  @Deprecated
   public Run create(String threadId, RunParam param)
       throws ApiException, NoApiKeyException, InputRequiredException, InvalidateParameter {
     if (threadId == null || threadId.equals("")) {
@@ -83,7 +94,12 @@ public final class Runs {
    * @throws NoApiKeyException No api key found.
    * @throws InputRequiredException The threadId is null or empty.
    * @throws InvalidateParameter The stream in param is false.
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
    */
+  @Deprecated
   public Flowable<AssistantStreamMessage> createStream(String threadId, RunParam param)
       throws ApiException, NoApiKeyException, InputRequiredException, InvalidateParameter {
     if (threadId == null || threadId.equals("")) {
@@ -109,7 +125,12 @@ public final class Runs {
    * @throws NoApiKeyException No api key found.
    * @throws InputRequiredException The threadId is null or empty.
    * @throws InvalidateParameter The stream in param is false.
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
    */
+  @Deprecated
   public void createStream(String threadId, RunParam param, AssistantEventHandler handler)
       throws ApiException, NoApiKeyException, InputRequiredException, InvalidateParameter {
     if (threadId == null || threadId.equals("")) {
@@ -132,7 +153,12 @@ public final class Runs {
    * @throws ApiException The request exception, if network connection issue etc.
    * @throws NoApiKeyException Can not find a valid api key
    * @throws InvalidateParameter The input parameter is invalid.
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
    */
+  @Deprecated
   public Run createThreadAndRun(ThreadAndRunParam param)
       throws ApiException, NoApiKeyException, InvalidateParameter {
     if (param.getStream()) {
@@ -152,7 +178,12 @@ public final class Runs {
    * @throws ApiException The request exception, if network connection issue etc.
    * @throws NoApiKeyException Can not find a valid api key
    * @throws InvalidateParameter The input parameter is invalid.
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
    */
+  @Deprecated
   public Flowable<AssistantStreamMessage> createStreamThreadAndRun(ThreadAndRunParam param)
       throws ApiException, NoApiKeyException, InvalidateParameter {
     if (!param.getStream()) {
@@ -175,7 +206,12 @@ public final class Runs {
    * @throws ApiException The request exception, if network connection issue etc.
    * @throws NoApiKeyException Can not find a valid api key
    * @throws InvalidateParameter The input parameter is invalid.
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
    */
+  @Deprecated
   public void createStreamThreadAndRun(ThreadAndRunParam param, AssistantEventHandler handler)
       throws ApiException, NoApiKeyException, InvalidateParameter {
     if (!param.getStream()) {
@@ -196,7 +232,12 @@ public final class Runs {
    * @throws ApiException The request exception, if network connection issue etc.
    * @throws NoApiKeyException Can not find a valid api key
    * @throws InputRequiredException The thread id and run id are required.
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
    */
+  @Deprecated
   public Run update(String threadId, String runId, UpdateMetadataParam param)
       throws ApiException, NoApiKeyException, InputRequiredException {
     if (threadId == null || threadId.equals("") || runId == null || runId.isEmpty()) {
@@ -216,7 +257,12 @@ public final class Runs {
    * @return The list of `Run`.
    * @throws ApiException The request exception, if network connection issue etc.
    * @throws NoApiKeyException Can not find a valid api key
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
    */
+  @Deprecated
   public ListResult<Run> list(String threadId, GeneralListParam listParam)
       throws ApiException, NoApiKeyException {
     serviceOption.setHttpMethod(HttpMethod.GET);
@@ -235,7 +281,12 @@ public final class Runs {
    * @return The list of 'RunStep'
    * @throws ApiException The request exception, if network connection issue etc.
    * @throws NoApiKeyException Can not find a valid api key
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
    */
+  @Deprecated
   public ListResult<RunStep> listSteps(String threadId, String runId, GeneralListParam listParam)
       throws ApiException, NoApiKeyException {
     serviceOption.setHttpMethod(HttpMethod.GET);
@@ -253,7 +304,12 @@ public final class Runs {
    * @return The `Run` object.
    * @throws ApiException The request exception, if network connection issue etc.
    * @throws NoApiKeyException Can not find a valid api key
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
    */
+  @Deprecated
   public Run retrieve(String threadId, String runId) throws ApiException, NoApiKeyException {
     return retrieve(threadId, runId, null);
   }
@@ -267,12 +323,24 @@ public final class Runs {
    * @return The `Run` object.
    * @throws ApiException The request exception, if network connection issue etc.
    * @throws NoApiKeyException Can not find a valid api key
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
    */
+  @Deprecated
   public Run retrieve(String threadId, String runId, String apiKey)
       throws ApiException, NoApiKeyException {
     return retrieve(threadId, runId, apiKey, new HashMap<>());
   }
 
+  /**
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
+   */
+  @Deprecated
   public Run retrieve(String threadId, String runId, String apiKey, Map<String, String> headers)
       throws ApiException, NoApiKeyException {
     serviceOption.setHttpMethod(HttpMethod.GET);
@@ -291,7 +359,12 @@ public final class Runs {
    * @return The `RunStep` object.
    * @throws ApiException The request exception, if network connection issue etc.
    * @throws NoApiKeyException Can not find a valid api key
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
    */
+  @Deprecated
   public RunStep retrieveStep(String threadId, String runId, String stepId)
       throws ApiException, NoApiKeyException {
     return retrieveStep(threadId, runId, stepId, null);
@@ -307,12 +380,24 @@ public final class Runs {
    * @return The `RunStep` object.
    * @throws ApiException The request exception, if network connection issue etc.
    * @throws NoApiKeyException Can not find a valid api key
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
    */
+  @Deprecated
   public RunStep retrieveStep(String threadId, String runId, String stepId, String apiKey)
       throws ApiException, NoApiKeyException {
     return retrieveStep(threadId, runId, stepId, apiKey, new HashMap<>());
   }
 
+  /**
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
+   */
+  @Deprecated
   public RunStep retrieveStep(
       String threadId, String runId, String stepId, String apiKey, Map<String, String> headers)
       throws ApiException, NoApiKeyException {
@@ -334,7 +419,12 @@ public final class Runs {
    * @throws ApiException The request exception, if network connection issue etc.
    * @throws NoApiKeyException Can not find a valid api key
    * @throws InputRequiredException The thread id and run id must input.
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
    */
+  @Deprecated
   public Run submitToolOutputs(String threadId, String runId, SubmitToolOutputsParam param)
       throws ApiException, NoApiKeyException, InputRequiredException {
     if (threadId == null || threadId.equals("") || runId == null || runId.isEmpty()) {
@@ -358,7 +448,12 @@ public final class Runs {
    * @throws ApiException The request exception, if network connection issue etc.
    * @throws NoApiKeyException Can not find a valid api key
    * @throws InputRequiredException The thread id and run id must input.
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
    */
+  @Deprecated
   public Flowable<AssistantStreamMessage> submitStreamToolOutputs(
       String threadId, String runId, SubmitToolOutputsParam param)
       throws ApiException, NoApiKeyException, InputRequiredException {
@@ -386,7 +481,12 @@ public final class Runs {
    * @throws ApiException The request exception, if network connection issue etc.
    * @throws NoApiKeyException Can not find a valid api key
    * @throws InputRequiredException The thread id and run id must input.
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
    */
+  @Deprecated
   public void submitStreamToolOutputs(
       String threadId, String runId, SubmitToolOutputsParam param, AssistantEventHandler handler)
       throws ApiException, NoApiKeyException, InputRequiredException {
