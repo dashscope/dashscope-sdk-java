@@ -6,7 +6,7 @@ import static com.alibaba.dashscope.utils.ApiKeywords.TASK_STATUS;
 
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.DashScopeResult;
-import com.alibaba.dashscope.common.PublicErrorDef;
+import com.alibaba.dashscope.common.ClientErrorDef;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.common.TaskStatus;
 import com.alibaba.dashscope.exception.ApiException;
@@ -119,12 +119,12 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
         if (elapsed >= timeoutMillis) {
           throw new ApiException(
               Status.builder()
-                  .statusCode(PublicErrorDef.REQUEST_TIMEOUT.getStatusCode())
-                  .code(PublicErrorDef.REQUEST_TIMEOUT.getErrorCode())
+                  .statusCode(ClientErrorDef.REQUEST_TIMEOUT.getStatusCode())
+                  .code(ClientErrorDef.REQUEST_TIMEOUT.getErrorCode())
                   .message(
                       StringUtils.format(
                           "%s [taskId=%s, elapsed=%d ms, timeoutSeconds=%d, transientErrors=%d]",
-                          PublicErrorDef.REQUEST_TIMEOUT.getErrorMsg(),
+                          ClientErrorDef.REQUEST_TIMEOUT.getErrorMsg(),
                           taskId,
                           elapsed,
                           timeoutSeconds,
@@ -170,12 +170,12 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
             Thread.currentThread().interrupt();
             throw new ApiException(
                 Status.builder()
-                    .statusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode())
-                    .code(PublicErrorDef.INTERNAL_ERROR.getErrorCode())
+                    .statusCode(ClientErrorDef.INTERNAL_ERROR.getStatusCode())
+                    .code(ClientErrorDef.INTERNAL_ERROR.getErrorCode())
                     .message(
                         StringUtils.format(
                             "%s [taskId=%s, reason=thread_interrupted]",
-                            PublicErrorDef.INTERNAL_ERROR.getErrorMsg(), taskId))
+                            ClientErrorDef.INTERNAL_ERROR.getErrorMsg(), taskId))
                     .build(),
                 e);
           }
@@ -196,12 +196,12 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
         if (transientErrorCount >= MAX_TRANSIENT_ERRORS) {
           throw new ApiException(
               Status.builder()
-                  .statusCode(PublicErrorDef.SERVICE_UNAVAILABLE.getStatusCode())
-                  .code(PublicErrorDef.SERVICE_UNAVAILABLE.getErrorCode())
+                  .statusCode(ClientErrorDef.SERVICE_UNAVAILABLE.getStatusCode())
+                  .code(ClientErrorDef.SERVICE_UNAVAILABLE.getErrorCode())
                   .message(
                       StringUtils.format(
                           "%s [taskId=%s, transientErrors=%d, lastError=%s]",
-                          PublicErrorDef.SERVICE_UNAVAILABLE.getErrorMsg(),
+                          ClientErrorDef.SERVICE_UNAVAILABLE.getErrorMsg(),
                           taskId,
                           transientErrorCount,
                           e.getMessage()))
@@ -214,12 +214,12 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
           Thread.currentThread().interrupt();
           throw new ApiException(
               Status.builder()
-                  .statusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode())
-                  .code(PublicErrorDef.INTERNAL_ERROR.getErrorCode())
+                  .statusCode(ClientErrorDef.INTERNAL_ERROR.getStatusCode())
+                  .code(ClientErrorDef.INTERNAL_ERROR.getErrorCode())
                   .message(
                       StringUtils.format(
                           "%s [taskId=%s, reason=thread_interrupted]",
-                          PublicErrorDef.INTERNAL_ERROR.getErrorMsg(), taskId))
+                          ClientErrorDef.INTERNAL_ERROR.getErrorMsg(), taskId))
                   .build(),
               ie);
         }

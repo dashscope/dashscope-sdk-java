@@ -4,7 +4,7 @@ package com.alibaba.dashscope.protocol.okhttp;
 
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.DashScopeResult;
-import com.alibaba.dashscope.common.PublicErrorDef;
+import com.alibaba.dashscope.common.ClientErrorDef;
 import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.exception.ApiException;
@@ -152,8 +152,8 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
     }
     // HTTP status is 2xx (e.g., SSE stream connected with 200) but we have a business error
     if (errorCode != null && !errorCode.isEmpty()) {
-      // Try exact match against PublicErrorDef
-      PublicErrorDef errorDef = PublicErrorDef.fromErrorCode(errorCode);
+      // Try exact match against ClientErrorDef
+      ClientErrorDef errorDef = ClientErrorDef.fromErrorCode(errorCode);
       if (errorDef != null) {
         return errorDef.getStatusCode();
       }
@@ -189,22 +189,22 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
   }
 
   /**
-   * Map HTTP status code to corresponding PublicErrorDef. Falls back to INTERNAL_ERROR if no
+   * Map HTTP status code to corresponding ClientErrorDef. Falls back to INTERNAL_ERROR if no
    * specific mapping found.
    */
-  private PublicErrorDef mapStatusCodeToErrorDef(int statusCode) {
-    for (PublicErrorDef errorDef : PublicErrorDef.values()) {
+  private ClientErrorDef mapStatusCodeToErrorDef(int statusCode) {
+    for (ClientErrorDef errorDef : ClientErrorDef.values()) {
       if (errorDef.getStatusCode() == statusCode) {
         return errorDef;
       }
     }
     // Default fallback based on status code ranges
     if (statusCode >= 400 && statusCode < 500) {
-      return PublicErrorDef.INVALID_REQUEST;
+      return ClientErrorDef.INVALID_REQUEST;
     } else if (statusCode >= 500) {
-      return PublicErrorDef.INTERNAL_ERROR;
+      return ClientErrorDef.INTERNAL_ERROR;
     }
-    return PublicErrorDef.INTERNAL_ERROR;
+    return ClientErrorDef.INTERNAL_ERROR;
   }
 
   private Status parseFailed(Response response, Throwable th) {
@@ -212,12 +212,12 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       String message = th == null ? "Get response failed!" : th.getMessage();
 
       return Status.builder()
-          .statusCode(PublicErrorDef.SERVICE_UNAVAILABLE.getStatusCode())
-          .code(PublicErrorDef.SERVICE_UNAVAILABLE.getErrorCode())
+          .statusCode(ClientErrorDef.SERVICE_UNAVAILABLE.getStatusCode())
+          .code(ClientErrorDef.SERVICE_UNAVAILABLE.getErrorCode())
           .message(
               StringUtils.format(
                   "%s [reason=no_response, detail=%s]",
-                  PublicErrorDef.SERVICE_UNAVAILABLE.getErrorMsg(),
+                  ClientErrorDef.SERVICE_UNAVAILABLE.getErrorMsg(),
                   (message != null ? message : "Unknown")))
           .isJson(false)
           .build();
@@ -229,7 +229,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       try {
         body = response.body().string();
       } catch (IOException e) {
-        PublicErrorDef errorDef = mapStatusCodeToErrorDef(response.code());
+        ClientErrorDef errorDef = mapStatusCodeToErrorDef(response.code());
         return Status.builder()
             .statusCode(errorDef.getStatusCode())
             .code(errorDef.getErrorCode())
@@ -251,7 +251,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
             return parseFailedJson(response.code(), body);
           }
         }
-        PublicErrorDef errorDef = mapStatusCodeToErrorDef(response.code());
+        ClientErrorDef errorDef = mapStatusCodeToErrorDef(response.code());
         return Status.builder()
             .statusCode(errorDef.getStatusCode())
             .code(errorDef.getErrorCode())
@@ -264,7 +264,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
             .isJson(false)
             .build();
       } catch (IOException e) {
-        PublicErrorDef errorDef = mapStatusCodeToErrorDef(response.code());
+        ClientErrorDef errorDef = mapStatusCodeToErrorDef(response.code());
         return Status.builder()
             .statusCode(errorDef.getStatusCode())
             .code(errorDef.getErrorCode())
@@ -299,7 +299,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
         // Parsing failed, use defaults
       }
 
-      PublicErrorDef errorDef = mapStatusCodeToErrorDef(response.code());
+      ClientErrorDef errorDef = mapStatusCodeToErrorDef(response.code());
       return Status.builder()
           .statusCode(response.code())
           .code(extractedCode.isEmpty() ? errorDef.getErrorCode() : extractedCode)
@@ -320,22 +320,22 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
     if (url == null || url.isEmpty()) {
       throw new ApiException(
           Status.builder()
-              .statusCode(PublicErrorDef.INVALID_URL.getStatusCode())
-              .code(PublicErrorDef.INVALID_URL.getErrorCode())
+              .statusCode(ClientErrorDef.INVALID_URL.getStatusCode())
+              .code(ClientErrorDef.INVALID_URL.getErrorCode())
               .message(
                   StringUtils.format(
-                      "%s [detail=URL is null or empty]", PublicErrorDef.INVALID_URL.getErrorMsg()))
+                      "%s [detail=URL is null or empty]", ClientErrorDef.INVALID_URL.getErrorMsg()))
               .build());
     }
     HttpUrl parsedUrl = HttpUrl.parse(url);
     if (parsedUrl == null) {
       throw new ApiException(
           Status.builder()
-              .statusCode(PublicErrorDef.INVALID_URL.getStatusCode())
-              .code(PublicErrorDef.INVALID_URL.getErrorCode())
+              .statusCode(ClientErrorDef.INVALID_URL.getStatusCode())
+              .code(ClientErrorDef.INVALID_URL.getErrorCode())
               .message(
                   StringUtils.format(
-                      "%s [detail=%s]", PublicErrorDef.INVALID_URL.getErrorMsg(), url))
+                      "%s [detail=%s]", ClientErrorDef.INVALID_URL.getErrorMsg(), url))
               .build());
     }
 

@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /** Customer-facing error definitions. */
-public enum PublicErrorDef {
+public enum ClientErrorDef {
   INVALID_REQUEST(
       400,
       "BadRequestError",
@@ -80,7 +80,7 @@ public enum PublicErrorDef {
   private final String errorMsg;
   private final String anthropicErrorCode;
 
-  PublicErrorDef(int statusCode, String errorCode, String errorMsg, String anthropicErrorCode) {
+  ClientErrorDef(int statusCode, String errorCode, String errorMsg, String anthropicErrorCode) {
     this.statusCode = statusCode;
     this.errorCode = errorCode;
     this.errorMsg = errorMsg;
@@ -111,21 +111,21 @@ public enum PublicErrorDef {
     return msg;
   }
 
-  private static final Map<String, PublicErrorDef> ERROR_CODE_MAP = new HashMap<>();
+  private static final Map<String, ClientErrorDef> ERROR_CODE_MAP = new HashMap<>();
 
   static {
-    for (PublicErrorDef def : values()) {
+    for (ClientErrorDef def : values()) {
       ERROR_CODE_MAP.put(def.errorCode, def);
     }
   }
 
   /**
-   * Look up a PublicErrorDef by its error code.
+   * Look up a ClientErrorDef by its error code.
    *
    * @param errorCode The error code to look up
-   * @return The matching PublicErrorDef, or null if not found
+   * @return The matching ClientErrorDef, or null if not found
    */
-  public static PublicErrorDef fromErrorCode(String errorCode) {
+  public static ClientErrorDef fromErrorCode(String errorCode) {
     return ERROR_CODE_MAP.get(errorCode);
   }
 }

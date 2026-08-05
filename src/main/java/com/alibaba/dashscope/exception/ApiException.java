@@ -1,7 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.exception;
 
-import com.alibaba.dashscope.common.PublicErrorDef;
+import com.alibaba.dashscope.common.ClientErrorDef;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.alibaba.dashscope.utils.StringUtils;
@@ -19,12 +19,12 @@ public class ApiException extends RuntimeException {
     } else {
       this.status =
           Status.builder()
-              .statusCode(PublicErrorDef.SERVICE_UNAVAILABLE.getStatusCode())
-              .code(PublicErrorDef.SERVICE_UNAVAILABLE.getErrorCode())
+              .statusCode(ClientErrorDef.SERVICE_UNAVAILABLE.getStatusCode())
+              .code(ClientErrorDef.SERVICE_UNAVAILABLE.getErrorCode())
               .message(
                   StringUtils.format(
                       "%s [reason=wrapped_exception, detail=%s: %s]",
-                      PublicErrorDef.SERVICE_UNAVAILABLE.getErrorMsg(),
+                      ClientErrorDef.SERVICE_UNAVAILABLE.getErrorMsg(),
                       e.getClass().getSimpleName(),
                       e.getMessage()))
               .build();

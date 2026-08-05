@@ -230,9 +230,9 @@ public class DashScopeResult extends Result {
 
   private void setInternalError() {
     this.output = null;
-    this.setStatusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode());
-    this.setCode(PublicErrorDef.INTERNAL_ERROR.getErrorCode());
-    this.setMessage(PublicErrorDef.INTERNAL_ERROR.getErrorMsg());
+    this.setStatusCode(ClientErrorDef.INTERNAL_ERROR.getStatusCode());
+    this.setCode(ClientErrorDef.INTERNAL_ERROR.getErrorCode());
+    this.setMessage(ClientErrorDef.INTERNAL_ERROR.getErrorMsg());
   }
 
   private Map<String, Object> changeHeaders(Map<String, List<String>> headers) {
@@ -273,7 +273,7 @@ public class DashScopeResult extends Result {
 
   /**
    * Resolve the appropriate HTTP status code for an API exception. Priority: 1) Body status_code,
-   * 2) HTTP response status code, 3) Exact match in PublicErrorDef, 4) Keyword match for legacy
+   * 2) HTTP response status code, 3) Exact match in ClientErrorDef, 4) Keyword match for legacy
    * error codes, 5) Default to bodyStatusCode/httpStatusCode/200.
    *
    * <p>This method is null-safe: all parameters accept {@code null} values and will never cause
@@ -287,8 +287,8 @@ public class DashScopeResult extends Result {
       return httpStatusCode;
     }
     if (errorCode != null) {
-      // Exact match against PublicErrorDef
-      for (PublicErrorDef def : PublicErrorDef.values()) {
+      // Exact match against ClientErrorDef
+      for (ClientErrorDef def : ClientErrorDef.values()) {
         if (def.getErrorCode().equals(errorCode)) {
           return def.getStatusCode();
         }
