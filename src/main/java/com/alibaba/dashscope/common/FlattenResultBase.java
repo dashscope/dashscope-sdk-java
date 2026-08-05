@@ -18,7 +18,9 @@ import lombok.Data;
 @Data
 public abstract class FlattenResultBase {
   /** The request if. */
-  @SerializedName("request_id")
+  @SerializedName(
+      value = "request_id",
+      alternate = {"requestId"})
   private String requestId;
 
   protected FlattenResultBase() {}
