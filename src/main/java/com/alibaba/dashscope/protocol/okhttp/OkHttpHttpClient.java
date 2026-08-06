@@ -87,72 +87,72 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
   }
 
   private Status parseFailedJson(int httpStatusCode, String body) {
-      int finalStatusCode = httpStatusCode;  // 修复：初始化为 httpStatusCode 而不是 0
-      try {
-          JsonObject jsonResponse = JsonUtils.parse(body);
-          String code = "";
-          String message = "";
-          String requestId = "";
-          if (jsonResponse.has(ApiKeywords.REQUEST_ID)) {
-              requestId = jsonResponse.get(ApiKeywords.REQUEST_ID).getAsString();
-          } else if (jsonResponse.has("requestId")) {
-              requestId = jsonResponse.get("requestId").getAsString();
-          }
-          if (jsonResponse.has(ApiKeywords.CODE) && !jsonResponse.get(ApiKeywords.CODE).isJsonNull()) {
-              code = jsonResponse.get(ApiKeywords.CODE).getAsString();
-          }
-          if (jsonResponse.has(ApiKeywords.MESSAGE)) {
-              message = jsonResponse.get(ApiKeywords.MESSAGE).getAsString();
-          }
-          if ((code == null || code.isEmpty())
-                  && (message == null || message.isEmpty())
-                  && jsonResponse.has(ApiKeywords.ERROR)
-                  && jsonResponse.get(ApiKeywords.ERROR).isJsonObject()) {
-              JsonObject error = jsonResponse.getAsJsonObject(ApiKeywords.ERROR);
-              if (error.has(ApiKeywords.CODE)) {
-                  code = error.get(ApiKeywords.CODE).getAsString();
-              }
-              if (error.has(ApiKeywords.MESSAGE)) {
-                  message = error.get(ApiKeywords.MESSAGE).getAsString();
-              }
-          }
-          // 修复：如果有业务错误码，尝试解析正确的状态码
-          if (code != null && !code.isEmpty()) {
-              finalStatusCode = resolveErrorStatusCode(httpStatusCode, code);
-          }
-          return Status.builder()
-                  .statusCode(finalStatusCode)
-                  .code(code)
-                  .message(message)
-                  .requestId(requestId)
-                  .isJson(true)
-                  .build();
-      } catch (Throwable e) {
-          // Try to extract code/message even if standard parsing failed
-          String extractedCode = "";
-          String extractedMessage = body;
-          try {
-              JsonObject json = JsonUtils.parse(body);
-              if (json.has(ApiKeywords.CODE)) {
-                  extractedCode = json.get(ApiKeywords.CODE).getAsString();
-              }
-              if (json.has(ApiKeywords.MESSAGE)) {
-                  extractedMessage = json.get(ApiKeywords.MESSAGE).getAsString();
-              }
-          } catch (Exception ex) {
-              // Parsing failed, use defaults
-          }
-
-          // If we have a business error code, try to map it to the correct status code
-          finalStatusCode = resolveErrorStatusCode(httpStatusCode, extractedCode);
-
-          return Status.builder()
-                  .statusCode(finalStatusCode)
-                  .code(extractedCode.isEmpty() ? "" : extractedCode)
-                  .message(extractedMessage)
-                  .isJson(!extractedCode.isEmpty())
-                  .build();
+    int finalStatusCode = httpStatusCode; // 修复：初始化为 httpStatusCode 而不是 0
+    try {
+      JsonObject jsonResponse = JsonUtils.parse(body);
+      String code = "";
+      String message = "";
+      String requestId = "";
+      if (jsonResponse.has(ApiKeywords.REQUEST_ID)) {
+        requestId = jsonResponse.get(ApiKeywords.REQUEST_ID).getAsString();
+      } else if (jsonResponse.has("requestId")) {
+        requestId = jsonResponse.get("requestId").getAsString();
       }
+      if (jsonResponse.has(ApiKeywords.CODE) && !jsonResponse.get(ApiKeywords.CODE).isJsonNull()) {
+        code = jsonResponse.get(ApiKeywords.CODE).getAsString();
+      }
+      if (jsonResponse.has(ApiKeywords.MESSAGE)) {
+        message = jsonResponse.get(ApiKeywords.MESSAGE).getAsString();
+      }
+      if ((code == null || code.isEmpty())
+          && (message == null || message.isEmpty())
+          && jsonResponse.has(ApiKeywords.ERROR)
+          && jsonResponse.get(ApiKeywords.ERROR).isJsonObject()) {
+        JsonObject error = jsonResponse.getAsJsonObject(ApiKeywords.ERROR);
+        if (error.has(ApiKeywords.CODE)) {
+          code = error.get(ApiKeywords.CODE).getAsString();
+        }
+        if (error.has(ApiKeywords.MESSAGE)) {
+          message = error.get(ApiKeywords.MESSAGE).getAsString();
+        }
+      }
+      // 修复：如果有业务错误码，尝试解析正确的状态码
+      if (code != null && !code.isEmpty()) {
+        finalStatusCode = resolveErrorStatusCode(httpStatusCode, code);
+      }
+      return Status.builder()
+          .statusCode(finalStatusCode)
+          .code(code)
+          .message(message)
+          .requestId(requestId)
+          .isJson(true)
+          .build();
+    } catch (Throwable e) {
+      // Try to extract code/message even if standard parsing failed
+      String extractedCode = "";
+      String extractedMessage = body;
+      try {
+        JsonObject json = JsonUtils.parse(body);
+        if (json.has(ApiKeywords.CODE)) {
+          extractedCode = json.get(ApiKeywords.CODE).getAsString();
+        }
+        if (json.has(ApiKeywords.MESSAGE)) {
+          extractedMessage = json.get(ApiKeywords.MESSAGE).getAsString();
+        }
+      } catch (Exception ex) {
+        // Parsing failed, use defaults
+      }
+
+      // If we have a business error code, try to map it to the correct status code
+      finalStatusCode = resolveErrorStatusCode(httpStatusCode, extractedCode);
+
+      return Status.builder()
+          .statusCode(finalStatusCode)
+          .code(extractedCode.isEmpty() ? "" : extractedCode)
+          .message(extractedMessage)
+          .isJson(!extractedCode.isEmpty())
+          .build();
+    }
   }
 
   /**
@@ -339,7 +339,8 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
               .code(PublicErrorCode.INVALID_URL.getErrorCode())
               .message(
                   StringUtils.format(
-                      "%s [detail=URL is null or empty]", PublicErrorCode.INVALID_URL.getErrorMsg()))
+                      "%s [detail=URL is null or empty]",
+                      PublicErrorCode.INVALID_URL.getErrorMsg()))
               .build());
     }
     HttpUrl parsedUrl = HttpUrl.parse(url);

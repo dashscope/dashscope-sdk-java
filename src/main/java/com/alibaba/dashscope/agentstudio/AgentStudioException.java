@@ -11,9 +11,9 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * Typed AgentStudio error. Codes converge onto {@link PublicErrorCode} (shared with the Python SDK):
- * {@link #getCode()} is the unified Anthropic-compatible code, the raw server code is on {@link
- * #getRawCode()}, and {@link #getKind()} branches on the error category. Extends {@link
+ * Typed AgentStudio error. Codes converge onto {@link PublicErrorCode} (shared with the Python
+ * SDK): {@link #getCode()} is the unified Anthropic-compatible code, the raw server code is on
+ * {@link #getRawCode()}, and {@link #getKind()} branches on the error category. Extends {@link
  * ApiException} so existing {@code catch (ApiException)} still works.
  */
 public class AgentStudioException extends ApiException {

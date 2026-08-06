@@ -93,7 +93,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
               .code(PublicErrorCode.INVALID_URL.getErrorCode())
               .message(
                   StringUtils.format(
-                      "%s [detail=URL is null or empty]", PublicErrorCode.INVALID_URL.getErrorMsg()))
+                      "%s [detail=URL is null or empty]",
+                      PublicErrorCode.INVALID_URL.getErrorMsg()))
               .build());
     }
     // HttpUrl.parse() only supports http/https schemes.
