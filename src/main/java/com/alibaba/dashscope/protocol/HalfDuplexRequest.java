@@ -136,12 +136,19 @@ public class HalfDuplexRequest {
       return HttpRequest.builder()
           .url(getHttpUrl())
           .headers(requestHeaders)
-          .body(body == null ? null : JsonUtils.toJson(body))
+          .body(serializeHttpBody(body))
           .httpMethod(getHttpMethod())
           .build();
     } else {
       return HttpRequest.builder().httpMethod(getHttpMethod()).build();
     }
+  }
+
+  private String serializeHttpBody(JsonObject body) {
+    if (body == null) {
+      return null;
+    }
+    return param.shouldSerializeExplicitNulls() ? body.toString() : JsonUtils.toJson(body);
   }
 
   public JsonObject getWebSocketPayload() {

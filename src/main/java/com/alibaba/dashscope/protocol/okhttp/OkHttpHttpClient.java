@@ -94,6 +94,8 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       String requestId = "";
       if (jsonResponse.has(ApiKeywords.REQUEST_ID)) {
         requestId = jsonResponse.get(ApiKeywords.REQUEST_ID).getAsString();
+      } else if (jsonResponse.has("requestId")) {
+        requestId = jsonResponse.get("requestId").getAsString();
       }
       if (jsonResponse.has(ApiKeywords.CODE) && !jsonResponse.get(ApiKeywords.CODE).isJsonNull()) {
         code = jsonResponse.get(ApiKeywords.CODE).getAsString();
@@ -101,10 +103,18 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       if (jsonResponse.has(ApiKeywords.MESSAGE)) {
         message = jsonResponse.get(ApiKeywords.MESSAGE).getAsString();
       }
-
-      // If we have a business error code, try to map it to the correct status code
-      int finalStatusCode = resolveErrorStatusCode(httpStatusCode, code);
-
+      if ((code == null || code.isEmpty())
+          && (message == null || message.isEmpty())
+          && jsonResponse.has(ApiKeywords.ERROR)
+          && jsonResponse.get(ApiKeywords.ERROR).isJsonObject()) {
+        JsonObject error = jsonResponse.getAsJsonObject(ApiKeywords.ERROR);
+        if (error.has(ApiKeywords.CODE)) {
+          code = error.get(ApiKeywords.CODE).getAsString();
+        }
+        if (error.has(ApiKeywords.MESSAGE)) {
+          message = error.get(ApiKeywords.MESSAGE).getAsString();
+        }
+      }
       return Status.builder()
           .statusCode(finalStatusCode)
           .code(code)
