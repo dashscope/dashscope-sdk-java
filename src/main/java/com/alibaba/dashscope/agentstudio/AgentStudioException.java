@@ -1,7 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.agentstudio;
 
-import com.alibaba.dashscope.common.ClientErrorDef;
+import com.alibaba.dashscope.common.PublicErrorCode;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.exception.ApiException;
 import java.util.HashMap;
@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * Typed AgentStudio error. Codes converge onto {@link ClientErrorDef} (shared with the Python SDK):
+ * Typed AgentStudio error. Codes converge onto {@link PublicErrorCode} (shared with the Python SDK):
  * {@link #getCode()} is the unified Anthropic-compatible code, the raw server code is on {@link
  * #getRawCode()}, and {@link #getKind()} branches on the error category. Extends {@link
  * ApiException} so existing {@code catch (ApiException)} still works.
@@ -128,24 +128,24 @@ public class AgentStudioException extends ApiException {
 
   // --- Normalization (mirrors dashscope/agentstudio/exceptions.py) ---
 
-  private static final Map<Integer, ClientErrorDef> STATUS_TO_PUBLIC = new HashMap<>();
+  private static final Map<Integer, PublicErrorCode> STATUS_TO_PUBLIC = new HashMap<>();
   private static final Set<String> REGISTRY_ANTHROPIC_CODES = new HashSet<>();
   private static final Map<String, String> LEGACY_CODE_ALIASES = new HashMap<>();
   private static final Map<Kind, String> KIND_TO_CODE = new HashMap<>();
   private static final Pattern PLACEHOLDER = Pattern.compile("\\s*:?\\s*\\{[^}]+\\}");
 
   static {
-    STATUS_TO_PUBLIC.put(400, ClientErrorDef.INVALID_REQUEST);
-    STATUS_TO_PUBLIC.put(401, ClientErrorDef.AUTH_FAILED);
-    STATUS_TO_PUBLIC.put(403, ClientErrorDef.PERMISSION_DENIED);
-    STATUS_TO_PUBLIC.put(404, ClientErrorDef.RESOURCE_NOT_FOUND);
-    STATUS_TO_PUBLIC.put(429, ClientErrorDef.RATE_LIMIT_EXCEEDED);
-    STATUS_TO_PUBLIC.put(500, ClientErrorDef.INTERNAL_ERROR);
-    STATUS_TO_PUBLIC.put(502, ClientErrorDef.INTERNAL_ERROR);
-    STATUS_TO_PUBLIC.put(503, ClientErrorDef.SERVICE_UNAVAILABLE);
-    STATUS_TO_PUBLIC.put(504, ClientErrorDef.REQUEST_TIMEOUT);
+    STATUS_TO_PUBLIC.put(400, PublicErrorCode.INVALID_REQUEST);
+    STATUS_TO_PUBLIC.put(401, PublicErrorCode.AUTH_FAILED);
+    STATUS_TO_PUBLIC.put(403, PublicErrorCode.PERMISSION_DENIED);
+    STATUS_TO_PUBLIC.put(404, PublicErrorCode.RESOURCE_NOT_FOUND);
+    STATUS_TO_PUBLIC.put(429, PublicErrorCode.RATE_LIMIT_EXCEEDED);
+    STATUS_TO_PUBLIC.put(500, PublicErrorCode.INTERNAL_ERROR);
+    STATUS_TO_PUBLIC.put(502, PublicErrorCode.INTERNAL_ERROR);
+    STATUS_TO_PUBLIC.put(503, PublicErrorCode.SERVICE_UNAVAILABLE);
+    STATUS_TO_PUBLIC.put(504, PublicErrorCode.REQUEST_TIMEOUT);
 
-    for (ClientErrorDef def : ClientErrorDef.values()) {
+    for (PublicErrorCode def : PublicErrorCode.values()) {
       REGISTRY_ANTHROPIC_CODES.add(def.getAnthropicErrorCode());
     }
 
@@ -171,7 +171,7 @@ public class AgentStudioException extends ApiException {
     if (normalized != null) {
       return normalized;
     }
-    ClientErrorDef pub = STATUS_TO_PUBLIC.get(statusCode);
+    PublicErrorCode pub = STATUS_TO_PUBLIC.get(statusCode);
     if (pub != null) {
       return pub.getAnthropicErrorCode();
     }
@@ -188,7 +188,7 @@ public class AgentStudioException extends ApiException {
     if (REGISTRY_ANTHROPIC_CODES.contains(code)) {
       return code; // already a unified Anthropic code
     }
-    ClientErrorDef byErrorCode = ClientErrorDef.fromErrorCode(code);
+    PublicErrorCode byErrorCode = PublicErrorCode.fromErrorCode(code);
     if (byErrorCode != null) {
       return byErrorCode.getAnthropicErrorCode(); // e.g. "NotFoundError" -> "not_found_error"
     }
@@ -199,12 +199,12 @@ public class AgentStudioException extends ApiException {
     if (serverMessage != null && !serverMessage.isEmpty()) {
       return serverMessage;
     }
-    ClientErrorDef pub = STATUS_TO_PUBLIC.get(statusCode);
+    PublicErrorCode pub = STATUS_TO_PUBLIC.get(statusCode);
     return pub != null ? defaultMessage(pub) : "HTTP " + statusCode;
   }
 
   /** Default message with unresolved {@code {var}} placeholders stripped. */
-  private static String defaultMessage(ClientErrorDef pub) {
+  private static String defaultMessage(PublicErrorCode pub) {
     String msg = PLACEHOLDER.matcher(pub.getErrorMsg()).replaceAll("").trim();
     if (!msg.isEmpty() && !msg.endsWith(".")) {
       msg += ".";

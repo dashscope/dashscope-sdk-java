@@ -3,7 +3,7 @@ package com.alibaba.dashscope.audio.qwen_tts_realtime;
 
 import static com.alibaba.dashscope.utils.JsonUtils.gson;
 
-import com.alibaba.dashscope.common.ClientErrorDef;
+import com.alibaba.dashscope.common.PublicErrorCode;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
@@ -234,11 +234,11 @@ public class QwenTtsRealtime extends WebSocketListener {
     if (url == null || url.isEmpty()) {
       throw new ApiException(
           Status.builder()
-              .statusCode(ClientErrorDef.INVALID_URL.getStatusCode())
-              .code(ClientErrorDef.INVALID_URL.getErrorCode())
+              .statusCode(PublicErrorCode.INVALID_URL.getStatusCode())
+              .code(PublicErrorCode.INVALID_URL.getErrorCode())
               .message(
                   StringUtils.format(
-                      "%s [detail=URL is null or empty]", ClientErrorDef.INVALID_URL.getErrorMsg()))
+                      "%s [detail=URL is null or empty]", PublicErrorCode.INVALID_URL.getErrorMsg()))
               .build());
     }
     // HttpUrl.parse() only supports http/https, convert ws/wss for validation
@@ -248,11 +248,11 @@ public class QwenTtsRealtime extends WebSocketListener {
     if (parsedUrl == null) {
       throw new ApiException(
           Status.builder()
-              .statusCode(ClientErrorDef.INVALID_URL.getStatusCode())
-              .code(ClientErrorDef.INVALID_URL.getErrorCode())
+              .statusCode(PublicErrorCode.INVALID_URL.getStatusCode())
+              .code(PublicErrorCode.INVALID_URL.getErrorCode())
               .message(
                   StringUtils.format(
-                      "%s [detail=%s]", ClientErrorDef.INVALID_URL.getErrorMsg(), url))
+                      "%s [detail=%s]", PublicErrorCode.INVALID_URL.getErrorMsg(), url))
               .build());
     }
     Request request = bd.url(url).build();

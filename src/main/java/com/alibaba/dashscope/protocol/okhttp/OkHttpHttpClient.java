@@ -4,7 +4,7 @@ package com.alibaba.dashscope.protocol.okhttp;
 
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.DashScopeResult;
-import com.alibaba.dashscope.common.ClientErrorDef;
+import com.alibaba.dashscope.common.PublicErrorCode;
 import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.exception.ApiException;
@@ -87,67 +87,72 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
   }
 
   private Status parseFailedJson(int httpStatusCode, String body) {
-    try {
-      JsonObject jsonResponse = JsonUtils.parse(body);
-      String code = "";
-      String message = "";
-      String requestId = "";
-      if (jsonResponse.has(ApiKeywords.REQUEST_ID)) {
-        requestId = jsonResponse.get(ApiKeywords.REQUEST_ID).getAsString();
-      } else if (jsonResponse.has("requestId")) {
-        requestId = jsonResponse.get("requestId").getAsString();
-      }
-      if (jsonResponse.has(ApiKeywords.CODE) && !jsonResponse.get(ApiKeywords.CODE).isJsonNull()) {
-        code = jsonResponse.get(ApiKeywords.CODE).getAsString();
-      }
-      if (jsonResponse.has(ApiKeywords.MESSAGE)) {
-        message = jsonResponse.get(ApiKeywords.MESSAGE).getAsString();
-      }
-      if ((code == null || code.isEmpty())
-          && (message == null || message.isEmpty())
-          && jsonResponse.has(ApiKeywords.ERROR)
-          && jsonResponse.get(ApiKeywords.ERROR).isJsonObject()) {
-        JsonObject error = jsonResponse.getAsJsonObject(ApiKeywords.ERROR);
-        if (error.has(ApiKeywords.CODE)) {
-          code = error.get(ApiKeywords.CODE).getAsString();
-        }
-        if (error.has(ApiKeywords.MESSAGE)) {
-          message = error.get(ApiKeywords.MESSAGE).getAsString();
-        }
-      }
-      return Status.builder()
-          .statusCode(finalStatusCode)
-          .code(code)
-          .message(message)
-          .requestId(requestId)
-          .isJson(true)
-          .build();
-    } catch (Throwable e) {
-      // Try to extract code/message even if standard parsing failed
-      String extractedCode = "";
-      String extractedMessage = body;
+      int finalStatusCode = httpStatusCode;  // 修复：初始化为 httpStatusCode 而不是 0
       try {
-        JsonObject json = JsonUtils.parse(body);
-        if (json.has(ApiKeywords.CODE)) {
-          extractedCode = json.get(ApiKeywords.CODE).getAsString();
-        }
-        if (json.has(ApiKeywords.MESSAGE)) {
-          extractedMessage = json.get(ApiKeywords.MESSAGE).getAsString();
-        }
-      } catch (Exception ex) {
-        // Parsing failed, use defaults
+          JsonObject jsonResponse = JsonUtils.parse(body);
+          String code = "";
+          String message = "";
+          String requestId = "";
+          if (jsonResponse.has(ApiKeywords.REQUEST_ID)) {
+              requestId = jsonResponse.get(ApiKeywords.REQUEST_ID).getAsString();
+          } else if (jsonResponse.has("requestId")) {
+              requestId = jsonResponse.get("requestId").getAsString();
+          }
+          if (jsonResponse.has(ApiKeywords.CODE) && !jsonResponse.get(ApiKeywords.CODE).isJsonNull()) {
+              code = jsonResponse.get(ApiKeywords.CODE).getAsString();
+          }
+          if (jsonResponse.has(ApiKeywords.MESSAGE)) {
+              message = jsonResponse.get(ApiKeywords.MESSAGE).getAsString();
+          }
+          if ((code == null || code.isEmpty())
+                  && (message == null || message.isEmpty())
+                  && jsonResponse.has(ApiKeywords.ERROR)
+                  && jsonResponse.get(ApiKeywords.ERROR).isJsonObject()) {
+              JsonObject error = jsonResponse.getAsJsonObject(ApiKeywords.ERROR);
+              if (error.has(ApiKeywords.CODE)) {
+                  code = error.get(ApiKeywords.CODE).getAsString();
+              }
+              if (error.has(ApiKeywords.MESSAGE)) {
+                  message = error.get(ApiKeywords.MESSAGE).getAsString();
+              }
+          }
+          // 修复：如果有业务错误码，尝试解析正确的状态码
+          if (code != null && !code.isEmpty()) {
+              finalStatusCode = resolveErrorStatusCode(httpStatusCode, code);
+          }
+          return Status.builder()
+                  .statusCode(finalStatusCode)
+                  .code(code)
+                  .message(message)
+                  .requestId(requestId)
+                  .isJson(true)
+                  .build();
+      } catch (Throwable e) {
+          // Try to extract code/message even if standard parsing failed
+          String extractedCode = "";
+          String extractedMessage = body;
+          try {
+              JsonObject json = JsonUtils.parse(body);
+              if (json.has(ApiKeywords.CODE)) {
+                  extractedCode = json.get(ApiKeywords.CODE).getAsString();
+              }
+              if (json.has(ApiKeywords.MESSAGE)) {
+                  extractedMessage = json.get(ApiKeywords.MESSAGE).getAsString();
+              }
+          } catch (Exception ex) {
+              // Parsing failed, use defaults
+          }
+
+          // If we have a business error code, try to map it to the correct status code
+          finalStatusCode = resolveErrorStatusCode(httpStatusCode, extractedCode);
+
+          return Status.builder()
+                  .statusCode(finalStatusCode)
+                  .code(extractedCode.isEmpty() ? "" : extractedCode)
+                  .message(extractedMessage)
+                  .isJson(!extractedCode.isEmpty())
+                  .build();
       }
-
-      // If we have a business error code, try to map it to the correct status code
-      int finalStatusCode = resolveErrorStatusCode(httpStatusCode, extractedCode);
-
-      return Status.builder()
-          .statusCode(finalStatusCode)
-          .code(extractedCode.isEmpty() ? "" : extractedCode)
-          .message(extractedMessage)
-          .isJson(!extractedCode.isEmpty())
-          .build();
-    }
   }
 
   /**
@@ -162,8 +167,8 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
     }
     // HTTP status is 2xx (e.g., SSE stream connected with 200) but we have a business error
     if (errorCode != null && !errorCode.isEmpty()) {
-      // Try exact match against ClientErrorDef
-      ClientErrorDef errorDef = ClientErrorDef.fromErrorCode(errorCode);
+      // Try exact match against PublicErrorCode
+      PublicErrorCode errorDef = PublicErrorCode.fromErrorCode(errorCode);
       if (errorDef != null) {
         return errorDef.getStatusCode();
       }
@@ -199,22 +204,22 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
   }
 
   /**
-   * Map HTTP status code to corresponding ClientErrorDef. Falls back to INTERNAL_ERROR if no
+   * Map HTTP status code to corresponding PublicErrorCode. Falls back to INTERNAL_ERROR if no
    * specific mapping found.
    */
-  private ClientErrorDef mapStatusCodeToErrorDef(int statusCode) {
-    for (ClientErrorDef errorDef : ClientErrorDef.values()) {
+  private PublicErrorCode mapStatusCodeToErrorDef(int statusCode) {
+    for (PublicErrorCode errorDef : PublicErrorCode.values()) {
       if (errorDef.getStatusCode() == statusCode) {
         return errorDef;
       }
     }
     // Default fallback based on status code ranges
     if (statusCode >= 400 && statusCode < 500) {
-      return ClientErrorDef.INVALID_REQUEST;
+      return PublicErrorCode.INVALID_REQUEST;
     } else if (statusCode >= 500) {
-      return ClientErrorDef.INTERNAL_ERROR;
+      return PublicErrorCode.INTERNAL_ERROR;
     }
-    return ClientErrorDef.INTERNAL_ERROR;
+    return PublicErrorCode.INTERNAL_ERROR;
   }
 
   private Status parseFailed(Response response, Throwable th) {
@@ -222,12 +227,12 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       String message = th == null ? "Get response failed!" : th.getMessage();
 
       return Status.builder()
-          .statusCode(ClientErrorDef.SERVICE_UNAVAILABLE.getStatusCode())
-          .code(ClientErrorDef.SERVICE_UNAVAILABLE.getErrorCode())
+          .statusCode(PublicErrorCode.SERVICE_UNAVAILABLE.getStatusCode())
+          .code(PublicErrorCode.SERVICE_UNAVAILABLE.getErrorCode())
           .message(
               StringUtils.format(
                   "%s [reason=no_response, detail=%s]",
-                  ClientErrorDef.SERVICE_UNAVAILABLE.getErrorMsg(),
+                  PublicErrorCode.SERVICE_UNAVAILABLE.getErrorMsg(),
                   (message != null ? message : "Unknown")))
           .isJson(false)
           .build();
@@ -239,7 +244,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       try {
         body = response.body().string();
       } catch (IOException e) {
-        ClientErrorDef errorDef = mapStatusCodeToErrorDef(response.code());
+        PublicErrorCode errorDef = mapStatusCodeToErrorDef(response.code());
         return Status.builder()
             .statusCode(errorDef.getStatusCode())
             .code(errorDef.getErrorCode())
@@ -261,7 +266,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
             return parseFailedJson(response.code(), body);
           }
         }
-        ClientErrorDef errorDef = mapStatusCodeToErrorDef(response.code());
+        PublicErrorCode errorDef = mapStatusCodeToErrorDef(response.code());
         return Status.builder()
             .statusCode(errorDef.getStatusCode())
             .code(errorDef.getErrorCode())
@@ -274,7 +279,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
             .isJson(false)
             .build();
       } catch (IOException e) {
-        ClientErrorDef errorDef = mapStatusCodeToErrorDef(response.code());
+        PublicErrorCode errorDef = mapStatusCodeToErrorDef(response.code());
         return Status.builder()
             .statusCode(errorDef.getStatusCode())
             .code(errorDef.getErrorCode())
@@ -309,7 +314,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
         // Parsing failed, use defaults
       }
 
-      ClientErrorDef errorDef = mapStatusCodeToErrorDef(response.code());
+      PublicErrorCode errorDef = mapStatusCodeToErrorDef(response.code());
       return Status.builder()
           .statusCode(response.code())
           .code(extractedCode.isEmpty() ? errorDef.getErrorCode() : extractedCode)
@@ -330,22 +335,22 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
     if (url == null || url.isEmpty()) {
       throw new ApiException(
           Status.builder()
-              .statusCode(ClientErrorDef.INVALID_URL.getStatusCode())
-              .code(ClientErrorDef.INVALID_URL.getErrorCode())
+              .statusCode(PublicErrorCode.INVALID_URL.getStatusCode())
+              .code(PublicErrorCode.INVALID_URL.getErrorCode())
               .message(
                   StringUtils.format(
-                      "%s [detail=URL is null or empty]", ClientErrorDef.INVALID_URL.getErrorMsg()))
+                      "%s [detail=URL is null or empty]", PublicErrorCode.INVALID_URL.getErrorMsg()))
               .build());
     }
     HttpUrl parsedUrl = HttpUrl.parse(url);
     if (parsedUrl == null) {
       throw new ApiException(
           Status.builder()
-              .statusCode(ClientErrorDef.INVALID_URL.getStatusCode())
-              .code(ClientErrorDef.INVALID_URL.getErrorCode())
+              .statusCode(PublicErrorCode.INVALID_URL.getStatusCode())
+              .code(PublicErrorCode.INVALID_URL.getErrorCode())
               .message(
                   StringUtils.format(
-                      "%s [detail=%s]", ClientErrorDef.INVALID_URL.getErrorMsg(), url))
+                      "%s [detail=%s]", PublicErrorCode.INVALID_URL.getErrorMsg(), url))
               .build());
     }
 

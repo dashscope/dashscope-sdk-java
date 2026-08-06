@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /** Customer-facing error definitions. */
-public enum ClientErrorDef {
+public enum PublicErrorCode {
   INVALID_REQUEST(
       400,
       "BadRequestError",
@@ -25,6 +25,16 @@ public enum ClientErrorDef {
       "The provided URL is invalid or cannot be accessed.",
       "invalid_request_error"),
   INVALID_FILE(400, "BadRequestError", "The provided file is invalid.", "invalid_request_error"),
+  REQUEST_CANCELLED(
+      400,
+      "RequestCancelledError",
+      "The request was cancelled by the client.",
+      "invalid_request_error"),
+  PROTOCOL_UNSUPPORTED(
+      400,
+      "ProtocolUnsupportedError",
+      "The network protocol is not supported.",
+      "invalid_request_error"),
   AUTH_FAILED(
       401,
       "AuthenticationError",
@@ -64,6 +74,11 @@ public enum ClientErrorDef {
       "InternalServerError",
       "The server encountered an internal error. Please try again later.",
       "api_error"),
+  RESPONSE_ERROR(
+      500,
+      "ResponseError",
+      "The server returned a response that could not be parsed.",
+      "api_error"),
   SERVICE_UNAVAILABLE(
       503,
       "ServiceUnavailableError",
@@ -80,7 +95,7 @@ public enum ClientErrorDef {
   private final String errorMsg;
   private final String anthropicErrorCode;
 
-  ClientErrorDef(int statusCode, String errorCode, String errorMsg, String anthropicErrorCode) {
+  PublicErrorCode(int statusCode, String errorCode, String errorMsg, String anthropicErrorCode) {
     this.statusCode = statusCode;
     this.errorCode = errorCode;
     this.errorMsg = errorMsg;
@@ -111,21 +126,21 @@ public enum ClientErrorDef {
     return msg;
   }
 
-  private static final Map<String, ClientErrorDef> ERROR_CODE_MAP = new HashMap<>();
+  private static final Map<String, PublicErrorCode> ERROR_CODE_MAP = new HashMap<>();
 
   static {
-    for (ClientErrorDef def : values()) {
+    for (PublicErrorCode def : values()) {
       ERROR_CODE_MAP.put(def.errorCode, def);
     }
   }
 
   /**
-   * Look up a ClientErrorDef by its error code.
+   * Look up a PublicErrorCode by its error code.
    *
    * @param errorCode The error code to look up
-   * @return The matching ClientErrorDef, or null if not found
+   * @return The matching PublicErrorCode, or null if not found
    */
-  public static ClientErrorDef fromErrorCode(String errorCode) {
+  public static PublicErrorCode fromErrorCode(String errorCode) {
     return ERROR_CODE_MAP.get(errorCode);
   }
 }

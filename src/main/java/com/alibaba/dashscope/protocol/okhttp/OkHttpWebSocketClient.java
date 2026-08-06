@@ -3,7 +3,7 @@
 package com.alibaba.dashscope.protocol.okhttp;
 
 import com.alibaba.dashscope.common.DashScopeResult;
-import com.alibaba.dashscope.common.ClientErrorDef;
+import com.alibaba.dashscope.common.PublicErrorCode;
 import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.exception.ApiException;
@@ -89,11 +89,11 @@ public class OkHttpWebSocketClient extends WebSocketListener
     if (url == null || url.isEmpty()) {
       throw new ApiException(
           Status.builder()
-              .statusCode(ClientErrorDef.INVALID_URL.getStatusCode())
-              .code(ClientErrorDef.INVALID_URL.getErrorCode())
+              .statusCode(PublicErrorCode.INVALID_URL.getStatusCode())
+              .code(PublicErrorCode.INVALID_URL.getErrorCode())
               .message(
                   StringUtils.format(
-                      "%s [detail=URL is null or empty]", ClientErrorDef.INVALID_URL.getErrorMsg()))
+                      "%s [detail=URL is null or empty]", PublicErrorCode.INVALID_URL.getErrorMsg()))
               .build());
     }
     // HttpUrl.parse() only supports http/https schemes.
@@ -108,11 +108,11 @@ public class OkHttpWebSocketClient extends WebSocketListener
     if (parsedUrl == null) {
       throw new ApiException(
           Status.builder()
-              .statusCode(ClientErrorDef.INVALID_URL.getStatusCode())
-              .code(ClientErrorDef.INVALID_URL.getErrorCode())
+              .statusCode(PublicErrorCode.INVALID_URL.getStatusCode())
+              .code(PublicErrorCode.INVALID_URL.getErrorCode())
               .message(
                   StringUtils.format(
-                      "%s [detail=%s]", ClientErrorDef.INVALID_URL.getErrorMsg(), url))
+                      "%s [detail=%s]", PublicErrorCode.INVALID_URL.getErrorMsg(), url))
               .build());
     }
     // Use bd.url(String) which handles ws:// and wss:// schemes internally
@@ -226,12 +226,12 @@ public class OkHttpWebSocketClient extends WebSocketListener
     }
     throw new ApiException(
         Status.builder()
-            .statusCode(ClientErrorDef.SERVICE_UNAVAILABLE.getStatusCode())
-            .code(ClientErrorDef.SERVICE_UNAVAILABLE.getErrorCode())
+            .statusCode(PublicErrorCode.SERVICE_UNAVAILABLE.getStatusCode())
+            .code(PublicErrorCode.SERVICE_UNAVAILABLE.getErrorCode())
             .message(
                 StringUtils.format(
                     "%s [originalError=%s]",
-                    ClientErrorDef.SERVICE_UNAVAILABLE.getErrorMsg(), errorMessage))
+                    PublicErrorCode.SERVICE_UNAVAILABLE.getErrorMsg(), errorMessage))
             .build());
   }
 
