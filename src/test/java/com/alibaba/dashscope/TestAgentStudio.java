@@ -1,7 +1,6 @@
 package com.alibaba.dashscope;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -140,9 +139,11 @@ public class TestAgentStudio {
 
   @Test
   public void testAgentRetrieveErrorNormalizesServerCode() throws Exception {
+    // A recognized registry code (snake_case) is kept as-is; we do not map from
+    // other vocabularies (e.g. PascalCase), matching the Python SDK.
     mockServer.enqueue(
         TestUtils.createMockResponse(
-            "{\"code\":\"NotFoundError\",\"message\":\"agent not found\",\"request_id\":\"r1\"}",
+            "{\"code\":\"not_found_error\",\"message\":\"agent not found\",\"request_id\":\"r1\"}",
             404));
     AgentStudioException ex =
         assertThrows(
@@ -153,27 +154,18 @@ public class TestAgentStudio {
   }
 
   @Test
-  public void testAgentRetrieveErrorLegacyPermissionNormalized() throws Exception {
-    mockServer.enqueue(
-        TestUtils.createMockResponse(
-            "{\"code\":\"permission_denied_error\",\"message\":\"forbidden\"}", 403));
-    AgentStudioException ex =
-        assertThrows(
-            AgentStudioException.class, () -> new Agents(null, null, null).retrieve("nope"));
-    mockServer.takeRequest();
-    assertEquals("permission_error", ex.getCode());
-  }
-
-  @Test
-  public void testAgentRetrieveErrorDefaultMessageNoPlaceholder() throws Exception {
+  public void testAgentRetrieveErrorNoBodyFallsBackToApiError() throws Exception {
+    // A server responded (so this is a StatusError), but carried no code. We don't
+    // guess a public code from the status number, so it falls back to generic
+    // api_error with a bare HTTP status message.
     mockServer.enqueue(TestUtils.createMockResponse("{}", 404));
-    AgentStudioException ex =
+    AgentStudioException.StatusError ex =
         assertThrows(
-            AgentStudioException.class, () -> new Agents(null, null, null).retrieve("nope"));
+            AgentStudioException.StatusError.class,
+            () -> new Agents(null, null, null).retrieve("nope"));
     mockServer.takeRequest();
-    assertEquals("not_found_error", ex.getCode());
-    assertEquals("The requested resource was not found.", ex.getErrorMessage());
-    assertFalse(ex.getErrorMessage().contains("{"));
+    assertEquals("api_error", ex.getCode());
+    assertEquals("HTTP 404", ex.getErrorMessage());
   }
 
   @Test

@@ -5,30 +5,42 @@ import java.util.Map;
 
 /** Internal error codes with two-layer message design. */
 public enum InternalErrorCode {
-  SDK_AGENTSTUDIO_NETWORK_ERROR(
-      "sdk.agentstudio.NetworkError",
+  SDK_AGENTSTUDIO_API_CONNECTION_ERROR(
+      "sdk.agentstudio.APIConnectionError",
       PublicErrorCode.INTERNAL_ERROR,
-      "Failed to establish or maintain connection with the server.",
+      "Failed to connect to the AgentStudio service.",
       true,
       new String[] {},
-      "Network connection failed",
-      "Check network connection and retry"),
-  SDK_AGENTSTUDIO_CONFLICT(
-      "sdk.agentstudio.Conflict",
+      "",
+      "Check your network connectivity and ensure the AgentStudio endpoint "
+          + "(base_url / region) is reachable. Verify firewall and proxy settings."),
+  SDK_AGENTSTUDIO_API_TIMEOUT_ERROR(
+      "sdk.agentstudio.APITimeoutError",
+      PublicErrorCode.REQUEST_TIMEOUT,
+      "The request to the AgentStudio service timed out.",
+      true,
+      new String[] {},
+      "",
+      "The request did not complete within the timeout period. Increase the "
+          + "client timeout or retry the request."),
+  SDK_AGENTSTUDIO_STREAM_ERROR(
+      "sdk.agentstudio.StreamError",
+      PublicErrorCode.INTERNAL_ERROR,
+      "The SSE stream encountered a fatal protocol error.",
+      true,
+      new String[] {},
+      "",
+      "Retry the streaming request. If the error persists, report it at "
+          + "https://github.com/dashscope/dashscope-sdk-java/issues."),
+  SDK_AGENTSTUDIO_STREAM_CLOSED_ERROR(
+      "sdk.agentstudio.StreamClosedError",
       PublicErrorCode.INVALID_REQUEST,
-      "The request conflicts with the current state of the resource.",
-      true,
-      new String[] {},
-      "Request conflicts with current resource state",
-      "Retry later or check resource state"),
-  SDK_AGENTSTUDIO_UNKNOWN_ERROR(
-      "sdk.agentstudio.UnknownError",
-      PublicErrorCode.INTERNAL_ERROR,
-      "An unexpected error occurred.",
+      "Attempted I/O on an already-closed stream.",
       false,
       new String[] {},
-      "Unexpected error occurred",
-      "Contact technical support");
+      "",
+      "Do not read from a stream after it has been closed. Consume the stream "
+          + "before calling close().");
 
   private final String code;
   private final PublicErrorCode external;
