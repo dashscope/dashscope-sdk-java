@@ -149,7 +149,6 @@ public class TestAgentStudio {
             AgentStudioException.class, () -> new Agents(null, null, null).retrieve("nope"));
     assertEquals("GET", mockServer.takeRequest().getMethod());
     assertEquals("not_found_error", ex.getCode());
-    assertEquals(AgentStudioException.Kind.NOT_FOUND, ex.getKind());
     assertEquals("agent not found", ex.getErrorMessage());
   }
 
@@ -163,7 +162,6 @@ public class TestAgentStudio {
             AgentStudioException.class, () -> new Agents(null, null, null).retrieve("nope"));
     mockServer.takeRequest();
     assertEquals("permission_error", ex.getCode());
-    assertEquals(AgentStudioException.Kind.PERMISSION_DENIED, ex.getKind());
   }
 
   @Test

@@ -13,38 +13,19 @@ import java.util.regex.Pattern;
 
 /**
  * Typed AgentStudio error. Codes converge onto {@link PublicErrorCode} (shared with the Python
- * SDK): {@link #getCode()} is the unified Anthropic-compatible code, the raw server code is on
- * {@link #getRawCode()}, and {@link #getKind()} branches on the error category. Extends {@link
- * ApiException} so existing {@code catch (ApiException)} still works.
+ * SDK): {@link #getCode()} is the unified Anthropic-compatible code and the raw server code is on
+ * {@link #getRawCode()}. Extends {@link ApiException} so existing {@code catch (ApiException)}
+ * still works.
  */
 public class AgentStudioException extends ApiException {
 
-  public enum Kind {
-    INVALID_REQUEST,
-    AUTHENTICATION,
-    PERMISSION_DENIED,
-    NOT_FOUND,
-    CONFLICT,
-    RATE_LIMIT,
-    SERVER_ERROR,
-    NETWORK,
-    UNKNOWN
-  }
-
-  private final Kind kind;
   private final String code;
   private final String errorMessage;
 
-  private AgentStudioException(
-      Status status, Kind kind, String code, String errorMessage, Throwable cause) {
+  private AgentStudioException(Status status, String code, String errorMessage, Throwable cause) {
     super(status, cause);
-    this.kind = kind;
     this.code = code;
     this.errorMessage = errorMessage;
-  }
-
-  public Kind getKind() {
-    return kind;
   }
 
   public int getStatusCode() {
@@ -83,28 +64,6 @@ public class AgentStudioException extends ApiException {
         || statusCode >= 500;
   }
 
-  public static Kind classify(int statusCode) {
-    if (statusCode == -1) {
-      return Kind.NETWORK;
-    }
-    switch (statusCode) {
-      case 400:
-        return Kind.INVALID_REQUEST;
-      case 401:
-        return Kind.AUTHENTICATION;
-      case 403:
-        return Kind.PERMISSION_DENIED;
-      case 404:
-        return Kind.NOT_FOUND;
-      case 409:
-        return Kind.CONFLICT;
-      case 429:
-        return Kind.RATE_LIMIT;
-      default:
-        return statusCode >= 500 ? Kind.SERVER_ERROR : Kind.UNKNOWN;
-    }
-  }
-
   public static AgentStudioException wrap(ApiException e) {
     if (e instanceof AgentStudioException) {
       return (AgentStudioException) e;
@@ -116,23 +75,22 @@ public class AgentStudioException extends ApiException {
     int statusCode = status.getStatusCode();
     String unifiedCode = unifyCode(statusCode, status.getCode());
     String message = resolveMessage(statusCode, status.getMessage());
-    return new AgentStudioException(
-        status, classify(statusCode), unifiedCode, message, e.getCause());
+    return new AgentStudioException(status, unifiedCode, message, e.getCause());
   }
 
   @Override
   public String getMessage() {
     return String.format(
-        "[%s] status=%d code=%s message=%s request_id=%s",
-        kind, getStatusCode(), code, errorMessage, getRequestId());
+        "status=%d code=%s message=%s request_id=%s",
+        getStatusCode(), code, errorMessage, getRequestId());
   }
 
   // --- Normalization (mirrors dashscope/agentstudio/exceptions.py) ---
 
   private static final Map<Integer, PublicErrorCode> STATUS_TO_PUBLIC = new HashMap<>();
+  private static final Map<Integer, InternalErrorCode> STATUS_TO_INTERNAL = new HashMap<>();
   private static final Set<String> REGISTRY_ANTHROPIC_CODES = new HashSet<>();
   private static final Map<String, String> LEGACY_CODE_ALIASES = new HashMap<>();
-  private static final Map<Kind, InternalErrorCode> KIND_TO_INTERNAL = new HashMap<>();
   private static final Pattern PLACEHOLDER = Pattern.compile("\\s*:?\\s*\\{[^}]+\\}");
 
   static {
@@ -147,22 +105,22 @@ public class AgentStudioException extends ApiException {
     STATUS_TO_PUBLIC.put(503, PublicErrorCode.SERVICE_UNAVAILABLE);
     STATUS_TO_PUBLIC.put(504, PublicErrorCode.REQUEST_TIMEOUT);
 
+    // Statuses with no public code get a dedicated internal one: -1 (no HTTP
+    // response) and 409 (public taxonomy has no conflict code).
+    STATUS_TO_INTERNAL.put(-1, InternalErrorCode.SDK_AGENTSTUDIO_NETWORK_ERROR);
+    STATUS_TO_INTERNAL.put(409, InternalErrorCode.SDK_AGENTSTUDIO_CONFLICT);
+
     for (PublicErrorCode def : PublicErrorCode.values()) {
       REGISTRY_ANTHROPIC_CODES.add(def.getAnthropicErrorCode());
     }
 
     LEGACY_CODE_ALIASES.put("permission_denied_error", "permission_error"); // TODO(bma-fix)
-
-    // Internal codes only where public has none: NETWORK (no response),
-    // CONFLICT (409), UNKNOWN (unmapped non-5xx). All else resolves to public.
-    KIND_TO_INTERNAL.put(Kind.NETWORK, InternalErrorCode.SDK_AGENTSTUDIO_NETWORK_ERROR);
-    KIND_TO_INTERNAL.put(Kind.CONFLICT, InternalErrorCode.SDK_AGENTSTUDIO_CONFLICT);
-    KIND_TO_INTERNAL.put(Kind.UNKNOWN, InternalErrorCode.SDK_AGENTSTUDIO_UNKNOWN_ERROR);
   }
 
   /**
-   * Resolve the unified code: a recognized server code wins, else the per-status registry row, else
-   * the kind default.
+   * Resolve the unified code: a recognized server code wins, else the per-status public code, else
+   * the per-status internal code, else a range fallback (unmapped 5xx -> public api_error, any
+   * other unmapped status -> internal UnknownError).
    */
   static String unifyCode(int statusCode, String serverCode) {
     String normalized = normalizeServerCode(serverCode);
@@ -173,12 +131,15 @@ public class AgentStudioException extends ApiException {
     if (pub != null) {
       return pub.getAnthropicErrorCode();
     }
-    // No status row: use the category's internal code (NETWORK/CONFLICT/UNKNOWN),
-    // else fall back to the generic public api_error (unmapped 5xx).
-    InternalErrorCode internal = KIND_TO_INTERNAL.get(classify(statusCode));
-    return internal != null
-        ? internal.getCode()
-        : PublicErrorCode.INTERNAL_ERROR.getAnthropicErrorCode();
+    InternalErrorCode internal = STATUS_TO_INTERNAL.get(statusCode);
+    if (internal != null) {
+      return internal.getCode();
+    }
+    // Unmapped 5xx still received a server response -> generic public api_error;
+    // anything else has no matching category -> internal UnknownError.
+    return statusCode >= 500
+        ? PublicErrorCode.INTERNAL_ERROR.getAnthropicErrorCode()
+        : InternalErrorCode.SDK_AGENTSTUDIO_UNKNOWN_ERROR.getCode();
   }
 
   private static String normalizeServerCode(String code) {
