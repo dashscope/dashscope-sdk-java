@@ -5,34 +5,46 @@ import com.alibaba.dashscope.common.InternalErrorCode;
 import com.alibaba.dashscope.common.PublicErrorCode;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.exception.ApiException;
-import java.util.HashMap;
+import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
- * Typed AgentStudio error. Codes converge onto {@link PublicErrorCode} (shared with the Python
- * SDK): {@link #getCode()} is the unified Anthropic-compatible code and the raw server code is on
- * {@link #getRawCode()}. Extends {@link ApiException} so existing {@code catch (ApiException)}
- * still works.
+ * Typed AgentStudio error. Each error path maps onto one exception type, and each type owns a
+ * single code namespace so a caller always knows which vocabulary {@link #getCode()} speaks:
+ *
+ * <ul>
+ *   <li>{@link StatusError} — the server returned an HTTP response; the code is an
+ *       Anthropic-compatible {@link PublicErrorCode} code (e.g. {@code not_found_error}).
+ *   <li>{@link ConnectionError} — no HTTP response was received (connect / timeout); the code is an
+ *       {@code sdk.agentstudio.*} internal code.
+ *   <li>{@link StreamError} — an SSE stream failure; the code is an {@code sdk.agentstudio.*}
+ *       internal code.
+ * </ul>
+ *
+ * <p>Extends {@link ApiException} so existing {@code catch (ApiException)} still works.
  */
 public class AgentStudioException extends ApiException {
 
   private final String code;
   private final String errorMessage;
+  private final boolean retryable;
 
-  private AgentStudioException(Status status, String code, String errorMessage, Throwable cause) {
+  AgentStudioException(
+      Status status, String code, String errorMessage, boolean retryable, Throwable cause) {
     super(status, cause);
     this.code = code;
     this.errorMessage = errorMessage;
+    this.retryable = retryable;
   }
 
+  /** HTTP status code, or {@code -1} when no HTTP response was received. */
   public int getStatusCode() {
     return getStatus() != null ? getStatus().getStatusCode() : -1;
   }
 
-  /** Unified error code from the Anthropic-compatible taxonomy (e.g. {@code not_found_error}). */
+  /** Unified error code; the namespace depends on the concrete type (see class javadoc). */
   public String getCode() {
     return code;
   }
@@ -42,7 +54,7 @@ public class AgentStudioException extends ApiException {
     return getStatus() != null ? getStatus().getCode() : null;
   }
 
-  /** Resolved message: the server's text when present, else the registry default. */
+  /** Resolved, human-readable message. */
   public String getErrorMessage() {
     return errorMessage;
   }
@@ -52,30 +64,7 @@ public class AgentStudioException extends ApiException {
   }
 
   public boolean isRetryable() {
-    return isRetryable(getStatusCode());
-  }
-
-  /** A -1 status code marks a network-level failure (no HTTP response). */
-  public static boolean isRetryable(int statusCode) {
-    return statusCode == -1
-        || statusCode == 408
-        || statusCode == 409
-        || statusCode == 429
-        || statusCode >= 500;
-  }
-
-  public static AgentStudioException wrap(ApiException e) {
-    if (e instanceof AgentStudioException) {
-      return (AgentStudioException) e;
-    }
-    Status status = e.getStatus();
-    if (status == null) {
-      status = Status.builder().statusCode(-1).build();
-    }
-    int statusCode = status.getStatusCode();
-    String unifiedCode = unifyCode(statusCode, status.getCode());
-    String message = resolveMessage(statusCode, status.getMessage());
-    return new AgentStudioException(status, unifiedCode, message, e.getCause());
+    return retryable;
   }
 
   @Override
@@ -85,69 +74,121 @@ public class AgentStudioException extends ApiException {
         getStatusCode(), code, errorMessage, getRequestId());
   }
 
-  // --- Normalization (mirrors dashscope/agentstudio/exceptions.py) ---
+  // --- Error subtypes: one code namespace each -------------------------------
 
-  private static final Map<Integer, PublicErrorCode> STATUS_TO_PUBLIC = new HashMap<>();
-  private static final Map<Integer, InternalErrorCode> STATUS_TO_INTERNAL = new HashMap<>();
-  private static final Set<String> REGISTRY_ANTHROPIC_CODES = new HashSet<>();
-  private static final Map<String, String> LEGACY_CODE_ALIASES = new HashMap<>();
-  private static final Pattern PLACEHOLDER = Pattern.compile("\\s*:?\\s*\\{[^}]+\\}");
-
-  static {
-    STATUS_TO_PUBLIC.put(400, PublicErrorCode.INVALID_REQUEST);
-    STATUS_TO_PUBLIC.put(401, PublicErrorCode.AUTH_FAILED);
-    STATUS_TO_PUBLIC.put(403, PublicErrorCode.PERMISSION_DENIED);
-    STATUS_TO_PUBLIC.put(404, PublicErrorCode.RESOURCE_NOT_FOUND);
-    STATUS_TO_PUBLIC.put(413, PublicErrorCode.REQUEST_TOO_LARGE);
-    STATUS_TO_PUBLIC.put(429, PublicErrorCode.RATE_LIMIT_EXCEEDED);
-    STATUS_TO_PUBLIC.put(500, PublicErrorCode.INTERNAL_ERROR);
-    STATUS_TO_PUBLIC.put(502, PublicErrorCode.INTERNAL_ERROR);
-    STATUS_TO_PUBLIC.put(503, PublicErrorCode.SERVICE_UNAVAILABLE);
-    STATUS_TO_PUBLIC.put(504, PublicErrorCode.REQUEST_TIMEOUT);
-
-    // Statuses with no public code get a dedicated internal one: -1 (no HTTP
-    // response) and 409 (public taxonomy has no conflict code).
-    STATUS_TO_INTERNAL.put(-1, InternalErrorCode.SDK_AGENTSTUDIO_NETWORK_ERROR);
-    STATUS_TO_INTERNAL.put(409, InternalErrorCode.SDK_AGENTSTUDIO_CONFLICT);
-
-    for (PublicErrorCode def : PublicErrorCode.values()) {
-      REGISTRY_ANTHROPIC_CODES.add(def.getAnthropicErrorCode());
+  /** HTTP response error. {@link #getCode()} is always a public Anthropic-compatible code. */
+  public static final class StatusError extends AgentStudioException {
+    StatusError(Status status, String code, String message, boolean retryable, Throwable cause) {
+      super(status, code, message, retryable, cause);
     }
-
-    LEGACY_CODE_ALIASES.put("permission_denied_error", "permission_error"); // TODO(bma-fix)
   }
 
   /**
-   * Resolve the unified code: a recognized server code wins, else the per-status public code, else
-   * the per-status internal code, else a range fallback (unmapped 5xx -> public api_error, any
-   * other unmapped status -> internal UnknownError).
+   * Transport failure (no HTTP response). {@link #getCode()} is an {@code sdk.agentstudio.*} code.
    */
-  static String unifyCode(int statusCode, String serverCode) {
+  public static final class ConnectionError extends AgentStudioException {
+    ConnectionError(
+        Status status, String code, String message, boolean retryable, Throwable cause) {
+      super(status, code, message, retryable, cause);
+    }
+  }
+
+  /** SSE stream failure. {@link #getCode()} is an {@code sdk.agentstudio.*} code. */
+  public static final class StreamError extends AgentStudioException {
+    StreamError(Status status, String code, String message, boolean retryable, Throwable cause) {
+      super(status, code, message, retryable, cause);
+    }
+  }
+
+  // --- Factories -------------------------------------------------------------
+
+  /**
+   * Wrap an {@link ApiException}. A missing status or an {@link IOException} cause means no HTTP
+   * response was received (transport failure) and yields a {@link ConnectionError}; otherwise the
+   * server responded and we build a {@link StatusError}.
+   */
+  public static AgentStudioException wrap(ApiException e) {
+    if (e instanceof AgentStudioException) {
+      return (AgentStudioException) e;
+    }
+    Status status = e.getStatus();
+    Throwable cause = e.getCause();
+    if (status == null || cause instanceof IOException) {
+      return connectionError(cause != null ? cause : e);
+    }
+    return statusError(status, cause);
+  }
+
+  /** HTTP response error carrying a public code (the server's code, else generic api_error). */
+  public static StatusError statusError(Status status, Throwable cause) {
+    int statusCode = status.getStatusCode();
+    return new StatusError(
+        status,
+        publicCode(status.getCode()),
+        resolveMessage(statusCode, status.getMessage()),
+        isRetryableStatus(statusCode),
+        cause);
+  }
+
+  /**
+   * Transport failure: {@code APITimeoutError} on socket timeouts, else {@code APIConnectionError}.
+   */
+  public static ConnectionError connectionError(Throwable cause) {
+    InternalErrorCode def =
+        hasCause(cause, SocketTimeoutException.class)
+            ? InternalErrorCode.SDK_AGENTSTUDIO_API_TIMEOUT_ERROR
+            : InternalErrorCode.SDK_AGENTSTUDIO_API_CONNECTION_ERROR;
+    String message = causeMessage(cause, def);
+    return new ConnectionError(
+        internalStatus(def, message), def.getCode(), message, def.isAllowRetry(), cause);
+  }
+
+  /** A stream read timeout, surfaced as {@code APITimeoutError}. */
+  public static ConnectionError timeout(String message) {
+    InternalErrorCode def = InternalErrorCode.SDK_AGENTSTUDIO_API_TIMEOUT_ERROR;
+    String resolved = (message != null && !message.isEmpty()) ? message : def.getMessage();
+    return new ConnectionError(
+        internalStatus(def, resolved), def.getCode(), resolved, def.isAllowRetry(), null);
+  }
+
+  /** A fatal SSE protocol error. */
+  public static StreamError streamError(Throwable cause) {
+    InternalErrorCode def = InternalErrorCode.SDK_AGENTSTUDIO_STREAM_ERROR;
+    String message = causeMessage(cause, def);
+    return new StreamError(
+        internalStatus(def, message), def.getCode(), message, def.isAllowRetry(), cause);
+  }
+
+  /** Raised when consumers attempt I/O on an already-closed stream. */
+  public static StreamError streamClosed() {
+    InternalErrorCode def = InternalErrorCode.SDK_AGENTSTUDIO_STREAM_CLOSED_ERROR;
+    return new StreamError(
+        internalStatus(def, def.getMessage()),
+        def.getCode(),
+        def.getMessage(),
+        def.isAllowRetry(),
+        null);
+  }
+
+  // --- Code / message normalization ------------------------------------------
+
+  private static final Set<String> REGISTRY_ANTHROPIC_CODES = new HashSet<>();
+
+  static {
+    for (PublicErrorCode def : PublicErrorCode.values()) {
+      REGISTRY_ANTHROPIC_CODES.add(def.getAnthropicErrorCode());
+    }
+  }
+
+  /** Public code for a status error: the recognized server code, else generic {@code api_error}. */
+  private static String publicCode(String serverCode) {
     String normalized = normalizeServerCode(serverCode);
-    if (normalized != null) {
-      return normalized;
-    }
-    PublicErrorCode pub = STATUS_TO_PUBLIC.get(statusCode);
-    if (pub != null) {
-      return pub.getAnthropicErrorCode();
-    }
-    InternalErrorCode internal = STATUS_TO_INTERNAL.get(statusCode);
-    if (internal != null) {
-      return internal.getCode();
-    }
-    // Unmapped 5xx still received a server response -> generic public api_error;
-    // anything else has no matching category -> internal UnknownError.
-    return statusCode >= 500
-        ? PublicErrorCode.INTERNAL_ERROR.getAnthropicErrorCode()
-        : InternalErrorCode.SDK_AGENTSTUDIO_UNKNOWN_ERROR.getCode();
+    return normalized != null ? normalized : PublicErrorCode.INTERNAL_ERROR.getAnthropicErrorCode();
   }
 
   private static String normalizeServerCode(String code) {
     if (code == null || code.isEmpty()) {
       return null;
-    }
-    if (LEGACY_CODE_ALIASES.containsKey(code)) {
-      return LEGACY_CODE_ALIASES.get(code);
     }
     if (REGISTRY_ANTHROPIC_CODES.contains(code)) {
       return code; // already a unified Anthropic code
@@ -159,20 +200,39 @@ public class AgentStudioException extends ApiException {
     return null;
   }
 
+  /** Retry policy for HTTP responses: transient statuses only. */
+  private static boolean isRetryableStatus(int statusCode) {
+    return statusCode == 408 || statusCode == 409 || statusCode == 429 || statusCode >= 500;
+  }
+
+  private static boolean hasCause(Throwable t, Class<? extends Throwable> type) {
+    for (Throwable c = t; c != null; c = c.getCause()) {
+      if (type.isInstance(c)) {
+        return true;
+      }
+      if (c.getCause() == c) {
+        break;
+      }
+    }
+    return false;
+  }
+
+  private static String causeMessage(Throwable cause, InternalErrorCode def) {
+    if (cause != null && cause.getMessage() != null && !cause.getMessage().isEmpty()) {
+      return cause.getMessage();
+    }
+    return def.getMessage();
+  }
+
+  private static Status internalStatus(InternalErrorCode def, String message) {
+    return Status.builder().statusCode(-1).code(def.getCode()).message(message).build();
+  }
+
+  /** Resolved message: the server's text when present, else a bare HTTP status. */
   static String resolveMessage(int statusCode, String serverMessage) {
     if (serverMessage != null && !serverMessage.isEmpty()) {
       return serverMessage;
     }
-    PublicErrorCode pub = STATUS_TO_PUBLIC.get(statusCode);
-    return pub != null ? defaultMessage(pub) : "HTTP " + statusCode;
-  }
-
-  /** Default message with unresolved {@code {var}} placeholders stripped. */
-  private static String defaultMessage(PublicErrorCode pub) {
-    String msg = PLACEHOLDER.matcher(pub.getErrorMsg()).replaceAll("").trim();
-    if (!msg.isEmpty() && !msg.endsWith(".")) {
-      msg += ".";
-    }
-    return msg;
+    return "HTTP " + statusCode;
   }
 }

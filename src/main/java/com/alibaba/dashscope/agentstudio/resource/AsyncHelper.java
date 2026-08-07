@@ -8,6 +8,7 @@ import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.protocol.ServiceOption;
+import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
@@ -42,9 +43,19 @@ final class AsyncHelper {
     return future;
   }
 
-  /** Wrap {@link ApiException}s as the unified {@link AgentStudioException}. */
+  /**
+   * Normalize failures onto {@link AgentStudioException}: server responses via {@code wrap}, and
+   * raw transport {@link IOException}s (delivered unwrapped by the HTTP client) as connection
+   * errors. Unrelated throwables pass through untouched.
+   */
   private static Throwable normalize(Throwable e) {
-    return e instanceof ApiException ? AgentStudioException.wrap((ApiException) e) : e;
+    if (e instanceof ApiException) {
+      return AgentStudioException.wrap((ApiException) e);
+    }
+    if (e instanceof IOException) {
+      return AgentStudioException.connectionError(e);
+    }
+    return e;
   }
 
   static <T> CompletableFuture<T> failedFuture(Throwable ex) {
