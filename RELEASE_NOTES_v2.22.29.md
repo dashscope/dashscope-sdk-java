@@ -28,5 +28,4 @@ https://github.com/dashscope/dashscope-sdk-java/compare/v2.22.28...v2.22.29
 
 ## 👥 Contributors
 - coolsky99
-- kevin Lu
-- 一里
+- luk384090-cloud
