@@ -1,6 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.agentstudio;
 
+import com.alibaba.dashscope.common.InternalErrorCode;
 import com.alibaba.dashscope.common.PublicErrorCode;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.exception.ApiException;
@@ -131,7 +132,7 @@ public class AgentStudioException extends ApiException {
   private static final Map<Integer, PublicErrorCode> STATUS_TO_PUBLIC = new HashMap<>();
   private static final Set<String> REGISTRY_ANTHROPIC_CODES = new HashSet<>();
   private static final Map<String, String> LEGACY_CODE_ALIASES = new HashMap<>();
-  private static final Map<Kind, String> KIND_TO_CODE = new HashMap<>();
+  private static final Map<Kind, InternalErrorCode> KIND_TO_INTERNAL = new HashMap<>();
   private static final Pattern PLACEHOLDER = Pattern.compile("\\s*:?\\s*\\{[^}]+\\}");
 
   static {
@@ -139,6 +140,7 @@ public class AgentStudioException extends ApiException {
     STATUS_TO_PUBLIC.put(401, PublicErrorCode.AUTH_FAILED);
     STATUS_TO_PUBLIC.put(403, PublicErrorCode.PERMISSION_DENIED);
     STATUS_TO_PUBLIC.put(404, PublicErrorCode.RESOURCE_NOT_FOUND);
+    STATUS_TO_PUBLIC.put(413, PublicErrorCode.REQUEST_TOO_LARGE);
     STATUS_TO_PUBLIC.put(429, PublicErrorCode.RATE_LIMIT_EXCEEDED);
     STATUS_TO_PUBLIC.put(500, PublicErrorCode.INTERNAL_ERROR);
     STATUS_TO_PUBLIC.put(502, PublicErrorCode.INTERNAL_ERROR);
@@ -151,15 +153,11 @@ public class AgentStudioException extends ApiException {
 
     LEGACY_CODE_ALIASES.put("permission_denied_error", "permission_error"); // TODO(bma-fix)
 
-    KIND_TO_CODE.put(Kind.INVALID_REQUEST, "invalid_request_error");
-    KIND_TO_CODE.put(Kind.AUTHENTICATION, "authentication_error");
-    KIND_TO_CODE.put(Kind.PERMISSION_DENIED, "permission_error");
-    KIND_TO_CODE.put(Kind.NOT_FOUND, "not_found_error");
-    KIND_TO_CODE.put(Kind.CONFLICT, "conflict_error");
-    KIND_TO_CODE.put(Kind.RATE_LIMIT, "rate_limit_error");
-    KIND_TO_CODE.put(Kind.SERVER_ERROR, "api_error");
-    KIND_TO_CODE.put(Kind.NETWORK, "api_connection_error");
-    KIND_TO_CODE.put(Kind.UNKNOWN, "api_status_error");
+    // Internal codes only where public has none: NETWORK (no response),
+    // CONFLICT (409), UNKNOWN (unmapped non-5xx). All else resolves to public.
+    KIND_TO_INTERNAL.put(Kind.NETWORK, InternalErrorCode.SDK_AGENTSTUDIO_NETWORK_ERROR);
+    KIND_TO_INTERNAL.put(Kind.CONFLICT, InternalErrorCode.SDK_AGENTSTUDIO_CONFLICT);
+    KIND_TO_INTERNAL.put(Kind.UNKNOWN, InternalErrorCode.SDK_AGENTSTUDIO_UNKNOWN_ERROR);
   }
 
   /**
@@ -175,7 +173,12 @@ public class AgentStudioException extends ApiException {
     if (pub != null) {
       return pub.getAnthropicErrorCode();
     }
-    return KIND_TO_CODE.get(classify(statusCode));
+    // No status row: use the category's internal code (NETWORK/CONFLICT/UNKNOWN),
+    // else fall back to the generic public api_error (unmapped 5xx).
+    InternalErrorCode internal = KIND_TO_INTERNAL.get(classify(statusCode));
+    return internal != null
+        ? internal.getCode()
+        : PublicErrorCode.INTERNAL_ERROR.getAnthropicErrorCode();
   }
 
   private static String normalizeServerCode(String code) {

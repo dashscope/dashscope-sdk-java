@@ -5,62 +5,6 @@ import java.util.Map;
 
 /** Internal error codes with two-layer message design. */
 public enum InternalErrorCode {
-  SDK_AGENTSTUDIO_INVALID_REQUEST(
-      "sdk.agentstudio.InvalidRequest",
-      PublicErrorCode.INVALID_REQUEST,
-      "The request is invalid or malformed.",
-      false,
-      new String[] {},
-      "Invalid or malformed request",
-      "Check request parameters and format"),
-  SDK_AGENTSTUDIO_AUTHENTICATION_FAILED(
-      "sdk.agentstudio.AuthenticationFailed",
-      PublicErrorCode.AUTH_FAILED,
-      "Authentication failed or credentials are invalid.",
-      false,
-      new String[] {},
-      "Authentication failed or invalid credentials",
-      "Check API Key or authentication info"),
-  SDK_AGENTSTUDIO_PERMISSION_DENIED(
-      "sdk.agentstudio.PermissionDenied",
-      PublicErrorCode.PERMISSION_DENIED,
-      "You do not have permission to access this resource.",
-      false,
-      new String[] {},
-      "No permission to access this resource",
-      "Check account permission configuration"),
-  SDK_AGENTSTUDIO_RESOURCE_NOT_FOUND(
-      "sdk.agentstudio.ResourceNotFound",
-      PublicErrorCode.RESOURCE_NOT_FOUND,
-      "The requested resource was not found.",
-      false,
-      new String[] {},
-      "Requested resource not found",
-      "Check if the resource ID is correct"),
-  SDK_AGENTSTUDIO_CONFLICT(
-      "sdk.agentstudio.Conflict",
-      PublicErrorCode.INVALID_REQUEST,
-      "The request conflicts with the current state of the resource.",
-      true,
-      new String[] {},
-      "Request conflicts with current resource state",
-      "Retry later or check resource state"),
-  SDK_AGENTSTUDIO_RATE_LIMIT_EXCEEDED(
-      "sdk.agentstudio.RateLimitExceeded",
-      PublicErrorCode.RATE_LIMIT_EXCEEDED,
-      "Rate limit exceeded. Please slow down your requests.",
-      true,
-      new String[] {},
-      "Request rate exceeds limit",
-      "Reduce request frequency or retry later"),
-  SDK_AGENTSTUDIO_SERVER_ERROR(
-      "sdk.agentstudio.ServerError",
-      PublicErrorCode.INTERNAL_ERROR,
-      "The server encountered an internal error.",
-      true,
-      new String[] {},
-      "Internal server error",
-      "Retry later"),
   SDK_AGENTSTUDIO_NETWORK_ERROR(
       "sdk.agentstudio.NetworkError",
       PublicErrorCode.INTERNAL_ERROR,
@@ -69,6 +13,14 @@ public enum InternalErrorCode {
       new String[] {},
       "Network connection failed",
       "Check network connection and retry"),
+  SDK_AGENTSTUDIO_CONFLICT(
+      "sdk.agentstudio.Conflict",
+      PublicErrorCode.INVALID_REQUEST,
+      "The request conflicts with the current state of the resource.",
+      true,
+      new String[] {},
+      "Request conflicts with current resource state",
+      "Retry later or check resource state"),
   SDK_AGENTSTUDIO_UNKNOWN_ERROR(
       "sdk.agentstudio.UnknownError",
       PublicErrorCode.INTERNAL_ERROR,
