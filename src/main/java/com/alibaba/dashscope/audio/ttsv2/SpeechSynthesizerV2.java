@@ -364,16 +364,26 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
   private void handleTaskFailed(JsonObject message) {
     log.error("Task failed: " + message.toString());
     if (callback != null) {
-      String errorMessage = "Unknown error";
-      if (message.has("header") && message.getAsJsonObject("header").has("error_message")) {
-        errorMessage = message.getAsJsonObject("header").get("error_message").getAsString();
+      String errorCode = "";
+      String errorMessage = "";
+      int statusCode = -1;
+      if (message.has("header")) {
+        JsonObject header = message.getAsJsonObject("header");
+        if (header.has("error_code")) {
+          errorCode = header.get("error_code").getAsString();
+        }
+        if (header.has("error_message")) {
+          errorMessage = header.get("error_message").getAsString();
+        }
+        if (header.has("status_code") && !header.get("status_code").isJsonNull()) {
+          statusCode = header.get("status_code").getAsInt();
+        }
       }
 
-      // Create a Status object for the ApiException
       com.alibaba.dashscope.common.Status status =
           com.alibaba.dashscope.common.Status.builder()
-              .statusCode(-1)
-              .code("TASK_FAILED")
+              .statusCode(statusCode)
+              .code(errorCode)
               .message(errorMessage)
               .build();
       callback.onError(new ApiException(status));

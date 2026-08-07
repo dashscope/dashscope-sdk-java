@@ -3,12 +3,14 @@
 package com.alibaba.dashscope.protocol.okhttp;
 
 import com.alibaba.dashscope.common.DashScopeResult;
+import com.alibaba.dashscope.common.PublicErrorCode;
 import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.*;
 import com.alibaba.dashscope.protocol.Protocol;
+import com.alibaba.dashscope.utils.ApiKeywords;
 import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.alibaba.dashscope.utils.StringUtils;
@@ -83,6 +85,38 @@ public class OkHttpWebSocketClient extends WebSocketListener
     if (baseWebSocketUrl != null) {
       url = baseWebSocketUrl;
     }
+    // Validate URL before building request to provide clear error message
+    if (url == null || url.isEmpty()) {
+      throw new ApiException(
+          Status.builder()
+              .statusCode(PublicErrorCode.INVALID_URL.getStatusCode())
+              .code(PublicErrorCode.INVALID_URL.getErrorCode())
+              .message(
+                  StringUtils.format(
+                      "%s [detail=URL is null or empty]",
+                      PublicErrorCode.INVALID_URL.getErrorMsg()))
+              .build());
+    }
+    // HttpUrl.parse() only supports http/https schemes.
+    // WebSocket URLs use ws/wss schemes, so we convert them for validation.
+    String urlForValidation = url;
+    if (urlForValidation.startsWith("ws://")) {
+      urlForValidation = "http://" + urlForValidation.substring("ws://".length());
+    } else if (urlForValidation.startsWith("wss://")) {
+      urlForValidation = "https://" + urlForValidation.substring("wss://".length());
+    }
+    HttpUrl parsedUrl = HttpUrl.parse(urlForValidation);
+    if (parsedUrl == null) {
+      throw new ApiException(
+          Status.builder()
+              .statusCode(PublicErrorCode.INVALID_URL.getStatusCode())
+              .code(PublicErrorCode.INVALID_URL.getErrorCode())
+              .message(
+                  StringUtils.format(
+                      "%s [detail=%s]", PublicErrorCode.INVALID_URL.getErrorMsg(), url))
+              .build());
+    }
+    // Use bd.url(String) which handles ws:// and wss:// schemes internally
     Request request = bd.url(url).build();
     return request;
   }
@@ -152,6 +186,23 @@ public class OkHttpWebSocketClient extends WebSocketListener
         flowable.timeout(60, TimeUnit.SECONDS).blockingSubscribe();
         return;
       } catch (Throwable ex) {
+        // Unwrap RxJava-wrapped exceptions to find the original ApiException.
+        Throwable unwrapped = ex;
+        while (unwrapped != null && !(unwrapped instanceof ApiException)) {
+          unwrapped = unwrapped.getCause();
+        }
+
+        // Client-side errors (e.g. invalid URL, invalid API key) should not be retried or wrapped.
+        // Rethrow immediately so the caller sees the original error code.
+        if (unwrapped instanceof ApiException) {
+          ApiException apiEx = (ApiException) unwrapped;
+          // Only rethrow 4xx errors directly; 5xx errors should still be retried.
+          if (apiEx.getStatus() != null
+              && apiEx.getStatus().getStatusCode() >= 400
+              && apiEx.getStatus().getStatusCode() < 500) {
+            throw apiEx;
+          }
+        }
         reconnectionTimes += 1;
         errorMessage = ex.getMessage();
         log.error(errorMessage);
@@ -176,9 +227,12 @@ public class OkHttpWebSocketClient extends WebSocketListener
     }
     throw new ApiException(
         Status.builder()
-            .code("ConnectionError")
-            .message(errorMessage)
-            .statusCode(Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE)
+            .statusCode(PublicErrorCode.SERVICE_UNAVAILABLE.getStatusCode())
+            .code(PublicErrorCode.SERVICE_UNAVAILABLE.getErrorCode())
+            .message(
+                StringUtils.format(
+                    "%s [originalError=%s]",
+                    PublicErrorCode.SERVICE_UNAVAILABLE.getErrorMsg(), errorMessage))
             .build());
   }
 
@@ -221,6 +275,51 @@ public class OkHttpWebSocketClient extends WebSocketListener
     }
   }
 
+  /**
+   * Parse WebSocket handshake failure response body to extract error details. Returns an
+   * ApiException with the original error code/message if parsing succeeds, otherwise returns null.
+   */
+  private ApiException parseWebSocketHandshakeError(
+      int httpStatusCode, String responseBody, Throwable cause) {
+    if (responseBody == null || responseBody.isEmpty()) {
+      return null;
+    }
+
+    try {
+      JsonObject jsonResponse = JsonUtils.parse(responseBody);
+      String code = "";
+      String message = "";
+      String requestId = "";
+
+      if (jsonResponse.has(ApiKeywords.REQUEST_ID)) {
+        requestId = jsonResponse.get(ApiKeywords.REQUEST_ID).getAsString();
+      }
+      if (jsonResponse.has(ApiKeywords.CODE) && !jsonResponse.get(ApiKeywords.CODE).isJsonNull()) {
+        code = jsonResponse.get(ApiKeywords.CODE).getAsString();
+      }
+      if (jsonResponse.has(ApiKeywords.MESSAGE)) {
+        message = jsonResponse.get(ApiKeywords.MESSAGE).getAsString();
+      }
+
+      // If we have a business error code, use it directly with the HTTP status code
+      if (!code.isEmpty()) {
+        Status status =
+            Status.builder()
+                .statusCode(httpStatusCode)
+                .code(code)
+                .message(message)
+                .requestId(requestId)
+                .isJson(true)
+                .build();
+        return new ApiException(status, cause);
+      }
+    } catch (Throwable e) {
+      log.debug("Failed to parse WebSocket handshake error response as JSON", e);
+    }
+
+    return null;
+  }
+
   @Override
   public void onFailure(WebSocket webSocket, Throwable t, Response response) {
     // Invoked when a web socket has been closed due to an error reading from or
@@ -235,8 +334,10 @@ public class OkHttpWebSocketClient extends WebSocketListener
     }
 
     String responseBody = "";
+    int httpStatusCode = 0;
     // Get response body if there is.
     if (response != null) {
+      httpStatusCode = response.code();
       try {
         responseBody = response.body().string();
       } catch (IOException ex) {
@@ -249,11 +350,23 @@ public class OkHttpWebSocketClient extends WebSocketListener
             t.getMessage(), t.getCause(), responseBody);
     log.error(failureMessage);
     isOpen.set(false);
+
+    // Try to parse the response body for structured error information
+    ApiException parsedException = parseWebSocketHandshakeError(httpStatusCode, responseBody, t);
+
     if (connectionEmitter != null && !connectionEmitter.isCancelled()) {
-      connectionEmitter.onError(new Exception(failureMessage, t));
+      if (parsedException != null) {
+        connectionEmitter.onError(parsedException);
+      } else {
+        connectionEmitter.onError(new Exception(failureMessage, t));
+      }
     } else if (responseEmitter != null && !responseEmitter.isCancelled()) {
       // error on request
-      responseEmitter.onError(new Exception(failureMessage, t));
+      if (parsedException != null) {
+        responseEmitter.onError(parsedException);
+      } else {
+        responseEmitter.onError(new Exception(failureMessage, t));
+      }
     } else {
       log.error(failureMessage);
     }
@@ -279,21 +392,35 @@ public class OkHttpWebSocketClient extends WebSocketListener
         case TASK_STARTED:
           // if has payload, call onNext.
           if (response.payload.output != null || response.payload.usage != null) {
-            responseEmitter.onNext(
-                new DashScopeResult()
-                    .fromResponse(
-                        Protocol.WEBSOCKET,
-                        NetworkResponse.builder().message(text).build(),
-                        isFlattenResult));
+            try {
+              responseEmitter.onNext(
+                  new DashScopeResult()
+                      .fromResponse(
+                          Protocol.WEBSOCKET,
+                          NetworkResponse.builder().message(text).httpStatusCode(200).build(),
+                          isFlattenResult));
+            } catch (Exception e) {
+              log.error("Failed to create result for TASK_STARTED", e);
+              if (!responseEmitter.isCancelled()) {
+                responseEmitter.onError(e);
+              }
+            }
           } else if (passTaskStarted.get()) {
-            DashScopeResult start_message =
-                new DashScopeResult()
-                    .fromResponse(
-                        Protocol.WEBSOCKET,
-                        NetworkResponse.builder().message(text).build(),
-                        isFlattenResult);
-            start_message.setEvent(WebSocketEventType.TASK_STARTED.getValue());
-            responseEmitter.onNext(start_message);
+            try {
+              DashScopeResult start_message =
+                  new DashScopeResult()
+                      .fromResponse(
+                          Protocol.WEBSOCKET,
+                          NetworkResponse.builder().message(text).httpStatusCode(200).build(),
+                          isFlattenResult);
+              start_message.setEvent(WebSocketEventType.TASK_STARTED.getValue());
+              responseEmitter.onNext(start_message);
+            } catch (Exception e) {
+              log.error("Failed to create start_message for TASK_STARTED", e);
+              if (!responseEmitter.isCancelled()) {
+                responseEmitter.onError(e);
+              }
+            }
           }
           break;
         case TASK_FAILED:
@@ -312,31 +439,46 @@ public class OkHttpWebSocketClient extends WebSocketListener
           } else {
             log.error(StringUtils.format("Something wrong, receive task failed message: %s", text));
           }
+          break;
         case TASK_FINISHED:
           // check the payload and usage is null.
           if (response.payload.output != null || response.payload.usage != null) {
-            responseEmitter.onNext(
-                new DashScopeResult()
-                    .fromResponse(
-                        Protocol.WEBSOCKET,
-                        NetworkResponse.builder().message(text).build(),
-                        isFlattenResult));
+            try {
+              responseEmitter.onNext(
+                  new DashScopeResult()
+                      .fromResponse(
+                          Protocol.WEBSOCKET,
+                          NetworkResponse.builder().message(text).httpStatusCode(200).build(),
+                          isFlattenResult));
+            } catch (Exception e) {
+              log.error("[DEBUG] Failed to create result for TASK_FINISHED", e);
+              if (!responseEmitter.isCancelled()) {
+                responseEmitter.onError(e);
+              }
+            }
           }
           responseEmitter.onComplete();
           break;
         case RESULT_GENERATED:
           // get payload and usage.
-          responseEmitter.onNext(
-              new DashScopeResult()
-                  .fromResponse(
-                      Protocol.WEBSOCKET,
-                      NetworkResponse.builder().message(text).build(),
-                      isFlattenResult));
+          try {
+            responseEmitter.onNext(
+                new DashScopeResult()
+                    .fromResponse(
+                        Protocol.WEBSOCKET,
+                        NetworkResponse.builder().message(text).httpStatusCode(200).build(),
+                        isFlattenResult));
+          } catch (Exception e) {
+            log.error("Failed to create result for RESULT_GENERATED", e);
+            if (!responseEmitter.isCancelled()) {
+              responseEmitter.onError(e);
+            }
+          }
           break;
         default:
-          // throw new ApiException(Status.builder().code("")
-          // .message(StringUtils.format("Receive unknown message: %s", text))
-          // .statusCode(Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE).build());
+          // Protocol layer error: received undefined event type.
+          // This is SDK-level handling, not an API standard error code.
+          // Kept as hardcoded string to avoid polluting global ErrorType enum.
           responseEmitter.onError(
               new ApiException(
                   Status.builder()
@@ -346,6 +488,9 @@ public class OkHttpWebSocketClient extends WebSocketListener
                       .build()));
       }
     } catch (Throwable ex) {
+      // Protocol layer error: JSON deserialization failed.
+      // This is SDK-level handling for malformed messages, not an API standard error.
+      // Kept as hardcoded string to maintain separation from business-layer errors.
       responseEmitter.onError(
           new ApiException(
               Status.builder()
@@ -554,6 +699,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
   public void send(HalfDuplexRequest req, ResultCallback<DashScopeResult> callback) {
     if (req.getStreamingMode() == StreamingMode.NONE
         || req.getStreamingMode() == StreamingMode.IN) {
+      // Create flowable and subscribe with callback directly
+      // No need for the initial subscribe().dispose() pattern which causes emitter to be disposed
       Flowable<DashScopeResult> flowable =
           Flowable.<DashScopeResult>create(
               emitter -> {
@@ -561,21 +708,28 @@ public class OkHttpWebSocketClient extends WebSocketListener
                 this.isFlattenResult = req.getIsFlatten();
               },
               BackpressureStrategy.BUFFER);
-      flowable.subscribe().dispose();
+
+      // Subscribe first to initialize responseEmitter
+      Disposable subscription =
+          flowable.subscribe(
+              msg -> {
+                callback.onEvent(msg);
+              },
+              err -> {
+                callback.onError(new ApiException(err));
+              },
+              new Action() {
+                @Override
+                public void run() throws Exception {
+                  callback.onComplete();
+                }
+              });
+
+      // Now send the request - responseEmitter is already initialized and active
       sendBatchRequest(req);
-      flowable.subscribe(
-          msg -> {
-            callback.onEvent(msg);
-          },
-          err -> {
-            callback.onError(new ApiException(err));
-          },
-          new Action() {
-            @Override
-            public void run() throws Exception {
-              callback.onComplete();
-            }
-          });
+
+      // Note: Don't dispose here - let the WebSocket lifecycle manage the subscription
+      // The subscription will be completed when onClosing/onFailure is called
     } else {
       throw new ApiException(
           Status.builder()
@@ -796,7 +950,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
               this.isFlattenResult = req.getIsFlatten();
             },
             BackpressureStrategy.BUFFER);
-    flowable.subscribe().dispose();
+    // No need to subscribe here: sendStreamRequest() handles the actual WebSocket connection
+    // and the returned flowable will be subscribed by the caller
     CompletableFuture<Void> future = sendStreamRequest(req);
 
     return flowable
