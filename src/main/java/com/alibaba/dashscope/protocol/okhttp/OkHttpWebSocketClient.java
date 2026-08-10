@@ -48,7 +48,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
   protected volatile FlowableEmitter<DashScopeResult> responseEmitter;
   // is the result is flatten format.
   private boolean isFlattenResult;
-  private FlowableEmitter<DashScopeResult> connectionEmitter;
+  private volatile FlowableEmitter<DashScopeResult> connectionEmitter;
 
   private AtomicBoolean passTaskStarted = new AtomicBoolean(false);
 
@@ -93,6 +93,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
      * https://square.github.io/okhttp/3.x/okhttp/okhttp3/WebSocket.html
      */
     isClosed.set(true);
+    releaseConnectionWaiter();
     if (webSocketClient != null) {
       return webSocketClient.close(code, reason);
     } else {
@@ -103,6 +104,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
   public void cancel() {
     // Set isClosed BEFORE cancel to suppress onFailure error propagation
     isClosed.set(true);
+    releaseConnectionWaiter();
     // Dispose upstream subscription to stop sending data
     Disposable d = streamingDataDisposable;
     if (d != null && !d.isDisposed()) {
@@ -110,6 +112,19 @@ public class OkHttpWebSocketClient extends WebSocketListener
     }
     if (webSocketClient != null) {
       webSocketClient.cancel();
+    }
+  }
+
+  /**
+   * Completes the connection emitter so that the thread blocked in establishWebSocketClient()
+   * returns immediately instead of waiting for the 60s timeout. Safe to call at any time:
+   * completing an already-terminated emitter is a no-op, and the isClosed checks downstream
+   * prevent any message from being sent on the aborted connection.
+   */
+  private void releaseConnectionWaiter() {
+    FlowableEmitter<DashScopeResult> emitter = this.connectionEmitter;
+    if (emitter != null && !emitter.isCancelled()) {
+      emitter.onComplete();
     }
   }
 
@@ -231,6 +246,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
     if (isClosed.get()) {
       log.debug("called close before but not working, close again in onFailure.");
       close(1001, "call closed before");
+      // Do not leave establishWebSocketClient() waiting for the 60s timeout.
+      releaseConnectionWaiter();
       return;
     }
 
@@ -387,6 +404,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
     if (isClosed.get()) {
       log.debug("called close before but not working, close again in onOpen.");
       close(1001, "call closed before");
+      // Do not leave establishWebSocketClient() waiting for the 60s timeout.
+      releaseConnectionWaiter();
       return;
     }
     isOpen.set(true);
