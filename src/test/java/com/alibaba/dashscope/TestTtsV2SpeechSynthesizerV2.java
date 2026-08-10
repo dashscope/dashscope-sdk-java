@@ -3,6 +3,7 @@
 package com.alibaba.dashscope;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.alibaba.dashscope.audio.tts.SpeechSynthesisResult;
 import com.alibaba.dashscope.audio.ttsv2.SpeechSynthesisAudioFormat;
@@ -14,6 +15,8 @@ import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Response;
 import okhttp3.WebSocket;
@@ -156,5 +159,86 @@ public class TestTtsV2SpeechSynthesizerV2 {
       assertEquals((byte) audioBuffer.get(i), (byte) 0x01);
     }
     System.out.println("############ Start Test Streaming Call Done ############");
+  }
+
+  @Test
+  public void testStreamingFlushMessageFormat() throws IOException {
+    List<String> received = Collections.synchronizedList(new ArrayList<>());
+    MockWebServer server = new MockWebServer();
+    server.enqueue(
+        new MockResponse()
+            .withWebSocketUpgrade(
+                new WebSocketListener() {
+                  @Override
+                  public void onMessage(WebSocket webSocket, String string) {
+                    received.add(string);
+                    JsonObject req = JsonUtils.parse(string);
+                    String taskId = req.getAsJsonObject("header").get("task_id").getAsString();
+                    if (string.contains("run-task")) {
+                      webSocket.send(
+                          "{\"header\": {\"task_id\": \""
+                              + taskId
+                              + "\", \"event\": \"task-started\"}, \"payload\": {}}");
+                    } else if (string.contains("finish-task")) {
+                      webSocket.send(
+                          "{\"header\": {\"task_id\": \""
+                              + taskId
+                              + "\", \"event\": \"task-finished\"}, \"payload\": {}}");
+                      // Release the connection, otherwise MockWebServer.close() times out.
+                      webSocket.close(1000, "close by server");
+                    }
+                  }
+                }));
+    Constants.baseWebsocketApiUrl = String.format("http://127.0.0.1:%s", server.getPort());
+
+    SpeechSynthesisParam param =
+        SpeechSynthesisParam.builder()
+            .apiKey("1234")
+            .model("cosyvoice-v1")
+            .voice("longxiaochun")
+            .format(SpeechSynthesisAudioFormat.MP3_16000HZ_MONO_128KBPS)
+            .build();
+    // A dedicated callback: the shared one accumulates into the static audioBuffer asserted by the
+    // other test.
+    SpeechSynthesizerV2 synthesizer =
+        new SpeechSynthesizerV2(
+            param,
+            new ResultCallback<SpeechSynthesisResult>() {
+              @Override
+              public void onEvent(SpeechSynthesisResult message) {}
+
+              @Override
+              public void onComplete() {}
+
+              @Override
+              public void onError(Exception e) {}
+            });
+    synthesizer.setStartedTimeout(2000);
+    synthesizer.streamingCall("今天天气怎么样？");
+    synthesizer.streamingFlush();
+    JsonObject extra = new JsonObject();
+    extra.addProperty("index", 1);
+    synthesizer.streamingFlush(extra);
+    synthesizer.streamingComplete();
+    synthesizer.close();
+
+    List<JsonObject> flushInputs = new ArrayList<>();
+    for (String message : received) {
+      JsonObject sent = JsonUtils.parse(message);
+      JsonObject input = sent.getAsJsonObject("payload").getAsJsonObject("input");
+      if (input != null && input.has("flush")) {
+        // A flush travels as a continue-task, so the session stays open.
+        assertEquals("continue-task", sent.getAsJsonObject("header").get("action").getAsString());
+        flushInputs.add(input);
+      }
+    }
+    assertEquals(2, flushInputs.size());
+    // Plain flush carries the flag only.
+    assertTrue(flushInputs.get(0).get("flush").getAsBoolean());
+    assertEquals(1, flushInputs.get(0).entrySet().size());
+    // Extra params travel next to the flag, which itself stays untouched.
+    assertTrue(flushInputs.get(1).get("flush").getAsBoolean());
+    assertEquals(1, flushInputs.get(1).get("index").getAsInt());
+    server.close();
   }
 }
