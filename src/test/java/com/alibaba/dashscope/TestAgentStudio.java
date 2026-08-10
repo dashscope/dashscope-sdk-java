@@ -139,9 +139,11 @@ public class TestAgentStudio {
 
   @Test
   public void testAgentRetrieveErrorNormalizesServerCode() throws Exception {
+    // A recognized registry code (snake_case) is kept as-is; we do not map from
+    // other vocabularies (e.g. PascalCase), matching the Python SDK.
     mockServer.enqueue(
         TestUtils.createMockResponse(
-            "{\"code\":\"NotFoundError\",\"message\":\"agent not found\",\"request_id\":\"r1\"}",
+            "{\"code\":\"not_found_error\",\"message\":\"agent not found\",\"request_id\":\"r1\"}",
             404));
     AgentStudioException ex =
         assertThrows(

@@ -193,10 +193,6 @@ public class AgentStudioException extends ApiException {
     if (REGISTRY_ANTHROPIC_CODES.contains(code)) {
       return code; // already a unified Anthropic code
     }
-    PublicErrorCode byErrorCode = PublicErrorCode.fromErrorCode(code);
-    if (byErrorCode != null) {
-      return byErrorCode.getAnthropicErrorCode(); // e.g. "NotFoundError" -> "not_found_error"
-    }
     return null;
   }
 

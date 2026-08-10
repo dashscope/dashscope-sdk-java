@@ -47,7 +47,7 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
               @Override
               public void onEvent(EventSource es, String id, String type, String data) {
                 if (closed.get()) return;
-                if (data == null || data.isEmpty() || "{}".equals(data.trim())) {
+                if (data == null || data.isEmpty()) {
                   return;
                 }
                 try {
@@ -87,7 +87,6 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
     if (response == null) {
       return t != null ? AgentStudioException.connectionError(t) : null;
     }
-    int code = response.code();
     String body = "";
     try (ResponseBody rb = response.body()) {
       if (rb != null) {
@@ -97,22 +96,9 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
       log.debug("Failed to read SSE failure response body", e);
     }
 
-    // Try to extract original error code and message from response body
-    String apiCode = "";
-    String apiMessage = body.isEmpty() ? response.message() : body;
-    try {
-      com.google.gson.JsonObject json = com.alibaba.dashscope.utils.JsonUtils.parse(body);
-      if (json.has("code")) {
-        apiCode = json.get("code").getAsString();
-      }
-      if (json.has("message")) {
-        apiMessage = json.get("message").getAsString();
-      }
-    } catch (Exception e) {
-      log.debug("Failed to parse error response body as JSON", e);
-    }
-
-    Status status = Status.builder().statusCode(code).code(apiCode).message(apiMessage).build();
+    // No code is parsed here, so statusError falls back to generic api_error.
+    String message = body.isEmpty() ? response.message() : body;
+    Status status = Status.builder().statusCode(response.code()).message(message).build();
     return AgentStudioException.statusError(status, t);
   }
 

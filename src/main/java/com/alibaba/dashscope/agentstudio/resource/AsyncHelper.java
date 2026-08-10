@@ -68,7 +68,9 @@ final class AsyncHelper {
     try {
       return future.join();
     } catch (CompletionException e) {
-      Throwable cause = e.getCause();
+      // Route every failure through the shared classifier so ad-hoc paths
+      // (e.g. Files upload) also surface a typed AgentStudioException.
+      Throwable cause = normalize(e.getCause());
       if (cause instanceof RuntimeException) {
         throw (RuntimeException) cause;
       }
