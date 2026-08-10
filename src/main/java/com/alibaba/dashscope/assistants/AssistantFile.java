@@ -5,7 +5,12 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-/** AssistantFile */
+/**
+ * @deprecated The Assistants API (com.alibaba.dashscope.assistants) is deprecated and will be
+ *     removed in a future release. Please migrate to the Responses API. See
+ *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration details.
+ */
+@Deprecated
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class AssistantFile extends FlattenResultBase {

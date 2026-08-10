@@ -25,6 +25,13 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
   private CustomInput customInput;
   private List<Object> images;
   private String taskId;
+  /**
+   * Extra custom payload.parameters entries, mutable at runtime (unlike the immutable {@code
+   * parameters} field inherited from {@link FullDuplexServiceParam}). Used by {@code
+   * requestToRespond}/{@code updateInfo} to let callers pass arbitrary key/value pairs into
+   * payload.parameters for a specific request.
+   */
+  private Map<String, Object> extraParameters;
 
   @Builder
   public static class CustomInput {
@@ -142,6 +149,7 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
     customInput = null;
     images = null;
     dialogAttributes = null;
+    extraParameters = null;
   }
 
   @Builder
@@ -151,6 +159,8 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
     List<Object> images;
     BizParams bizParams;
     ClientInfo clientInfo;
+    /** Custom key/value pairs merged directly into payload.parameters. */
+    Map<String, Object> parameters;
   }
 
   @Override
@@ -262,6 +272,9 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
     }
     if (this.parameters != null) {
       params.putAll(this.parameters);
+    }
+    if (this.extraParameters != null) {
+      params.putAll(this.extraParameters);
     }
     return params;
   }

@@ -8,6 +8,12 @@ import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
 
+/**
+ * @deprecated The Assistants API (com.alibaba.dashscope.assistants) is deprecated and will be
+ *     removed in a future release. Please migrate to the Responses API. See
+ *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration details.
+ */
+@Deprecated
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder

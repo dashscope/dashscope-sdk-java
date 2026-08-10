@@ -59,7 +59,12 @@ public class HalfDuplexRequest {
     if (baseUrl.endsWith("/")) {
       baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
     }
-    return baseUrl + serviceOption.httpUrl();
+    String path = serviceOption.httpUrl();
+    // Avoid duplicate path when baseUrl already contains the full path
+    if (path != null && !path.isEmpty() && baseUrl.endsWith(path)) {
+      return baseUrl;
+    }
+    return baseUrl + path;
   }
 
   public boolean isSecurityCheck() {
@@ -131,12 +136,19 @@ public class HalfDuplexRequest {
       return HttpRequest.builder()
           .url(getHttpUrl())
           .headers(requestHeaders)
-          .body(body == null ? null : JsonUtils.toJson(body))
+          .body(serializeHttpBody(body))
           .httpMethod(getHttpMethod())
           .build();
     } else {
       return HttpRequest.builder().httpMethod(getHttpMethod()).build();
     }
+  }
+
+  private String serializeHttpBody(JsonObject body) {
+    if (body == null) {
+      return null;
+    }
+    return param.shouldSerializeExplicitNulls() ? body.toString() : JsonUtils.toJson(body);
   }
 
   public JsonObject getWebSocketPayload() {

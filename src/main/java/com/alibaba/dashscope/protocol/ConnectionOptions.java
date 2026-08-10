@@ -93,4 +93,16 @@ public final class ConnectionOptions {
   public void setUseDefaultClient(boolean useDefaultClient) {
     this.useDefaultClient = useDefaultClient;
   }
+
+  public boolean hasCustomConnectTimeout() {
+    return connectTimeout != null;
+  }
+
+  public boolean hasCustomWriteTimeout() {
+    return writeTimeout != null;
+  }
+
+  public boolean hasCustomReadTimeout() {
+    return readTimeout != null;
+  }
 }

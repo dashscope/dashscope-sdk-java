@@ -280,19 +280,24 @@ public final class MultiModalConversation {
   /**
    * Modifies the parameters for internal streaming optimization. If incrementalOutput is false,
    * modifies the MultiModalConversationParam object to set incrementalOutput to true for internal
-   * streaming optimization.
+   * streaming optimization. If incrementalOutput is true or null, keeps the original value to
+   * return real incremental content.
    *
    * @param param The parameter object to modify
-   * @return true if the parameter was modified, false otherwise
+   * @return true if the parameter was modified (needs local merge), false otherwise (real
+   *     incremental)
    */
   private boolean modifyIncrementalOutput(MultiModalConversationParam param) {
     Boolean incrementalOutput = param.getIncrementalOutput();
+    // Only modify when user explicitly sets incrementalOutput to false
+    // If user sets true or null, respect their choice and return real incremental content
     if (ParamUtils.shouldModifyIncrementalOutput(param.getModel())
         && Boolean.FALSE.equals(incrementalOutput)) {
       // Modify the MultiModalConversationParam object to enable incremental output
       param.setIncrementalOutput(true);
       return true;
     }
+    // User wants real incremental content (incrementalOutput=true or null)
     return false;
   }
 
@@ -328,22 +333,20 @@ public final class MultiModalConversation {
           if (currentContent != null && !currentContent.isEmpty()) {
             mergeTextContent(currentContent, accumulated);
           }
-          // Always set the accumulated content if we have any
-          if (!accumulated.content.isEmpty()) {
-            choice.getMessage().setContent(accumulated.content);
-          }
 
           // Handle reasoning_content accumulation
           String currentReasoningContent = choice.getMessage().getReasoningContent();
           if (currentReasoningContent != null && !currentReasoningContent.isEmpty()) {
             accumulated.reasoningContent.append(currentReasoningContent);
           }
-          // Always set the accumulated reasoning_content if we have any
+
+          // Accumulate both reasoning_content and content independently
           if (accumulated.reasoningContent.length() > 0) {
             choice.getMessage().setReasoningContent(accumulated.reasoningContent.toString());
           }
-
-          // Handle tool_calls accumulation
+          if (!accumulated.content.isEmpty()) {
+            choice.getMessage().setContent(accumulated.content);
+          }
           List<ToolCallBase> currentToolCalls = choice.getMessage().getToolCalls();
           if (currentToolCalls != null && !currentToolCalls.isEmpty()) {
             mergeToolCalls(currentToolCalls, accumulated.toolCalls);

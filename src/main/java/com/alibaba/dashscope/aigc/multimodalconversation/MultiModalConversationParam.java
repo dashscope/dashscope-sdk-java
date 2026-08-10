@@ -91,19 +91,24 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
   /**
    * Used to control the streaming output mode. If true, the subsequent output will include the
    * previously input content by default. Otherwise, the subsequent output will not include the
-   * previously output content. Default: false eg(false):
+   * previously output content. Default: false eg(false): /** Used to control the streaming output
+   * mode. If true, each chunk contains only incremental content without accumulation. If false, SDK
+   * accumulates chunks locally and returns full content in each chunk. Must be explicitly set - no
+   * default value.
    *
    * <pre>
-   * I
-   * I like
-   * I like apple
-   * when true:
-   * I
-   * like
-   * apple
+   * incrementalOutput=true (incremental):
+   * Chunk1: reasoning="让我先分析", content=[]
+   * Chunk2: reasoning="看起来是羊", content=[{text="这张图片"}]
+   * Chunk3: reasoning="", content=[{text="和一辆车"}]
+   *
+   * incrementalOutput=false (full):
+   * Chunk1: reasoning="让我先分析", content=[]
+   * Chunk2: reasoning="让我先分析看起来是羊", content=[{text="这张图片"}]
+   * Chunk3: reasoning="让我先分析看起来是羊", content=[{text="这张图片和一辆车"}]
    * </pre>
    */
-  @Builder.Default private Boolean incrementalOutput;
+  private Boolean incrementalOutput;
 
   /** Output format of the model including "text" and "audio". Default value: ["text"] */
   private List<String> modalities;
@@ -161,6 +166,24 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
 
   /** thinking budget */
   private Integer thinkingBudget;
+
+  /** stop words or token ids to stop generation */
+  @Singular("stopString")
+  private List<String> stopStrings;
+
+  @Singular private List<List<Integer>> stopTokens;
+
+  /**
+   * whether to return log probabilities of output tokens, supported for qwen-vl-ocr-2025-04-13 and
+   * later
+   */
+  private Boolean logprobs;
+
+  /**
+   * number of top candidate tokens to return log probabilities for, range [0,5], only effective
+   * when logprobs is true
+   */
+  private Integer topLogprobs;
 
   @Override
   public JsonObject getHttpBody() {
@@ -316,6 +339,26 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
 
     if (thinkingBudget != null) {
       params.put("thinking_budget", thinkingBudget);
+    }
+
+    if (stopStrings != null
+        && !stopStrings.isEmpty()
+        && stopTokens != null
+        && !stopTokens.isEmpty()) {
+      throw new IllegalArgumentException("Only one of stopStrings or stopTokens can be specified.");
+    }
+    if (stopStrings != null && !stopStrings.isEmpty()) {
+      params.put(ApiKeywords.STOP, stopStrings);
+    } else if (stopTokens != null && !stopTokens.isEmpty()) {
+      params.put(ApiKeywords.STOP, stopTokens);
+    }
+
+    if (logprobs != null) {
+      params.put("logprobs", logprobs);
+    }
+
+    if (topLogprobs != null) {
+      params.put("top_logprobs", topLogprobs);
     }
 
     params.putAll(parameters);

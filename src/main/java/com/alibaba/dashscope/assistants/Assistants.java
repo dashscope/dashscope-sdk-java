@@ -23,6 +23,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * @deprecated The Assistants API (com.alibaba.dashscope.assistants) is deprecated and will be
+ *     removed in a future release. Please migrate to the Responses API. See
+ *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration details.
+ */
+@Deprecated
 public final class Assistants {
   private final GeneralApi<HalfDuplexParamBase> api;
   private final GeneralServiceOption serviceOption;
@@ -54,6 +60,13 @@ public final class Assistants {
     preWarmConnection();
   }
 
+  /**
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
+   */
+  @Deprecated
   public Assistant create(AssistantParam param) throws ApiException, NoApiKeyException {
     serviceOption.setHttpMethod(HttpMethod.POST);
     serviceOption.setPath(StringUtils.format("assistants"));
@@ -61,6 +74,13 @@ public final class Assistants {
     return FlattenResultBase.fromDashScopeResult(result, Assistant.class);
   }
 
+  /**
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
+   */
+  @Deprecated
   public Assistant update(String assistantId, AssistantParam param)
       throws ApiException, NoApiKeyException, InputRequiredException {
     if (assistantId == null || assistantId.equals("")) {
@@ -72,6 +92,13 @@ public final class Assistants {
     return FlattenResultBase.fromDashScopeResult(result, Assistant.class);
   }
 
+  /**
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
+   */
+  @Deprecated
   public ListResult<Assistant> list(GeneralListParam listParam)
       throws ApiException, NoApiKeyException {
     serviceOption.setHttpMethod(HttpMethod.GET);
@@ -81,16 +108,37 @@ public final class Assistants {
     return FlattenResultBase.fromDashScopeResult(result, typeOfT);
   }
 
+  /**
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
+   */
+  @Deprecated
   public Assistant retrieve(String assistantId)
       throws ApiException, NoApiKeyException, InputRequiredException {
     return retrieve(assistantId, null);
   }
 
+  /**
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
+   */
+  @Deprecated
   public Assistant retrieve(String assistantId, String apiKey)
       throws ApiException, NoApiKeyException, InputRequiredException {
     return retrieve(assistantId, apiKey, new HashMap<>());
   }
 
+  /**
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
+   */
+  @Deprecated
   public Assistant retrieve(String assistantId, String apiKey, Map<String, String> headers)
       throws ApiException, NoApiKeyException, InputRequiredException {
     if (assistantId == null || assistantId.isEmpty()) {
@@ -103,16 +151,37 @@ public final class Assistants {
     return FlattenResultBase.fromDashScopeResult(result, Assistant.class);
   }
 
+  /**
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
+   */
+  @Deprecated
   public DeletionStatus delete(String assistantId)
       throws ApiException, NoApiKeyException, InputRequiredException {
     return delete(assistantId, null);
   }
 
+  /**
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
+   */
+  @Deprecated
   public DeletionStatus delete(String assistantId, String apiKey)
       throws ApiException, NoApiKeyException, InputRequiredException {
     return delete(assistantId, apiKey, new HashMap<>());
   }
 
+  /**
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
+   */
+  @Deprecated
   public DeletionStatus delete(String assistantId, String apiKey, Map<String, String> headers)
       throws ApiException, NoApiKeyException, InputRequiredException {
     if (assistantId == null || assistantId.isEmpty()) {
@@ -126,6 +195,13 @@ public final class Assistants {
     return FlattenResultBase.fromDashScopeResult(result, DeletionStatus.class);
   }
 
+  /**
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
+   */
+  @Deprecated
   public AssistantFile createFile(String assistantId, AssistantFileParam param)
       throws ApiException, NoApiKeyException, InputRequiredException {
     if (assistantId == null || assistantId.isEmpty()) {
@@ -137,6 +213,13 @@ public final class Assistants {
     return FlattenResultBase.fromDashScopeResult(result, AssistantFile.class);
   }
 
+  /**
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
+   */
+  @Deprecated
   public ListResult<AssistantFile> listFiles(String assistantId, GeneralListParam listParam)
       throws ApiException, NoApiKeyException, InputRequiredException {
     if (assistantId == null || assistantId.isEmpty()) {
@@ -149,16 +232,37 @@ public final class Assistants {
     return FlattenResultBase.fromDashScopeResult(result, typeOfT);
   }
 
+  /**
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
+   */
+  @Deprecated
   public AssistantFile retrieveFile(String assistantId, String fileId)
       throws ApiException, NoApiKeyException, InputRequiredException {
     return retrieveFile(assistantId, fileId, null);
   }
 
+  /**
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
+   */
+  @Deprecated
   public AssistantFile retrieveFile(String assistantId, String fileId, String apiKey)
       throws ApiException, NoApiKeyException, InputRequiredException {
     return retrieveFile(assistantId, fileId, apiKey, new HashMap<>());
   }
 
+  /**
+   * @deprecated The Assistants API is deprecated and will be removed in a future release. Please
+   *     migrate to the Responses API. See
+   *     https://help.aliyun.com/zh/model-studio/synchronous-call-api-reference for migration
+   *     details.
+   */
+  @Deprecated
   public AssistantFile retrieveFile(
       String assistantId, String fileId, String apiKey, Map<String, String> headers)
       throws ApiException, NoApiKeyException, InputRequiredException {

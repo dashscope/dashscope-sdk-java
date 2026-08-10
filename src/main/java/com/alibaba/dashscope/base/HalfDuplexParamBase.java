@@ -56,6 +56,15 @@ public abstract class HalfDuplexParamBase {
   public abstract JsonObject getHttpBody();
 
   /**
+   * Whether explicitly added JSON null values should be preserved when serializing the HTTP body.
+   *
+   * @return {@code true} to preserve explicit JSON null values
+   */
+  public boolean shouldSerializeExplicitNulls() {
+    return false;
+  }
+
+  /**
    * Get the request input data.
    *
    * @return The input data object.

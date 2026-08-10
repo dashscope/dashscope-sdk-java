@@ -26,7 +26,7 @@ mvn package
 
 if [ $? -ne 0 ]; then
   echo "mvn package failed, please check if any unittest is failed!"
-  exit -1
+  exit 1
 fi
 
 echo "CI passed."

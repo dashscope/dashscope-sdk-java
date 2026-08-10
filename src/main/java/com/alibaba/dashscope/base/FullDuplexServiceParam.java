@@ -45,4 +45,16 @@ public abstract class FullDuplexServiceParam extends FullDuplexParamBase {
       headers.put(key, value);
     }
   }
+
+  /**
+   * The directive to be carried in payload.input.directive when sending the finish-task message.
+   * Subclasses can override this method to instruct the server with special semantics (e.g.
+   * "cancel") when the finish-task message is sent. Returns null by default, meaning no directive
+   * will be added.
+   *
+   * @return the directive string, or null if none.
+   */
+  public String getDirective() {
+    return null;
+  }
 }

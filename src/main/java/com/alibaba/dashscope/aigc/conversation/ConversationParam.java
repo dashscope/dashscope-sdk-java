@@ -166,12 +166,25 @@ public class ConversationParam extends GenerationParamBase {
     if (maxTokens != null) {
       params.put(MAX_TOKENS, maxTokens);
     }
+    if (stopStrings != null
+        && !stopStrings.isEmpty()
+        && stopTokens != null
+        && !stopTokens.isEmpty()) {
+      throw new IllegalArgumentException("Only one of stopStrings or stopTokens can be specified.");
+    }
     if (stopStrings != null && !stopStrings.isEmpty()) {
       params.put(STOP, stopStrings);
     } else if (stopTokens != null && !stopTokens.isEmpty()) {
       params.put(STOP, stopTokens);
     }
-    params.putAll(parameters);
+    if (parameters != null) {
+      parameters.forEach(
+          (k, v) -> {
+            if (v != null) {
+              params.put(k, v);
+            }
+          });
+    }
     return params;
   }
 

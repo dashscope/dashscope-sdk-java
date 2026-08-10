@@ -96,7 +96,8 @@ public final class SpeechSynthesizer {
             .baseWebSocketUrl(baseUrl)
             .passTaskStarted(true)
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
+    duplexApi =
+        new SynchronizeFullDuplexApi<>(defaultAudioOptionsIfNull(connectionOptions), serviceOption);
     this.callback = callback;
     this.asyncCall = this.callback != null;
   }
@@ -120,7 +121,8 @@ public final class SpeechSynthesizer {
             .baseWebSocketUrl(baseUrl)
             .passTaskStarted(true)
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(connectionOptions, serviceOption);
+    duplexApi =
+        new SynchronizeFullDuplexApi<>(defaultAudioOptionsIfNull(connectionOptions), serviceOption);
     this.callback = null;
   }
 
@@ -137,7 +139,7 @@ public final class SpeechSynthesizer {
             .function(Function.SPEECH_SYNTHESIZER.getValue())
             .passTaskStarted(true)
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
+    duplexApi = new SynchronizeFullDuplexApi<>(defaultAudioOptionsIfNull(null), serviceOption);
     this.callback = null;
   }
 
@@ -186,7 +188,7 @@ public final class SpeechSynthesizer {
             .baseWebSocketUrl(baseUrl)
             .passTaskStarted(true)
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
+    duplexApi = new SynchronizeFullDuplexApi<>(defaultAudioOptionsIfNull(null), serviceOption);
     this.callback = callback;
     this.asyncCall = this.callback != null;
   }
@@ -215,13 +217,26 @@ public final class SpeechSynthesizer {
             .function(Function.SPEECH_SYNTHESIZER.getValue())
             .passTaskStarted(true)
             .build();
-    duplexApi = new SynchronizeFullDuplexApi<>(serviceOption);
+    duplexApi = new SynchronizeFullDuplexApi<>(defaultAudioOptionsIfNull(null), serviceOption);
     this.callback = callback;
     this.asyncCall = this.callback != null;
   }
 
   public String getLastRequestId() {
     return preRequestId;
+  }
+
+  /**
+   * Returns the given options, or a default instance routed to the dedicated audio client
+   * (useDefaultClient=false) when null.
+   */
+  private static ConnectionOptions defaultAudioOptionsIfNull(ConnectionOptions connectionOptions) {
+    if (connectionOptions != null) {
+      return connectionOptions;
+    }
+    ConnectionOptions defaultOptions = ConnectionOptions.builder().build();
+    defaultOptions.setUseDefaultClient(false);
+    return defaultOptions;
   }
 
   /**
@@ -239,7 +254,7 @@ public final class SpeechSynthesizer {
     return duplexApi
         .duplexCall(
             StreamInputTtsParamWithStream.fromStreamInputTtsParam(
-                this.parameters, inputStream, preRequestId, false))
+                this.parameters, inputStream, preRequestId, false, this.canceled))
         .filter(item -> item.getEvent() != WebSocketEventType.TASK_STARTED.getValue())
         .map(SpeechSynthesisResult::fromDashScopeResult)
         .filter(item -> !canceled.get())
@@ -292,7 +307,8 @@ public final class SpeechSynthesizer {
                     },
                     BackpressureStrategy.BUFFER),
                 preRequestId,
-                true))
+                true,
+                this.canceled))
         .filter(item -> item.getEvent() != WebSocketEventType.TASK_STARTED.getValue())
         .map(SpeechSynthesisResult::fromDashScopeResult)
         .doOnNext(
@@ -368,7 +384,7 @@ public final class SpeechSynthesizer {
     try {
       duplexApi.duplexCall(
           SpeechSynthesizer.StreamInputTtsParamWithStream.fromStreamInputTtsParam(
-              this.parameters, textFrames, preRequestId, enableSsml),
+              this.parameters, textFrames, preRequestId, enableSsml, this.canceled),
           new ResultCallback<DashScopeResult>() {
             //                        private Sentence lastSentence = null;
 
@@ -441,9 +457,6 @@ public final class SpeechSynthesizer {
             @Override
             public void onComplete() {
               log.debug("[TtsV2] onComplete");
-              if (canceled.get()) {
-                return;
-              }
               synchronized (SpeechSynthesizer.this) {
                 state = SpeechSynthesisState.IDLE;
               }
@@ -802,11 +815,19 @@ public final class SpeechSynthesizer {
 
     @NonNull private Flowable<TextStreamItem> textStream;
 
+    /**
+     * Shared reference to the outer {@link SpeechSynthesizer}'s canceled flag. When set to true
+     * before the finish-task message is sent, the finish-task message will carry
+     * payload.input.directive="cancel" to notify the server to discard remaining audio.
+     */
+    private AtomicBoolean canceled;
+
     public static StreamInputTtsParamWithStream fromStreamInputTtsParam(
         SpeechSynthesisParam param,
         Flowable<TextStreamItem> textStream,
         String preRequestId,
-        boolean enableSsml) {
+        boolean enableSsml,
+        AtomicBoolean canceled) {
       return StreamInputTtsParamWithStream.builder()
           .headers(param.getHeaders())
           .parameters(param.getParameters())
@@ -817,7 +838,13 @@ public final class SpeechSynthesizer {
           .model(param.getModel())
           .voice(param.getVoice())
           .apiKey(param.getApiKey())
+          .canceled(canceled)
           .build();
+    }
+
+    @Override
+    public String getDirective() {
+      return (canceled != null && canceled.get()) ? "cancel" : null;
     }
 
     @Override

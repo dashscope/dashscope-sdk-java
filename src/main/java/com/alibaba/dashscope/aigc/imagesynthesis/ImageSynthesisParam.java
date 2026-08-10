@@ -12,6 +12,7 @@ import com.alibaba.dashscope.utils.GsonExclude;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.alibaba.dashscope.utils.PreprocessInputImage;
 import com.google.gson.JsonObject;
+import com.google.gson.annotations.SerializedName;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,6 +58,27 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
   @Builder.Default private Boolean promptExtend = null;
 
   @Builder.Default private Boolean watermark = null;
+
+  /**
+   * Controls the similarity between the output image and the reference image (垫图). Value range:
+   * [0.0, 1.0]. Higher values mean the generated image is more similar to the reference image.
+   */
+  @Builder.Default private Float refStrength = null;
+
+  /**
+   * The mode for generating images based on the reference image (垫图). Supported modes: - "repaint"
+   * (default): Generate image based on the content of the reference image. - "refonly": Generate
+   * image based on the style of the reference image.
+   */
+  @Builder.Default private String refMode = null;
+
+  /**
+   * The color used to fill the masked area before inpainting. Format: hex color code, e.g.,
+   * "#FFFFFF" or "white", "black", etc.
+   */
+  @SerializedName("mask_color")
+  @Builder.Default
+  private String maskColor = null;
 
   @Override
   public JsonObject getInput() {
@@ -122,6 +144,18 @@ public class ImageSynthesisParam extends HalfDuplexServiceParam {
     }
     if (watermark != null) {
       params.put(WATERMARK, watermark);
+    }
+
+    if (refStrength != null) {
+      params.put("ref_strength", refStrength);
+    }
+
+    if (refMode != null) {
+      params.put("ref_mode", refMode);
+    }
+
+    if (maskColor != null) {
+      params.put("mask_color", maskColor);
     }
 
     params.putAll(super.getParameters());

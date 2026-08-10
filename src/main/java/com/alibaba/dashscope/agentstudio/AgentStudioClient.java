@@ -2,6 +2,8 @@
 package com.alibaba.dashscope.agentstudio;
 
 import com.alibaba.dashscope.agentstudio.resource.Agents;
+import com.alibaba.dashscope.agentstudio.resource.DeploymentRuns;
+import com.alibaba.dashscope.agentstudio.resource.Deployments;
 import com.alibaba.dashscope.agentstudio.resource.Environments;
 import com.alibaba.dashscope.agentstudio.resource.Files;
 import com.alibaba.dashscope.agentstudio.resource.Sessions;
@@ -14,6 +16,8 @@ import java.util.function.Supplier;
 
 public class AgentStudioClient implements Closeable {
   private final Agents agents;
+  private final Deployments deployments;
+  private final DeploymentRuns deploymentRuns;
   private final Sessions sessions;
   private final Environments environments;
   private final Skills skills;
@@ -41,6 +45,8 @@ public class AgentStudioClient implements Closeable {
       ConnectionOptions connectionOptions) {
     this.baseUrl = resolveBaseUrl(baseUrl, workspace, region);
     this.agents = new Agents(this.baseUrl, connectionOptions, apiKey);
+    this.deployments = new Deployments(this.baseUrl, connectionOptions, apiKey);
+    this.deploymentRuns = new DeploymentRuns(this.baseUrl, connectionOptions, apiKey);
     this.sessions = new Sessions(this.baseUrl, connectionOptions, apiKey);
     this.environments = new Environments(this.baseUrl, connectionOptions, apiKey);
     this.files = new Files(this.baseUrl, connectionOptions, apiKey);
@@ -91,6 +97,14 @@ public class AgentStudioClient implements Closeable {
 
   public Agents agents() {
     return agents;
+  }
+
+  public Deployments deployments() {
+    return deployments;
+  }
+
+  public DeploymentRuns deploymentRuns() {
+    return deploymentRuns;
   }
 
   public Sessions sessions() {
