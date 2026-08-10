@@ -289,6 +289,24 @@ public class TestFullDuplexErrorHandling {
     assertTrue(isError.get());
   }
 
+  /**
+   * Builds a service option pinned to the given endpoint. The handshake reads {@link
+   * Constants#baseWebsocketApiUrl} on every attempt, so a test that publishes its own mock server
+   * there can be reached by the leftover retry loops of earlier test classes, which would inflate
+   * the recorded request count. Pinning the url on the service option keeps this test isolated.
+   */
+  private ApiServiceOption serviceOptionAt(String baseWebSocketUrl) {
+    return ApiServiceOption.builder()
+        .protocol(Protocol.WEBSOCKET)
+        .streamingMode(StreamingMode.DUPLEX)
+        .outputMode(OutputMode.ACCUMULATE)
+        .taskGroup("group")
+        .task("task")
+        .function("function")
+        .baseWebSocketUrl(baseWebSocketUrl)
+        .build();
+  }
+
   @Test
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
   public void testHandshakeClientErrorIsNotRetried() throws ApiException, NoApiKeyException {
@@ -299,8 +317,8 @@ public class TestFullDuplexErrorHandling {
     for (int i = 0; i < 3; ++i) {
       server.enqueue(new MockResponse().setResponseCode(429).setBody("rate limit exceeded"));
     }
-    Constants.baseWebsocketApiUrl =
-        String.format("ws://127.0.0.1:%s/api-ws/v1/inference/", server.getPort());
+    ApiServiceOption option =
+        serviceOptionAt(String.format("ws://127.0.0.1:%s/api-ws/v1/inference/", server.getPort()));
     FullDuplexTestParam param = getStreamTextParam();
     long start = System.currentTimeMillis();
     ApiException thrown =
@@ -308,7 +326,7 @@ public class TestFullDuplexErrorHandling {
             ApiException.class,
             () -> {
               SynchronizeFullDuplexApi<FullDuplexTestParam> api =
-                  new SynchronizeFullDuplexApi<>(serviceOption);
+                  new SynchronizeFullDuplexApi<>(option);
               api.duplexCall(param).blockingForEach(msg -> {});
             });
     long elapsed = System.currentTimeMillis() - start;
@@ -328,8 +346,8 @@ public class TestFullDuplexErrorHandling {
     for (int i = 0; i < 5; ++i) {
       server.enqueue(new MockResponse().setResponseCode(500).setBody("internal error"));
     }
-    Constants.baseWebsocketApiUrl =
-        String.format("ws://127.0.0.1:%s/api-ws/v1/inference/", server.getPort());
+    ApiServiceOption option =
+        serviceOptionAt(String.format("ws://127.0.0.1:%s/api-ws/v1/inference/", server.getPort()));
     FullDuplexTestParam param = getStreamTextParam();
     long start = System.currentTimeMillis();
     ApiException thrown =
@@ -337,7 +355,7 @@ public class TestFullDuplexErrorHandling {
             ApiException.class,
             () -> {
               SynchronizeFullDuplexApi<FullDuplexTestParam> api =
-                  new SynchronizeFullDuplexApi<>(serviceOption);
+                  new SynchronizeFullDuplexApi<>(option);
               api.duplexCall(param).blockingForEach(msg -> {});
             });
     long elapsed = System.currentTimeMillis() - start;
