@@ -25,8 +25,11 @@ import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import okhttp3.Request.Builder;
@@ -35,8 +38,29 @@ import okio.ByteString;
 @Slf4j
 public class OkHttpWebSocketClient extends WebSocketListener
     implements HalfDuplexClient, FullDuplexClient {
-  // we will try 3 times for connection.
-  private static final int MAX_CONNECTION_TIMES = 3;
+  // we will try 3 times for connection, only for retryable failures.
+  private static final int MAX_CONNECTION_TIMES =
+      intSetting(
+          "dashscope.websocket.max.connect.attempts",
+          "DASHSCOPE_WEBSOCKET_MAX_CONNECT_ATTEMPTS",
+          3);
+  // base delay of the exponential backoff applied between two retryable handshake attempts.
+  private static final long RETRY_BACKOFF_MILLIS =
+      intSetting(
+          "dashscope.websocket.retry.backoff.millis",
+          "DASHSCOPE_WEBSOCKET_RETRY_BACKOFF_MILLIS",
+          1000);
+  // upper bound of the backoff delay, whatever the attempt number is.
+  private static final long MAX_RETRY_BACKOFF_MILLIS = 10000L;
+  // how long one handshake attempt may take before it is abandoned.
+  private static final int CONNECT_WAIT_SECONDS =
+      intSetting(
+          "dashscope.websocket.connect.wait.seconds",
+          "DASHSCOPE_WEBSOCKET_CONNECT_WAIT_SECONDS",
+          60);
+  // okhttp reports the status line in the handshake failure message when the upgrade is refused,
+  // e.g. "Expected HTTP 101 response but was '403 Forbidden'".
+  private static final Pattern CLIENT_ERROR_STATUS_LINE = Pattern.compile("was '4\\d\\d ");
   private OkHttpClient client;
   private WebSocket webSocketClient;
   // indicate the websocket connection is established.
@@ -54,6 +78,9 @@ public class OkHttpWebSocketClient extends WebSocketListener
 
   // Disposable for the streaming data subscription, used to cancel upstream when stopping
   protected volatile Disposable streamingDataDisposable;
+
+  // Terminal error parked until a subscriber is attached to the response stream.
+  private final AtomicReference<Throwable> pendingResponseError = new AtomicReference<>(null);
 
   public OkHttpWebSocketClient(OkHttpClient client, boolean passTaskStarted) {
     this.client = client;
@@ -117,9 +144,9 @@ public class OkHttpWebSocketClient extends WebSocketListener
 
   /**
    * Completes the connection emitter so that the thread blocked in establishWebSocketClient()
-   * returns immediately instead of waiting for the 60s timeout. Safe to call at any time:
-   * completing an already-terminated emitter is a no-op, and the isClosed checks downstream
-   * prevent any message from being sent on the aborted connection.
+   * returns immediately instead of waiting for the connect timeout. Safe to call at any time:
+   * completing an already-terminated emitter is a no-op, and the isClosed checks downstream prevent
+   * any message from being sent on the aborted connection.
    */
   private void releaseConnectionWaiter() {
     FlowableEmitter<DashScopeResult> emitter = this.connectionEmitter;
@@ -134,9 +161,10 @@ public class OkHttpWebSocketClient extends WebSocketListener
       String workspace,
       Map<String, String> customHeaders,
       String baseWebSocketUrl) {
-    int reconnectionTimes = 0;
+    int attempts = 0;
     String errorMessage = "";
-    while (reconnectionTimes < MAX_CONNECTION_TIMES) {
+    int httpStatusCode = 0;
+    while (true) {
       // Bail out immediately if cancel() has been called
       if (isClosed.get()) {
         log.debug("Connection cancelled, stop reconnecting.");
@@ -148,7 +176,9 @@ public class OkHttpWebSocketClient extends WebSocketListener
                 emitter -> {
                   this.connectionEmitter = emitter;
                   try {
-                    client = OkHttpClientFactory.getOkHttpClient();
+                    if (client == null) {
+                      client = OkHttpClientFactory.getOkHttpClient();
+                    }
                     webSocketClient =
                         client.newWebSocket(
                             buildConnectionRequest(
@@ -164,27 +194,36 @@ public class OkHttpWebSocketClient extends WebSocketListener
                 },
                 BackpressureStrategy.BUFFER);
         // wait for connection establish
-        flowable.timeout(60, TimeUnit.SECONDS).blockingSubscribe();
+        flowable.timeout(CONNECT_WAIT_SECONDS, TimeUnit.SECONDS).blockingSubscribe();
         return;
       } catch (Throwable ex) {
-        reconnectionTimes += 1;
-        errorMessage = ex.getMessage();
+        attempts += 1;
+        errorMessage = ex.getMessage() != null ? ex.getMessage() : ex.toString();
         log.error(errorMessage);
-        if (errorMessage.contains("401 Unauthorized")) {
-          break;
-        } else if (errorMessage.contains(Constants.NO_API_KEY_ERROR)) {
+        if (errorMessage.contains(Constants.NO_API_KEY_ERROR)) {
           throw ex;
+        }
+        httpStatusCode = extractHttpStatusCode(ex);
+        // The server answered the handshake with a client error (401, 403, 429, ...): retrying
+        // cannot change the outcome and would only add pressure on a server already refusing us,
+        // so surface the status code to the caller right away.
+        if (isClientError(httpStatusCode, errorMessage)) {
+          log.warn(
+              "Websocket handshake refused with http status {}, will not retry: {}",
+              httpStatusCode,
+              errorMessage);
+          break;
+        }
+        if (attempts >= MAX_CONNECTION_TIMES) {
+          // No point in waiting after the last attempt.
+          break;
         }
         // Check again before sleeping
         if (isClosed.get()) {
           log.debug("Connection cancelled during retry, stop reconnecting.");
           return;
         }
-        try {
-          Thread.sleep(10000);
-        } catch (InterruptedException e) {
-          // Respect interruption - exit the loop
-          Thread.currentThread().interrupt();
+        if (!sleepBeforeRetry(attempts)) {
           return;
         }
       }
@@ -193,8 +232,98 @@ public class OkHttpWebSocketClient extends WebSocketListener
         Status.builder()
             .code("ConnectionError")
             .message(errorMessage)
-            .statusCode(Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE)
+            .statusCode(
+                httpStatusCode > 0
+                    ? httpStatusCode
+                    : Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE)
             .build());
+  }
+
+  /**
+   * Walks the cause chain looking for the HTTP status code carried by a refused handshake. RxJava
+   * wraps the exception raised inside the connection emitter before it reaches the caller of
+   * blockingSubscribe(), hence the walk instead of a plain instanceof check.
+   *
+   * @return the HTTP status code, or 0 when no handshake response was received.
+   */
+  private static int extractHttpStatusCode(Throwable ex) {
+    Throwable cause = ex;
+    int depth = 0;
+    while (cause != null && depth < 8) {
+      if (cause instanceof WebSocketConnectException) {
+        return ((WebSocketConnectException) cause).httpStatusCode;
+      }
+      cause = cause.getCause();
+      depth += 1;
+    }
+    return 0;
+  }
+
+  /** A 4xx handshake response is a final decision from the server, so it must not be retried. */
+  private static boolean isClientError(int httpStatusCode, String errorMessage) {
+    if (httpStatusCode >= 400 && httpStatusCode < 500) {
+      return true;
+    }
+    // Fallback for the cases where the response object is not available.
+    return errorMessage != null && CLIENT_ERROR_STATUS_LINE.matcher(errorMessage).find();
+  }
+
+  /**
+   * Waits before the next handshake attempt, using an exponential backoff with jitter so that a
+   * burst of sessions failing at the same time does not retry in lockstep.
+   *
+   * @return false when the wait was interrupted and the caller should give up.
+   */
+  private static boolean sleepBeforeRetry(int attempts) {
+    long delay = RETRY_BACKOFF_MILLIS << Math.min(attempts - 1, 16);
+    delay = Math.min(delay, MAX_RETRY_BACKOFF_MILLIS);
+    long jitter = delay / 4;
+    long sleepMillis = delay - jitter + ThreadLocalRandom.current().nextLong(2 * jitter + 1);
+    try {
+      Thread.sleep(sleepMillis);
+      return true;
+    } catch (InterruptedException e) {
+      // Respect interruption - exit the loop
+      Thread.currentThread().interrupt();
+      return false;
+    }
+  }
+
+  /**
+   * Reads an int setting from the system property first, then from the environment variable, and
+   * falls back to the default value when both are absent or malformed.
+   */
+  protected static int intSetting(String systemProperty, String envName, int defaultValue) {
+    String value = System.getProperty(systemProperty);
+    if (value == null || value.trim().isEmpty()) {
+      value = System.getenv(envName);
+    }
+    if (value == null || value.trim().isEmpty()) {
+      return defaultValue;
+    }
+    try {
+      return Integer.parseInt(value.trim());
+    } catch (NumberFormatException ex) {
+      log.warn("Invalid value '{}' for {}, fallback to {}", value, envName, defaultValue);
+      return defaultValue;
+    }
+  }
+
+  /**
+   * Signals a refused WebSocket handshake. Carries the HTTP status code answered by the server so
+   * that the retry logic can tell a permanent client error (403 Forbidden, 429 Too Many Requests,
+   * ...) from a transient network failure.
+   */
+  static final class WebSocketConnectException extends Exception {
+    private static final long serialVersionUID = 1L;
+
+    /** The HTTP status code of the handshake response, 0 when no response was received. */
+    final int httpStatusCode;
+
+    WebSocketConnectException(String message, int httpStatusCode, Throwable cause) {
+      super(message, cause);
+      this.httpStatusCode = httpStatusCode;
+    }
   }
 
   @Override
@@ -252,22 +381,31 @@ public class OkHttpWebSocketClient extends WebSocketListener
     }
 
     String responseBody = "";
+    int httpStatusCode = 0;
     // Get response body if there is.
     if (response != null) {
-      try {
-        responseBody = response.body().string();
-      } catch (IOException ex) {
-        log.error(ex.getMessage());
+      httpStatusCode = response.code();
+      ResponseBody body = response.body();
+      if (body != null) {
+        try {
+          responseBody = body.string();
+        } catch (IOException ex) {
+          log.error(ex.getMessage());
+        }
       }
     }
     String failureMessage =
         StringUtils.format(
             "Websocket failure %s, cause: %s, body: %s",
             t.getMessage(), t.getCause(), responseBody);
+    if (httpStatusCode > 0) {
+      // Appended, not inlined, to keep the message prefix stable for log based diagnostics.
+      failureMessage = failureMessage + ", http status: " + httpStatusCode;
+    }
     log.error(failureMessage);
     isOpen.set(false);
     if (connectionEmitter != null && !connectionEmitter.isCancelled()) {
-      connectionEmitter.onError(new Exception(failureMessage, t));
+      connectionEmitter.onError(new WebSocketConnectException(failureMessage, httpStatusCode, t));
     } else if (responseEmitter != null && !responseEmitter.isCancelled()) {
       // error on request
       responseEmitter.onError(new Exception(failureMessage, t));
@@ -647,11 +785,41 @@ public class OkHttpWebSocketClient extends WebSocketListener
     // no-op by default
   }
 
+  /**
+   * Publishes a terminal error on the response stream. When no subscriber is attached yet, the
+   * error is parked and replayed as soon as one subscribes: a failure raised early, a handshake
+   * refused by the server for instance, can otherwise be reported before the caller of duplex() had
+   * the chance to subscribe, which would leave that caller waiting forever.
+   */
+  protected void emitResponseError(Throwable error) {
+    FlowableEmitter<DashScopeResult> emitter = this.responseEmitter;
+    if (emitter != null && !emitter.isCancelled()) {
+      emitter.onError(error);
+      return;
+    }
+    pendingResponseError.set(error);
+    // A subscriber may have attached in the meantime, do not let the parked error be forgotten.
+    drainPendingResponseError();
+  }
+
+  /** Replays the parked terminal error, if any, to the currently attached subscriber. */
+  private void drainPendingResponseError() {
+    FlowableEmitter<DashScopeResult> emitter = this.responseEmitter;
+    if (emitter == null || emitter.isCancelled()) {
+      return;
+    }
+    Throwable parked = pendingResponseError.getAndSet(null);
+    if (parked != null) {
+      emitter.onError(parked);
+    }
+  }
+
   /** Core streaming request logic. Extracted to allow subclasses to use different executors. */
   protected void executeStreamRequest(FullDuplexRequest req) {
     try {
       isClosed.set(false); // Reset for reuse across sessions
       isFirstMessage.set(false);
+      pendingResponseError.set(null);
 
       JsonObject startMessage = req.getStartTaskMessage();
       onBeforeSendStartMessage(startMessage);
@@ -707,16 +875,12 @@ public class OkHttpWebSocketClient extends WebSocketListener
                   }
                 } catch (Throwable ex) {
                   log.error(StringUtils.format("sendStreamData exception: %s", ex.getMessage()));
-                  if (responseEmitter != null && !responseEmitter.isCancelled()) {
-                    responseEmitter.onError(ex);
-                  }
+                  emitResponseError(ex);
                 }
               },
               err -> {
                 log.error(StringUtils.format("Get stream data error!"));
-                if (responseEmitter != null && !responseEmitter.isCancelled()) {
-                  responseEmitter.onError(err);
-                }
+                emitResponseError(err);
               },
               new Action() {
                 @Override
@@ -740,9 +904,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
       }
     } catch (Throwable ex) {
       log.error(StringUtils.format("sendStreamData exception: %s", ex.getMessage()));
-      if (responseEmitter != null && !responseEmitter.isCancelled()) {
-        responseEmitter.onError(ex);
-      }
+      emitResponseError(ex);
     }
   }
 
@@ -763,9 +925,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
       log.error("Sending streaming data cancelled", ex.getMessage());
     } catch (CompletionException ex) {
       log.error("Sending streaming data exception", ex.getMessage());
-      if (responseEmitter != null && !responseEmitter.isCancelled()) {
-        responseEmitter.onError(ex.getCause() != null ? ex.getCause() : ex);
-      }
+      emitResponseError(ex.getCause() != null ? ex.getCause() : ex);
     }
   }
 
@@ -776,6 +936,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
             emitter -> {
               this.responseEmitter = emitter;
               this.isFlattenResult = req.getIsFlatten();
+              drainPendingResponseError();
             },
             BackpressureStrategy.BUFFER);
     flowable.subscribe().dispose();
@@ -813,6 +974,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
             emitter -> {
               this.responseEmitter = emitter;
               this.isFlattenResult = req.getIsFlatten();
+              drainPendingResponseError();
             },
             BackpressureStrategy.BUFFER);
     flowable.subscribe().dispose();
