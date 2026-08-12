@@ -57,6 +57,7 @@ public final class SpeechSynthesizer {
   private String preRequestId = null;
   private boolean isFirst = true;
   private AtomicBoolean canceled = new AtomicBoolean(false);
+  private final AtomicReference<Exception> lastError = new AtomicReference<>(null);
   private boolean asyncCall = false;
   private long startStreamTimeStamp = -1;
   private long firstPackageTimeStamp = -1;
@@ -158,6 +159,7 @@ public final class SpeechSynthesizer {
     this.cmdBuffer.clear();
     this.textEmitter = null;
     this.isFirst = true;
+    this.lastError.set(null);
 
     this.asyncCall = this.callback != null;
   }
@@ -350,6 +352,7 @@ public final class SpeechSynthesizer {
     // 新的session开始，重置所有buffer
     outputStream = new ByteArrayOutputStream();
     audioData = null;
+    lastError.set(null);
     //        timestamps.clear();
     WritableByteChannel channel = Channels.newChannel(outputStream);
 
@@ -381,6 +384,9 @@ public final class SpeechSynthesizer {
     startLatch = new AtomicReference<>(new CountDownLatch(1));
     firstAudioLatch = new AtomicReference<>(new CountDownLatch(1));
     preRequestId = UUID.randomUUID().toString();
+    // Bind the callback that owns this session: once updateParamAndCallback() installs a new
+    // callback, a late event from this session must not be delivered to the next one.
+    final ResultCallback<SpeechSynthesisResult> sessionCallback = this.callback;
     try {
       duplexApi.duplexCall(
           SpeechSynthesizer.StreamInputTtsParamWithStream.fromStreamInputTtsParam(
@@ -446,12 +452,12 @@ public final class SpeechSynthesizer {
                 }
               } catch (Exception e) {
                 log.error("Failed to parse response: {}", message, e);
-                callback.onError(e);
+                sessionCallback.onError(e);
               }
               if (speechSynthesisResult.getRequestId() == null) {
                 speechSynthesisResult.setRequestId(preRequestId);
               }
-              callback.onEvent(speechSynthesisResult);
+              sessionCallback.onEvent(speechSynthesisResult);
             }
 
             @Override
@@ -466,7 +472,7 @@ public final class SpeechSynthesizer {
               } catch (IOException e) {
                 log.error("Failed to close channel: {}", e);
               }
-              callback.onComplete();
+              sessionCallback.onComplete();
               if (stopLatch.get() != null) {
                 stopLatch.get().countDown();
               }
@@ -475,14 +481,29 @@ public final class SpeechSynthesizer {
             @Override
             public void onError(Exception e) {
               if (canceled.get()) {
+                // Suppress the error itself: the caller asked to stop, so a task-failed or a
+                // transport error is just noise. The session is over all the same, so reset the
+                // state, release the internal latches and still deliver a terminal callback.
+                // releaseLatches() only unblocks streamingComplete()/streamingCall(); a
+                // callback-driven caller waits on onComplete/onError and would otherwise never
+                // get any signal. Report onComplete, matching the cancel-then-success path.
+                log.debug("[TtsV2] error after cancel, reported as complete: " + e.getMessage());
+                synchronized (SpeechSynthesizer.this) {
+                  state = SpeechSynthesisState.IDLE;
+                }
+                releaseLatches();
+                sessionCallback.onComplete();
                 return;
-              }
-              synchronized (SpeechSynthesizer.this) {
-                state = SpeechSynthesisState.IDLE;
               }
               ApiException apiException = new ApiException(e);
               apiException.setStackTrace(e.getStackTrace());
-              callback.onError(apiException);
+              // Record before resetting the state: a caller that observes IDLE must also be able
+              // to see the real cause, otherwise it only reports "State invalid".
+              lastError.set(apiException);
+              synchronized (SpeechSynthesizer.this) {
+                state = SpeechSynthesisState.IDLE;
+              }
+              sessionCallback.onError(apiException);
               if (stopLatch.get() != null) {
                 stopLatch.get().countDown();
               }
@@ -491,17 +512,38 @@ public final class SpeechSynthesizer {
     } catch (NoApiKeyException e) {
       ApiException apiException = new ApiException(e);
       apiException.setStackTrace(e.getStackTrace());
-      callback.onError(apiException);
-      if (stopLatch.get() != null) {
-        stopLatch.get().countDown();
-      }
-      if (startLatch.get() != null) {
-        startLatch.get().countDown();
-      }
-      if (firstAudioLatch.get() != null) {
-        firstAudioLatch.get().countDown();
-      }
+      lastError.set(apiException);
+      sessionCallback.onError(apiException);
+      releaseLatches();
     }
+  }
+
+  /** Release stopLatch/startLatch/firstAudioLatch to unblock any waiting threads. */
+  private void releaseLatches() {
+    if (stopLatch.get() != null) {
+      stopLatch.get().countDown();
+    }
+    if (startLatch.get() != null) {
+      startLatch.get().countDown();
+    }
+    if (firstAudioLatch.get() != null) {
+      firstAudioLatch.get().countDown();
+    }
+  }
+
+  /**
+   * Rethrows the error recorded for the current session, if any. Used by the synchronous call(),
+   * which has no user callback to receive the error and would otherwise return empty audio.
+   */
+  private void throwIfLastError() {
+    Exception e = lastError.getAndSet(null);
+    if (e == null) {
+      return;
+    }
+    if (e instanceof ApiException) {
+      throw (ApiException) e;
+    }
+    throw new ApiException(e);
   }
 
   /**
@@ -604,6 +646,10 @@ public final class SpeechSynthesizer {
   /**
    * Immediately terminate the streaming input speech synthesis task and discard any remaining audio
    * that is not yet delivered.
+   *
+   * <p>The session always ends with {@code onComplete}, even when the task fails after the cancel:
+   * the failure is suppressed as noise, but the terminal callback is still delivered so that the
+   * caller is never left waiting.
    */
   public void streamingCancel() {
     canceled.set(true);
@@ -706,6 +752,8 @@ public final class SpeechSynthesizer {
    *     wait indefinitely.
    * @return If a callback is not set during initialization, the complete audio is returned as the
    *     function's return value. Otherwise, the return value is null.
+   * @throws ApiException when no callback is set and the task fails, so that the caller gets the
+   *     real cause instead of empty audio.
    */
   public ByteBuffer call(String text, long timeoutMillis) throws RuntimeException {
     if (this.callback == null) {
@@ -759,12 +807,25 @@ public final class SpeechSynthesizer {
       }
     } catch (InterruptedException ignored) {
       log.error("Interrupted while waiting for streaming complete");
+    } catch (RuntimeException e) {
+      // The real cause may already have been recorded by the error callback, in which case the
+      // exception raised here only masks it.
+      if (!this.asyncCall) {
+        throwIfLastError();
+      }
+      throw e;
     }
     if (this.asyncCall) {
       this.asyncStreamingComplete();
       return null;
     } else {
-      this.streamingComplete(timeoutMillis);
+      try {
+        this.streamingComplete(timeoutMillis);
+      } catch (RuntimeException stopError) {
+        throwIfLastError();
+        throw stopError;
+      }
+      throwIfLastError();
       return audioData;
     }
   }
@@ -777,6 +838,8 @@ public final class SpeechSynthesizer {
    * @param text utf-8 encoded text
    * @return If a callback is not set during initialization, the complete audio is returned as the
    *     function's return value. Otherwise, the return value is null.
+   * @throws ApiException when no callback is set and the task fails, so that the caller gets the
+   *     real cause instead of empty audio.
    */
   public ByteBuffer call(String text) {
     return call(text, 0);
