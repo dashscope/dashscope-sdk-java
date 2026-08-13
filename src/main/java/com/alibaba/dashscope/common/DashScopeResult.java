@@ -87,7 +87,12 @@ public class DashScopeResult extends Result {
         this.output = response.getBinary();
       }
     } else {
-      this.output = parseJson(response.getMessage(), "Failed to parse HTTP response message");
+      if (Integer.valueOf(204).equals(response.getHttpStatusCode())) {
+        this.setStatusCode(response.getHttpStatusCode());
+        this.output = new JsonObject();
+      } else {
+        this.output = parseJson(response.getMessage(), "Failed to parse HTTP response message");
+      }
       this.event = response.getEvent();
     }
     return (T) this;
