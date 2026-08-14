@@ -206,7 +206,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
         httpStatusCode = extractHttpStatusCode(ex);
         // The server answered the handshake with a client error (401, 403, 429, ...): retrying
         // cannot change the outcome and would only add pressure on a server already refusing us,
-        // so surface the status code to the caller right away.
+        // so give up immediately.
         if (isClientError(httpStatusCode, errorMessage)) {
           log.warn(
               "Websocket handshake refused with http status {}, will not retry: {}",
@@ -228,14 +228,13 @@ public class OkHttpWebSocketClient extends WebSocketListener
         }
       }
     }
+    // The handshake status code only drives the retry decision above: callers rely on the fixed
+    // websocket failure status code, so it must not leak into the reported status.
     throw new ApiException(
         Status.builder()
             .code("ConnectionError")
             .message(errorMessage)
-            .statusCode(
-                httpStatusCode > 0
-                    ? httpStatusCode
-                    : Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE)
+            .statusCode(Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE)
             .build());
   }
 

@@ -330,8 +330,10 @@ public class TestFullDuplexErrorHandling {
               api.duplexCall(param).blockingForEach(msg -> {});
             });
     long elapsed = System.currentTimeMillis() - start;
-    // The status code answered by the server is reported to the caller as is.
-    assertEquals(429, thrown.getStatus().getStatusCode());
+    // The handshake http status only drives the retry decision: callers keep seeing the fixed
+    // websocket failure status code.
+    assertEquals(
+        Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE, thrown.getStatus().getStatusCode());
     // A client error is final: a single handshake must have been attempted.
     assertEquals(1, server.getRequestCount());
     // And no backoff must have been waited for.
@@ -359,7 +361,8 @@ public class TestFullDuplexErrorHandling {
               api.duplexCall(param).blockingForEach(msg -> {});
             });
     long elapsed = System.currentTimeMillis() - start;
-    assertEquals(500, thrown.getStatus().getStatusCode());
+    assertEquals(
+        Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE, thrown.getStatus().getStatusCode());
     // A transient failure is retried up to the attempt limit.
     assertEquals(3, server.getRequestCount());
     // Two backoffs only: the last attempt must not be followed by a wait.
