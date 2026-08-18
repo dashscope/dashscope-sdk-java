@@ -3,9 +3,6 @@ package com.alibaba.dashscope.agentstudio.model;
 
 /** Event types accepted by webhook endpoint subscriptions. */
 public final class WebhookEventType {
-  /** Subscribe to every supported event type. */
-  public static final String ALL = "*";
-
   /** A session was created. */
   public static final String SESSION_CREATED = "session.created";
 
