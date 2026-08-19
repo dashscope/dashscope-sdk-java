@@ -279,13 +279,16 @@ public class OkHttpWebSocketClient extends WebSocketListener
         }
       }
     }
-    // The handshake status code only drives the retry decision above: callers rely on the fixed
-    // websocket failure status code, so it must not leak into the reported status.
+    // The handshake status code only drives the retry decision above; the reported status is a
+    // fixed SERVICE_UNAVAILABLE so callers do not see raw handshake codes like 401 or 429.
     throw new ApiException(
         Status.builder()
-            .code("ConnectionError")
-            .message(errorMessage)
-            .statusCode(Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE)
+            .statusCode(PublicErrorCode.SERVICE_UNAVAILABLE.getStatusCode())
+            .code(PublicErrorCode.SERVICE_UNAVAILABLE.getErrorCode())
+            .message(
+                StringUtils.format(
+                    "%s [originalError=%s]",
+                    PublicErrorCode.SERVICE_UNAVAILABLE.getErrorMsg(), errorMessage))
             .build());
   }
 
