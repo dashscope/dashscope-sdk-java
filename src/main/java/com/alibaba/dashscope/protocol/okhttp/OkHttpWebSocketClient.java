@@ -283,12 +283,9 @@ public class OkHttpWebSocketClient extends WebSocketListener
     // websocket failure status code, so it must not leak into the reported status.
     throw new ApiException(
         Status.builder()
-            .statusCode(PublicErrorCode.SERVICE_UNAVAILABLE.getStatusCode())
-            .code(PublicErrorCode.SERVICE_UNAVAILABLE.getErrorCode())
-            .message(
-                StringUtils.format(
-                    "%s [originalError=%s]",
-                    PublicErrorCode.SERVICE_UNAVAILABLE.getErrorMsg(), errorMessage))
+            .code("ConnectionError")
+            .message(errorMessage)
+            .statusCode(Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE)
             .build());
   }
 
