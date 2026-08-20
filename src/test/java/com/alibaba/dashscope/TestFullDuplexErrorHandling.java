@@ -2,12 +2,14 @@
 
 package com.alibaba.dashscope;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.api.SynchronizeFullDuplexApi;
 import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.common.OutputMode;
+import com.alibaba.dashscope.common.PublicErrorCode;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
@@ -286,5 +288,85 @@ public class TestFullDuplexErrorHandling {
     wsServer.send(JsonUtils.toJson(WebSocketServerMessage.getTaskFinishedMessage(null, null)));
     semaphore.acquire();
     assertTrue(isError.get());
+  }
+
+  /**
+   * Builds a service option pinned to the given endpoint. The handshake reads {@link
+   * Constants#baseWebsocketApiUrl} on every attempt, so a test that publishes its own mock server
+   * there can be reached by the leftover retry loops of earlier test classes, which would inflate
+   * the recorded request count. Pinning the url on the service option keeps this test isolated.
+   */
+  private ApiServiceOption serviceOptionAt(String baseWebSocketUrl) {
+    return ApiServiceOption.builder()
+        .protocol(Protocol.WEBSOCKET)
+        .streamingMode(StreamingMode.DUPLEX)
+        .outputMode(OutputMode.ACCUMULATE)
+        .taskGroup("group")
+        .task("task")
+        .function("function")
+        .baseWebSocketUrl(baseWebSocketUrl)
+        .build();
+  }
+
+  @Test
+  @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
+  public void testHandshakeClientErrorIsNotRetried() throws ApiException, NoApiKeyException {
+    server = new MockWebServer();
+    serverListener = new WebSocketRecorder("server");
+    // The server refuses the upgrade with a rate limit error. Several responses are enqueued so
+    // that a retry would be served normally instead of failing on an exhausted queue.
+    for (int i = 0; i < 3; ++i) {
+      server.enqueue(new MockResponse().setResponseCode(429).setBody("rate limit exceeded"));
+    }
+    ApiServiceOption option =
+        serviceOptionAt(String.format("ws://127.0.0.1:%s/api-ws/v1/inference/", server.getPort()));
+    FullDuplexTestParam param = getStreamTextParam();
+    long start = System.currentTimeMillis();
+    ApiException thrown =
+        assertThrows(
+            ApiException.class,
+            () -> {
+              SynchronizeFullDuplexApi<FullDuplexTestParam> api =
+                  new SynchronizeFullDuplexApi<>(option);
+              api.duplexCall(param).blockingForEach(msg -> {});
+            });
+    long elapsed = System.currentTimeMillis() - start;
+    // The handshake http status only drives the retry decision; exhausted retries are reported as
+    // a fixed SERVICE_UNAVAILABLE status.
+    assertEquals(
+        PublicErrorCode.SERVICE_UNAVAILABLE.getStatusCode(), thrown.getStatus().getStatusCode());
+    // A client error is final: a single handshake must have been attempted.
+    assertEquals(1, server.getRequestCount());
+    // And no backoff must have been waited for.
+    assertTrue(elapsed < 5000, "elapsed: " + elapsed);
+  }
+
+  @Test
+  @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
+  public void testHandshakeServerErrorIsRetried() throws ApiException, NoApiKeyException {
+    server = new MockWebServer();
+    serverListener = new WebSocketRecorder("server");
+    for (int i = 0; i < 5; ++i) {
+      server.enqueue(new MockResponse().setResponseCode(500).setBody("internal error"));
+    }
+    ApiServiceOption option =
+        serviceOptionAt(String.format("ws://127.0.0.1:%s/api-ws/v1/inference/", server.getPort()));
+    FullDuplexTestParam param = getStreamTextParam();
+    long start = System.currentTimeMillis();
+    ApiException thrown =
+        assertThrows(
+            ApiException.class,
+            () -> {
+              SynchronizeFullDuplexApi<FullDuplexTestParam> api =
+                  new SynchronizeFullDuplexApi<>(option);
+              api.duplexCall(param).blockingForEach(msg -> {});
+            });
+    long elapsed = System.currentTimeMillis() - start;
+    assertEquals(
+        PublicErrorCode.SERVICE_UNAVAILABLE.getStatusCode(), thrown.getStatus().getStatusCode());
+    // A transient failure is retried up to the attempt limit.
+    assertEquals(3, server.getRequestCount());
+    // Two backoffs only: the last attempt must not be followed by a wait.
+    assertTrue(elapsed < 15000, "elapsed: " + elapsed);
   }
 }

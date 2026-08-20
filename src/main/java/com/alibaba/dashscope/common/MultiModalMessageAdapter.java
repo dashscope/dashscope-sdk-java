@@ -46,12 +46,10 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
       out.value(((Number) value).doubleValue());
     } else if (value instanceof Short || value instanceof Byte) {
       out.value(((Number) value).intValue());
-    } else if (value instanceof BigDecimal) {
-      // Use jsonValue to write as JSON number, not string
-      out.jsonValue(((BigDecimal) value).toPlainString());
-    } else if (value instanceof BigInteger) {
-      // Use jsonValue to write as JSON number, not string
-      out.jsonValue(((BigInteger) value).toString());
+    } else if (value instanceof BigDecimal || value instanceof BigInteger) {
+      // value(Number) keeps the JSON number unquoted and is JsonTreeWriter-safe,
+      // unlike jsonValue which throws UnsupportedOperationException under toJsonTree
+      out.value((Number) value);
     } else if (value instanceof Boolean) {
       out.value((Boolean) value);
     } else if (value instanceof Character) {
@@ -66,9 +64,9 @@ public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
     } else if (value instanceof Map) {
       writeMapObject(out, (Map<String, Object>) value);
     } else {
-      // For unsupported types, serialize using Gson to JSON string
-      String jsonStr = JsonUtils.toJson(value);
-      out.jsonValue(jsonStr);
+      // Serialize arbitrary objects through Gson directly into the writer;
+      // works for both streaming and JsonTreeWriter (toJsonTree) paths
+      JsonUtils.gson.toJson(value, value.getClass(), out);
     }
   }
 

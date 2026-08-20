@@ -225,6 +225,22 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
     sendTaskMessage("continue-task", input);
   }
 
+  /**
+   * Sends a flush directive, asking the server to synthesize the text buffered so far without
+   * ending the session.
+   *
+   * @param params Optional fields carried next to the flush flag, may be null. Keys already present
+   *     are kept, so the flush flag itself cannot be overridden.
+   */
+  public void sendFlush(JsonObject params) {
+    JsonObject input = new JsonObject();
+    input.addProperty("flush", true);
+    if (params != null) {
+      JsonUtils.merge(input, params);
+    }
+    sendTaskMessage("continue-task", input);
+  }
+
   public void stopSynthesizer() {
     JsonObject input = new JsonObject();
     if (canceled.get()) {
@@ -538,6 +554,31 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
       }
     } else {
       this.submitText(text);
+    }
+  }
+
+  /**
+   * Forces the server to synthesize the text submitted so far. The session stays open, so
+   * streamingCall() can keep sending text afterwards.
+   */
+  public void streamingFlush() {
+    streamingFlush(null);
+  }
+
+  /**
+   * Forces the server to synthesize the text submitted so far. The session stays open, so
+   * streamingCall() can keep sending text afterwards.
+   *
+   * @param params Optional fields carried next to the flush flag, may be null.
+   */
+  public void streamingFlush(JsonObject params) {
+    synchronized (this) {
+      if (state != SpeechSynthesisState.TTS_STARTED) {
+        throw new ApiException(
+            new InputRequiredException(
+                "State invalid: expect stream input tts state is started but " + state.getValue()));
+      }
+      sendFlush(params);
     }
   }
 
