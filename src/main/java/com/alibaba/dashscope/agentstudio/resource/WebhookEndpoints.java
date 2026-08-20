@@ -19,6 +19,7 @@ import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
 import com.alibaba.dashscope.utils.StringUtils;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -59,8 +60,8 @@ public final class WebhookEndpoints {
     return AsyncHelper.joinAndUnwrap(updateAsync(webhookId, param));
   }
 
-  public void delete(String webhookId) {
-    AsyncHelper.joinAndUnwrap(deleteAsync(webhookId));
+  public JsonObject delete(String webhookId) {
+    return AsyncHelper.joinAndUnwrap(deleteAsync(webhookId));
   }
 
   public WebhookEndpoint enable(String webhookId) {
@@ -137,14 +138,15 @@ public final class WebhookEndpoints {
         .thenApply(result -> FlattenResultBase.fromDashScopeResult(result, WebhookEndpoint.class));
   }
 
-  public CompletableFuture<Void> deleteAsync(String webhookId) {
+  public CompletableFuture<JsonObject> deleteAsync(String webhookId) {
     if (isEmpty(webhookId)) {
       return AsyncHelper.failedFuture(new InputRequiredException("webhookId is required!"));
     }
     GeneralServiceOption option =
         AgentStudioConstants.newServiceOption(
             HttpMethod.DELETE, StringUtils.format("%s/%s", RESOURCE_PATH, webhookId), baseUrl);
-    return AsyncHelper.callAsync(api, emptyParam(), option).thenApply(result -> null);
+    return AsyncHelper.callAsync(api, emptyParam(), option)
+        .thenApply(result -> (JsonObject) result.getOutput());
   }
 
   public CompletableFuture<WebhookEndpoint> enableAsync(String webhookId) {

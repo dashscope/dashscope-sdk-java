@@ -9,7 +9,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
 
-/** Cursor pagination parameters for an endpoint's webhook event audit records. */
+/** Cursor pagination parameters for an endpoint's webhook events. */
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)

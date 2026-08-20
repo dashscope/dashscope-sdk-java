@@ -6,7 +6,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-/** Webhook event envelope returned by test and endpoint audit APIs. */
+/** Webhook event envelope returned by test and endpoint event APIs. */
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class WebhookEvent extends FlattenResultBase {

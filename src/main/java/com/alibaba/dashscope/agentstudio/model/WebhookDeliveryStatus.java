@@ -1,7 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.agentstudio.model;
 
-/** Webhook delivery audit status. */
+/** Webhook delivery status. */
 public enum WebhookDeliveryStatus {
   /** The delivery is waiting to start. */
   PENDING,

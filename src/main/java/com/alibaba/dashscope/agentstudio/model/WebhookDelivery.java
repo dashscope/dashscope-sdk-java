@@ -4,7 +4,7 @@ package com.alibaba.dashscope.agentstudio.model;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
-/** Delivery audit information attached to an endpoint event. */
+/** Delivery information attached to an endpoint event. */
 @Data
 public class WebhookDelivery {
   @SerializedName("webhook_id")
