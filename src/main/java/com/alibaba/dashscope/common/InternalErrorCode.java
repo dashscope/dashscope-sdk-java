@@ -12,8 +12,9 @@ public enum InternalErrorCode {
       false,
       new String[] {},
       "",
-      "Set the DASHSCOPE_API_KEY environment variable or pass a valid api_key to the client."
-          + " You can obtain an API key through the DashScope console."),
+      "Set the DASHSCOPE_API_KEY environment variable or pass a valid api_key to AgenticRL()."
+          + " You can obtain an API key at"
+          + " https://modelstudio.console.alibabacloud.com/cn-beijing?tab=api."),
   SDK_AGENTIC_RL_FUNCTION_REGISTRATION_FAILED(
       "sdk.agentic_rl.FunctionRegistrationFailed",
       PublicErrorCode.INTERNAL_ERROR,
@@ -250,7 +251,7 @@ public enum InternalErrorCode {
       new String[] {},
       "",
       "An unexpected AgenticRL error occurred. Check the error message and logs for details. If the"
-          + " issue persists, submit a bug report to the DashScope SDK team."),
+          + " issue persists, submit a bug report at https://github.com/dashscope/dashscope-sdk-java/issues."),
   SDK_AGENTIC_RL_RUNTIME_ERROR_WITH_CODE(
       "sdk.agentic_rl.RuntimeErrorWithCode",
       PublicErrorCode.INTERNAL_ERROR,
@@ -259,7 +260,7 @@ public enum InternalErrorCode {
       new String[] {},
       "",
       "An unexpected runtime error occurred. Check the error message and traceback for details. If"
-          + " the issue persists, submit a bug report to the DashScope SDK team."),
+          + " the issue persists, submit a bug report at https://github.com/dashscope/dashscope-sdk-java/issues."),
   SDK_AGENTIC_RL_VALUE_ERROR_WITH_CODE(
       "sdk.agentic_rl.ValueErrorWithCode",
       PublicErrorCode.INVALID_REQUEST,
@@ -294,7 +295,7 @@ public enum InternalErrorCode {
       true,
       new String[] {},
       "",
-      "Retry the streaming request. If the error persists, report it to the DashScope SDK team."),
+      "Retry the streaming request. If the error persists, report it at https://github.com/dashscope/dashscope-sdk-java/issues."),
   SDK_AGENTSTUDIO_STREAM_CLOSED_ERROR(
       "sdk.agentstudio.StreamClosedError",
       PublicErrorCode.INVALID_REQUEST,
