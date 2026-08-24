@@ -85,6 +85,61 @@ public final class Files implements Closeable {
     return AsyncHelper.joinAndUnwrap(deleteAsync(fileId, apiKey, headers));
   }
 
+  /**
+   * Download a file's binary content.
+   *
+   * <p>Only files whose {@code downloadable} flag is true can be fetched; the service answers 403
+   * otherwise. Use {@link FileContent#writeToFile(String)} to persist the bytes to disk.
+   */
+  public FileContent download(String fileId) {
+    return AsyncHelper.joinAndUnwrap(downloadAsync(fileId));
+  }
+
+  public CompletableFuture<FileContent> downloadAsync(String fileId) {
+    if (fileId == null || fileId.isEmpty()) {
+      return AsyncHelper.failedFuture(new InputRequiredException("fileId is required!"));
+    }
+    String key;
+    try {
+      key = ApiKey.getApiKey(this.apiKey);
+    } catch (Exception e) {
+      return AsyncHelper.failedFuture(e);
+    }
+    String resolvedBase = resolveUploadBaseUrl();
+    String url = resolvedBase + StringUtils.format("/files/%s/content", fileId);
+    Request request =
+        new Request.Builder().url(url).header("Authorization", "Bearer " + key).get().build();
+
+    CompletableFuture<FileContent> future = new CompletableFuture<>();
+    uploadClient
+        .newCall(request)
+        .enqueue(
+            new Callback() {
+              @Override
+              public void onFailure(Call call, IOException e) {
+                future.completeExceptionally(new ApiException(e));
+              }
+
+              @Override
+              public void onResponse(Call call, Response response) {
+                try (Response r = response) {
+                  if (!r.isSuccessful()) {
+                    String body = r.body() != null ? r.body().string() : "";
+                    future.completeExceptionally(
+                        new ApiException(
+                            Status.builder().statusCode(r.code()).message(body).build()));
+                    return;
+                  }
+                  byte[] bytes = r.body() != null ? r.body().bytes() : new byte[0];
+                  future.complete(new FileContent(bytes));
+                } catch (Exception e) {
+                  future.completeExceptionally(new ApiException(e));
+                }
+              }
+            });
+    return future;
+  }
+
   public CompletableFuture<AgentStudioFile> uploadAsync(String filePath, String mimeType) {
     if (filePath == null || filePath.isEmpty()) {
       return AsyncHelper.failedFuture(new InputRequiredException("filePath is required!"));
