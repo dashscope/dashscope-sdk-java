@@ -3,6 +3,7 @@ package com.alibaba.dashscope.agentstudio.model;
 
 import com.alibaba.dashscope.agentstudio.model.Configs.McpServerConfig;
 import com.alibaba.dashscope.agentstudio.model.Configs.ModelConfig;
+import com.alibaba.dashscope.agentstudio.model.Configs.MultiAgentConfig;
 import com.alibaba.dashscope.agentstudio.model.Configs.SkillConfig;
 import com.alibaba.dashscope.agentstudio.model.Configs.ToolConfig;
 import com.alibaba.dashscope.common.FlattenResultBase;
@@ -41,6 +42,9 @@ public class Agent extends FlattenResultBase {
 
   @SerializedName("mcp_servers")
   private List<McpServerConfig> mcpServers;
+
+  @SerializedName("multiagent")
+  private MultiAgentConfig multiagent;
 
   @SerializedName("version")
   private Integer version;

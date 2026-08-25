@@ -1,6 +1,8 @@
 package com.alibaba.dashscope;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -14,6 +16,7 @@ import com.alibaba.dashscope.agentstudio.model.Agent;
 import com.alibaba.dashscope.agentstudio.model.AgentStudioDeletionStatus;
 import com.alibaba.dashscope.agentstudio.model.AgentStudioFile;
 import com.alibaba.dashscope.agentstudio.model.AgentVersion;
+import com.alibaba.dashscope.agentstudio.model.Configs;
 import com.alibaba.dashscope.agentstudio.model.Credential;
 import com.alibaba.dashscope.agentstudio.model.Environment;
 import com.alibaba.dashscope.agentstudio.model.Session;
@@ -56,8 +59,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import okio.Buffer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -121,6 +126,53 @@ public class TestAgentStudio {
     assertEquals("qwen-plus", body.getAsJsonObject("model").get("id").getAsString());
     assertEquals("desc", body.get("description").getAsString());
     assertEquals("be helpful", body.get("system").getAsString());
+  }
+
+  @Test
+  public void testAgentCreateMultiagentHttpBody() {
+    Configs.MultiAgentConfig.RosterEntry self = new Configs.MultiAgentConfig.RosterEntry();
+    self.setType("self");
+    Configs.MultiAgentConfig.RosterEntry worker = new Configs.MultiAgentConfig.RosterEntry();
+    worker.setType("agent");
+    worker.setId("agent_worker");
+    worker.setVersion(1);
+    Configs.MultiAgentConfig roster = new Configs.MultiAgentConfig();
+    roster.setType("coordinator");
+    roster.setAgents(Arrays.asList(self, worker));
+
+    JsonObject body =
+        AgentCreateParam.builder()
+            .name("coordinator")
+            .model("qwen-max")
+            .multiagent(roster)
+            .build()
+            .getHttpBody();
+    JsonObject ma = body.getAsJsonObject("multiagent");
+    assertEquals("coordinator", ma.get("type").getAsString());
+    assertEquals(2, ma.getAsJsonArray("agents").size());
+    assertEquals(
+        "self", ma.getAsJsonArray("agents").get(0).getAsJsonObject().get("type").getAsString());
+    JsonObject w = ma.getAsJsonArray("agents").get(1).getAsJsonObject();
+    assertEquals("agent", w.get("type").getAsString());
+    assertEquals("agent_worker", w.get("id").getAsString());
+    assertEquals(1, w.get("version").getAsInt());
+
+    // omitted -> not emitted
+    JsonObject plain =
+        AgentCreateParam.builder().name("plain").model("qwen-max").build().getHttpBody();
+    assertFalse(plain.has("multiagent"));
+  }
+
+  @Test
+  public void testThreadEventExposesThreadId() {
+    String json =
+        "{\"object\":\"message\",\"type\":\"thread_status\","
+            + "\"id\":\"sevt_1\",\"thread_id\":\"sthr_abc\","
+            + "\"metadata\":{\"to_agent_name\":\"worker\"}}";
+    Message ev = JsonUtils.fromJson(json, Message.class);
+    assertEquals("sthr_abc", ev.getThreadId());
+    assertEquals("thread_status", ev.getType());
+    assertEquals("worker", ev.getMetadata().get("to_agent_name"));
   }
 
   @Test
@@ -248,6 +300,32 @@ public class TestAgentStudio {
     assertNotNull(session.getUsage());
     assertEquals(100L, session.getUsage().getInputTokens().longValue());
     assertEquals(42.5, session.getUsage().getSpeed(), 0.01);
+  }
+
+  @Test
+  public void testSessionCreateWithVaultIds() throws Exception {
+    // vault_ids is forwarded in the request body; omitted -> not emitted.
+    enqueue("session_response");
+    new Sessions(null, null, null)
+        .create(
+            SessionCreateParam.builder()
+                .agent("agent_xyz")
+                .vaultIds(Arrays.asList("vlt_x"))
+                .metadata(Collections.singletonMap("biz_ticket_id", "1234"))
+                .build());
+    RecordedRequest req = mockServer.takeRequest();
+    assertEquals("POST", req.getMethod());
+    assertTrue(req.getPath().endsWith("/sessions"));
+    JsonObject body = JsonUtils.parse(req.getBody().readUtf8());
+    assertTrue(body.has("vault_ids"));
+    assertEquals("vlt_x", body.getAsJsonArray("vault_ids").get(0).getAsString());
+    assertEquals("1234", body.getAsJsonObject("metadata").get("biz_ticket_id").getAsString());
+
+    // Omitted vault_ids must not produce a null vault_ids in the body.
+    enqueue("session_response");
+    new Sessions(null, null, null).create(SessionCreateParam.builder().agent("agent_xyz").build());
+    JsonObject body2 = JsonUtils.parse(mockServer.takeRequest().getBody().readUtf8());
+    assertFalse(body2.has("vault_ids"));
   }
 
   @Test
@@ -828,6 +906,33 @@ public class TestAgentStudio {
     assertEquals(2, page.getData().size());
     assertEquals("file_001", page.getData().get(0).getId());
     assertEquals("cursor_file", page.getNextPage());
+  }
+
+  @Test
+  public void testFileDownload() throws Exception {
+    String baseUrl = String.format("http://127.0.0.1:%s/api/v1/agentstudio", mockServer.getPort());
+    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.agentstudio.resource.Files(baseUrl, null, null);
+    try {
+      byte[] expected = "file content".getBytes(StandardCharsets.UTF_8);
+      mockServer.enqueue(
+          new MockResponse().setResponseCode(200).setBody(new Buffer().write(expected)));
+      com.alibaba.dashscope.agentstudio.resource.FileContent content =
+          filesResource.download("file_001");
+      RecordedRequest req = mockServer.takeRequest();
+      assertEquals("GET", req.getMethod());
+      assertTrue(req.getPath().endsWith("/files/file_001/content"));
+      assertEquals("Bearer test-key", req.getHeader("Authorization"));
+      assertEquals(expected.length, content.length());
+      assertArrayEquals(expected, content.getBytes());
+
+      java.io.File out = java.io.File.createTempFile("download", ".bin");
+      out.deleteOnExit();
+      content.writeToFile(out.getAbsolutePath());
+      assertArrayEquals(expected, java.nio.file.Files.readAllBytes(out.toPath()));
+    } finally {
+      filesResource.close();
+    }
   }
 
   @Test

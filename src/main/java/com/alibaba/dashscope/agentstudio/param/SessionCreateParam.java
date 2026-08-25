@@ -20,6 +20,7 @@ public class SessionCreateParam extends FlattenHalfDuplexParamBase {
   @Default private String environmentId = null;
   @Default private String title = null;
   @Default private List<Map<String, Object>> resources = null;
+  @Default private List<String> vaultIds = null;
   @Default private Map<String, String> metadata = null;
 
   @Override
@@ -34,6 +35,9 @@ public class SessionCreateParam extends FlattenHalfDuplexParamBase {
     }
     if (resources != null && !resources.isEmpty()) {
       body.add("resources", JsonUtils.toJsonElement(resources));
+    }
+    if (vaultIds != null && !vaultIds.isEmpty()) {
+      body.add("vault_ids", JsonUtils.toJsonElement(vaultIds));
     }
     if (metadata != null && !metadata.isEmpty()) {
       body.add("metadata", JsonUtils.toJsonElement(metadata));

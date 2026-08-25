@@ -37,6 +37,13 @@ public final class AgentStudioConstants {
     public static final String SESSION_STATUS = "session_status";
     public static final String ERROR = "error";
     public static final String SESSION_UPDATED = "session_updated";
+    public static final String THREAD_CREATED = "thread_created";
+    public static final String THREAD_STATUS = "thread_status";
+    public static final String THREAD_MESSAGE_SENT = "thread_message_sent";
+    public static final String THREAD_MESSAGE_RECEIVED = "thread_message_received";
+    public static final String THREAD_CONTEXT_COMPACTED = "thread_context_compacted";
+    public static final String MODEL_REQUEST_START = "model_request_start";
+    public static final String MODEL_REQUEST_END = "model_request_end";
     public static final String OUTCOME_EVALUATION = "outcome_evaluation";
 
     private SSEEventType() {}

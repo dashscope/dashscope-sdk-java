@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.agentstudio.param;
 
 import com.alibaba.dashscope.agentstudio.model.Configs.McpServerConfig;
+import com.alibaba.dashscope.agentstudio.model.Configs.MultiAgentConfig;
 import com.alibaba.dashscope.agentstudio.model.Configs.SkillConfig;
 import com.alibaba.dashscope.agentstudio.model.Configs.ToolConfig;
 import com.alibaba.dashscope.base.FlattenHalfDuplexParamBase;
@@ -29,6 +30,7 @@ public class AgentUpdateParam extends FlattenHalfDuplexParamBase {
   @Default private List<ToolConfig> tools = null;
   @Default private List<McpServerConfig> mcpServers = null;
   @Default private List<SkillConfig> skills = null;
+  @Default private MultiAgentConfig multiagent = null;
   @Default private Map<String, String> metadata = null;
 
   @Override
@@ -59,6 +61,9 @@ public class AgentUpdateParam extends FlattenHalfDuplexParamBase {
     }
     if (skills != null) {
       body.add("skills", JsonUtils.toJsonElement(skills));
+    }
+    if (multiagent != null) {
+      body.add("multiagent", JsonUtils.toJsonElement(multiagent));
     }
     if (metadata != null && !metadata.isEmpty()) {
       body.add("metadata", JsonUtils.toJsonElement(metadata));

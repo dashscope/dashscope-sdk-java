@@ -44,6 +44,10 @@ public class Message {
   @SerializedName("session_thread_id")
   private String sessionThreadId;
 
+  /** Thread this event belongs to; server sends it on all {@code thread_*} events. */
+  @SerializedName("thread_id")
+  private String threadId;
+
   @SerializedName("code")
   private String code;
 
