@@ -121,6 +121,8 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
 
   @Builder.Default private String audioSetting = null;
 
+  @Builder.Default private Boolean enableThinking = null;
+
   /** The inputs of the model. */
   @Override
   public JsonObject getInput() {
@@ -235,6 +237,9 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
     if (audioSetting != null && !audioSetting.isEmpty()) {
       params.put(AUDIO_SETTING, audioSetting);
     }
+    if (enableThinking != null) {
+      params.put(ENABLE_THINKING, enableThinking);
+    }
 
     params.putAll(super.getParameters());
     return params;
@@ -346,7 +351,8 @@ public class VideoSynthesisParam extends HalfDuplexServiceParam {
       for (int i = 0; i < this.media.size(); i++) {
         Media media = this.media.get(i);
         if (media != null) {
-          if (media.getUrl() != null) {
+          // exclude when media is a link
+          if (media.getUrl() != null && !VideoSynthesis.MediaType.LINK.equals(media.getType())) {
             itemsToProcess.add(new TaskItem(MEDIA_URLS, "_URL", media.getUrl(), i));
           }
           if (media.getReferenceVoice() != null) {
