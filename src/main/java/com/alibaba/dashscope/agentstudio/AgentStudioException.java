@@ -1,7 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.agentstudio;
 
-import com.alibaba.dashscope.common.InternalErrorCode;
+import com.alibaba.dashscope.common.SdkErrorCode;
 import com.alibaba.dashscope.common.PublicErrorCode;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.exception.ApiException;
@@ -134,10 +134,10 @@ public class AgentStudioException extends ApiException {
    * Transport failure: {@code APITimeoutError} on socket timeouts, else {@code APIConnectionError}.
    */
   public static ConnectionError connectionError(Throwable cause) {
-    InternalErrorCode def =
+    SdkErrorCode def =
         hasCause(cause, SocketTimeoutException.class)
-            ? InternalErrorCode.SDK_AGENTSTUDIO_API_TIMEOUT_ERROR
-            : InternalErrorCode.SDK_AGENTSTUDIO_API_CONNECTION_ERROR;
+            ? SdkErrorCode.SDK_AGENTSTUDIO_API_TIMEOUT_ERROR
+            : SdkErrorCode.SDK_AGENTSTUDIO_API_CONNECTION_ERROR;
     String message = causeMessage(cause, def);
     return new ConnectionError(
         internalStatus(def, message), def.getCode(), message, def.isAllowRetry(), cause);
@@ -145,7 +145,7 @@ public class AgentStudioException extends ApiException {
 
   /** A stream read timeout, surfaced as {@code APITimeoutError}. */
   public static ConnectionError timeout(String message) {
-    InternalErrorCode def = InternalErrorCode.SDK_AGENTSTUDIO_API_TIMEOUT_ERROR;
+    SdkErrorCode def = SdkErrorCode.SDK_AGENTSTUDIO_API_TIMEOUT_ERROR;
     String resolved = (message != null && !message.isEmpty()) ? message : def.getMessage();
     return new ConnectionError(
         internalStatus(def, resolved), def.getCode(), resolved, def.isAllowRetry(), null);
@@ -153,7 +153,7 @@ public class AgentStudioException extends ApiException {
 
   /** A fatal SSE protocol error. */
   public static StreamError streamError(Throwable cause) {
-    InternalErrorCode def = InternalErrorCode.SDK_AGENTSTUDIO_STREAM_ERROR;
+    SdkErrorCode def = SdkErrorCode.SDK_AGENTSTUDIO_STREAM_ERROR;
     String message = causeMessage(cause, def);
     return new StreamError(
         internalStatus(def, message), def.getCode(), message, def.isAllowRetry(), cause);
@@ -161,7 +161,7 @@ public class AgentStudioException extends ApiException {
 
   /** Raised when consumers attempt I/O on an already-closed stream. */
   public static StreamError streamClosed() {
-    InternalErrorCode def = InternalErrorCode.SDK_AGENTSTUDIO_STREAM_CLOSED_ERROR;
+    SdkErrorCode def = SdkErrorCode.SDK_AGENTSTUDIO_STREAM_CLOSED_ERROR;
     return new StreamError(
         internalStatus(def, def.getMessage()),
         def.getCode(),
@@ -213,14 +213,14 @@ public class AgentStudioException extends ApiException {
     return false;
   }
 
-  private static String causeMessage(Throwable cause, InternalErrorCode def) {
+  private static String causeMessage(Throwable cause, SdkErrorCode def) {
     if (cause != null && cause.getMessage() != null && !cause.getMessage().isEmpty()) {
       return cause.getMessage();
     }
     return def.getMessage();
   }
 
-  private static Status internalStatus(InternalErrorCode def, String message) {
+  private static Status internalStatus(SdkErrorCode def, String message) {
     return Status.builder().statusCode(-1).code(def.getCode()).message(message).build();
   }
 
