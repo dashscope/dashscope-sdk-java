@@ -1,10 +1,10 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.agentstudio.resource;
 
+import com.alibaba.dashscope.agentstudio.AgentStudioException;
 import com.alibaba.dashscope.agentstudio.message.ContentBlock;
 import com.alibaba.dashscope.agentstudio.message.Message;
 import com.alibaba.dashscope.common.Status;
-import com.alibaba.dashscope.exception.ApiException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.Closeable;
@@ -47,7 +47,7 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
               @Override
               public void onEvent(EventSource es, String id, String type, String data) {
                 if (closed.get()) return;
-                if (data == null || data.isEmpty() || "{}".equals(data.trim())) {
+                if (data == null || data.isEmpty()) {
                   return;
                 }
                 try {
@@ -68,7 +68,7 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
               @Override
               public void onFailure(EventSource es, Throwable t, Response response) {
                 if (closed.get()) return;
-                ApiException wrapped = wrapFailure(t, response);
+                AgentStudioException wrapped = wrapFailure(t, response);
                 if (wrapped != null) {
                   queue.offer(wrapped);
                 } else {
@@ -78,15 +78,15 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
             });
   }
 
-  /** Convert OkHttp's onFailure into an ApiException that preserves HTTP status and body. */
-  private static ApiException wrapFailure(Throwable t, Response response) {
+  /**
+   * Convert OkHttp's onFailure into a typed {@link AgentStudioException}: an HTTP {@code response}
+   * yields a {@link AgentStudioException.StatusError}; its absence means the transport failed
+   * before a response, yielding a {@link AgentStudioException.ConnectionError}.
+   */
+  private static AgentStudioException wrapFailure(Throwable t, Response response) {
     if (response == null) {
-      if (t != null) {
-        return new ApiException(t instanceof Exception ? (Exception) t : new RuntimeException(t));
-      }
-      return null;
+      return t != null ? AgentStudioException.connectionError(t) : null;
     }
-    int code = response.code();
     String body = "";
     try (ResponseBody rb = response.body()) {
       if (rb != null) {
@@ -95,13 +95,11 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
     } catch (IOException e) {
       log.debug("Failed to read SSE failure response body", e);
     }
-    Status status =
-        Status.builder()
-            .statusCode(code)
-            .code(code >= 500 ? "server_error" : code == 401 ? "auth_error" : "http_error")
-            .message(body.isEmpty() ? "HTTP " + code : body)
-            .build();
-    return new ApiException(status, t);
+
+    // No code is parsed here, so statusError falls back to generic api_error.
+    String message = body.isEmpty() ? response.message() : body;
+    Status status = Status.builder().statusCode(response.code()).message(message).build();
+    return AgentStudioException.statusError(status, t);
   }
 
   @Override
@@ -117,18 +115,16 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
           Object item = queue.poll(timeoutMs, TimeUnit.MILLISECONDS);
           if (item == null) {
             // Differentiate timeout from real end-of-stream: POISON is real EOF, null is timeout.
-            throw new ApiException(
-                Status.builder()
-                    .statusCode(-1)
-                    .code("stream_timeout")
-                    .message("No event received within " + timeoutMs + "ms")
-                    .build());
+            throw AgentStudioException.timeout("No event received within " + timeoutMs + "ms");
           }
           if (item == POISON) {
             return false;
           }
+          if (item instanceof AgentStudioException) {
+            throw (AgentStudioException) item; // already typed by onFailure
+          }
           if (item instanceof Throwable) {
-            throw new ApiException((Throwable) item);
+            throw AgentStudioException.streamError((Throwable) item); // JSON parse failure
           }
           next = (Message) item;
           return true;

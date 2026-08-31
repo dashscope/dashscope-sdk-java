@@ -72,7 +72,7 @@ public class TestHttpTimeout {
             });
     long end = System.currentTimeMillis();
     System.out.println(exception.getMessage());
-    assertTrue(exception.getMessage().contains("unknown_error"));
+    assertTrue(exception.getMessage().contains("network error"));
     assertTrue(end - start > timeoutSeconds * 1000);
   }
 
@@ -102,7 +102,7 @@ public class TestHttpTimeout {
             });
     long end = System.currentTimeMillis();
     System.out.println(exception.getMessage());
-    assertTrue(exception.getMessage().contains("unknown_error"));
+    assertTrue(exception.getMessage().contains("body_read_error"));
     assertTrue(end - start > timeoutSeconds * 1000);
   }
 

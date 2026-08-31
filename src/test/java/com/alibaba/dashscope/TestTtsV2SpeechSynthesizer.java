@@ -8,7 +8,7 @@ import com.alibaba.dashscope.audio.tts.SpeechSynthesisResult;
 import com.alibaba.dashscope.audio.ttsv2.ParamHotFix;
 import com.alibaba.dashscope.audio.ttsv2.SpeechSynthesisAudioFormat;
 import com.alibaba.dashscope.audio.ttsv2.SpeechSynthesisParam;
-import com.alibaba.dashscope.audio.ttsv2.SpeechSynthesizer;
+import com.alibaba.dashscope.audio.ttsv2.SpeechSynthesizerV2;
 import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
@@ -151,9 +151,9 @@ public class TestTtsV2SpeechSynthesizer {
             .format(SpeechSynthesisAudioFormat.MP3_16000HZ_MONO_128KBPS)
             .hotFix(hotFix)
             .build();
-    SpeechSynthesizer synthesizer = new SpeechSynthesizer(param, callback);
-    synthesizer.setStartedTimeout(1000);
-    synthesizer.setFirstAudioTimeout(2000);
+    SpeechSynthesizerV2 synthesizer = new SpeechSynthesizerV2(param, callback);
+    synthesizer.setStartedTimeout(10000);
+    synthesizer.setFirstAudioTimeout(15000);
     for (int i = 0; i < 3; i++) {
       synthesizer.streamingCall("今天天气怎么样？");
     }
