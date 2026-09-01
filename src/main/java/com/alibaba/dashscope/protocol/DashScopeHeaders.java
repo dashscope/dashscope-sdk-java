@@ -33,17 +33,15 @@ public final class DashScopeHeaders {
     return userAgent;
   }
 
-  /**
-   * Check if SDK tracking headers are disabled via DASHSCOPE_DISABLE_SDK_HEADERS env var.
-   */
+  /** Check if SDK tracking headers are disabled via DASHSCOPE_DISABLE_SDK_HEADERS env var. */
   private static boolean isSdkHeadersDisabled() {
     String disable = System.getenv("DASHSCOPE_DISABLE_SDK_HEADERS");
     return "1".equals(disable) || "true".equalsIgnoreCase(disable);
   }
 
   /**
-   * Add SDK tracking headers to the given map.
-   * These headers are set first so that user-supplied customHeaders can override them.
+   * Add SDK tracking headers to the given map. These headers are set first so that user-supplied
+   * customHeaders can override them.
    */
   private static void addSdkTrackingHeaders(Map<String, String> headers) {
     if (!isSdkHeadersDisabled()) {
