@@ -40,8 +40,8 @@ public final class DashScopeHeaders {
   }
 
   /**
-   * Build the combined sdk-client value: {@code client/version[/module]}.
-   * Module segment is omitted when module is null or empty.
+   * Build the combined sdk-client value: {@code client/version[/module]}. Module segment is omitted
+   * when module is null or empty.
    */
   private static String buildSdkClientValue(String module) {
     String value = SDK_CLIENT + "/" + Version.version;
@@ -114,7 +114,14 @@ public final class DashScopeHeaders {
       Map<String, String> customHeaders)
       throws NoApiKeyException {
     return buildHttpHeaders(
-        apiKey, isSecurityCheck, protocol, isSSE, isAsyncTask, workspace, customHeaders, null,
+        apiKey,
+        isSecurityCheck,
+        protocol,
+        isSSE,
+        isAsyncTask,
+        workspace,
+        customHeaders,
+        null,
         null);
   }
 
@@ -129,8 +136,15 @@ public final class DashScopeHeaders {
       String customUserAgent)
       throws NoApiKeyException {
     return buildHttpHeaders(
-        apiKey, isSecurityCheck, protocol, isSSE, isAsyncTask, workspace, customHeaders,
-        customUserAgent, null);
+        apiKey,
+        isSecurityCheck,
+        protocol,
+        isSSE,
+        isAsyncTask,
+        workspace,
+        customHeaders,
+        customUserAgent,
+        null);
   }
 
   // Build HTTP headers with optional custom user agent suffix and module
