@@ -87,11 +87,16 @@ public class DashScopeResult extends Result {
         this.output = response.getBinary();
       }
     } else {
-      if (Integer.valueOf(204).equals(response.getHttpStatusCode())) {
+      if (response.getHttpStatusCode() != null) {
         this.setStatusCode(response.getHttpStatusCode());
+      }
+      String message = response.getMessage();
+      if (message == null || message.isEmpty()) {
+        // Non-2xx responses are raised as ApiException upstream, so an empty body here means a
+        // successful no-payload response such as 204, which Gson cannot parse.
         this.output = new JsonObject();
       } else {
-        this.output = parseJson(response.getMessage(), "Failed to parse HTTP response message");
+        this.output = parseJson(message, "Failed to parse HTTP response message");
       }
       this.event = response.getEvent();
     }
