@@ -110,7 +110,8 @@ public class HalfDuplexRequest {
             serviceOption.getIsAsyncTask(),
             param.getWorkspace(),
             filteredHeaders,
-            customUserAgent);
+            customUserAgent,
+            serviceOption.getModule());
 
     if (getHttpMethod() == HttpMethod.GET) {
       return HttpRequest.builder()
@@ -214,5 +215,9 @@ public class HalfDuplexRequest {
 
   public String getWorkspace() {
     return param.getWorkspace();
+  }
+
+  public String getModule() {
+    return serviceOption.getModule();
   }
 }
