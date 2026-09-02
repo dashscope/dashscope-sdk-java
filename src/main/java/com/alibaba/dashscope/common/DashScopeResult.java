@@ -52,10 +52,13 @@ public class DashScopeResult extends Result {
     } else {
       String message = response.getMessage();
       if (message == null || message.isEmpty()) {
-        log.warn(
-            "HTTP response message is null or empty, httpStatusCode: {}",
-            response.getHttpStatusCode());
-        setInternalError();
+        // Non-2xx responses are raised as ApiException upstream, so an empty body here means a
+        // successful no-payload response such as 204, which Gson cannot parse.
+        if (response.getHttpStatusCode() != null) {
+          this.setStatusCode(response.getHttpStatusCode());
+        }
+        this.setCode("");
+        this.setMessage("");
         return (T) this;
       }
       JsonObject jsonObject = parseJson(message, "Failed to parse HTTP response as JSON: {}");
@@ -87,11 +90,16 @@ public class DashScopeResult extends Result {
         this.output = response.getBinary();
       }
     } else {
-      if (Integer.valueOf(204).equals(response.getHttpStatusCode())) {
+      if (response.getHttpStatusCode() != null) {
         this.setStatusCode(response.getHttpStatusCode());
+      }
+      String message = response.getMessage();
+      if (message == null || message.isEmpty()) {
+        // Non-2xx responses are raised as ApiException upstream, so an empty body here means a
+        // successful no-payload response such as 204, which Gson cannot parse.
         this.output = new JsonObject();
       } else {
-        this.output = parseJson(response.getMessage(), "Failed to parse HTTP response message");
+        this.output = parseJson(message, "Failed to parse HTTP response message");
       }
       this.event = response.getEvent();
     }
@@ -112,10 +120,10 @@ public class DashScopeResult extends Result {
       }
       String encryptedMessage = response.getMessage();
       if (encryptedMessage == null || encryptedMessage.isEmpty()) {
-        log.warn(
-            "Encrypted HTTP response message is null or empty, httpStatusCode: {}",
-            response.getHttpStatusCode());
-        setInternalError();
+        // Non-2xx responses are raised as ApiException upstream, so an empty body here means a
+        // successful no-payload response such as 204, which Gson cannot parse.
+        this.setCode("");
+        this.setMessage("");
         return (T) this;
       }
       JsonObject jsonObject =
