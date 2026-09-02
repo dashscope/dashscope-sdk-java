@@ -22,6 +22,7 @@ public class EncryptionKeys {
         .httpMethod(HttpMethod.GET)
         .streamingMode(StreamingMode.NONE)
         .path("public-keys/latest")
+        .module("utils")
         .build();
   }
 

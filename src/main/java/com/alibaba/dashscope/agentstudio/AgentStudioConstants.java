@@ -111,6 +111,7 @@ public final class AgentStudioConstants {
             .httpMethod(method)
             .streamingMode(StreamingMode.OUT)
             .path(path)
+            .module("agentstudio")
             .build();
     if (baseUrl != null) {
       opt.setBaseHttpUrl(baseUrl);

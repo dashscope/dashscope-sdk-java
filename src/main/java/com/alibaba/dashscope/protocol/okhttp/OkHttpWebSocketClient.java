@@ -92,7 +92,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
       boolean isSecurityCheck,
       String workspace,
       Map<String, String> customHeaders,
-      String baseWebSocketUrl)
+      String baseWebSocketUrl,
+      String module)
       throws NoApiKeyException {
     // Extract and filter custom user agent from param headers
     String customUserAgent = customHeaders != null ? customHeaders.get("user-agent") : null;
@@ -105,7 +106,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
     bd.headers(
         Headers.of(
             DashScopeHeaders.buildWebSocketHeaders(
-                apiKey, isSecurityCheck, workspace, filteredHeaders, customUserAgent)));
+                apiKey, isSecurityCheck, workspace, filteredHeaders, customUserAgent, module)));
     String url = Constants.baseWebsocketApiUrl;
     if (baseWebSocketUrl != null) {
       url = baseWebSocketUrl;
@@ -160,7 +161,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
       boolean isSecurityCheck,
       String workspace,
       Map<String, String> customHeaders,
-      String baseWebSocketUrl) {
+      String baseWebSocketUrl,
+      String module) {
     int attempts = 0;
     String errorMessage = "";
     int httpStatusCode = 0;
@@ -186,7 +188,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
                                 isSecurityCheck,
                                 workspace,
                                 customHeaders,
-                                baseWebSocketUrl),
+                                baseWebSocketUrl,
+                                module),
                             this);
                   } catch (Throwable ex) {
                     this.connectionEmitter.onError(ex);
@@ -557,7 +560,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
       String message,
       String workspace,
       Map<String, String> customHeaders,
-      String baseWebSocketUrl) {
+      String baseWebSocketUrl,
+      String module) {
     // Guard: skip if already cancelled
     if (isClosed.get()) {
       log.debug("sendTextWithRetry skipped: connection already closed.");
@@ -565,7 +569,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
     }
     // simple retry with fixed delay, no strategy
     if (!isOpen.get()) {
-      establishWebSocketClient(apiKey, isSecurityCheck, workspace, customHeaders, baseWebSocketUrl);
+      establishWebSocketClient(
+          apiKey, isSecurityCheck, workspace, customHeaders, baseWebSocketUrl, module);
     }
     if (isClosed.get()) {
       return;
@@ -599,7 +604,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
         break;
       } else {
         establishWebSocketClient(
-            apiKey, isSecurityCheck, workspace, customHeaders, baseWebSocketUrl);
+            apiKey, isSecurityCheck, workspace, customHeaders, baseWebSocketUrl, module);
         log.warn(
             StringUtils.format(
                 "Send request failed, the connection may closed, will reconnect and send again"));
@@ -615,13 +620,15 @@ public class OkHttpWebSocketClient extends WebSocketListener
       ByteString message,
       String workspace,
       Map<String, String> customHeaders,
-      String baseWebSocketUrl) {
+      String baseWebSocketUrl,
+      String module) {
     // Guard: skip if already cancelled
     if (isClosed.get()) {
       return;
     }
     if (!isOpen.get()) {
-      establishWebSocketClient(apiKey, isSecurityCheck, workspace, customHeaders, baseWebSocketUrl);
+      establishWebSocketClient(
+          apiKey, isSecurityCheck, workspace, customHeaders, baseWebSocketUrl, module);
     }
     if (isClosed.get()) {
       return;
@@ -641,7 +648,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
         break;
       } else {
         establishWebSocketClient(
-            apiKey, isSecurityCheck, workspace, customHeaders, baseWebSocketUrl);
+            apiKey, isSecurityCheck, workspace, customHeaders, baseWebSocketUrl, module);
         log.warn(
             StringUtils.format(
                 "Send request failed, the connection may closed, will reconnect and send again"));
@@ -660,7 +667,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
           JsonUtils.toJson(req.getStartTaskMessage()),
           req.getWorkspace(),
           req.getHeaders(),
-          req.getBaseWebSocketUrl());
+          req.getBaseWebSocketUrl(),
+          req.getModule());
       // send binary data.
       sendBinaryWithRetry(
           req.getApiKey(),
@@ -668,7 +676,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
           ByteString.of(req.getWebsocketBinaryData()),
           req.getWorkspace(),
           req.getHeaders(),
-          req.getBaseWebSocketUrl());
+          req.getBaseWebSocketUrl(),
+          req.getModule());
     } else {
       // data and start-task in same package.
       sendTextWithRetry(
@@ -677,7 +686,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
           JsonUtils.toJson(req.getStartTaskMessage()),
           req.getWorkspace(),
           req.getHeaders(),
-          req.getBaseWebSocketUrl());
+          req.getBaseWebSocketUrl(),
+          req.getModule());
     }
   }
 
@@ -830,7 +840,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
           JsonUtils.toJson(startMessage),
           req.getWorkspace(),
           req.getHeaders(),
-          req.getBaseWebSocketUrl());
+          req.getBaseWebSocketUrl(),
+          req.getModule());
 
       Flowable<Object> streamingData = req.getStreamingData();
       Disposable d =
@@ -845,7 +856,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
                         JsonUtils.toJson(continueData),
                         req.getWorkspace(),
                         req.getHeaders(),
-                        req.getBaseWebSocketUrl());
+                        req.getBaseWebSocketUrl(),
+                        req.getModule());
                   } else if (data instanceof byte[]) {
                     sendBinaryWithRetry(
                         req.getApiKey(),
@@ -853,7 +865,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
                         ByteString.of((byte[]) data),
                         req.getWorkspace(),
                         req.getHeaders(),
-                        req.getBaseWebSocketUrl());
+                        req.getBaseWebSocketUrl(),
+                        req.getModule());
                   } else if (data instanceof ByteBuffer) {
                     sendBinaryWithRetry(
                         req.getApiKey(),
@@ -861,7 +874,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
                         ByteString.of((ByteBuffer) data),
                         req.getWorkspace(),
                         req.getHeaders(),
-                        req.getBaseWebSocketUrl());
+                        req.getBaseWebSocketUrl(),
+                        req.getModule());
                   } else {
                     JsonObject continueData = req.getContinueMessage(data, taskId);
                     sendTextWithRetry(
@@ -870,7 +884,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
                         JsonUtils.toJson(continueData),
                         req.getWorkspace(),
                         req.getHeaders(),
-                        req.getBaseWebSocketUrl());
+                        req.getBaseWebSocketUrl(),
+                        req.getModule());
                   }
                 } catch (Throwable ex) {
                   log.error(StringUtils.format("sendStreamData exception: %s", ex.getMessage()));
@@ -891,7 +906,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
                       JsonUtils.toJson(req.getFinishedTaskMessage(taskId)),
                       req.getWorkspace(),
                       req.getHeaders(),
-                      req.getBaseWebSocketUrl());
+                      req.getBaseWebSocketUrl(),
+                      req.getModule());
                 }
               });
       // Publish the disposable, then check if cancel() raced ahead.
