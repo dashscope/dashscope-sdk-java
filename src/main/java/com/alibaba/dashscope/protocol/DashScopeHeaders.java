@@ -8,8 +8,12 @@ import com.alibaba.dashscope.utils.ApiKey;
 import com.alibaba.dashscope.utils.StringUtils;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public final class DashScopeHeaders {
+  private static final String SDK_CLIENT = "java-sdk";
+  private static final String SDK_SESSION_ID = UUID.randomUUID().toString();
+
   public static String userAgent() {
     return userAgent(null);
   }
@@ -29,6 +33,24 @@ public final class DashScopeHeaders {
     return userAgent;
   }
 
+  /** Check if SDK tracking headers are disabled via DASHSCOPE_DISABLE_SDK_HEADERS env var. */
+  private static boolean isSdkHeadersDisabled() {
+    String disable = System.getenv("DASHSCOPE_DISABLE_SDK_HEADERS");
+    return "1".equals(disable) || "true".equalsIgnoreCase(disable);
+  }
+
+  /**
+   * Add SDK tracking headers to the given map. These headers are set first so that user-supplied
+   * customHeaders can override them.
+   */
+  private static void addSdkTrackingHeaders(Map<String, String> headers) {
+    if (!isSdkHeadersDisabled()) {
+      headers.put("x-dashscope-sdk-client", SDK_CLIENT);
+      headers.put("x-dashscope-sdk-version", Version.version);
+      headers.put("x-dashscope-sdk-session-id", SDK_SESSION_ID);
+    }
+  }
+
   public static Map<String, String> buildWebSocketHeaders(
       String apiKey, boolean isSecurityCheck, String workspace, Map<String, String> customHeaders)
       throws NoApiKeyException {
@@ -46,6 +68,7 @@ public final class DashScopeHeaders {
     Map<String, String> headers = new HashMap<>();
     headers.put("Authorization", "Bearer " + ApiKey.getApiKey(apiKey));
     headers.put("user-agent", userAgent(customUserAgent));
+    addSdkTrackingHeaders(headers);
     if (workspace != null && !workspace.isEmpty()) {
       headers.put("X-DashScope-WorkSpace", workspace);
     }
@@ -85,6 +108,7 @@ public final class DashScopeHeaders {
     Map<String, String> headers = new HashMap<>();
     headers.put("Authorization", "Bearer " + ApiKey.getApiKey(apiKey));
     headers.put("user-agent", userAgent(customUserAgent));
+    addSdkTrackingHeaders(headers);
     if (isSecurityCheck) {
       headers.put("X-DashScope-DataInspection", "enable");
     }
