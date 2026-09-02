@@ -120,10 +120,9 @@ public class HalfDuplexRequest {
           .parameters(param.getParameters())
           .httpMethod(getHttpMethod())
           .build();
-    } else if (
-        getHttpMethod() == HttpMethod.POST
-            || getHttpMethod() == HttpMethod.PUT
-            || getHttpMethod() == HttpMethod.DELETE) {
+    } else if (getHttpMethod() == HttpMethod.POST
+        || getHttpMethod() == HttpMethod.PUT
+        || getHttpMethod() == HttpMethod.DELETE) {
       JsonObject body = param.getHttpBody();
       if (isEncryptRequest() && body != null) { // we need to encrypt the input
         this.encryptionConfig = EncryptionUtils.generateEncryptionConfig(param.getApiKey());

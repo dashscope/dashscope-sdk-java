@@ -84,8 +84,7 @@ public final class WebhookEndpoints {
     return listEvents(webhookId, WebhookEventListParam.builder().build());
   }
 
-  public CursorPage<WebhookEvent> listEvents(
-      String webhookId, WebhookEventListParam param) {
+  public CursorPage<WebhookEvent> listEvents(String webhookId, WebhookEventListParam param) {
     return AsyncHelper.joinAndUnwrap(listEventsAsync(webhookId, param));
   }
 
@@ -119,8 +118,7 @@ public final class WebhookEndpoints {
         AgentStudioConstants.newServiceOption(HttpMethod.GET, RESOURCE_PATH, baseUrl);
     return AsyncHelper.callAsync(api, emptyParam(), option)
         .thenApply(
-            result ->
-                FlattenResultBase.fromDashScopeResult(result, WebhookEndpointList.class));
+            result -> FlattenResultBase.fromDashScopeResult(result, WebhookEndpointList.class));
   }
 
   public CompletableFuture<WebhookEndpoint> updateAsync(
@@ -197,8 +195,7 @@ public final class WebhookEndpoints {
         .thenApply(
             result -> {
               Type type = new TypeToken<CursorPage<WebhookEvent>>() {}.getType();
-              CursorPage<WebhookEvent> page =
-                  FlattenResultBase.fromDashScopeResult(result, type);
+              CursorPage<WebhookEvent> page = FlattenResultBase.fromDashScopeResult(result, type);
               page.setFetchNext(
                   cursor ->
                       listEventsAsync(
@@ -211,8 +208,7 @@ public final class WebhookEndpoints {
             });
   }
 
-  private CompletableFuture<WebhookEndpoint> endpointActionAsync(
-      String webhookId, String action) {
+  private CompletableFuture<WebhookEndpoint> endpointActionAsync(String webhookId, String action) {
     if (isEmpty(webhookId)) {
       return AsyncHelper.failedFuture(new InputRequiredException("webhookId is required!"));
     }
@@ -222,9 +218,7 @@ public final class WebhookEndpoints {
 
   private GeneralServiceOption actionOption(String webhookId, String action) {
     return AgentStudioConstants.newServiceOption(
-        HttpMethod.POST,
-        StringUtils.format("%s/%s/%s", RESOURCE_PATH, webhookId, action),
-        baseUrl);
+        HttpMethod.POST, StringUtils.format("%s/%s/%s", RESOURCE_PATH, webhookId, action), baseUrl);
   }
 
   private GeneralGetParam emptyParam() {
