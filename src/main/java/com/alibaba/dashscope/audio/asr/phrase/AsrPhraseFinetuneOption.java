@@ -59,4 +59,9 @@ public class AsrPhraseFinetuneOption implements ServiceOption {
       return "/fine-tunes/outputs";
     }
   }
+
+  @Override
+  public String getModule() {
+    return "audio";
+  }
 }
