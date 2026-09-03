@@ -30,15 +30,13 @@ import org.junitpioneer.jupiter.SetEnvironmentVariable;
  *   x-dashscope-sdk-session-id: &lt;process-wide uuid&gt;
  * </pre>
  *
- * Version and module live inside the client value; {@code x-dashscope-sdk-version} and {@code
- * x-dashscope-sdk-module} must not be emitted.
+ * No other {@code x-dashscope-sdk-*} header may be emitted.
  */
 @Execution(ExecutionMode.SAME_THREAD)
 public class TestDashScopeHeaders {
   private static final String SDK_CLIENT = "x-dashscope-sdk-client";
   private static final String SDK_SESSION_ID = "x-dashscope-sdk-session-id";
-  private static final String SDK_VERSION = "x-dashscope-sdk-version";
-  private static final String SDK_MODULE = "x-dashscope-sdk-module";
+  private static final String SDK_HEADER_PREFIX = "x-dashscope-sdk-";
   private static final String CLIENT_PREFIX = "java-sdk/" + Version.version;
   private static final String API_KEY = "sk-test";
 
@@ -50,6 +48,14 @@ public class TestDashScopeHeaders {
   private static Map<String, String> wsHeaders(String module) throws NoApiKeyException {
     return DashScopeHeaders.buildWebSocketHeaders(
         API_KEY, false, null, new HashMap<>(), null, module);
+  }
+
+  private static void assertOnlySdkTrackingHeaders(Map<String, String> headers) {
+    for (String key : headers.keySet()) {
+      if (key.startsWith(SDK_HEADER_PREFIX)) {
+        assertTrue(SDK_CLIENT.equals(key) || SDK_SESSION_ID.equals(key), "unexpected: " + key);
+      }
+    }
   }
 
   @Test
@@ -71,13 +77,11 @@ public class TestDashScopeHeaders {
   public void testOnlyTwoTrackingHeadersAreEmitted() throws NoApiKeyException {
     for (Map<String, String> headers : new Map[] {httpHeaders("aigc"), wsHeaders("audio")}) {
       assertTrue(headers.get(SDK_CLIENT).startsWith(CLIENT_PREFIX));
-      assertFalse(headers.containsKey(SDK_VERSION));
-      assertFalse(headers.containsKey(SDK_MODULE));
+      assertOnlySdkTrackingHeaders(headers);
     }
-    assertFalse(
+    assertOnlySdkTrackingHeaders(
         DashScopeHeaders.buildHttpHeaders(
-                API_KEY, false, Protocol.HTTP, false, false, null, new HashMap<String, String>())
-            .containsKey(SDK_VERSION));
+            API_KEY, false, Protocol.HTTP, false, false, null, new HashMap<String, String>()));
   }
 
   @Test

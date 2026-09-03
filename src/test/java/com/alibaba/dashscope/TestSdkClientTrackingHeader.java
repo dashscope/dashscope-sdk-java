@@ -5,6 +5,7 @@ package com.alibaba.dashscope;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.aigc.generation.Generation;
 import com.alibaba.dashscope.aigc.generation.models.QwenParam;
@@ -47,8 +48,7 @@ public class TestSdkClientTrackingHeader {
       MediaType.parse("application/json; charset=utf-8");
   private static final String SDK_CLIENT = "x-dashscope-sdk-client";
   private static final String SDK_SESSION_ID = "x-dashscope-sdk-session-id";
-  private static final String SDK_VERSION = "x-dashscope-sdk-version";
-  private static final String SDK_MODULE = "x-dashscope-sdk-module";
+  private static final String SDK_HEADER_PREFIX = "x-dashscope-sdk-";
   private static final String CLIENT_PREFIX = "java-sdk/" + Version.version;
 
   private MockWebServer server;
@@ -79,8 +79,11 @@ public class TestSdkClientTrackingHeader {
   private void assertTrackingHeaders(RecordedRequest request, String expectedModule) {
     assertEquals(CLIENT_PREFIX + "/" + expectedModule, request.getHeader(SDK_CLIENT));
     assertNotNull(request.getHeader(SDK_SESSION_ID));
-    assertNull(request.getHeader(SDK_VERSION));
-    assertNull(request.getHeader(SDK_MODULE));
+    for (String name : request.getHeaders().names()) {
+      if (name.startsWith(SDK_HEADER_PREFIX)) {
+        assertTrue(SDK_CLIENT.equals(name) || SDK_SESSION_ID.equals(name), "unexpected: " + name);
+      }
+    }
   }
 
   private void enqueueJsonResponse() {
