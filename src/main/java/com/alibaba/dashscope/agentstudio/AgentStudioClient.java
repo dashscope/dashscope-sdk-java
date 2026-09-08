@@ -6,6 +6,7 @@ import com.alibaba.dashscope.agentstudio.resource.DeploymentRuns;
 import com.alibaba.dashscope.agentstudio.resource.Deployments;
 import com.alibaba.dashscope.agentstudio.resource.Environments;
 import com.alibaba.dashscope.agentstudio.resource.Files;
+import com.alibaba.dashscope.agentstudio.resource.Security;
 import com.alibaba.dashscope.agentstudio.resource.Sessions;
 import com.alibaba.dashscope.agentstudio.resource.Skills;
 import com.alibaba.dashscope.agentstudio.resource.Vaults;
@@ -25,6 +26,7 @@ public class AgentStudioClient implements Closeable {
   private final Vaults vaults;
   private final Files files;
   private final WebhookEndpoints webhookEndpoints;
+  private final Security security;
   private final String baseUrl;
 
   public AgentStudioClient() {
@@ -55,6 +57,7 @@ public class AgentStudioClient implements Closeable {
     this.skills = new Skills(this.baseUrl, connectionOptions, apiKey, this.files);
     this.vaults = new Vaults(this.baseUrl, connectionOptions, apiKey);
     this.webhookEndpoints = new WebhookEndpoints(this.baseUrl, connectionOptions, apiKey);
+    this.security = new Security(this.baseUrl, connectionOptions, apiKey);
   }
 
   public static Builder builder() {
@@ -132,6 +135,10 @@ public class AgentStudioClient implements Closeable {
 
   public WebhookEndpoints webhookEndpoints() {
     return webhookEndpoints;
+  }
+
+  public Security security() {
+    return security;
   }
 
   public String getBaseUrl() {

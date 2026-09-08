@@ -97,6 +97,18 @@ public final class Configs {
 
       @SerializedName("version")
       private Integer version;
+
+      @SerializedName("name")
+      private String name;
+
+      @SerializedName("description")
+      private String description;
     }
+  }
+
+  @Data
+  public static class PermissionPolicy {
+    @SerializedName("type")
+    private String type;
   }
 }
