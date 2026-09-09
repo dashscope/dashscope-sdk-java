@@ -37,12 +37,12 @@ public final class Recognition {
 
   private ApiServiceOption serviceOption;
 
-  private Emitter<ByteBuffer> audioEmitter;
+  private Emitter<Object> streamDataEmitter;
 
   @SuperBuilder
   private static class AsyncCmdBuffer {
     @Builder.Default private boolean isStop = false;
-    private ByteBuffer audioFrame;
+    private Object streamData;
   }
 
   private final Queue<AsyncCmdBuffer> cmdBuffer = new LinkedList<>();
@@ -62,22 +62,22 @@ public final class Recognition {
   @SuperBuilder
   private static class RecognitionParamWithStream extends RecognitionParam {
 
-    @NonNull private Flowable<ByteBuffer> audioStream;
+    @NonNull private Flowable<Object> streamData;
 
     @Override
     public Flowable<Object> getStreamingData() {
-      return audioStream.cast(Object.class);
+      return streamData;
     }
 
     public static RecognitionParamWithStream FromRecognitionParam(
-        RecognitionParam param, Flowable<ByteBuffer> audioStream, String preRequestId) {
+        RecognitionParam param, Flowable<?> streamData, String preRequestId) {
       RecognitionParamWithStream recognitionParamWithStream =
           RecognitionParamWithStream.builder()
               .parameters((param.getParameters()))
               .parameter("pre_task_id", preRequestId)
               .headers(param.getHeaders())
               .format(param.getFormat())
-              .audioStream(audioStream)
+              .streamData(streamData.cast(Object.class))
               .disfluencyRemovalEnabled(param.isDisfluencyRemovalEnabled())
               .model(param.getModel())
               .sampleRate(param.getSampleRate())
@@ -217,7 +217,7 @@ public final class Recognition {
           new InputRequiredException("Parameter invalid: ResultCallback is null"));
     }
 
-    Flowable<ByteBuffer> audioFrames =
+    Flowable<Object> audioFrames =
         Flowable.create(
             emitter -> {
               synchronized (Recognition.this) {
@@ -227,12 +227,12 @@ public final class Recognition {
                       emitter.onComplete();
                       return;
                     } else {
-                      emitter.onNext(buffer.audioFrame);
+                      emitter.onNext(buffer.streamData);
                     }
                   }
                   cmdBuffer.clear();
                 }
-                audioEmitter = emitter;
+                streamDataEmitter = emitter;
               }
             },
             BackpressureStrategy.BUFFER);
@@ -423,10 +423,33 @@ public final class Recognition {
             new InputRequiredException(
                 "State invalid: expect recognition state is started but " + state.getValue()));
       }
-      if (audioEmitter == null) {
-        cmdBuffer.add(AsyncCmdBuffer.builder().audioFrame(audioFrame).build());
+      if (streamDataEmitter == null) {
+        cmdBuffer.add(AsyncCmdBuffer.builder().streamData(audioFrame).build());
       } else {
-        audioEmitter.onNext(audioFrame);
+        streamDataEmitter.onNext(audioFrame);
+      }
+    }
+  }
+
+  /**
+   * Updates the recognition context while the task is running.
+   *
+   * @param payloadInput conversation context carried in payload.input
+   */
+  public void updateContext(Map<String, Object> payloadInput) {
+    if (payloadInput == null) {
+      throw new ApiException(new InputRequiredException("Parameter invalid: payloadInput context is null"));
+    }
+    synchronized (this) {
+      if (state != RecognitionState.RECOGNITION_STARTED) {
+        throw new ApiException(
+            new InputRequiredException(
+                "State invalid: expect recognition state is started but " + state.getValue()));
+      }
+      if (streamDataEmitter == null) {
+        cmdBuffer.add(AsyncCmdBuffer.builder().streamData(payloadInput).build());
+      } else {
+        streamDataEmitter.onNext(payloadInput);
       }
     }
   }
@@ -439,10 +462,10 @@ public final class Recognition {
             new RuntimeException(
                 "State invalid: expect recognition state is started but " + state.getValue()));
       }
-      if (audioEmitter == null) {
+      if (streamDataEmitter == null) {
         cmdBuffer.add(AsyncCmdBuffer.builder().isStop(true).build());
       } else {
-        audioEmitter.onComplete();
+        streamDataEmitter.onComplete();
       }
     }
 
@@ -455,7 +478,7 @@ public final class Recognition {
   }
 
   private void reset() {
-    this.audioEmitter = null;
+    this.streamDataEmitter = null;
     this.cmdBuffer.clear();
     this.state = RecognitionState.IDLE;
     this.stopLatch = new AtomicReference<>(null);
