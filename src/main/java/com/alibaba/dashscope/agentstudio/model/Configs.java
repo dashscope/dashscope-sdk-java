@@ -35,6 +35,9 @@ public final class Configs {
     public static class DefaultConfig {
       @SerializedName("enabled")
       private Boolean enabled;
+
+      @SerializedName("permission_policy")
+      private PermissionPolicy permissionPolicy;
     }
 
     @Data
@@ -44,6 +47,9 @@ public final class Configs {
 
       @SerializedName("enabled")
       private Boolean enabled;
+
+      @SerializedName("permission_policy")
+      private PermissionPolicy permissionPolicy;
     }
   }
 
