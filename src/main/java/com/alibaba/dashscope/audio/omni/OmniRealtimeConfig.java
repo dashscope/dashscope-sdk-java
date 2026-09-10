@@ -50,6 +50,11 @@ public class OmniRealtimeConfig {
    * field.
    */
   @Builder.Default OmniRealtimeAudioFormatConfig outputAudio = null;
+  /**
+   * Video input representation compactness. When set, it is serialized as {@code
+   * video.input.representation_compactness}.
+   */
+  @Builder.Default Integer inputVideoRepresentationCompactness = null;
   /** enable transcription for input audio */
   @Builder.Default boolean enableInputAudioTranscription = true;
   /** model used for input audio transcription */
@@ -105,6 +110,14 @@ public class OmniRealtimeConfig {
       // Legacy flat fields, kept unchanged for full backward compatibility.
       config.put(OmniRealtimeConstants.INPUT_AUDIO_FORMAT, inputAudioFormat);
       config.put(OmniRealtimeConstants.OUTPUT_AUDIO_FORMAT, outputAudioFormat);
+    }
+    if (inputVideoRepresentationCompactness != null) {
+      Map<String, Object> videoInput = new HashMap<>();
+      videoInput.put(
+          OmniRealtimeConstants.REPRESENTATION_COMPACTNESS, inputVideoRepresentationCompactness);
+      Map<String, Object> video = new HashMap<>();
+      video.put(OmniRealtimeConstants.VIDEO_INPUT, videoInput);
+      config.put(OmniRealtimeConstants.VIDEO, video);
     }
     if (enableInputAudioTranscription) {
       Map<String, Object> inputTranscriptionConfig = new HashMap<>();
