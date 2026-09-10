@@ -10,7 +10,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.alibaba.dashscope.agentstudio.message.ClientEvents;
 import com.alibaba.dashscope.agentstudio.message.ContentBlock;
 import com.alibaba.dashscope.agentstudio.message.Message;
+import com.alibaba.dashscope.agentstudio.model.Configs;
 import com.alibaba.dashscope.agentstudio.model.Session;
+import com.alibaba.dashscope.agentstudio.param.AgentCreateParam;
 import com.alibaba.dashscope.agentstudio.param.SessionEventListParam;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -139,5 +141,32 @@ class TestAgentStudioProtocol {
     assertNull(msg.getPendingToolApprovals());
     assertNull(msg.getEventStart());
     assertNull(msg.getDeltaText());
+  }
+
+  @Test
+  void testPermissionPolicySerializedInToolConfig() {
+    Configs.ToolConfig.DefaultConfig dc = new Configs.ToolConfig.DefaultConfig();
+    dc.setEnabled(false);
+    Configs.PermissionPolicy pp = new Configs.PermissionPolicy();
+    pp.setType("always_ask");
+    dc.setPermissionPolicy(pp);
+
+    Configs.ToolConfig tool = new Configs.ToolConfig();
+    tool.setType("builtin_toolkit");
+    tool.setDefaultConfig(dc);
+
+    JsonObject body =
+        AgentCreateParam.builder()
+            .name("test")
+            .model("qwen-max")
+            .tools(Arrays.asList(tool))
+            .build()
+            .getHttpBody();
+
+    JsonObject dcJson =
+        body.getAsJsonArray("tools").get(0).getAsJsonObject().getAsJsonObject("default_config");
+    assertTrue(dcJson.has("permission_policy"));
+    assertEquals(
+        "always_ask", dcJson.getAsJsonObject("permission_policy").get("type").getAsString());
   }
 }
