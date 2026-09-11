@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.common.DashScopeResult;
-import com.alibaba.dashscope.common.PublicErrorDef;
+import com.alibaba.dashscope.common.PublicErrorCode;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.HalfDuplexRequest;
 import com.alibaba.dashscope.protocol.NetworkResponse;
@@ -38,10 +38,10 @@ public class TestDashScopeResultEmptyBody {
     assertTrue(result.getOutput() instanceof JsonObject);
     assertEquals(0, ((JsonObject) result.getOutput()).size());
     assertNotEquals(
-        PublicErrorDef.INTERNAL_ERROR.getStatusCode(),
+        PublicErrorCode.INTERNAL_ERROR.getStatusCode(),
         result.getStatusCode(),
         "empty body was misreported as an internal error");
-    assertNotEquals(PublicErrorDef.INTERNAL_ERROR.getErrorCode(), result.getCode());
+    assertNotEquals(PublicErrorCode.INTERNAL_ERROR.getErrorCode(), result.getCode());
   }
 
   @Test
@@ -133,7 +133,7 @@ public class TestDashScopeResultEmptyBody {
   @Test
   public void testMalformedBodyIsStillAnInternalError() throws Exception {
     DashScopeResult result = flattenResult(200, "not json at all");
-    assertEquals(PublicErrorDef.INTERNAL_ERROR.getStatusCode(), result.getStatusCode());
-    assertEquals(PublicErrorDef.INTERNAL_ERROR.getErrorCode(), result.getCode());
+    assertEquals(PublicErrorCode.INTERNAL_ERROR.getStatusCode(), result.getStatusCode());
+    assertEquals(PublicErrorCode.INTERNAL_ERROR.getErrorCode(), result.getCode());
   }
 }

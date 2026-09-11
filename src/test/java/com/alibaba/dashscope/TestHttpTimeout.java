@@ -1,10 +1,12 @@
 package com.alibaba.dashscope;
 
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
+import com.alibaba.dashscope.common.PublicErrorCode;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
@@ -13,142 +15,118 @@ import com.alibaba.dashscope.protocol.HttpMethod;
 import com.alibaba.dashscope.utils.Constants;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
+import java.util.Arrays;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
 @Execution(ExecutionMode.SAME_THREAD)
 public class TestHttpTimeout {
   private MockWebServer mockServer;
+  private String originalBaseHttpApiUrl;
 
-  public TestHttpTimeout() {}
-
-  @Before
+  @BeforeEach
   public void before() throws IOException {
-    System.out.println("Starting server!");
     this.mockServer = new MockWebServer();
     this.mockServer.start();
+    originalBaseHttpApiUrl = Constants.baseHttpApiUrl;
     Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s/api/v1/", mockServer.getPort());
     Constants.apiKey = "1234";
   }
 
-  @After
+  @AfterEach
   public void after() throws IOException {
+    Constants.baseHttpApiUrl = originalBaseHttpApiUrl;
     this.mockServer.close();
+  }
+
+  private static GeneralServiceOption postOption() {
+    GeneralServiceOption serviceOption = GeneralServiceOption.builder().build();
+    serviceOption.setHttpMethod(HttpMethod.POST);
+    serviceOption.setPath("timeout/connection");
+    return serviceOption;
+  }
+
+  private static void assertServiceUnavailable(ApiException exception) {
+    assertEquals(
+        PublicErrorCode.SERVICE_UNAVAILABLE.getStatusCode(), exception.getStatus().getStatusCode());
+    assertEquals(
+        PublicErrorCode.SERVICE_UNAVAILABLE.getErrorCode(), exception.getStatus().getCode());
   }
 
   @Test
   public void testConnectionTimeout() throws ApiException, NoApiKeyException {
-    GeneralServiceOption serviceOption = GeneralServiceOption.builder().build();
-    serviceOption.setHttpMethod(HttpMethod.POST);
-    serviceOption.setPath(String.format("timeout/connection"));
-    long timeoutSeconds = 10;
+    // RFC 5737 TEST-NET-1, guaranteed unroutable: the connect attempt hangs until the
+    // connect timeout fires.
+    Constants.baseHttpApiUrl = "http://192.0.2.1:81/api/v1/";
     ConnectionOptions connectionOptions =
         ConnectionOptions.builder()
-            .connectTimeout(
-                Duration.ofSeconds(timeoutSeconds)) // set connection timeout, default 120s
-            .readTimeout(Duration.ofSeconds(20)) // set read timeout, default 300s
-            .writeTimeout(Duration.ofSeconds(20)) // set read timeout, default 60s
+            .connectTimeout(Duration.ofSeconds(2))
+            .readTimeout(Duration.ofSeconds(20))
+            .writeTimeout(Duration.ofSeconds(20))
             .build();
     GeneralApi<HalfDuplexParamBase> api = new GeneralApi<>(connectionOptions);
     TimeoutTestParam param =
         TimeoutTestParam.builder().model("model").name("test").description("desc").build();
-    long delayTime = 11;
-    MockResponse mockResponse = new MockResponse().setHeadersDelay(delayTime, TimeUnit.SECONDS);
-    this.mockServer.enqueue(mockResponse);
-    long start = System.currentTimeMillis();
-    Exception exception =
-        assertThrows(
-            ApiException.class,
-            () -> {
-              api.call(param, serviceOption);
-            });
-    long end = System.currentTimeMillis();
+
+    ApiException exception = assertThrows(ApiException.class, () -> api.call(param, postOption()));
+
     System.out.println(exception.getMessage());
-    assertTrue(exception.getMessage().contains("unknown_error"));
-    assertTrue(end - start > timeoutSeconds * 1000);
+    assertServiceUnavailable(exception);
   }
 
   @Test
   public void testReadTimeout() throws ApiException, NoApiKeyException {
-    GeneralServiceOption serviceOption = GeneralServiceOption.builder().build();
-    serviceOption.setHttpMethod(HttpMethod.POST);
-    serviceOption.setPath(String.format("timeout/connection"));
-    long timeoutSeconds = 10;
+    long timeoutSeconds = 3;
     ConnectionOptions connectionOptions =
         ConnectionOptions.builder()
-            .connectTimeout(Duration.ofSeconds(20)) // set connection timeout, default 120s
-            .readTimeout(Duration.ofSeconds(timeoutSeconds)) // set read timeout, default 300s
-            .writeTimeout(Duration.ofSeconds(20)) // set read timeout, default 60s
+            .connectTimeout(Duration.ofSeconds(20))
+            .readTimeout(Duration.ofSeconds(timeoutSeconds))
+            .writeTimeout(Duration.ofSeconds(20))
             .build();
     GeneralApi<HalfDuplexParamBase> api = new GeneralApi<>(connectionOptions);
     TimeoutTestParam param =
         TimeoutTestParam.builder().model("model").name("test").description("desc").build();
-    MockResponse mockResponse = new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE);
-    mockServer.enqueue(mockResponse);
+    mockServer.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
+
     long start = System.currentTimeMillis();
-    Exception exception =
-        assertThrows(
-            ApiException.class,
-            () -> {
-              api.call(param, serviceOption);
-            });
-    long end = System.currentTimeMillis();
+    ApiException exception = assertThrows(ApiException.class, () -> api.call(param, postOption()));
+    long elapsed = System.currentTimeMillis() - start;
+
     System.out.println(exception.getMessage());
-    assertTrue(exception.getMessage().contains("unknown_error"));
-    assertTrue(end - start > timeoutSeconds * 1000);
+    assertServiceUnavailable(exception);
+    assertTrue(elapsed >= timeoutSeconds * 1000);
   }
 
   @Test
   public void testWriteTimeout() throws ApiException, NoApiKeyException {
-    GeneralServiceOption serviceOption = GeneralServiceOption.builder().build();
-    serviceOption.setHttpMethod(HttpMethod.POST);
-    serviceOption.setPath(String.format("timeout/connection"));
-    long timeoutMillisSeconds = 1;
-    // write timeout, time out of client send data, if the data is too many to send in
-    // write timeout, such as 1G send in 1 second, will write timeout
     ConnectionOptions connectionOptions =
         ConnectionOptions.builder()
-            .connectTimeout(Duration.ofSeconds(20)) // set connection timeout, default 120s
-            .readTimeout(Duration.ofSeconds(20)) // set read timeout, default 300s
-            .writeTimeout(Duration.ofMillis(timeoutMillisSeconds))
+            .connectTimeout(Duration.ofSeconds(20))
+            .readTimeout(Duration.ofSeconds(20))
+            .writeTimeout(Duration.ofMillis(1))
             .build();
     GeneralApi<HalfDuplexParamBase> api = new GeneralApi<>(connectionOptions);
-
-    int leftLimit = 97; // letter 'a'
-    int rightLimit = 122; // letter 'z'
-    int targetStringLength = 100000000;
-    Random random = new Random();
-
-    String generatedString =
-        random
-            .ints(leftLimit, rightLimit + 1)
-            .limit(targetStringLength)
-            .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-            .toString();
-
+    // The server never reads the request body; an 8MB payload cannot fit the socket buffers,
+    // so the 1ms write timeout must fire.
+    char[] chars = new char[8 * 1024 * 1024];
+    Arrays.fill(chars, 'a');
     TimeoutTestParam param =
-        TimeoutTestParam.builder().model("model").name(generatedString).description("desc").build();
-    MockResponse mockResponse = new MockResponse().setBody("{\"model\": \"m\"}");
-    mockServer.enqueue(mockResponse);
-    long start = System.currentTimeMillis();
-    Exception exception =
-        assertThrows(
-            ApiException.class,
-            () -> {
-              api.call(param, serviceOption);
-              okhttp3.mockwebserver.RecordedRequest request = mockServer.takeRequest();
-              System.out.println(request.getBody());
-            });
-    long end = System.currentTimeMillis();
-    assertTrue(exception.getMessage().contains("timeout"));
-    assertTrue(end - start > timeoutMillisSeconds);
+        TimeoutTestParam.builder()
+            .model("model")
+            .name(new String(chars))
+            .description("desc")
+            .build();
+    mockServer.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
+
+    ApiException exception = assertThrows(ApiException.class, () -> api.call(param, postOption()));
+
+    System.out.println(exception.getMessage());
+    assertServiceUnavailable(exception);
   }
 }

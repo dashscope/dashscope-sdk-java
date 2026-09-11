@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.agentstudio.AgentStudioClient;
+import com.alibaba.dashscope.agentstudio.AgentStudioException;
 import com.alibaba.dashscope.agentstudio.message.ClientEvents;
 import com.alibaba.dashscope.agentstudio.message.ContentBlock;
 import com.alibaba.dashscope.agentstudio.message.Message;
@@ -184,6 +185,39 @@ public class TestAgentStudio {
     assertTrue(req.getPath().contains("/agents/agent_xyz"));
     assertEquals("A test agent", agent.getDescription());
     assertEquals("ws_001", agent.getWorkspaceId());
+  }
+
+  // ======================== Error normalization ========================
+
+  @Test
+  public void testAgentRetrieveErrorNormalizesServerCode() throws Exception {
+    // A recognized registry code (snake_case) is kept as-is; we do not map from
+    // other vocabularies (e.g. PascalCase), matching the Python SDK.
+    mockServer.enqueue(
+        TestUtils.createMockResponse(
+            "{\"code\":\"not_found_error\",\"message\":\"agent not found\",\"request_id\":\"r1\"}",
+            404));
+    AgentStudioException ex =
+        assertThrows(
+            AgentStudioException.class, () -> new Agents(null, null, null).retrieve("nope"));
+    assertEquals("GET", mockServer.takeRequest().getMethod());
+    assertEquals("not_found_error", ex.getCode());
+    assertEquals("agent not found", ex.getErrorMessage());
+  }
+
+  @Test
+  public void testAgentRetrieveErrorNoBodyFallsBackToApiError() throws Exception {
+    // A server responded (so this is a StatusError), but carried no code. We don't
+    // guess a public code from the status number, so it falls back to generic
+    // api_error with a bare HTTP status message.
+    mockServer.enqueue(TestUtils.createMockResponse("{}", 404));
+    AgentStudioException.StatusError ex =
+        assertThrows(
+            AgentStudioException.StatusError.class,
+            () -> new Agents(null, null, null).retrieve("nope"));
+    mockServer.takeRequest();
+    assertEquals("api_error", ex.getCode());
+    assertEquals("HTTP 404", ex.getErrorMessage());
   }
 
   @Test

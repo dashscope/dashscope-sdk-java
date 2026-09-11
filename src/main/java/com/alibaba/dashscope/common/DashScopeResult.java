@@ -242,9 +242,9 @@ public class DashScopeResult extends Result {
 
   private void setInternalError() {
     this.output = null;
-    this.setStatusCode(PublicErrorDef.INTERNAL_ERROR.getStatusCode());
-    this.setCode(PublicErrorDef.INTERNAL_ERROR.getErrorCode());
-    this.setMessage(PublicErrorDef.INTERNAL_ERROR.getErrorMsg());
+    this.setStatusCode(PublicErrorCode.INTERNAL_ERROR.getStatusCode());
+    this.setCode(PublicErrorCode.INTERNAL_ERROR.getErrorCode());
+    this.setMessage(PublicErrorCode.INTERNAL_ERROR.getErrorMsg());
   }
 
   private Map<String, Object> changeHeaders(Map<String, List<String>> headers) {
