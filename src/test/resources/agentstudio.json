@@ -338,6 +338,7 @@
       {"type": "file", "file_id": "file_01", "mount_path": "/mnt/data"}
     ],
     "vault_ids": ["vault_01"],
+    "environment_variables": {"API_BASE_URL": "https://example.test"},
     "metadata": {"biz": "summary"},
     "status": "paused",
     "paused_reason": {

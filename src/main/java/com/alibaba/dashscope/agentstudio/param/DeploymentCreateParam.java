@@ -64,7 +64,8 @@ public class DeploymentCreateParam extends FlattenHalfDuplexParamBase {
     }
     if (environmentVariables != null) {
       body.add(
-          "environment_variables", JsonUtils.toJsonElement(new LinkedHashMap<>(environmentVariables)));
+          "environment_variables",
+          JsonUtils.toJsonElement(new LinkedHashMap<>(environmentVariables)));
     }
     if (metadata != null) {
       body.add("metadata", JsonUtils.toJsonElement(new LinkedHashMap<>(metadata)));
