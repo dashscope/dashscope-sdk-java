@@ -631,7 +631,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
         default:
           // Protocol layer error: received undefined event type.
           // This is SDK-level handling, not an API standard error code.
-          // Kept as hardcoded string to avoid polluting global ErrorType enum.
+          // Kept as a hardcoded string to stay out of the public error code enums.
           responseEmitter.onError(
               new ApiException(
                   Status.builder()

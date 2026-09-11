@@ -12,7 +12,6 @@ import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -250,61 +249,5 @@ public class DashScopeResult extends Result {
                 },
                 (v1, v2) -> v1,
                 java.util.LinkedHashMap::new));
-  }
-
-  /** Keyword-to-status mapping for legacy / non-standard error codes. */
-  private static final Map<String, Integer> LEGACY_ERROR_KEYWORDS = new LinkedHashMap<>();
-
-  static {
-    LEGACY_ERROR_KEYWORDS.put("InvalidParameter", 400);
-    LEGACY_ERROR_KEYWORDS.put("BadRequest", 400);
-    LEGACY_ERROR_KEYWORDS.put("DataInspection", 400);
-    LEGACY_ERROR_KEYWORDS.put("Inspection", 400);
-    LEGACY_ERROR_KEYWORDS.put("Unauthorized", 401);
-    LEGACY_ERROR_KEYWORDS.put("ApiKey", 401);
-    LEGACY_ERROR_KEYWORDS.put("Forbidden", 403);
-    LEGACY_ERROR_KEYWORDS.put("AccessDenied", 403);
-    LEGACY_ERROR_KEYWORDS.put("NotFound", 404);
-    LEGACY_ERROR_KEYWORDS.put("Throttling", 429);
-    LEGACY_ERROR_KEYWORDS.put("RateLimit", 429);
-    LEGACY_ERROR_KEYWORDS.put("InternalError", 500);
-    LEGACY_ERROR_KEYWORDS.put("SystemError", 500);
-  }
-
-  /**
-   * Resolve the appropriate HTTP status code for an API exception. Priority: 1) Body status_code,
-   * 2) HTTP response status code, 3) Exact match in PublicErrorCode, 4) Keyword match for legacy
-   * error codes, 5) Default to bodyStatusCode/httpStatusCode/200.
-   *
-   * <p>This method is null-safe: all parameters accept {@code null} values and will never cause
-   * NullPointerException. Returns a primitive {@code int}, safe for direct use in builders.
-   */
-  private int resolveStatusCode(Integer bodyStatusCode, Integer httpStatusCode, String errorCode) {
-    if (bodyStatusCode != null && bodyStatusCode != 200) {
-      return bodyStatusCode;
-    }
-    if (httpStatusCode != null && httpStatusCode != 200) {
-      return httpStatusCode;
-    }
-    if (errorCode != null) {
-      // Exact match against PublicErrorCode
-      for (PublicErrorCode def : PublicErrorCode.values()) {
-        if (def.getErrorCode().equals(errorCode)) {
-          return def.getStatusCode();
-        }
-      }
-      // Fallback: exact match first, then keyword match for non-standard / legacy error codes
-      if (LEGACY_ERROR_KEYWORDS.containsKey(errorCode)) {
-        return LEGACY_ERROR_KEYWORDS.get(errorCode);
-      }
-      for (Map.Entry<String, Integer> entry : LEGACY_ERROR_KEYWORDS.entrySet()) {
-        if (errorCode.contains(entry.getKey())) {
-          return entry.getValue();
-        }
-      }
-    }
-    return bodyStatusCode != null && bodyStatusCode != 200
-        ? bodyStatusCode
-        : (httpStatusCode != null && httpStatusCode != 200 ? httpStatusCode : 400);
   }
 }

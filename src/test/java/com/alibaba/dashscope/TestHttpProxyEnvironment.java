@@ -2,11 +2,12 @@
 
 package com.alibaba.dashscope;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
+import com.alibaba.dashscope.common.PublicErrorCode;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.GeneralServiceOption;
@@ -62,7 +63,12 @@ public class TestHttpProxyEnvironment {
               api.call(param, serviceOption);
             });
     System.out.println(exception.getMessage());
-    assertTrue(exception.getMessage().contains("network error"));
+    ApiException apiException = (ApiException) exception;
+    assertEquals(
+        PublicErrorCode.SERVICE_UNAVAILABLE.getStatusCode(),
+        apiException.getStatus().getStatusCode());
+    assertEquals(
+        PublicErrorCode.SERVICE_UNAVAILABLE.getErrorCode(), apiException.getStatus().getCode());
     mockServer.close();
   }
 }
