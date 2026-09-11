@@ -72,8 +72,7 @@
     "environment_id": "env_001",
     "status": "idle",
     "stop_reason": {
-      "type": "end_turn",
-      "event_ids": ["evt_1", "evt_2"]
+      "type": "end_turn"
     },
     "usage": {
       "input_tokens": 100,
@@ -339,6 +338,7 @@
       {"type": "file", "file_id": "file_01", "mount_path": "/mnt/data"}
     ],
     "vault_ids": ["vault_01"],
+    "environment_variables": {"API_BASE_URL": "https://example.test"},
     "metadata": {"biz": "summary"},
     "status": "paused",
     "paused_reason": {

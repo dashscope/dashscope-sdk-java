@@ -59,4 +59,9 @@ public final class AsyncTaskOption implements ServiceOption {
   public OutputMode getOutputMode() {
     throw new UnsupportedOperationException("Unimplemented method 'getOutputMode'");
   }
+
+  @Override
+  public String getModule() {
+    return "tasks";
+  }
 }

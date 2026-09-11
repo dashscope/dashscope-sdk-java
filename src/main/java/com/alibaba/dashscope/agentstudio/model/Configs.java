@@ -35,6 +35,9 @@ public final class Configs {
     public static class DefaultConfig {
       @SerializedName("enabled")
       private Boolean enabled;
+
+      @SerializedName("permission_policy")
+      private PermissionPolicy permissionPolicy;
     }
 
     @Data
@@ -44,6 +47,9 @@ public final class Configs {
 
       @SerializedName("enabled")
       private Boolean enabled;
+
+      @SerializedName("permission_policy")
+      private PermissionPolicy permissionPolicy;
     }
   }
 
@@ -69,5 +75,46 @@ public final class Configs {
 
     @SerializedName("url")
     private String url;
+  }
+
+  /**
+   * The {@code multiagent} field on an agent: {@code type} is currently always {@code
+   * "coordinator"}, {@code agents} is the roster of 1-20 entries (an empty list clears it).
+   */
+  @Data
+  public static class MultiAgentConfig {
+    @SerializedName("type")
+    private String type;
+
+    @SerializedName("agents")
+    private List<RosterEntry> agents;
+
+    /**
+     * One roster entry: {@code type} is {@code "agent"} (reference another agent by {@code id} plus
+     * optional {@code version}) or {@code "self"} (a copy of the coordinator; at most one).
+     */
+    @Data
+    public static class RosterEntry {
+      @SerializedName("type")
+      private String type;
+
+      @SerializedName("id")
+      private String id;
+
+      @SerializedName("version")
+      private Integer version;
+
+      @SerializedName("name")
+      private String name;
+
+      @SerializedName("description")
+      private String description;
+    }
+  }
+
+  @Data
+  public static class PermissionPolicy {
+    @SerializedName("type")
+    private String type;
   }
 }

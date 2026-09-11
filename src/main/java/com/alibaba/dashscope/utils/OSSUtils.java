@@ -155,7 +155,9 @@ public final class OSSUtils {
                         false,
                         false,
                         "",
-                        new HashMap<String, String>())))
+                        new HashMap<String, String>(),
+                        null,
+                        "utils")))
             .build();
     try (Response response = client.newCall(request).execute()) {
       if (!response.isSuccessful()) {

@@ -26,6 +26,7 @@ public class DeploymentCreateParam extends FlattenHalfDuplexParamBase {
   @NonNull private List<JsonObject> initialEvents;
   @Default private List<DeploymentResourceParam> resources = null;
   @Default private List<String> vaultIds = null;
+  @Default private Map<String, String> environmentVariables = null;
   @Default private Map<String, String> metadata = null;
 
   @Override
@@ -60,6 +61,11 @@ public class DeploymentCreateParam extends FlattenHalfDuplexParamBase {
         vaultItems.add(vaultId);
       }
       body.add("vault_ids", vaultItems);
+    }
+    if (environmentVariables != null) {
+      body.add(
+          "environment_variables",
+          JsonUtils.toJsonElement(new LinkedHashMap<>(environmentVariables)));
     }
     if (metadata != null) {
       body.add("metadata", JsonUtils.toJsonElement(new LinkedHashMap<>(metadata)));

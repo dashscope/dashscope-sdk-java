@@ -42,6 +42,7 @@ public final class Assistants {
         .httpMethod(HttpMethod.POST)
         .streamingMode(StreamingMode.OUT)
         .path("assistants")
+        .module("assistants")
         .build();
   }
 
@@ -290,6 +291,7 @@ public final class Assistants {
                 .httpMethod(HttpMethod.GET)
                 .streamingMode(StreamingMode.OUT)
                 .path("assistants")
+                .module("assistants")
                 .build();
 
         if (serviceOption.getBaseHttpUrl() != null) {

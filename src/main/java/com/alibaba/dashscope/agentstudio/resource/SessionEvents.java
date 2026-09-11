@@ -131,15 +131,39 @@ public final class SessionEvents implements Closeable {
   }
 
   public AgentStudioEventStream stream(String sessionId) {
-    return stream(sessionId, AgentStudioConstants.DEFAULT_TIMEOUT_MS);
+    return stream(sessionId, null, AgentStudioConstants.DEFAULT_TIMEOUT_MS);
   }
 
   public AgentStudioEventStream stream(String sessionId, long timeoutMs) {
+    return stream(sessionId, null, timeoutMs);
+  }
+
+  /**
+   * Open the SSE stream, optionally opting into incremental text deltas.
+   *
+   * <p>{@code eventDeltas} accepts {@code "message"} and/or {@code "reasoning"} (aliases {@code
+   * "agent.message"}/{@code "agent.thinking"}). When set, the stream emits {@code
+   * event_start}/{@code event_delta} frames carrying partial text — consume via {@link
+   * AgentStudioEventStream#textDeltas()}.
+   */
+  public AgentStudioEventStream stream(String sessionId, List<String> eventDeltas) {
+    return stream(sessionId, eventDeltas, AgentStudioConstants.DEFAULT_TIMEOUT_MS);
+  }
+
+  public AgentStudioEventStream stream(String sessionId, List<String> eventDeltas, long timeoutMs) {
     String url = resolveStreamBaseUrl();
     if (!url.endsWith("/")) {
       url += "/";
     }
     url += StringUtils.format("sessions/%s/events/stream", sessionId);
+    if (eventDeltas != null && !eventDeltas.isEmpty()) {
+      StringBuilder qs = new StringBuilder("?");
+      for (int i = 0; i < eventDeltas.size(); i++) {
+        if (i > 0) qs.append("&");
+        qs.append("event_deltas[]=").append(eventDeltas.get(i));
+      }
+      url += qs;
+    }
 
     String resolvedKey = resolveApiKey();
     OkHttpClient client =

@@ -7,6 +7,7 @@ import com.alibaba.dashscope.agentstudio.message.Message;
 import com.alibaba.dashscope.common.Status;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Iterator;
@@ -88,6 +89,8 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
       return t != null ? AgentStudioException.connectionError(t) : null;
     }
     String body = "";
+    String errorCode = null;
+    String errorMsg = null;
     try (ResponseBody rb = response.body()) {
       if (rb != null) {
         body = rb.string();
@@ -95,10 +98,25 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
     } catch (IOException e) {
       log.debug("Failed to read SSE failure response body", e);
     }
-
-    // No code is parsed here, so statusError falls back to generic api_error.
-    String message = body.isEmpty() ? response.message() : body;
-    Status status = Status.builder().statusCode(response.code()).message(message).build();
+    // Parse the agentstudio error envelope {type:error, error:{code,message}}
+    // to surface the server's actual error code instead of a generic one.
+    if (body != null && !body.isEmpty()) {
+      try {
+        JsonObject parsed = GSON.fromJson(body, JsonObject.class);
+        if (parsed != null && parsed.has("error") && parsed.get("error").isJsonObject()) {
+          JsonObject errObj = parsed.getAsJsonObject("error");
+          if (errObj.has("code")) errorCode = errObj.get("code").getAsString();
+          if (errObj.has("message")) errorMsg = errObj.get("message").getAsString();
+        }
+      } catch (Exception e) {
+        log.debug("Failed to parse SSE error body as JSON", e);
+      }
+    }
+    // statusError normalizes the parsed code: recognized public codes are kept,
+    // anything else falls back to generic api_error.
+    String message = errorMsg != null ? errorMsg : (body.isEmpty() ? response.message() : body);
+    Status status =
+        Status.builder().statusCode(response.code()).code(errorCode).message(message).build();
     return AgentStudioException.statusError(status, t);
   }
 
@@ -148,6 +166,10 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
     return new TextStream(this);
   }
 
+  public TextDeltaStream textDeltas() {
+    return new TextDeltaStream(this);
+  }
+
   @Override
   public void close() {
     if (closed.compareAndSet(false, true)) {
@@ -184,7 +206,8 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
               String status = extractSessionStatus(msg);
               if ("idle".equals(status)
                   || "terminated".equals(status)
-                  || "rescheduling".equals(status)) {
+                  || "rescheduled".equals(status)
+                  || "deleted".equals(status)) {
                 done = true;
                 return false;
               }
@@ -231,6 +254,71 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
         }
       }
       return null;
+    }
+
+    @Override
+    public void close() {
+      source.close();
+    }
+  }
+
+  /**
+   * Incremental text chunks from {@code event_delta} frames. Requires the stream to be opened with
+   * {@code event_deltas}; otherwise yields nothing (use {@link TextStream} for terminal full text).
+   * Stops on terminal {@code session_status}.
+   */
+  public static class TextDeltaStream implements Iterable<String>, Closeable {
+    private final AgentStudioEventStream source;
+
+    TextDeltaStream(AgentStudioEventStream source) {
+      this.source = source;
+    }
+
+    @Override
+    public Iterator<String> iterator() {
+      final Iterator<Message> msgIter = source.iterator();
+      return new Iterator<String>() {
+        private String next;
+        private boolean done;
+
+        @Override
+        public boolean hasNext() {
+          if (next != null) return true;
+          if (done) return false;
+          while (msgIter.hasNext()) {
+            Message msg = msgIter.next();
+            String type = msg.getType();
+            if ("session_status".equals(type)) {
+              String status = TextStream.extractSessionStatus(msg);
+              if (status != null
+                  && ("idle".equals(status)
+                      || "terminated".equals(status)
+                      || "rescheduled".equals(status)
+                      || "deleted".equals(status))) {
+                done = true;
+                return false;
+              }
+            }
+            if ("event_delta".equals(type)) {
+              String text = msg.getDeltaText();
+              if (text != null && !text.isEmpty()) {
+                next = text;
+                return true;
+              }
+            }
+          }
+          done = true;
+          return false;
+        }
+
+        @Override
+        public String next() {
+          if (!hasNext()) throw new NoSuchElementException();
+          String result = next;
+          next = null;
+          return result;
+        }
+      };
     }
 
     @Override

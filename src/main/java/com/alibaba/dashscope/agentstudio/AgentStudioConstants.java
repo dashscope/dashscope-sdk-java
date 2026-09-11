@@ -25,7 +25,7 @@ public final class AgentStudioConstants {
   public static final class SSEEventType {
     public static final String MESSAGE = "message";
     public static final String INTERRUPT = "interrupt";
-    public static final String TOOL_CONFIRMATION = "tool_confirmation";
+    public static final String TOOL_APPROVAL_RESPONSE = "tool_approval_response";
     public static final String FUNCTION_CALL_OUTPUT = "function_call_output";
     public static final String TOOL_CALL_OUTPUT = "tool_call_output";
     public static final String DEFINE_OUTCOME = "define_outcome";
@@ -34,9 +34,17 @@ public final class AgentStudioConstants {
     public static final String REASONING = "reasoning";
     public static final String MCP_CALL = "mcp_call";
     public static final String MCP_CALL_OUTPUT = "mcp_call_output";
+    public static final String TOOL_APPROVAL_REQUEST = "tool_approval_request";
     public static final String SESSION_STATUS = "session_status";
     public static final String ERROR = "error";
     public static final String SESSION_UPDATED = "session_updated";
+    public static final String THREAD_CREATED = "thread_created";
+    public static final String THREAD_STATUS = "thread_status";
+    public static final String THREAD_MESSAGE_SENT = "thread_message_sent";
+    public static final String THREAD_MESSAGE_RECEIVED = "thread_message_received";
+    public static final String THREAD_CONTEXT_COMPACTED = "thread_context_compacted";
+    public static final String MODEL_REQUEST_START = "model_request_start";
+    public static final String MODEL_REQUEST_END = "model_request_end";
     public static final String OUTCOME_EVALUATION = "outcome_evaluation";
 
     private SSEEventType() {}
@@ -65,10 +73,28 @@ public final class AgentStudioConstants {
   public static final class SessionStatusValue {
     public static final String IDLE = "idle";
     public static final String RUNNING = "running";
-    public static final String RESCHEDULING = "rescheduling";
+    public static final String RESCHEDULED = "rescheduled";
     public static final String TERMINATED = "terminated";
+    public static final String DELETED = "deleted";
 
     private SessionStatusValue() {}
+  }
+
+  /** {@code stop_reason.type} values carried by {@code session_status} idle events. */
+  public static final class StopReasonType {
+    public static final String END_TURN = "end_turn";
+    public static final String REQUIRES_ACTION = "requires_action";
+    public static final String RETRIES_EXHAUSTED = "retries_exhausted";
+
+    private StopReasonType() {}
+  }
+
+  /** Tool approval policy ({@code permission_policy.type}). */
+  public static final class PermissionPolicyType {
+    public static final String ALWAYS_ALLOW = "always_allow";
+    public static final String ALWAYS_ASK = "always_ask";
+
+    private PermissionPolicyType() {}
   }
 
   public static String resolveBaseUrl(String workspace, String region) {
@@ -104,6 +130,7 @@ public final class AgentStudioConstants {
             .httpMethod(method)
             .streamingMode(StreamingMode.OUT)
             .path(path)
+            .module("agentstudio")
             .build();
     if (baseUrl != null) {
       opt.setBaseHttpUrl(baseUrl);

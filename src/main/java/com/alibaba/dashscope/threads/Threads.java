@@ -34,6 +34,7 @@ public final class Threads {
         .httpMethod(HttpMethod.POST)
         .streamingMode(StreamingMode.OUT)
         .path("threads")
+        .module("assistants")
         .build();
   }
 

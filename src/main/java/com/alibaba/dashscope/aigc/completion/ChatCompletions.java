@@ -25,6 +25,7 @@ public final class ChatCompletions {
         .httpMethod(HttpMethod.POST)
         .streamingMode(StreamingMode.OUT)
         .path("chat/completions")
+        .module("aigc")
         .build();
   }
 

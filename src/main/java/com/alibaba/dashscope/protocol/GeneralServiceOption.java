@@ -29,6 +29,9 @@ public final class GeneralServiceOption implements ServiceOption {
 
   @Default private String baseWebSocketUrl = null;
 
+  /** SDK module name for tracking headers (e.g. "aigc", "agentstudio", "threads"). */
+  @Default private String module = null;
+
   @Override
   public String httpUrl() {
     StringBuffer sb = new StringBuffer();
@@ -45,5 +48,10 @@ public final class GeneralServiceOption implements ServiceOption {
   @Override
   public boolean getIsFlatten() {
     return true;
+  }
+
+  @Override
+  public String getModule() {
+    return module;
   }
 }

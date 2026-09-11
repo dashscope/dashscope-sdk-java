@@ -39,6 +39,7 @@ public final class Messages {
         .httpMethod(HttpMethod.POST)
         .streamingMode(StreamingMode.OUT)
         .path("threads")
+        .module("assistants")
         .build();
   }
 

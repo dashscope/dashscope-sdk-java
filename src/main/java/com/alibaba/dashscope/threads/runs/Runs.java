@@ -40,6 +40,7 @@ public final class Runs {
         .httpMethod(HttpMethod.POST)
         .streamingMode(StreamingMode.OUT)
         .path("assistants")
+        .module("assistants")
         .build();
   }
 

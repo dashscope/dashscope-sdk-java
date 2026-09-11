@@ -211,4 +211,6 @@ public class ApiKeywords {
   public static final String SHOT_TYPE = "shot_type";
 
   public static final String ENABLE_OVERLAYS = "enable_overlays";
+
+  public static final String ENABLE_THINKING = "enable_thinking";
 }

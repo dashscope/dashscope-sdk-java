@@ -42,6 +42,9 @@ public class Deployment extends FlattenResultBase {
   @SerializedName("vault_ids")
   private List<String> vaultIds;
 
+  @SerializedName("environment_variables")
+  private Map<String, String> environmentVariables;
+
   @SerializedName("metadata")
   private Map<String, String> metadata;
 

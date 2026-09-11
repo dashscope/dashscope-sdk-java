@@ -59,4 +59,9 @@ public final class ApiServiceOption implements ServiceOption {
     }
     return sb.toString();
   }
+
+  @Override
+  public String getModule() {
+    return taskGroup != null ? taskGroup : function;
+  }
 }
