@@ -31,7 +31,9 @@ public class SessionEventListParam extends FlattenHalfDuplexParamBase {
   public String toQueryString() {
     StringBuilder sb = new StringBuilder();
     if (types != null && !types.isEmpty()) {
-      AgentStudioConstants.appendParam(sb, "types", String.join(",", types));
+      for (String t : types) {
+        AgentStudioConstants.appendParam(sb, "types[]", t);
+      }
     }
     AgentStudioConstants.appendParam(sb, "created_at[gt]", createdAtGt);
     AgentStudioConstants.appendParam(sb, "created_at[gte]", createdAtGte);

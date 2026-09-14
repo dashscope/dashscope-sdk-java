@@ -28,16 +28,28 @@ public final class Sessions {
   private final String baseUrl;
   private final String apiKey;
   private final SessionEvents events;
+  private final SessionResources resources;
+  private final SessionThreads threads;
 
   public Sessions(String baseUrl, ConnectionOptions connectionOptions, String apiKey) {
     this.baseUrl = baseUrl;
     this.apiKey = apiKey;
     this.api = connectionOptions != null ? new GeneralApi<>(connectionOptions) : new GeneralApi<>();
     this.events = new SessionEvents(baseUrl, connectionOptions, apiKey);
+    this.resources = new SessionResources(baseUrl, connectionOptions, apiKey);
+    this.threads = new SessionThreads(baseUrl, connectionOptions, apiKey);
   }
 
   public SessionEvents events() {
     return events;
+  }
+
+  public SessionResources resources() {
+    return resources;
+  }
+
+  public SessionThreads threads() {
+    return threads;
   }
 
   public Session create(SessionCreateParam param) {

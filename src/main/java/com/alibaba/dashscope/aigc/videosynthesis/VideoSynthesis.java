@@ -76,9 +76,12 @@ public final class VideoSynthesis {
     public static final String REFERENCE_IMAGE = "reference_image";
     public static final String REFERENCE_VIDEO = "reference_video";
     public static final String REFERENCE_VOICE = "reference_voice";
+    public static final String REFERENCE_AUDIO = "reference_audio";
     public static final String VIDEO = "video";
     public static final String FIRST_CLIP = "first_clip";
     public static final String DRIVING_AUDIO = "driving_audio";
+    public static final String FILE = "file";
+    public static final String LINK = "link";
   }
 
   public static class AudioSetting {

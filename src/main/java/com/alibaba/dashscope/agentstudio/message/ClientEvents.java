@@ -74,22 +74,22 @@ public final class ClientEvents {
     return event;
   }
 
-  public static JsonObject userToolConfirmation(String toolUseId, String result) {
-    return userToolConfirmation(toolUseId, result, null, null);
-  }
-
-  public static JsonObject userToolConfirmation(
-      String toolUseId, String result, String denyMessage) {
-    return userToolConfirmation(toolUseId, result, denyMessage, null);
-  }
-
-  public static JsonObject userToolConfirmation(
-      String toolUseId, String result, String denyMessage, String sessionThreadId) {
+  /**
+   * Submit a tool approval ruling for an {@code always_ask} tool call.
+   *
+   * <p>{@code result} must be {@code "allow"} or {@code "deny"}; {@code denyMessage} is optional
+   * and only meaningful when denying. The approval identity is the {@code (batchId, callId)}
+   * composite key — {@code callId} may be reused across turns, so never match on it alone. Approval
+   * responses target the primary thread only (no {@code sessionThreadId}).
+   */
+  public static JsonObject userToolApprovalResponse(
+      String batchId, String callId, String result, String denyMessage) {
     if (!"allow".equals(result) && !"deny".equals(result)) {
-      throw new IllegalArgumentException("tool_confirmation result must be 'allow' or 'deny'");
+      throw new IllegalArgumentException("result must be 'allow' or 'deny'");
     }
     JsonObject data = new JsonObject();
-    data.addProperty("call_id", toolUseId);
+    data.addProperty("batch_id", batchId);
+    data.addProperty("call_id", callId);
     data.addProperty("result", result);
     if (denyMessage != null && "deny".equals(result)) {
       data.addProperty("deny_message", denyMessage);
@@ -100,12 +100,9 @@ public final class ClientEvents {
     JsonArray content = new JsonArray();
     content.add(dataBlock);
     JsonObject event = new JsonObject();
-    event.addProperty("type", "tool_confirmation");
+    event.addProperty("type", "tool_approval_response");
     event.addProperty("role", "user");
     event.add("content", content);
-    if (sessionThreadId != null) {
-      event.addProperty("session_thread_id", sessionThreadId);
-    }
     return event;
   }
 

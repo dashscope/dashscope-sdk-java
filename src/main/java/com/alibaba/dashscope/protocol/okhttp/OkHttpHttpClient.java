@@ -224,6 +224,13 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
         requestBuilder.post(RequestBody.create(MEDIA_TYPE_APPLICATION_JSON, ""));
       }
       request = requestBuilder.build();
+    } else if (req.getHttpMethod() == HttpMethod.PUT) {
+      Builder requestBuilder = new Request.Builder();
+      requestBuilder.url(req.getUrl()).headers(Headers.of(req.getHeaders()));
+      requestBuilder.put(
+          RequestBody.create(
+              MEDIA_TYPE_APPLICATION_JSON, req.getBody() == null ? "" : (String) req.getBody()));
+      request = requestBuilder.build();
     } else if (req.getHttpMethod() == HttpMethod.DELETE) {
       Builder requestBuilder = new Request.Builder();
       requestBuilder.url(req.getUrl()).headers(Headers.of(req.getHeaders()));

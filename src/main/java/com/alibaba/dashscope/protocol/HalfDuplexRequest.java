@@ -110,7 +110,8 @@ public class HalfDuplexRequest {
             serviceOption.getIsAsyncTask(),
             param.getWorkspace(),
             filteredHeaders,
-            customUserAgent);
+            customUserAgent,
+            serviceOption.getModule());
 
     if (getHttpMethod() == HttpMethod.GET) {
       return HttpRequest.builder()
@@ -120,7 +121,9 @@ public class HalfDuplexRequest {
           .parameters(param.getParameters())
           .httpMethod(getHttpMethod())
           .build();
-    } else if (getHttpMethod() == HttpMethod.POST || getHttpMethod() == HttpMethod.DELETE) {
+    } else if (getHttpMethod() == HttpMethod.POST
+        || getHttpMethod() == HttpMethod.PUT
+        || getHttpMethod() == HttpMethod.DELETE) {
       JsonObject body = param.getHttpBody();
       if (isEncryptRequest() && body != null) { // we need to encrypt the input
         this.encryptionConfig = EncryptionUtils.generateEncryptionConfig(param.getApiKey());
@@ -214,5 +217,9 @@ public class HalfDuplexRequest {
 
   public String getWorkspace() {
     return param.getWorkspace();
+  }
+
+  public String getModule() {
+    return serviceOption.getModule();
   }
 }

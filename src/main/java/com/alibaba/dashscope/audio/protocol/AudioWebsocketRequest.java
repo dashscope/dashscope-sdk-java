@@ -73,7 +73,7 @@ public class AudioWebsocketRequest extends WebSocketListener {
     bd.headers(
         Headers.of(
             DashScopeHeaders.buildWebSocketHeaders(
-                apiKey, isSecurityCheck, workspace, customHeaders)));
+                apiKey, isSecurityCheck, workspace, customHeaders, null, "audio")));
     String url = Constants.baseWebsocketApiUrl;
     if (baseWebSocketUrl != null) {
       url = baseWebSocketUrl;

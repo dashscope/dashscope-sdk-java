@@ -187,6 +187,10 @@ public class FullDuplexRequest {
     return param.getHeaders();
   }
 
+  public String getModule() {
+    return serviceOption.getModule();
+  }
+
   public String getWorkspace() {
     return param.getWorkspace();
   }

@@ -55,4 +55,13 @@ public interface ServiceOption {
   public default boolean getIsFlatten() {
     return false;
   }
+
+  /**
+   * SDK module name for tracking headers (e.g. "aigc", "audio").
+   *
+   * @return module identifier, or null if unknown
+   */
+  public default String getModule() {
+    return null;
+  }
 }

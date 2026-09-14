@@ -101,8 +101,64 @@ public class Session extends FlattenResultBase {
     @SerializedName("type")
     private String type;
 
-    @SerializedName("event_ids")
-    private List<String> eventIds;
+    @SerializedName("pending_batch_id")
+    private String pendingBatchId;
+
+    @SerializedName("pending_call_ids")
+    private List<String> pendingCallIds;
+  }
+
+  @Data
+  @EqualsAndHashCode(callSuper = true)
+  public static class SessionResource extends FlattenResultBase {
+    @SerializedName("id")
+    private String id;
+
+    @SerializedName("type")
+    private String type;
+
+    @SerializedName("file_id")
+    private String fileId;
+
+    @SerializedName("mount_path")
+    private String mountPath;
+
+    @SerializedName("created_at")
+    private String createdAt;
+
+    @SerializedName("updated_at")
+    private String updatedAt;
+  }
+
+  @Data
+  @EqualsAndHashCode(callSuper = true)
+  public static class SessionThread extends FlattenResultBase {
+    @SerializedName("id")
+    private String id;
+
+    @SerializedName("type")
+    private String type;
+
+    @SerializedName("session_id")
+    private String sessionId;
+
+    @SerializedName("parent_thread_id")
+    private String parentThreadId;
+
+    @SerializedName("agent")
+    private Map<String, Object> agent;
+
+    @SerializedName("status")
+    private String status;
+
+    @SerializedName("created_at")
+    private String createdAt;
+
+    @SerializedName("updated_at")
+    private String updatedAt;
+
+    @SerializedName("archived_at")
+    private String archivedAt;
   }
 
   @Data

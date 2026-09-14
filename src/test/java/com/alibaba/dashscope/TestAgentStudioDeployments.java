@@ -81,6 +81,8 @@ public class TestAgentStudioDeployments {
                                 .mountPath("/mnt/data")
                                 .build()))
                     .vaultIds(Collections.singletonList("vault_01"))
+                    .environmentVariables(
+                        Collections.singletonMap("API_BASE_URL", "https://example.test"))
                     .metadata(Collections.singletonMap("biz", "summary"))
                     .build());
 
@@ -93,6 +95,9 @@ public class TestAgentStudioDeployments {
     assertEquals(
         "message",
         body.getAsJsonArray("initial_events").get(0).getAsJsonObject().get("type").getAsString());
+    assertEquals(
+        "https://example.test",
+        body.getAsJsonObject("environment_variables").get("API_BASE_URL").getAsString());
     assertEquals("summary", body.getAsJsonObject("metadata").get("biz").getAsString());
 
     assertEquals("depl_01", deployment.getId());
@@ -101,6 +106,7 @@ public class TestAgentStudioDeployments {
     assertEquals("Asia/Shanghai", deployment.getSchedule().getTimezone());
     assertEquals("file_01", deployment.getResources().get(0).getFileId());
     assertEquals("RUN_FAILED", deployment.getPausedReason().getError().getCode());
+    assertEquals("https://example.test", deployment.getEnvironmentVariables().get("API_BASE_URL"));
     assertEquals("summary", deployment.getMetadata().get("biz"));
     assertEquals("req-depl-01", deployment.getRequestId());
   }
@@ -113,6 +119,7 @@ public class TestAgentStudioDeployments {
             .clearEnvironment(true)
             .clearSchedule(true)
             .resources(Collections.emptyList())
+            .environmentVariables(Collections.emptyMap())
             .metadata(Collections.emptyMap())
             .build();
     assertTrue(updateParam.getClearEnvironment());
@@ -130,6 +137,7 @@ public class TestAgentStudioDeployments {
     assertTrue(body.has("schedule"), body.toString());
     assertTrue(body.get("schedule").isJsonNull());
     assertEquals(0, body.getAsJsonArray("resources").size());
+    assertEquals(0, body.getAsJsonObject("environment_variables").size());
     assertEquals(0, body.getAsJsonObject("metadata").size());
   }
 

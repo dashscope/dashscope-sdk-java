@@ -16,6 +16,11 @@ public class OmniRealtimeConstants {
   public static final String AUDIO_OUTPUT = "output";
   public static final String AUDIO_FORMAT = "format";
   public static final String AUDIO_FORMAT_TYPE = "type";
+  // Video input configuration, see session.update:
+  // { "video": { "input": { "representation_compactness": 1 } } }
+  public static final String VIDEO = "video";
+  public static final String VIDEO_INPUT = "input";
+  public static final String REPRESENTATION_COMPACTNESS = "representation_compactness";
   public static final String INPUT_AUDIO_TRANSCRIPTION = "input_audio_transcription";
   public static final String INPUT_AUDIO_TRANSCRIPTION_MODEL = "model";
   public static final String INPUT_AUDIO_TRANSCRIPTION_CORPUS = "corpus";
