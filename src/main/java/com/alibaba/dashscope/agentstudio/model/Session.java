@@ -44,6 +44,12 @@ public class Session extends FlattenResultBase {
   @SerializedName("vault_ids")
   private List<String> vaultIds;
 
+  @SerializedName("environment_variables")
+  private Map<String, String> environmentVariables;
+
+  @SerializedName("mcp_configs")
+  private List<Map<String, Object>> mcpConfigs;
+
   @SerializedName("stats")
   private Stats stats;
 
