@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.alibaba.dashscope.api.SynchronizeFullDuplexApi;
 import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.common.OutputMode;
+import com.alibaba.dashscope.common.PublicErrorCode;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
@@ -330,10 +331,10 @@ public class TestFullDuplexErrorHandling {
               api.duplexCall(param).blockingForEach(msg -> {});
             });
     long elapsed = System.currentTimeMillis() - start;
-    // The handshake http status only drives the retry decision: callers keep seeing the fixed
-    // websocket failure status code.
+    // The handshake http status only drives the retry decision; exhausted retries are reported as
+    // a fixed SERVICE_UNAVAILABLE status.
     assertEquals(
-        Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE, thrown.getStatus().getStatusCode());
+        PublicErrorCode.SERVICE_UNAVAILABLE.getStatusCode(), thrown.getStatus().getStatusCode());
     // A client error is final: a single handshake must have been attempted.
     assertEquals(1, server.getRequestCount());
     // And no backoff must have been waited for.
@@ -362,7 +363,7 @@ public class TestFullDuplexErrorHandling {
             });
     long elapsed = System.currentTimeMillis() - start;
     assertEquals(
-        Constants.DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE, thrown.getStatus().getStatusCode());
+        PublicErrorCode.SERVICE_UNAVAILABLE.getStatusCode(), thrown.getStatus().getStatusCode());
     // A transient failure is retried up to the attempt limit.
     assertEquals(3, server.getRequestCount());
     // Two backoffs only: the last attempt must not be followed by a wait.

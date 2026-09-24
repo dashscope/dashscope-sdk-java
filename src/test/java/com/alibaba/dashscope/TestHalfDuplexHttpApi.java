@@ -220,30 +220,35 @@ public class TestHalfDuplexHttpApi {
   }
 
   @Test
-  public void testHttpSendNestedResponseError()
+  public void testHttp404HtmlResponseReturnsNotFoundError()
       throws ApiException, NoApiKeyException, IOException {
     MockWebServer server = new MockWebServer();
-    String errorCode = "NotFound";
-    String errorMessage = "Agent not found!";
-    JsonObject error = new JsonObject();
-    error.addProperty(ApiKeywords.CODE, errorCode);
-    error.addProperty(ApiKeywords.MESSAGE, errorMessage);
-    JsonObject rsp = new JsonObject();
-    rsp.addProperty("requestId", "req-nested-error");
-    rsp.add(ApiKeywords.ERROR, error);
+    String htmlBody =
+        "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n"
+            + "<html><head>\n<title>404 Not Found</title>\n</head><body>\n"
+            + "<h1>Not Found</h1>\n"
+            + "<p>The requested URL /services/aigc/text2image/image-synthesis was not found on this server.</p>\n"
+            + "</body></html>\n";
     server.enqueue(
         new MockResponse()
-            .setBody(JsonUtils.toJson(rsp))
+            .setBody(htmlBody)
             .setResponseCode(404)
-            .setHeader("content-type", MEDIA_TYPE_APPLICATION_JSON));
-    Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", server.getPort());
+            .setHeader("content-type", "text/html; charset=iso-8859-1"));
+    int port = server.getPort();
     HalfDuplexTestParam param =
-        HalfDuplexTestParam.builder().model("qwen-turbo").parameter("k1", "v1").build();
+        HalfDuplexTestParam.builder().model("wanx-v1").parameter("k1", "v1").build();
+    Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", port);
 
-    ApiException exception = assertThrows(ApiException.class, () -> syncApi.call(param));
-    assertEquals(errorCode, exception.getStatus().getCode());
-    assertEquals(errorMessage, exception.getStatus().getMessage());
-    assertEquals("req-nested-error", exception.getStatus().getRequestId());
+    ApiException exception =
+        assertThrows(
+            ApiException.class,
+            () -> {
+              syncApi.call(param);
+            });
+    // Should return NotFoundError instead of InternalServerError for 404
+    assertEquals(404, exception.getStatus().getStatusCode());
+    assertEquals("NotFoundError", exception.getStatus().getCode());
+    assertTrue(exception.getStatus().getMessage().contains("404 Not Found"));
     server.close();
   }
 

@@ -78,7 +78,9 @@ public class TestHttpProxySettingWithCode {
               api.call(param, serviceOption);
             });
     System.out.println(exception.getMessage());
-    assertTrue(exception.getMessage().contains("network error"));
+    assertTrue(
+        exception.getMessage().contains("service is temporarily unavailable")
+            || exception.getMessage().contains("ServiceUnavailableError"));
   }
 
   @Test

@@ -6,6 +6,7 @@ import static com.alibaba.dashscope.utils.ApiKeywords.TASK_STATUS;
 
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.DashScopeResult;
+import com.alibaba.dashscope.common.PublicErrorCode;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.common.TaskStatus;
 import com.alibaba.dashscope.exception.ApiException;
@@ -18,8 +19,10 @@ import com.google.gson.JsonObject;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
 /** Support DashScope async task CRUD. */
+@Slf4j
 public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
   final HalfDuplexClient client;
   ConnectionOptions connectionOptions;
@@ -104,6 +107,10 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
     int maxWaitMilliseconds = 5 * 1000;
     int incrementSteps = 3;
     int step = 0;
+    int transientErrorCount = 0;
+    final int MAX_TRANSIENT_ERRORS = 20;
+    int transientBackoffMs = 1000;
+    final int MAX_TRANSIENT_BACKOFF_MS = 10000;
     long startTime = System.currentTimeMillis();
     long timeoutMillis = timeoutSeconds > 0 ? timeoutSeconds * 1000L : -1L;
     while (true) {
@@ -112,12 +119,16 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
         if (elapsed >= timeoutMillis) {
           throw new ApiException(
               Status.builder()
-                  .statusCode(HttpURLConnection.HTTP_CLIENT_TIMEOUT)
-                  .code("TaskWaitTimeout")
+                  .statusCode(PublicErrorCode.REQUEST_TIMEOUT.getStatusCode())
+                  .code(PublicErrorCode.REQUEST_TIMEOUT.getErrorCode())
                   .message(
                       StringUtils.format(
-                          "Waiting for task [%s] timed out after %d ms (timeoutSeconds=%d).",
-                          taskId, elapsed, timeoutSeconds))
+                          "%s [taskId=%s, elapsed=%d ms, timeoutSeconds=%d, transientErrors=%d]",
+                          PublicErrorCode.REQUEST_TIMEOUT.getErrorMsg(),
+                          taskId,
+                          elapsed,
+                          timeoutSeconds,
+                          transientErrorCount))
                   .build());
         }
       }
@@ -155,7 +166,18 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
           }
           try {
             Thread.sleep(sleepMs);
-          } catch (InterruptedException ignored) {
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ApiException(
+                Status.builder()
+                    .statusCode(PublicErrorCode.INTERNAL_ERROR.getStatusCode())
+                    .code(PublicErrorCode.INTERNAL_ERROR.getErrorCode())
+                    .message(
+                        StringUtils.format(
+                            "%s [taskId=%s, reason=thread_interrupted]",
+                            PublicErrorCode.INTERNAL_ERROR.getErrorMsg(), taskId))
+                    .build(),
+                e);
           }
         }
       } catch (ApiException e) {
@@ -163,6 +185,45 @@ public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
             && e.getStatus().getStatusCode() != HttpURLConnection.HTTP_GATEWAY_TIMEOUT) {
           throw e;
         }
+        transientErrorCount++;
+        log.warn(
+            "Transient error during async task polling [taskId={}]: status={}, message={}, retry_count={}, backoff_ms={}",
+            taskId,
+            e.getStatus().getStatusCode(),
+            e.getMessage(),
+            transientErrorCount,
+            transientBackoffMs);
+        if (transientErrorCount >= MAX_TRANSIENT_ERRORS) {
+          throw new ApiException(
+              Status.builder()
+                  .statusCode(PublicErrorCode.SERVICE_UNAVAILABLE.getStatusCode())
+                  .code(PublicErrorCode.SERVICE_UNAVAILABLE.getErrorCode())
+                  .message(
+                      StringUtils.format(
+                          "%s [taskId=%s, transientErrors=%d, lastError=%s]",
+                          PublicErrorCode.SERVICE_UNAVAILABLE.getErrorMsg(),
+                          taskId,
+                          transientErrorCount,
+                          e.getMessage()))
+                  .build());
+        }
+        transientBackoffMs = Math.min(transientBackoffMs * 2, MAX_TRANSIENT_BACKOFF_MS);
+        try {
+          Thread.sleep(transientBackoffMs);
+        } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
+          throw new ApiException(
+              Status.builder()
+                  .statusCode(PublicErrorCode.INTERNAL_ERROR.getStatusCode())
+                  .code(PublicErrorCode.INTERNAL_ERROR.getErrorCode())
+                  .message(
+                      StringUtils.format(
+                          "%s [taskId=%s, reason=thread_interrupted]",
+                          PublicErrorCode.INTERNAL_ERROR.getErrorMsg(), taskId))
+                  .build(),
+              ie);
+        }
+        continue;
       }
     }
   }
