@@ -131,6 +131,21 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
     }
   }
 
+  private Status tryParseErrorJson(int statusCode, String body) {
+    try {
+      JsonObject jsonResponse = JsonUtils.parse(body);
+      if (jsonResponse == null
+          || (!jsonResponse.has(ApiKeywords.CODE)
+              && !jsonResponse.has(ApiKeywords.MESSAGE)
+              && !jsonResponse.has(ApiKeywords.ERROR))) {
+        return null;
+      }
+      return parseFailedJson(statusCode, body);
+    } catch (Throwable e) {
+      return null;
+    }
+  }
+
   private Status parseFailed(Response response, Throwable th) {
     if (response == null) {
       String message = th == null ? "Get response failed!" : th.getMessage();
@@ -158,30 +173,55 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       }
       return parseFailedJson(response.code(), body);
     } else if (contentType != null && contentType.toLowerCase().contains("text/event-stream")) {
+      String body = null;
       try {
-        String body = response.body().string();
+        body = response.body().string();
+      } catch (Throwable e) {
+        // The body may be partially consumed or the connection already broken.
+      }
+      if (body != null) {
         for (String part : body.split("\n")) {
           part = part.trim();
           if (part.startsWith("data:")) {
-            body = part.replace("data:", "");
-            return parseFailedJson(response.code(), body);
+            return parseFailedJson(response.code(), part.substring("data:".length()).trim());
           }
         }
-        return Status.builder()
-            .statusCode(response.code())
-            .code(ErrorType.RESPONSE_ERROR.getValue())
-            .message(body)
-            .isJson(false)
-            .build();
-      } catch (IOException e) {
-        return Status.builder()
-            .statusCode(response.code())
-            .code(ErrorType.RESPONSE_ERROR.getValue())
-            .message("Failed read response body: " + e.getMessage())
-            .isJson(true)
-            .build();
+        // The gateway may write a bare JSON error without SSE framing.
+        Status jsonStatus = tryParseErrorJson(response.code(), body);
+        if (jsonStatus != null) {
+          return jsonStatus;
+        }
       }
+      String message;
+      if (body != null && !body.isEmpty()) {
+        message = body;
+      } else if (th != null && th.getMessage() != null) {
+        message = th.getMessage();
+      } else {
+        message = response.message();
+      }
+      return Status.builder()
+          .statusCode(response.code())
+          .code(ErrorType.RESPONSE_ERROR.getValue())
+          .message(message)
+          .isJson(false)
+          .build();
     } else {
+      // The error body may still be JSON even if the content type says otherwise.
+      String body = null;
+      try {
+        if (response.body() != null) {
+          body = response.peekBody(16 * 1024).string();
+        }
+      } catch (Throwable e) {
+        // Ignore unreadable bodies and fall back to the HTTP status message.
+      }
+      if (body != null && !body.isEmpty()) {
+        Status jsonStatus = tryParseErrorJson(response.code(), body);
+        if (jsonStatus != null) {
+          return jsonStatus;
+        }
+      }
       return Status.builder()
           .statusCode(response.code())
           .code(ErrorType.RESPONSE_ERROR.getValue())
@@ -326,11 +366,19 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       String data,
       boolean isFlattenResult,
       Response response,
-      HalfDuplexRequest req) {
+      HalfDuplexRequest req,
+      AtomicBoolean terminated) {
     log.debug(StringUtils.format("Event: id %s, type: %s, data: %s", id, eventType, data));
+    if (terminated.get()) {
+      return;
+    }
     if (SSEEventType.ERROR.equals(eventType)) {
       Status st = parseStreamEventData(data);
-      emitter.onError(new ApiException(st));
+      // Only one terminal signal may be delivered; a broken connection can
+      // trigger onFailure right after an error event.
+      if (terminated.compareAndSet(false, true) && !emitter.isCancelled()) {
+        emitter.onError(new ApiException(st));
+      }
     } else if (SSEEventType.DATA.equals(eventType) || SSEEventType.RESULT.equals(eventType)) {
       emitter.onNext(
           new DashScopeResult()
@@ -401,7 +449,14 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                                 java.lang.String type,
                                 java.lang.String data) {
                               handleSSEEvent(
-                                  emitter, id, type, data, req.getIsFlatten(), response, req);
+                                  emitter,
+                                  id,
+                                  type,
+                                  data,
+                                  req.getIsFlatten(),
+                                  response,
+                                  req,
+                                  terminated);
                             }
 
                             @java.lang.Override
@@ -417,18 +472,20 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                                 java.lang.Throwable t,
                                 Response response) {
                               this.response = response;
-                              terminated.set(true);
                               activeEventSources.remove(eventSource);
                               super.onFailure(eventSource, t, response);
-                              emitter.onError(new ApiException(parseFailed(response, t), t));
+                              if (terminated.compareAndSet(false, true) && !emitter.isCancelled()) {
+                                emitter.onError(new ApiException(parseFailed(response, t), t));
+                              }
                             }
 
                             @java.lang.Override
                             public void onClosed(@NotNull EventSource eventSource) {
-                              terminated.set(true);
                               activeEventSources.remove(eventSource);
                               super.onClosed(eventSource);
-                              emitter.onComplete();
+                              if (terminated.compareAndSet(false, true)) {
+                                emitter.onComplete();
+                              }
                             }
                           });
               if (terminated.get()) {
@@ -460,6 +517,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
   public void streamOut(HalfDuplexRequest req, ResultCallback<DashScopeResult> callback)
       throws NoApiKeyException, ApiException {
     Request request = buildRequest(req.getHttpRequest());
+    final AtomicBoolean terminated = new AtomicBoolean(false);
     EventSources.createFactory(client)
         .newEventSource(
             request,
@@ -473,9 +531,14 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                   java.lang.String type,
                   java.lang.String data) {
                 log.debug(StringUtils.format("Event: id %s, type: %s, data: %s", id, type, data));
+                if (terminated.get()) {
+                  return;
+                }
                 if (SSEEventType.ERROR.equals(type)) {
                   Status st = parseStreamEventData(data);
-                  callback.onError(new ApiException(st));
+                  if (terminated.compareAndSet(false, true)) {
+                    callback.onError(new ApiException(st));
+                  }
                 } else if (SSEEventType.DATA.equals(type) || SSEEventType.RESULT.equals(type)) {
                   callback.onEvent(
                       new DashScopeResult()
@@ -527,12 +590,16 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
               public void onFailure(
                   @NotNull EventSource eventSource, java.lang.Throwable t, Response response) {
                 this.response = response;
-                callback.onError(new ApiException(parseFailed(response, t), t));
+                if (terminated.compareAndSet(false, true)) {
+                  callback.onError(new ApiException(parseFailed(response, t), t));
+                }
               }
 
               @java.lang.Override
               public void onClosed(EventSource eventSource) {
-                callback.onComplete();
+                if (terminated.compareAndSet(false, true)) {
+                  callback.onComplete();
+                }
               }
             });
   }
