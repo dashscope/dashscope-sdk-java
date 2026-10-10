@@ -151,7 +151,14 @@ public class EncryptionUtils {
   /** Generate a EncryptionConfig. */
   public static EncryptionConfig generateEncryptionConfig(String apiKey)
       throws ApiException, NoApiKeyException {
-    EncryptionKeys encryptionKeys = new EncryptionKeys();
+    return generateEncryptionConfig(apiKey, null);
+  }
+
+  /** Generate a EncryptionConfig, fetching the public key from the given base URL. */
+  public static EncryptionConfig generateEncryptionConfig(String apiKey, String baseHttpUrl)
+      throws ApiException, NoApiKeyException {
+    EncryptionKeys encryptionKeys =
+        baseHttpUrl != null ? new EncryptionKeys(baseHttpUrl) : new EncryptionKeys();
     EncryptionKey encryptionKey = encryptionKeys.get(apiKey);
     byte[] iv = new byte[12];
     new SecureRandom().nextBytes(iv);
