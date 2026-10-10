@@ -242,8 +242,7 @@ public class TestDecisionModel {
       assertEquals("/compatible-mode/v1/systemone", request.getPath());
       assertEquals("Bearer test-api-key", request.getHeader("Authorization"));
       assertEquals(
-          "java-sdk/" + Version.version + "/decision",
-          request.getHeader("x-dashscope-sdk-client"));
+          "java-sdk/" + Version.version + "/decision", request.getHeader("x-dashscope-sdk-client"));
       JsonObject body = JsonUtils.parse(request.getBody().readUtf8());
       assertEquals("decision-model-preview", body.get("model").getAsString());
       assertEquals("T-1001", body.getAsJsonObject("state").get("ticket_id").getAsString());
