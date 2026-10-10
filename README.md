@@ -179,10 +179,10 @@ The `call` method accepts a `GenerationParam`, and returns a `GenerationResult`,
 The decision model answers a batch of multiple-choice (choice), yes/no (noul) and ordered-scale (score) questions against a given business state, see the [Decision Model API document](https://platform.qianwenai.com/docs/api-reference/decision-model-api).
 
 ```java
-import com.alibaba.dashscope.decision_model.DecisionModel;
-import com.alibaba.dashscope.decision_model.DecisionModelParam;
-import com.alibaba.dashscope.decision_model.DecisionModelResult;
-import com.alibaba.dashscope.decision_model.DecisionQuestion;
+import com.alibaba.dashscope.decision.DecisionModel;
+import com.alibaba.dashscope.decision.DecisionModelParam;
+import com.alibaba.dashscope.decision.DecisionModelResult;
+import com.alibaba.dashscope.decision.DecisionQuestion;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;

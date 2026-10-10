@@ -1,9 +1,9 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 
-import com.alibaba.dashscope.decision_model.DecisionModel;
-import com.alibaba.dashscope.decision_model.DecisionModelParam;
-import com.alibaba.dashscope.decision_model.DecisionModelResult;
-import com.alibaba.dashscope.decision_model.DecisionQuestion;
+import com.alibaba.dashscope.decision.DecisionModel;
+import com.alibaba.dashscope.decision.DecisionModelParam;
+import com.alibaba.dashscope.decision.DecisionModelResult;
+import com.alibaba.dashscope.decision.DecisionQuestion;
 import com.alibaba.dashscope.utils.JsonUtils;
 import java.util.Arrays;
 import java.util.HashMap;

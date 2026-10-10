@@ -1,5 +1,5 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
-package com.alibaba.dashscope.decision_model;
+package com.alibaba.dashscope.decision;
 
 import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
@@ -32,7 +32,7 @@ public final class DecisionModel {
         .httpMethod(HttpMethod.POST)
         .streamingMode(StreamingMode.NONE)
         .path("systemone")
-        .module("decision_model")
+        .module("decision")
         .baseHttpUrl(
             System.getenv().getOrDefault(Constants.DASHSCOPE_HTTP_BASE_URL_ENV, DEFAULT_BASE_URL))
         .build();

@@ -179,10 +179,10 @@ public class Main {
 决策模型（Decision Model）针对给定的业务状态，批量回答多选一（choice）、是否判断（noul）、有序量表（score）三类问题，详见[决策模型 API 文档](https://platform.qianwenai.com/docs/api-reference/decision-model-api)。
 
 ```java
-import com.alibaba.dashscope.decision_model.DecisionModel;
-import com.alibaba.dashscope.decision_model.DecisionModelParam;
-import com.alibaba.dashscope.decision_model.DecisionModelResult;
-import com.alibaba.dashscope.decision_model.DecisionQuestion;
+import com.alibaba.dashscope.decision.DecisionModel;
+import com.alibaba.dashscope.decision.DecisionModelParam;
+import com.alibaba.dashscope.decision.DecisionModelResult;
+import com.alibaba.dashscope.decision.DecisionQuestion;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;

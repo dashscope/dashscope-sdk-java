@@ -8,11 +8,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.common.DashScopeResult;
-import com.alibaba.dashscope.decision_model.DecisionAnswer;
-import com.alibaba.dashscope.decision_model.DecisionModel;
-import com.alibaba.dashscope.decision_model.DecisionModelParam;
-import com.alibaba.dashscope.decision_model.DecisionModelResult;
-import com.alibaba.dashscope.decision_model.DecisionQuestion;
+import com.alibaba.dashscope.decision.DecisionAnswer;
+import com.alibaba.dashscope.decision.DecisionModel;
+import com.alibaba.dashscope.decision.DecisionModelParam;
+import com.alibaba.dashscope.decision.DecisionModelResult;
+import com.alibaba.dashscope.decision.DecisionQuestion;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.protocol.NetworkResponse;
@@ -242,7 +242,7 @@ public class TestDecisionModel {
       assertEquals("/compatible-mode/v1/systemone", request.getPath());
       assertEquals("Bearer test-api-key", request.getHeader("Authorization"));
       assertEquals(
-          "java-sdk/" + Version.version + "/decision_model",
+          "java-sdk/" + Version.version + "/decision",
           request.getHeader("x-dashscope-sdk-client"));
       JsonObject body = JsonUtils.parse(request.getBody().readUtf8());
       assertEquals("decision-model-preview", body.get("model").getAsString());

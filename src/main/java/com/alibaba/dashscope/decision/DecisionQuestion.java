@@ -1,5 +1,5 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
-package com.alibaba.dashscope.decision_model;
+package com.alibaba.dashscope.decision;
 
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;

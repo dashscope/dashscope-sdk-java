@@ -1,5 +1,5 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
-package com.alibaba.dashscope.decision_model;
+package com.alibaba.dashscope.decision;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
