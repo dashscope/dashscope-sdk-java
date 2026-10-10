@@ -173,3 +173,63 @@ public class Main {
 ```
 
 The `call` method accepts a `GenerationParam`, and returns a `GenerationResult`, you can also catch the exception with a try-catch block.
+
+### Decision Model
+
+The decision model answers a batch of multiple-choice (choice), yes/no (noul) and ordered-scale (score) questions against a given business state, see the [Decision Model API document](https://platform.qianwenai.com/docs/api-reference/decision-model-api).
+
+```java
+import com.alibaba.dashscope.decision_model.DecisionModel;
+import com.alibaba.dashscope.decision_model.DecisionModelParam;
+import com.alibaba.dashscope.decision_model.DecisionModelResult;
+import com.alibaba.dashscope.decision_model.DecisionQuestion;
+import com.alibaba.dashscope.exception.ApiException;
+import com.alibaba.dashscope.exception.InputRequiredException;
+import com.alibaba.dashscope.exception.NoApiKeyException;
+import com.alibaba.dashscope.utils.JsonUtils;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+public class Main {
+
+  public static void main(String[] args) {
+    // The business state.
+    Map<String, Object> state = new HashMap<>();
+    state.put("ticket_id", "T-1001");
+    state.put("content", "订单支付后超过 24 小时仍未到账，用户无法继续使用核心服务，要求立即处理。");
+
+    // The questions.
+    Map<String, String> options = new LinkedHashMap<>();
+    options.put("billing", "支付、退款和账单问题");
+    options.put("technical", "产品故障和集成问题");
+    List<String> levels = Arrays.asList(
+        "轻微问题，不影响功能",
+        "部分功能受影响，但存在替代方案",
+        "核心功能不可用，没有替代方案",
+        "造成严重业务或安全影响");
+    Map<String, DecisionQuestion> questions = new LinkedHashMap<>();
+    questions.put("department", DecisionQuestion.choice("应该由哪个团队处理？", options));
+    questions.put("escalate", DecisionQuestion.noul("是否需要立即通知值班人员？"));
+    questions.put("severity", DecisionQuestion.score("这个问题有多严重？", levels));
+
+    DecisionModelParam param = DecisionModelParam.builder()
+        .model(DecisionModelParam.Models.DECISION_MODEL_PREVIEW)
+        .state(state)
+        .questions(questions)
+        .build();
+
+    try {
+      DecisionModel decisionModel = new DecisionModel();
+      DecisionModelResult result = decisionModel.call(param);
+      System.out.println(JsonUtils.toJson(result));
+    } catch (ApiException | NoApiKeyException | InputRequiredException e) {
+      System.err.println("An error occurred: " + e.getMessage());
+    }
+  }
+}
+```
+
+The `call` method accepts a `DecisionModelParam`, and returns a `DecisionModelResult` whose `answers` are keyed by question id. Streaming is not supported. The API key is read from the `DASHSCOPE_API_KEY` environment variable by default, or set explicitly with `apiKey(...)`; the request url defaults to `https://maas.qianwenaiapi.com/compatible-mode/v1/systemone`, override it with `new DecisionModel(baseUrl)` or the `DASHSCOPE_HTTP_BASE_URL` environment variable.
