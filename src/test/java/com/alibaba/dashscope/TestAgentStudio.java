@@ -33,6 +33,7 @@ import com.alibaba.dashscope.agentstudio.param.CredentialUpdateParam;
 import com.alibaba.dashscope.agentstudio.param.EnvironmentCreateParam;
 import com.alibaba.dashscope.agentstudio.param.EnvironmentListParam;
 import com.alibaba.dashscope.agentstudio.param.FileListParam;
+import com.alibaba.dashscope.agentstudio.param.SessionAgent;
 import com.alibaba.dashscope.agentstudio.param.SessionCreateParam;
 import com.alibaba.dashscope.agentstudio.param.SessionEventListParam;
 import com.alibaba.dashscope.agentstudio.param.SessionListParam;
@@ -50,6 +51,7 @@ import com.alibaba.dashscope.agentstudio.resource.Vaults;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -59,6 +61,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -288,7 +292,11 @@ public class TestAgentStudio {
     enqueue("session_response");
     Session session =
         new Sessions(null, null, null)
-            .create(SessionCreateParam.builder().agent("agent_xyz").title("Test Session").build());
+            .create(
+                SessionCreateParam.builder()
+                    .agent(SessionAgent.ofString("agent_xyz"))
+                    .title("Test Session")
+                    .build());
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("POST", req.getMethod());
     assertTrue(req.getPath().endsWith("/sessions"));
@@ -309,7 +317,7 @@ public class TestAgentStudio {
     new Sessions(null, null, null)
         .create(
             SessionCreateParam.builder()
-                .agent("agent_xyz")
+                .agent(SessionAgent.ofString("agent_xyz"))
                 .vaultIds(Arrays.asList("vlt_x"))
                 .metadata(Collections.singletonMap("biz_ticket_id", "1234"))
                 .build());
@@ -323,9 +331,127 @@ public class TestAgentStudio {
 
     // Omitted vault_ids must not produce a null vault_ids in the body.
     enqueue("session_response");
-    new Sessions(null, null, null).create(SessionCreateParam.builder().agent("agent_xyz").build());
+    new Sessions(null, null, null)
+        .create(SessionCreateParam.builder().agent(SessionAgent.ofString("agent_xyz")).build());
     JsonObject body2 = JsonUtils.parse(mockServer.takeRequest().getBody().readUtf8());
     assertFalse(body2.has("vault_ids"));
+  }
+
+  @Test
+  public void testSessionCreateWithAgentOverride() throws Exception {
+    // agent accepts an override object (type=agent_with_overrides) in
+    // addition to the Agent ID string; environment_variables / mcp_configs
+    // are new top-level fields. Omitted optional fields are not sent.
+    enqueue("session_response");
+    Map<String, Object> agent = new HashMap<>();
+    agent.put("type", "agent_with_overrides");
+    agent.put("id", "agent_xxx");
+    agent.put("version", 3);
+    agent.put("system", "你是此 Session 专用的助手。");
+    agent.put("tools", Collections.emptyList());
+    Map<String, Object> mcpServer = new HashMap<>();
+    mcpServer.put("type", "official");
+    mcpServer.put("name", "weather");
+    agent.put("mcp_servers", Collections.singletonList(mcpServer));
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put("X-Tenant-Id", "demo");
+    Map<String, Object> mcpConfig = new HashMap<>();
+    mcpConfig.put("mcp_server_name", "weather");
+    mcpConfig.put("headers", headers);
+
+    new Sessions(null, null, null)
+        .create(
+            SessionCreateParam.builder()
+                .agent(SessionAgent.ofOverride(agent))
+                .title("项目分析")
+                .environmentVariables(Collections.singletonMap("LANG", "zh_CN.UTF-8"))
+                .mcpConfigs(Collections.singletonList(mcpConfig))
+                .build());
+    JsonObject body = JsonUtils.parse(mockServer.takeRequest().getBody().readUtf8());
+    assertTrue(body.has("agent"));
+    assertEquals("agent_with_overrides", body.getAsJsonObject("agent").get("type").getAsString());
+    assertEquals("agent_xxx", body.getAsJsonObject("agent").get("id").getAsString());
+    assertTrue(body.getAsJsonObject("agent").get("tools").isJsonArray());
+    assertEquals(
+        "zh_CN.UTF-8", body.getAsJsonObject("environment_variables").get("LANG").getAsString());
+    assertEquals(
+        "demo",
+        body.getAsJsonArray("mcp_configs")
+            .get(0)
+            .getAsJsonObject()
+            .getAsJsonObject("headers")
+            .get("X-Tenant-Id")
+            .getAsString());
+    // Omitted fields are absent — never sent as null.
+    assertFalse(body.has("resources"));
+    assertFalse(body.has("vault_ids"));
+    assertFalse(body.has("metadata"));
+  }
+
+  @Test
+  public void testSessionUpdateAgentPatchAndClear() throws Exception {
+    // update: agent patch sub-fields — null revokes the override (must be
+    // preserved as JSON null, not dropped), "" / [] override to empty, an
+    // omitted sub-field stays absent. Top-level [] / {} explicitly clear.
+    enqueue("session_response");
+    Map<String, Object> agentPatch = new HashMap<>();
+    agentPatch.put("system", "");
+    agentPatch.put("tools", null);
+    agentPatch.put("skills", Collections.emptyList());
+
+    new Sessions(null, null, null)
+        .update(
+            "sess_abc123",
+            SessionUpdateParam.builder()
+                .title("更新后")
+                .vaultIds(Collections.emptyList())
+                .environmentVariables(new HashMap<String, String>())
+                .mcpConfigs(Collections.emptyList())
+                .agent(SessionAgent.ofOverride(agentPatch))
+                .build());
+    JsonObject body = JsonUtils.parse(mockServer.takeRequest().getBody().readUtf8());
+    // Top-level [] / {} clear (sent, not null, not omitted).
+    assertTrue(body.has("vault_ids"));
+    assertTrue(body.getAsJsonArray("vault_ids").isEmpty());
+    assertTrue(body.has("environment_variables"));
+    assertTrue(body.getAsJsonObject("environment_variables").entrySet().isEmpty());
+    assertTrue(body.has("mcp_configs"));
+    assertTrue(body.getAsJsonArray("mcp_configs").isEmpty());
+    // Agent patch: null preserved (revoke), "" preserved (empty prompt),
+    // [] preserved (empty), omitted sub-field absent (keep).
+    JsonObject agent = body.getAsJsonObject("agent");
+    assertTrue(agent.has("tools"));
+    assertTrue(agent.get("tools").isJsonNull());
+    assertEquals("", agent.get("system").getAsString());
+    assertTrue(agent.getAsJsonArray("skills").isEmpty());
+    assertFalse(agent.has("mcp_servers"));
+  }
+
+  @Test
+  public void testSessionAgentUnionSerialization() {
+    // string form -> JSON string primitive
+    JsonElement s = SessionAgent.ofString("agent_01").toJsonElement();
+    assertTrue(s.isJsonPrimitive());
+    assertEquals("agent_01", s.getAsString());
+
+    // override form preserves null sub-fields (revoke override) and [] / ""
+    Map<String, Object> patch = new HashMap<>();
+    patch.put("system", "");
+    patch.put("tools", null);
+    patch.put("skills", Collections.emptyList());
+    JsonElement o = SessionAgent.ofOverride(patch).toJsonElement();
+    assertTrue(o.isJsonObject());
+    assertTrue(o.getAsJsonObject().get("tools").isJsonNull());
+    assertEquals("", o.getAsJsonObject().get("system").getAsString());
+    assertTrue(o.getAsJsonObject().getAsJsonArray("skills").isEmpty());
+
+    // static toJsonElement accepts String / Map / SessionAgent
+    assertEquals("agent_01", SessionAgent.toJsonElement("agent_01").getAsString());
+    assertTrue(SessionAgent.toJsonElement(patch).isJsonObject());
+    // unsupported type -> IllegalArgumentException
+    assertThrows(IllegalArgumentException.class, () -> SessionAgent.toJsonElement(42));
+    assertThrows(IllegalArgumentException.class, () -> SessionAgent.toJsonElement(null));
   }
 
   @Test

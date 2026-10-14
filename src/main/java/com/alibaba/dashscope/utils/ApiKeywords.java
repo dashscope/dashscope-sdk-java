@@ -93,6 +93,8 @@ public class ApiKeywords {
 
   public static final String INPUT_TOKENS = "input_tokens";
 
+  public static final String TOTAL_TOKENS = "total_tokens";
+
   public static final String ERROR = "error";
 
   public static final String EVENT = "event";

@@ -16,17 +16,21 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 public class SessionCreateParam extends FlattenHalfDuplexParamBase {
-  @NonNull private String agent;
+  /** Agent ID string, override Map, or SessionAgent. See {@link SessionAgent}. */
+  @NonNull private Object agent;
+
   @Default private String environmentId = null;
   @Default private String title = null;
   @Default private List<Map<String, Object>> resources = null;
   @Default private List<String> vaultIds = null;
+  @Default private Map<String, String> environmentVariables = null;
+  @Default private List<Map<String, Object>> mcpConfigs = null;
   @Default private Map<String, String> metadata = null;
 
   @Override
   public JsonObject getHttpBody() {
     JsonObject body = new JsonObject();
-    body.addProperty("agent", agent);
+    body.add("agent", SessionAgent.toJsonElement(agent));
     if (environmentId != null) {
       body.addProperty("environment_id", environmentId);
     }
@@ -38,6 +42,12 @@ public class SessionCreateParam extends FlattenHalfDuplexParamBase {
     }
     if (vaultIds != null && !vaultIds.isEmpty()) {
       body.add("vault_ids", JsonUtils.toJsonElement(vaultIds));
+    }
+    if (environmentVariables != null && !environmentVariables.isEmpty()) {
+      body.add("environment_variables", JsonUtils.toJsonElement(environmentVariables));
+    }
+    if (mcpConfigs != null && !mcpConfigs.isEmpty()) {
+      body.add("mcp_configs", JsonUtils.toJsonElement(mcpConfigs));
     }
     if (metadata != null && !metadata.isEmpty()) {
       body.add("metadata", JsonUtils.toJsonElement(metadata));
