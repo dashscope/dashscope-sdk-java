@@ -3,6 +3,7 @@ package com.alibaba.dashscope.decision;
 
 import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import java.util.Map;
@@ -16,9 +17,10 @@ public class DecisionModelResult {
   @SerializedName("request_id")
   private String requestId;
 
-  /** The answers, key is the question id. */
+  /** The answers, key is the caller-defined question id from the request. */
   private Map<String, DecisionAnswer> answers;
 
+  /** Metering info. The doc currently defines only {@code input_tokens}. */
   private DecisionModelUsage usage;
 
   /** The server side latency in milliseconds. */
@@ -26,6 +28,24 @@ public class DecisionModelResult {
   private Double latencyMs;
 
   public static DecisionModelResult fromDashScopeResult(DashScopeResult result) {
-    return JsonUtils.fromJsonObject((JsonObject) result.getOutput(), DecisionModelResult.class);
+    if (result == null) {
+      throw new IllegalArgumentException("DashScopeResult must not be null");
+    }
+    Object output = result.getOutput();
+    if (output == null) {
+      throw new IllegalStateException(
+          "Decision model response has no output payload; request_id="
+              + (result.getRequestId() == null ? "<none>" : result.getRequestId()));
+    }
+    if (!(output instanceof JsonObject)) {
+      throw new IllegalStateException(
+          "Decision model response output is not a JSON object: " + output.getClass().getName());
+    }
+    JsonElement element = (JsonObject) output;
+    DecisionModelResult parsed = JsonUtils.fromJsonObject(element, DecisionModelResult.class);
+    if (parsed != null && parsed.getRequestId() == null && result.getRequestId() != null) {
+      parsed.setRequestId(result.getRequestId());
+    }
+    return parsed;
   }
 }

@@ -4,6 +4,7 @@ package com.alibaba.dashscope;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -20,6 +21,7 @@ import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -108,6 +110,57 @@ public class TestDecisionModel {
     assertEquals("轻微问题，不影响功能", severity.getAsJsonArray("criteria").get(0).getAsString());
   }
 
+  /** Doc example B: state is a bare String, not an object. */
+  @Test
+  public void testHttpBodyWithStringState() {
+    Map<String, DecisionQuestion> questions = new LinkedHashMap<>();
+    questions.put("refund", DecisionQuestion.noul("是否在索要退款？"));
+    DecisionModelParam param =
+        DecisionModelParam.builder()
+            .model(DecisionModelParam.Models.DECISION_MODEL_PREVIEW)
+            .state("这段评论是否在索要退款？")
+            .questions(questions)
+            .build();
+    JsonObject body = param.getHttpBody();
+    assertTrue(body.get("state").isJsonPrimitive());
+    assertEquals("这段评论是否在索要退款？", body.get("state").getAsString());
+  }
+
+  /** Doc allows an Array state as well. */
+  @Test
+  public void testHttpBodyWithListState() {
+    Map<String, DecisionQuestion> questions = new LinkedHashMap<>();
+    questions.put("q", DecisionQuestion.noul("ok?"));
+    DecisionModelParam param =
+        DecisionModelParam.builder()
+            .model(DecisionModelParam.Models.DECISION_MODEL_PREVIEW)
+            .state(Arrays.asList("turn-1", "turn-2"))
+            .questions(questions)
+            .build();
+    JsonObject body = param.getHttpBody();
+    assertTrue(body.get("state").isJsonArray());
+    assertEquals(2, body.getAsJsonArray("state").size());
+  }
+
+  /** Noul questions accept optional {"true": ..., "false": ...} criteria. */
+  @Test
+  public void testNoulWithTrueFalseCriteria() {
+    DecisionQuestion q = DecisionQuestion.noul("是否在索要退款？", "用户在要求退款", "用户没有要求退款");
+    Map<String, DecisionQuestion> questions = new LinkedHashMap<>();
+    questions.put("refund", q);
+    DecisionModelParam param =
+        DecisionModelParam.builder()
+            .model(DecisionModelParam.Models.DECISION_MODEL_PREVIEW)
+            .state("...")
+            .questions(questions)
+            .build();
+    JsonObject body = param.getHttpBody();
+    JsonObject refund = body.getAsJsonObject("questions").getAsJsonObject("refund");
+    assertEquals("noul", refund.get("type").getAsString());
+    assertEquals("用户在要求退款", refund.getAsJsonObject("criteria").get("true").getAsString());
+    assertEquals("用户没有要求退款", refund.getAsJsonObject("criteria").get("false").getAsString());
+  }
+
   @Test
   public void testValidate() throws InputRequiredException {
     Map<String, DecisionQuestion> oneQuestion = new HashMap<>();
@@ -165,6 +218,80 @@ public class TestDecisionModel {
   }
 
   @Test
+  public void testValidateChoiceOptionCount() {
+    Map<String, String> tooMany = new LinkedHashMap<>();
+    for (int i = 0; i <= DecisionModelParam.MAX_CHOICE_OPTIONS; i++) {
+      tooMany.put("opt" + i, "desc" + i);
+    }
+    Map<String, DecisionQuestion> questions = new HashMap<>();
+    questions.put("q", DecisionQuestion.choice("pick", tooMany));
+    DecisionModelParam param =
+        DecisionModelParam.builder()
+            .model(DecisionModelParam.Models.DECISION_MODEL_PREVIEW)
+            .state("x")
+            .questions(questions)
+            .build();
+    assertThrows(InputRequiredException.class, param::validate);
+  }
+
+  @Test
+  public void testValidateScoreLevelCount() {
+    Map<String, DecisionQuestion> tooFew = new HashMap<>();
+    tooFew.put("q", DecisionQuestion.score("rate", Collections.singletonList("only-one")));
+    DecisionModelParam tooFewParam =
+        DecisionModelParam.builder()
+            .model(DecisionModelParam.Models.DECISION_MODEL_PREVIEW)
+            .state("x")
+            .questions(tooFew)
+            .build();
+    assertThrows(InputRequiredException.class, tooFewParam::validate);
+
+    List<String> tooMany = new ArrayList<>();
+    for (int i = 0; i <= DecisionModelParam.MAX_SCORE_LEVELS; i++) {
+      tooMany.add("level" + i);
+    }
+    Map<String, DecisionQuestion> manyQs = new HashMap<>();
+    manyQs.put("q", DecisionQuestion.score("rate", tooMany));
+    DecisionModelParam tooManyParam =
+        DecisionModelParam.builder()
+            .model(DecisionModelParam.Models.DECISION_MODEL_PREVIEW)
+            .state("x")
+            .questions(manyQs)
+            .build();
+    assertThrows(InputRequiredException.class, tooManyParam::validate);
+  }
+
+  @Test
+  public void testValidateCriteriaShapeMismatch() {
+    // score question given a Map instead of a List
+    Map<String, DecisionQuestion> qs = new HashMap<>();
+    Map<String, String> wrongShape = new LinkedHashMap<>();
+    wrongShape.put("0", "low");
+    wrongShape.put("1", "high");
+    qs.put("q", DecisionQuestion.builder().type("score").instructions("rate").criteria(wrongShape).build());
+    DecisionModelParam param =
+        DecisionModelParam.builder()
+            .model(DecisionModelParam.Models.DECISION_MODEL_PREVIEW)
+            .state("x")
+            .questions(qs)
+            .build();
+    assertThrows(InputRequiredException.class, param::validate);
+  }
+
+  @Test
+  public void testValidateInstructionsOptional() throws InputRequiredException {
+    // Doc says instructions is optional; a null instructions must still validate.
+    Map<String, DecisionQuestion> qs = new HashMap<>();
+    qs.put("q", DecisionQuestion.noul(null));
+    DecisionModelParam.builder()
+        .model(DecisionModelParam.Models.DECISION_MODEL_PREVIEW)
+        .state("x")
+        .questions(qs)
+        .build()
+        .validate();
+  }
+
+  @Test
   public void testFromDashScopeResult() throws Exception {
     NetworkResponse response =
         NetworkResponse.builder()
@@ -191,6 +318,9 @@ public class TestDecisionModel {
     DecisionAnswer escalate = result.getAnswers().get("escalate");
     assertEquals("noul", escalate.getType());
     assertEquals(0.99, escalate.getNoul(), 1e-6);
+    // doc example omits confidence/probabilities for noul
+    assertNull(escalate.getConfidence());
+    assertNull(escalate.getProbabilities());
 
     DecisionAnswer severity = result.getAnswers().get("severity");
     assertEquals("score", severity.getType());
@@ -200,10 +330,42 @@ public class TestDecisionModel {
   }
 
   @Test
+  public void testFromDashScopeResultRejectsNull() {
+    assertThrows(IllegalArgumentException.class, () -> DecisionModelResult.fromDashScopeResult(null));
+  }
+
+  @Test
+  public void testResolveBaseUrl() {
+    assertEquals(
+        "https://ws-abc.cn-beijing.maas.aliyuncs.com/compatible-mode/v1",
+        DecisionModel.resolveBaseUrl("ws-abc", "cn-beijing"));
+    assertEquals(
+        "https://ws-abc.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",
+        DecisionModel.resolveBaseUrl("ws-abc", DecisionModel.Regions.AP_SOUTHEAST_1));
+  }
+
+  @Test
+  public void testResolveBaseUrlRequiresWorkspace() {
+    // Only reliable when the environment does not already provide an override.
+    org.junit.jupiter.api.Assumptions.assumeTrue(System.getenv(DecisionModel.ENV_WORKSPACE) == null);
+    org.junit.jupiter.api.Assumptions.assumeTrue(System.getenv(DecisionModel.ENV_BASE_URL) == null);
+    assertThrows(IllegalArgumentException.class, () -> DecisionModel.resolveBaseUrl(null, null));
+    assertThrows(IllegalArgumentException.class, () -> DecisionModel.resolveBaseUrl("", ""));
+  }
+
+  @Test
+  public void testWithBaseUrlRejectsEmpty() {
+    assertThrows(IllegalArgumentException.class, () -> DecisionModel.withBaseUrl(null));
+    assertThrows(IllegalArgumentException.class, () -> DecisionModel.withBaseUrl(""));
+  }
+
+  @Test
   public void testRealCall() throws Exception {
     String apiKey = System.getenv(Constants.DASHSCOPE_API_KEY_ENV);
+    String workspace = System.getenv(DecisionModel.ENV_WORKSPACE);
     org.junit.jupiter.api.Assumptions.assumeTrue(apiKey != null && !apiKey.isEmpty());
-    DecisionModel decisionModel = new DecisionModel();
+    org.junit.jupiter.api.Assumptions.assumeTrue(workspace != null && !workspace.isEmpty());
+    DecisionModel decisionModel = new DecisionModel(workspace);
     DecisionModelResult result = decisionModel.call(buildDocParam());
     assertNotNull(result.getRequestId());
     assertNotNull(result.getAnswers());
@@ -223,7 +385,8 @@ public class TestDecisionModel {
 
       DecisionModelParam param = buildDocParam();
       param.setApiKey("test-api-key");
-      DecisionModel decisionModel = new DecisionModel(server.url("/compatible-mode/v1").toString());
+      DecisionModel decisionModel =
+          DecisionModel.withBaseUrl(server.url("/compatible-mode/v1").toString());
       DecisionModelResult result = decisionModel.call(param);
 
       // response parsing
@@ -270,7 +433,8 @@ public class TestDecisionModel {
 
       DecisionModelParam param = buildDocParam();
       param.setApiKey("test-api-key");
-      DecisionModel decisionModel = new DecisionModel(server.url("/compatible-mode/v1").toString());
+      DecisionModel decisionModel =
+          DecisionModel.withBaseUrl(server.url("/compatible-mode/v1").toString());
 
       ApiException e = assertThrows(ApiException.class, () -> decisionModel.call(param));
       assertEquals(400, e.getStatus().getStatusCode());
