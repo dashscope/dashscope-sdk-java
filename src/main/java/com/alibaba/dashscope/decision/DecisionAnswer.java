@@ -15,8 +15,8 @@ import lombok.NoArgsConstructor;
  *       option name).
  *   <li>{@code noul}: {@link #noul} only — {@link #confidence} and {@link #probabilities} are
  *       {@code null} per the documented example.
- *   <li>{@code score}: {@link #score}, {@link #confidence}, {@link #legend}, {@link
- *       #probabilities} (keyed by stringified level index {@code "0"}, {@code "1"}, ...).
+ *   <li>{@code score}: {@link #score}, {@link #confidence}, {@link #legend}, {@link #probabilities}
+ *       (keyed by stringified level index {@code "0"}, {@code "1"}, ...).
  * </ul>
  */
 @Data

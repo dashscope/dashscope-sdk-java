@@ -268,7 +268,9 @@ public class TestDecisionModel {
     Map<String, String> wrongShape = new LinkedHashMap<>();
     wrongShape.put("0", "low");
     wrongShape.put("1", "high");
-    qs.put("q", DecisionQuestion.builder().type("score").instructions("rate").criteria(wrongShape).build());
+    qs.put(
+        "q",
+        DecisionQuestion.builder().type("score").instructions("rate").criteria(wrongShape).build());
     DecisionModelParam param =
         DecisionModelParam.builder()
             .model(DecisionModelParam.Models.DECISION_MODEL_PREVIEW)
@@ -331,7 +333,8 @@ public class TestDecisionModel {
 
   @Test
   public void testFromDashScopeResultRejectsNull() {
-    assertThrows(IllegalArgumentException.class, () -> DecisionModelResult.fromDashScopeResult(null));
+    assertThrows(
+        IllegalArgumentException.class, () -> DecisionModelResult.fromDashScopeResult(null));
   }
 
   @Test
@@ -347,7 +350,8 @@ public class TestDecisionModel {
   @Test
   public void testResolveBaseUrlRequiresWorkspace() {
     // Only reliable when the environment does not already provide an override.
-    org.junit.jupiter.api.Assumptions.assumeTrue(System.getenv(DecisionModel.ENV_WORKSPACE) == null);
+    org.junit.jupiter.api.Assumptions.assumeTrue(
+        System.getenv(DecisionModel.ENV_WORKSPACE) == null);
     org.junit.jupiter.api.Assumptions.assumeTrue(System.getenv(DecisionModel.ENV_BASE_URL) == null);
     assertThrows(IllegalArgumentException.class, () -> DecisionModel.resolveBaseUrl(null, null));
     assertThrows(IllegalArgumentException.class, () -> DecisionModel.resolveBaseUrl("", ""));
