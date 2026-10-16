@@ -12,8 +12,9 @@ import lombok.experimental.SuperBuilder;
  * Request body for {@code POST /memory_stores/{store_id}/memories/{memory_id}}.
  *
  * <p>Mutate {@code content}, rename via {@code path}, or both (at least one is required
- * server-side). Passing the current {@code contentSha256} (from the retrieved memory) enables
- * optimistic concurrency — a mismatch returns 409 {@code memory_precondition_failed_error}.
+ * server-side). {@code precondition} is the optimistic lock: the content sha from the retrieved
+ * memory, wrapped into the documented {@code {"type": "content_sha256", ...}} object on the wire —
+ * a mismatch returns 409 {@code memory_precondition_failed_error}.
  */
 @Data
 @SuperBuilder
@@ -21,7 +22,7 @@ import lombok.experimental.SuperBuilder;
 public class MemoryUpdateParam extends FlattenHalfDuplexParamBase {
   @Default private String path = null;
   @Default private String content = null;
-  @Default private String contentSha256 = null;
+  @Default private String precondition = null;
 
   @Override
   public JsonObject getHttpBody() {
@@ -32,8 +33,11 @@ public class MemoryUpdateParam extends FlattenHalfDuplexParamBase {
     if (content != null) {
       body.addProperty("content", content);
     }
-    if (contentSha256 != null) {
-      body.addProperty("content_sha256", contentSha256);
+    if (precondition != null) {
+      JsonObject preconditionObject = new JsonObject();
+      preconditionObject.addProperty("type", "content_sha256");
+      preconditionObject.addProperty("content_sha256", precondition);
+      body.add("precondition", preconditionObject);
     }
     addExtraBody(body);
     return body;

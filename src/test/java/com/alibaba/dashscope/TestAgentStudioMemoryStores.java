@@ -192,13 +192,16 @@ public class TestAgentStudioMemoryStores {
         .update(
             "memstore_01Hx",
             "mem_01Hy",
-            MemoryUpdateParam.builder().content("CORRECTED").contentSha256("abc123").build());
+            MemoryUpdateParam.builder().content("CORRECTED").precondition("abc123").build());
     RecordedRequest request = mockServer.takeRequest();
     JsonObject body = JsonUtils.parse(request.getBody().readUtf8());
     assertEquals("POST", request.getMethod());
     assertTrue(request.getPath().endsWith("/memory_stores/memstore_01Hx/memories/mem_01Hy"));
     assertEquals("CORRECTED", body.get("content").getAsString());
-    assertEquals("abc123", body.get("content_sha256").getAsString());
+    // The sha wraps into the documented precondition object.
+    assertEquals("content_sha256", body.getAsJsonObject("precondition").get("type").getAsString());
+    assertEquals(
+        "abc123", body.getAsJsonObject("precondition").get("content_sha256").getAsString());
   }
 
   @Test

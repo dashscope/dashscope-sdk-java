@@ -59,7 +59,7 @@ public class AgentStudioMemoryStores {
         System.out.printf("%s -> %s%n", item.getPath(), item.getContent());
       }
 
-      // 4. Update with the optimistic lock (contentSha256 from step 2).
+      // 4. Update with the optimistic lock (precondition = sha from step 2).
       Memory updated =
           client
               .memoryStores()
@@ -69,7 +69,7 @@ public class AgentStudioMemoryStores {
                   memory.getId(),
                   MemoryUpdateParam.builder()
                       .content("All reports use GAAP formatting. ISO-8601 dates.")
-                      .contentSha256(memory.getContentSha256())
+                      .precondition(memory.getContentSha256())
                       .build());
       System.out.printf("updated sha: %s%n", updated.getContentSha256());
 
