@@ -20,6 +20,10 @@ public class CursorPage<T> extends FlattenResultBase implements Iterable<T> {
   @SerializedName("next_page")
   private String nextPage;
 
+  /** Directory prefixes of a tree-style listing (memory listings only, null elsewhere). */
+  @SerializedName("prefixes")
+  private List<String> prefixes;
+
   @EqualsAndHashCode.Exclude
   private transient Function<String, CompletableFuture<CursorPage<T>>> fetchNext;
 
