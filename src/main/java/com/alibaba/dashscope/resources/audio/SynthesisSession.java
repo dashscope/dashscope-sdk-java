@@ -398,6 +398,8 @@ public final class SynthesisSession implements AutoCloseable {
           if (TaskProtocol.TASK_FAILED.equals(event.getEvent())) {
             terminal = true;
             terminalFailure = failTask(event);
+            // §6 close 时序: lastResponse 已由 recordText 记录 → close → 重抛.
+            close();
             throw terminalFailure;
           }
           delivered.add(event);
@@ -413,10 +415,12 @@ public final class SynthesisSession implements AutoCloseable {
         case CLOSED:
           terminal = true;
           terminalFailure = new ApiConnectionException("websocket closed before task-finished", null);
+          close();
           throw terminalFailure;
         case FAILURE:
           terminal = true;
           terminalFailure = event.getFailure();
+          close();
           throw terminalFailure;
         default:
           break;

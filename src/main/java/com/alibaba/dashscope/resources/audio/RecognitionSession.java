@@ -390,6 +390,8 @@ public final class RecognitionSession implements AutoCloseable {
           if (TaskProtocol.TASK_FAILED.equals(event.getEvent())) {
             terminal = true;
             terminalFailure = failTask(event);
+            // §6 close 时序: record (recordText above) → close → rethrow.
+            close();
             throw terminalFailure;
           }
           delivered.add(event);
@@ -411,10 +413,12 @@ public final class RecognitionSession implements AutoCloseable {
         case CLOSED:
           terminal = true;
           terminalFailure = new ApiConnectionException("websocket closed before task-finished", null);
+          close();
           throw terminalFailure;
         case FAILURE:
           terminal = true;
           terminalFailure = event.getFailure();
+          close();
           throw terminalFailure;
         default:
           break;

@@ -76,6 +76,7 @@ class AsrMockTest {
   /** Server-side ws endpoint reacting to run/finish-task. */
   private static final class AsrServerSocket extends WebSocketListener {
     final CountDownLatch opened = new CountDownLatch(1);
+    final CountDownLatch closed = new CountDownLatch(1);
     final AtomicReference<WebSocket> socket = new AtomicReference<>();
     final BlockingQueue<JsonNode> texts = new LinkedBlockingQueue<>();
     final BlockingQueue<ByteString> binaries = new LinkedBlockingQueue<>();
@@ -116,6 +117,7 @@ class AsrMockTest {
     @Override
     public void onClosing(WebSocket webSocket, int code, String reason) {
       webSocket.close(code, reason);
+      closed.countDown();
     }
 
     void awaitOpen() throws InterruptedException {
@@ -298,6 +300,8 @@ class AsrMockTest {
       assertEquals("decode failed", e.getMessage());
       assertEquals(200, e.getStatusCode());
       assertEquals(java.util.Arrays.asList("你"), texts);
+      // §6 close 时序: the socket is closed before the failure reaches the caller.
+      assertTrue(socket.closed.await(10, TimeUnit.SECONDS), "socket not closed after task-failed");
       // No task-finished was ever produced: the failure is the terminal truth.
       List<String> events = new ArrayList<>();
       assertThrows(
