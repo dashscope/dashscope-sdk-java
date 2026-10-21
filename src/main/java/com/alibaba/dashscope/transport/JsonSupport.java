@@ -1,7 +1,8 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.transport;
 
-import com.alibaba.dashscope.errors.SdkException;
+import com.alibaba.dashscope.common.PublicErrorCode;
+import com.alibaba.dashscope.errors.Errors;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -33,8 +34,17 @@ public final class JsonSupport {
     try {
       return MAPPER.readTree(text);
     } catch (IOException e) {
-      throw new SdkException("failed to parse response JSON: " + e.getMessage(),
-          "sdk.ResponseParseError", null, false, e);
+      // Catalog-sourced, never an ad-hoc code: PublicErrorCode.RESPONSE_ERROR is exactly
+      // "the server returned a response that could not be parsed". Route through the same
+      // Errors factory every other error uses.
+      PublicErrorCode entry = PublicErrorCode.RESPONSE_ERROR;
+      throw Errors.fromStatus(
+          entry.getStatusCode(),
+          entry.getErrorCode(),
+          "failed to parse response JSON: " + e.getMessage(),
+          null,
+          null,
+          null);
     }
   }
 
