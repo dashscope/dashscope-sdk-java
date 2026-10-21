@@ -83,8 +83,15 @@ public final class WsConnection implements AutoCloseable {
     for (Map.Entry<String, String> e : opts.getHeaders().entrySet()) {
       builder.header(e.getKey(), e.getValue());
     }
+    // Shared connections must block forever on read (design §5): idle periods are normal and a
+    // socket read timeout would kill the single demux reader for ALL tasks. okhttp clears
+    // soTimeout on upgrade today; setting it explicitly keeps the guarantee local. Liveness is
+    // the task-level recv timeout on the demux queues, not the socket.
     OkHttpClient wsClient =
-        transport.okhttp().newBuilder().connectTimeout(connectTimeout).build();
+        transport.okhttp().newBuilder()
+            .connectTimeout(connectTimeout)
+            .readTimeout(0, TimeUnit.MILLISECONDS)
+            .build();
     this.socket = wsClient.newWebSocket(builder.build(), new Listener());
     this.reader = new Thread(this::demuxLoop, "dashscope-ws-reader");
     this.reader.setDaemon(true);

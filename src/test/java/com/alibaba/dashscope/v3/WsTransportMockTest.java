@@ -147,6 +147,32 @@ class WsTransportMockTest {
   }
 
   @Test
+  void sharedConnectionSurvivesIdlePeriodBeyondHttpReadTimeout() throws Exception {
+    // Design §5: WsConnection sockets block forever on read; the configured HTTP timeout must
+    // not kill the demux reader during a quiet period (regression: inherited readTimeout).
+    ServerSocket serverSocket = enqueueUpgrade();
+    try (HttpTransport shortTimeout =
+            new HttpTransport(
+                ConfigResolver.resolve(
+                    ClientOptions.builder()
+                        .apiKey("test-key")
+                        .baseUrl(server.url("/").toString())
+                        .wsBaseUrl(server.url("/api-ws/v1/inference").toString())
+                        .timeout(Duration.ofMillis(500))
+                        .build()));
+        WsConnection conn = new WsConnection(
+            shortTimeout, shortTimeout.config().getWsBaseUrl(), "audio", null)) {
+      serverSocket.awaitOpen();
+      TaskChannel handle = conn.attach("task-idle");
+      Thread.sleep(1200);
+      serverSocket.sendEvent("task-idle", "result-generated");
+      TaskEvent event = handle.recv(RECV_TIMEOUT);
+      assertNotNull(event);
+      assertEquals("result-generated", event.getEvent());
+    }
+  }
+
+  @Test
   void concurrentReceiversOnSharedConnection() throws Exception {
     ServerSocket serverSocket = enqueueUpgrade();
     try (WsConnection conn = new WsConnection(
