@@ -6,6 +6,8 @@ import com.alibaba.dashscope.resources.chat.ChatAsyncService;
 import com.alibaba.dashscope.resources.chat.ChatService;
 import com.alibaba.dashscope.resources.embeddings.EmbeddingAsyncService;
 import com.alibaba.dashscope.resources.embeddings.EmbeddingService;
+import com.alibaba.dashscope.resources.multimodal.MultimodalAsyncService;
+import com.alibaba.dashscope.resources.multimodal.MultimodalService;
 import com.alibaba.dashscope.resources.rerank.RerankAsyncService;
 import com.alibaba.dashscope.resources.rerank.RerankService;
 import com.alibaba.dashscope.transport.HttpTransport;
@@ -31,6 +33,7 @@ public final class DashScopeAsyncClient implements AutoCloseable {
   private final ChatAsyncService chat;
   private final EmbeddingAsyncService embeddings;
   private final RerankAsyncService rerank;
+  private final MultimodalAsyncService multimodal;
 
   private DashScopeAsyncClient(
       ClientOptions options, HttpTransport transport, ExecutorService executor, boolean ownsExecutor) {
@@ -41,6 +44,7 @@ public final class DashScopeAsyncClient implements AutoCloseable {
     this.chat = new ChatAsyncService(new ChatService(transport), executor);
     this.embeddings = new EmbeddingAsyncService(new EmbeddingService(transport), executor);
     this.rerank = new RerankAsyncService(new RerankService(transport), executor);
+    this.multimodal = new MultimodalAsyncService(new MultimodalService(transport), executor);
   }
 
   public static Builder builder() {
@@ -57,6 +61,10 @@ public final class DashScopeAsyncClient implements AutoCloseable {
 
   public RerankAsyncService rerank() {
     return rerank;
+  }
+
+  public MultimodalAsyncService multimodal() {
+    return multimodal;
   }
 
   /** Derive a client with extra overrides, sharing this client's pool and executor. */

@@ -35,8 +35,13 @@ public final class UserAgentInterceptor implements Interceptor {
     if (module != null && !module.value.isEmpty()) {
       sdkClient += "/" + module.value;
     }
+    String userAgent = USER_AGENT;
+    RequestTags.UserAgentSuffix suffix = request.tag(RequestTags.UserAgentSuffix.class);
+    if (suffix != null && !suffix.value.isEmpty()) {
+      userAgent += "; " + suffix.value;
+    }
     Request tagged = request.newBuilder()
-        .header("User-Agent", USER_AGENT)
+        .header("User-Agent", userAgent)
         .header(HEADER_SDK_CLIENT, sdkClient)
         .header(HEADER_SDK_SESSION_ID, SdkSession.ID)
         .build();

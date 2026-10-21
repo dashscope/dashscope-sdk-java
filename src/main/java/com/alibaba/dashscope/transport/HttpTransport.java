@@ -88,6 +88,11 @@ public final class HttpTransport implements AutoCloseable {
     return config;
   }
 
+  /** The shared OkHttpClient (same pool + auth/UA/retry interceptors); used by the ws transport. */
+  public OkHttpClient okhttp() {
+    return client;
+  }
+
   /** POST {@code path} (relative to the resolved base URL) with a JSON body. */
   public ResponseEnvelope execute(
       String path, JsonNode body, String module, RequestOptions options) {
@@ -96,11 +101,81 @@ public final class HttpTransport implements AutoCloseable {
     return handleResponse(response, options);
   }
 
+  /** POST with extra request headers (e.g. {@code X-DashScope-Async: enable} for job submit). */
+  public ResponseEnvelope execute(
+      String path, JsonNode body, Map<String, String> extraHeaders, String module,
+      RequestOptions options) {
+    RequestOptions opts = options == null ? RequestOptions.NONE : options;
+    RequestOptions.Builder merged =
+        RequestOptions.builder()
+            .timeout(opts.getTimeout())
+            .maxRetries(opts.getMaxRetries())
+            .apiKey(opts.getApiKey())
+            .workspace(opts.getWorkspace())
+            .headers(opts.getHeaders())
+            .headers(extraHeaders);
+    Request request = buildRequest(path, body, module, merged.build(), false);
+    Response response = send(request, merged.build(), false);
+    return handleResponse(response, merged.build());
+  }
+
+  /** GET {@code path} with query parameters (jobs fetch/cancel/list). */
+  public ResponseEnvelope executeGet(
+      String path, Map<String, String> query, String module, RequestOptions options) {
+    RequestOptions opts = options == null ? RequestOptions.NONE : options;
+    String apiKey = opts.getApiKey() != null ? opts.getApiKey() : config.getApiKey();
+    if (apiKey == null || apiKey.isEmpty()) {
+      throw Errors.fromSdkErrorCode(SdkErrorCode.SDK_INVALID_API_KEY);
+    }
+    String workspace = opts.getWorkspace() != null ? opts.getWorkspace() : config.getWorkspace();
+    StringBuilder url = new StringBuilder(config.getBaseUrl() + path);
+    if (query != null && !query.isEmpty()) {
+      boolean first = true;
+      for (Map.Entry<String, String> e : query.entrySet()) {
+        url.append(first ? '?' : '&');
+        first = false;
+        url.append(java.net.URLEncoder.encode(e.getKey(), java.nio.charset.StandardCharsets.UTF_8))
+            .append('=')
+            .append(
+                java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.UTF_8));
+      }
+    }
+    Request.Builder builder =
+        new Request.Builder()
+            .url(url.toString())
+            .get()
+            .tag(RequestTags.Auth.class, new RequestTags.Auth(apiKey, workspace))
+            .tag(RequestTags.MaxRetries.class, new RequestTags.MaxRetries(
+                opts.getMaxRetries() != null ? opts.getMaxRetries() : config.getMaxRetries()))
+            .header("Accept", "application/json; charset=utf-8");
+    if (module != null && !module.isEmpty()) {
+      builder.tag(RequestTags.Module.class, new RequestTags.Module(module));
+    }
+    for (Map.Entry<String, String> e : opts.getHeaders().entrySet()) {
+      builder.header(e.getKey(), e.getValue());
+    }
+    Response response = send(builder.build(), opts, false);
+    return handleResponse(response, opts);
+  }
+
   /** POST with SSE: returns the open stream. The initial HTTP layer always raises on failure
    * (there is no response object to hand back); in-stream error frames follow raiseOnError. */
   public SseStream executeStream(
       String path, JsonNode body, String module, RequestOptions options) {
+    return executeStream(path, body, module, null, options);
+  }
+
+  /** SSE variant carrying a User-Agent suffix (multimodal incremental_to_full parity). */
+  public SseStream executeStream(
+      String path, JsonNode body, String module, String userAgentSuffix, RequestOptions options) {
     Request request = buildRequest(path, body, module, options, true);
+    if (userAgentSuffix != null && !userAgentSuffix.isEmpty()) {
+      request =
+          request.newBuilder()
+              .tag(RequestTags.UserAgentSuffix.class,
+                  new RequestTags.UserAgentSuffix(userAgentSuffix))
+              .build();
+    }
     Response response = send(request, options, true);
     if (!response.isSuccessful()) {
       String text = readBodyText(response);

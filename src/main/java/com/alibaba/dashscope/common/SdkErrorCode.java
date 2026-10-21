@@ -269,6 +269,53 @@ public enum SdkErrorCode {
       "",
       "An invalid value was encountered. Check the function parameters and input data. Ensure all"
           + " values conform to the expected types and ranges."),
+  SDK_WS_PROTOCOL_ERROR(
+      "sdk.ws.ProtocolError",
+      PublicErrorCode.INTERNAL_ERROR,
+      "WebSocket protocol violation: {detail}.",
+      false,
+      new String[] {"detail"},
+      "",
+      "The gateway sent a frame that violates the task protocol (missing header, unknown task_id,"
+          + " or an unexpected event). Not retryable; if it persists, report it at"
+          + " https://github.com/dashscope/dashscope-sdk-java/issues with the frame detail."),
+  SDK_WS_UPSTREAM_QUEUE_FULL(
+      "sdk.ws.UpstreamQueueFull",
+      PublicErrorCode.INTERNAL_ERROR,
+      "WebSocket upstream send queue is full.",
+      false,
+      new String[] {},
+      "",
+      "The client is producing frames faster than the network drains them (OkHttp's send buffer"
+          + " is full). Slow the producer down — pace audio frames to real time instead of"
+          + " buffering unboundedly."),
+  SDK_WS_QUEUE_CAPACITY_EXCEEDED(
+      "sdk.ws.QueueCapacityExceeded",
+      PublicErrorCode.INTERNAL_ERROR,
+      "A task receive queue exceeded its configured capacity.",
+      false,
+      new String[] {},
+      "",
+      "The consumer is slower than the producer and the bounded receive queue overflowed. Drain"
+          + " events faster or raise the capacity; frames are never dropped silently."),
+  SDK_WS_BINARY_OWNER_CONFLICT(
+      "sdk.ws.BinaryOwnerConflict",
+      PublicErrorCode.INVALID_REQUEST,
+      "Binary stream ownership conflict: {detail}.",
+      false,
+      new String[] {"detail"},
+      "",
+      "A shared WebSocket connection supports at most one binary uplink (ASR) and one binary"
+          + " downlink (TTS). Use a separate connection for a second binary task."),
+  SDK_WS_ILLEGAL_STATE(
+      "sdk.ws.IllegalState",
+      PublicErrorCode.INVALID_REQUEST,
+      "Illegal WebSocket task state: {detail}.",
+      false,
+      new String[] {"detail"},
+      "",
+      "The operation is not valid for the task's current state (duplicate task_id, send after"
+          + " close, receive on a closed session). Check the session lifecycle."),
   SDK_AGENTSTUDIO_API_CONNECTION_ERROR(
       "sdk.agentstudio.APIConnectionError",
       PublicErrorCode.INTERNAL_ERROR,

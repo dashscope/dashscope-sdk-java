@@ -3,10 +3,13 @@ package com.alibaba.dashscope;
 
 import com.alibaba.dashscope.config.ConfigResolver;
 import com.alibaba.dashscope.config.ResolvedConfig;
+import com.alibaba.dashscope.resources.audio.AudioService;
 import com.alibaba.dashscope.resources.chat.ChatService;
 import com.alibaba.dashscope.resources.embeddings.EmbeddingService;
+import com.alibaba.dashscope.resources.multimodal.MultimodalService;
 import com.alibaba.dashscope.resources.rerank.RerankService;
 import com.alibaba.dashscope.transport.HttpTransport;
+import com.alibaba.dashscope.transport.ws.WsConnection;
 import java.time.Duration;
 import okhttp3.OkHttpClient;
 
@@ -30,6 +33,8 @@ public final class DashScopeClient implements AutoCloseable {
   private final ChatService chat;
   private final EmbeddingService embeddings;
   private final RerankService rerank;
+  private final MultimodalService multimodal;
+  private final AudioService audio;
 
   private DashScopeClient(ClientOptions options, HttpTransport transport) {
     this.options = options;
@@ -38,6 +43,8 @@ public final class DashScopeClient implements AutoCloseable {
     this.chat = new ChatService(transport);
     this.embeddings = new EmbeddingService(transport);
     this.rerank = new RerankService(transport);
+    this.multimodal = new MultimodalService(transport);
+    this.audio = new AudioService(transport);
   }
 
   public static Builder builder() {
@@ -56,9 +63,30 @@ public final class DashScopeClient implements AutoCloseable {
     return rerank;
   }
 
+  public MultimodalService multimodal() {
+    return multimodal;
+  }
+
+  public AudioService audio() {
+    return audio;
+  }
+
   /** The resolved configuration (config chain applied). */
   public ResolvedConfig config() {
     return config;
+  }
+
+  /**
+   * Open a shared WebSocket connection multiplexing many task-protocol tasks (audio design §7).
+   * The caller owns it and must close it; pass it to {@code asr().recognize(params, connection)}
+   * / {@code tts().connect(params, connection)} to reuse the handshake.
+   */
+  public WsConnection wsConnection() {
+    return wsConnection(RequestOptions.NONE);
+  }
+
+  public WsConnection wsConnection(RequestOptions options) {
+    return new WsConnection(transport, config.getWsBaseUrl(), "audio", options);
   }
 
   /** Derive a client with extra overrides, sharing this client's connection pool. */

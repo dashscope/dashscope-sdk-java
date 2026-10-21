@@ -44,25 +44,41 @@ public final class ResponseStream<T> implements Iterable<T>, AutoCloseable {
 
   private final class ResponseIterator implements Iterator<T> {
     private final Iterator<JsonNode> frames = stream.iterator();
+    private T next;
+    private boolean done;
 
     @Override
     public boolean hasNext() {
-      return frames.hasNext();
+      while (next == null && !done) {
+        if (!frames.hasNext()) {
+          done = true;
+          break;
+        }
+        JsonNode frame = frames.next();
+        if (raiseOnError && JsonSupport.isErrorFrame(frame)) {
+          Map<String, String> headers = headersOfStream();
+          throw Errors.fromBusinessCode(
+              JsonSupport.errorCode(frame),
+              JsonSupport.errorMessage(frame),
+              JsonSupport.requestId(frame, headers),
+              JsonSupport.toPlainValue(frame),
+              headers);
+        }
+        // A null mapping means the frame carries no item for this resource (e.g. a TTS
+        // usage-only SSE frame); skip it.
+        next = mapper.apply(frame);
+      }
+      return next != null;
     }
 
     @Override
     public T next() {
-      JsonNode frame = frames.next();
-      if (raiseOnError && JsonSupport.isErrorFrame(frame)) {
-        Map<String, String> headers = headersOfStream();
-        throw Errors.fromBusinessCode(
-            JsonSupport.errorCode(frame),
-            JsonSupport.errorMessage(frame),
-            JsonSupport.requestId(frame, headers),
-            JsonSupport.toPlainValue(frame),
-            headers);
+      if (!hasNext()) {
+        throw new java.util.NoSuchElementException();
       }
-      return mapper.apply(frame);
+      T out = next;
+      next = null;
+      return out;
     }
   }
 
