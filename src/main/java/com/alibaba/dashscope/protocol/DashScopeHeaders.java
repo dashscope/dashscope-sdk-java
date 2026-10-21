@@ -4,15 +4,16 @@ package com.alibaba.dashscope.protocol;
 
 import com.alibaba.dashscope.Version;
 import com.alibaba.dashscope.exception.NoApiKeyException;
+import com.alibaba.dashscope.shared.SdkSession;
 import com.alibaba.dashscope.utils.ApiKey;
 import com.alibaba.dashscope.utils.StringUtils;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 public final class DashScopeHeaders {
   private static final String SDK_CLIENT = "java-sdk";
-  private static final String SDK_SESSION_ID = UUID.randomUUID().toString();
+  // J2: session id single-sourced from the neutral layer, shared with 3.0 in-process.
+  private static final String SDK_SESSION_ID = SdkSession.ID;
 
   public static String userAgent() {
     return userAgent(null);

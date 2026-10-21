@@ -40,14 +40,14 @@
     <name>DashScope Java SDK</name>
     <groupId>com.alibaba</groupId>
     <artifactId>dashscope-sdk-java</artifactId>
-    <version>2.23.3</version>
+    <version>3.0.0-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
+        <maven.compiler.release>11</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-antrun.version>1.8</maven-antrun.version>
         <commons-lang3.version>3.11</commons-lang3.version>
+        <jackson.version>2.17.3</jackson.version>
     </properties>
     <dependencies>
         <dependency>
@@ -58,7 +58,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.26</version>
+            <version>1.18.34</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -89,6 +89,11 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.8.9</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -143,6 +148,24 @@
     </dependencies>
 
     <build>
+        <!-- J1: dashscope-version.properties is the single version source (Maven filtering);
+             everything else ships unfiltered. -->
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>dashscope-version.properties</exclude>
+                </excludes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>dashscope-version.properties</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.sonatype.central</groupId>
@@ -164,9 +187,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <release>11</release>
                 </configuration>
             </plugin>
             <plugin>
@@ -181,6 +204,8 @@
                     </dependency>
                 </dependencies>
                 <configuration>
+                    <!-- junit-pioneer env/sysprop mutation needs these on JDK 16+. -->
+                    <argLine>--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED</argLine>
                     <properties>
                         <configurationParameters>
                             junit.jupiter.execution.parallel.enabled=false
@@ -230,4 +255,81 @@
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <!-- M1 静默错误清零门禁：ErrorProne 只扫 3.0 新包（2.x 冻结代码豁免），
+             空 catch / 打印堆栈继续 直接编不过。需 JDK 21 工具链：mvn -Perrorprone compile -->
+        <profile>
+            <id>errorprone</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>3.13.0</version>
+                        <configuration>
+                            <release>11</release>
+                            <!-- ErrorProne runs in the Maven JVM; the jdk.compiler exports/opens
+                                 live in .mvn/jvm.config (forked javac would swallow EP's JVM). -->
+                            <compilerArgs>
+                                <arg>-XDcompilePolicy=simple</arg>
+                                <arg>--should-stop=ifError=FLOW</arg>
+                                <!-- javac only honors -Xep flags inside the -Xplugin arg string. -->
+                                <arg>-Xplugin:ErrorProne -Xep:EmptyCatch:ERROR -Xep:CatchAndPrintStackTrace:ERROR -Xep:DeadException:ERROR -XepExcludedPaths:.*/com/alibaba/dashscope/(aigc|audio|app|api|base|common|decision|embeddings|exception|multimodal|nlp|protocol|rerank|task|threads|tokenizers|tools|utils|agentstudio|assistants)/.*</arg>
+                            </compilerArgs>
+                            <annotationProcessorPaths>
+                                <path>
+                                    <groupId>com.google.errorprone</groupId>
+                                    <artifactId>error_prone_core</artifactId>
+                                    <version>2.36.0</version>
+                                </path>
+                                <!-- Declaring annotationProcessorPaths replaces the whole processor
+                                     path: lombok must be re-added or its generated symbols vanish. -->
+                                <path>
+                                    <groupId>org.projectlombok</groupId>
+                                    <artifactId>lombok</artifactId>
+                                    <version>1.18.34</version>
+                                </path>
+                            </annotationProcessorPaths>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!-- japicmp API 面基线：对比 2.23.3，确认 2.x 包二进制面不缩水（新增 3.0 类属预期）。
+             运行：mvn -Pjapicmp verify -->
+        <profile>
+            <id>japicmp</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.siom79.japicmp</groupId>
+                        <artifactId>japicmp-maven-plugin</artifactId>
+                        <version>0.23.0</version>
+                        <executions>
+                            <execution>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>cmp</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <oldVersion>
+                                <dependency>
+                                    <groupId>com.alibaba</groupId>
+                                    <artifactId>dashscope-sdk-java</artifactId>
+                                    <version>2.23.3</version>
+                                </dependency>
+                            </oldVersion>
+                            <parameter>
+                                <onlyModified>false</onlyModified>
+                                <breakBuildOnModifications>false</breakBuildOnModifications>
+                                <breakBuildOnBinaryIncompatibleModifications>false</breakBuildOnBinaryIncompatibleModifications>
+                            </parameter>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

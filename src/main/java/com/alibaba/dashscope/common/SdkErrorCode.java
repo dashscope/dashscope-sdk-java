@@ -1,0 +1,368 @@
+package com.alibaba.dashscope.common;
+
+import java.util.Map;
+
+/** SDK client-side error codes. */
+public enum SdkErrorCode {
+  SDK_INVALID_API_KEY(
+      "sdk.InvalidApiKey",
+      PublicErrorCode.AUTH_FAILED,
+      "Invalid API key configuration for client.",
+      false,
+      new String[] {},
+      "",
+      "Set the DASHSCOPE_API_KEY environment variable or pass a valid api_key to AgenticRL()."
+          + " You can obtain an API key at"
+          + " https://modelstudio.console.alibabacloud.com/cn-beijing?tab=api."),
+  SDK_AGENTIC_RL_FUNCTION_REGISTRATION_FAILED(
+      "sdk.agentic_rl.FunctionRegistrationFailed",
+      PublicErrorCode.INTERNAL_ERROR,
+      "Function component registration failed: {inner_code}.",
+      true,
+      new String[] {"inner_code"},
+      "",
+      "Check the inner error code for details. Ensure the function code package is valid and the"
+          + " deployment service is reachable. Retry the registration method call."),
+  SDK_AGENTIC_RL_DATASETS_UPLOAD_FAILED(
+      "sdk.agentic_rl.DatasetsUploadFailed",
+      PublicErrorCode.INTERNAL_ERROR,
+      "Datasets upload failed: {inner_code}.",
+      true,
+      new String[] {"inner_code"},
+      "",
+      "Verify your dataset files exist and are readable. Check OSS credentials and network"
+          + " connectivity. Retry the upload method call."),
+  SDK_AGENTIC_RL_DUPLICATE_FUNCTION_NAMES(
+      "sdk.agentic_rl.DuplicateFunctionNames",
+      PublicErrorCode.INVALID_REQUEST,
+      "Duplicate function names detected: {names}.",
+      false,
+      new String[] {"names"},
+      "",
+      "Each registered function must have a unique name. Review your RolloutFunctionComponent and"
+          + " RewardFunctionComponent definitions and remove any duplicate names before calling"
+          + " the submission method."),
+  SDK_AGENTIC_RL_JOB_SUBMISSION_FAILED(
+      "sdk.agentic_rl.JobSubmissionFailed",
+      PublicErrorCode.INTERNAL_ERROR,
+      "Job submission failed: {inner_code}.",
+      true,
+      new String[] {"inner_code"},
+      "",
+      "Check the inner error code for details. Ensure the model name is valid and your account has"
+          + " sufficient quota. Retry the submission method after fixing the underlying issue."),
+  SDK_AGENTIC_RL_WORKFLOW_FAILED(
+      "sdk.agentic_rl.WorkflowFailed",
+      PublicErrorCode.INTERNAL_ERROR,
+      "RL tuning workflow failed: {inner_code}.",
+      true,
+      new String[] {"inner_code"},
+      "",
+      "This error wraps a failure in the workflow. Inspect the inner error code to identify"
+          + " which step failed (registration, upload, or submission), fix that issue, and retry"
+          + " the operation."),
+  SDK_AGENTIC_RL_UNSUPPORTED_FUNCTION_TYPE(
+      "sdk.agentic_rl.UnsupportedFunctionType",
+      PublicErrorCode.INVALID_REQUEST,
+      "Unsupported function type: {functype}.",
+      false,
+      new String[] {"functype"},
+      "",
+      "Only ROLLOUT, REWARD, and GROUP_REWARD function types are supported. Pass a valid"
+          + " FunctionType enum value to the test method."),
+  SDK_AGENTIC_RL_FUNCTION_TEST_FAILED(
+      "sdk.agentic_rl.FunctionTestFailed",
+      PublicErrorCode.INTERNAL_ERROR,
+      "Function test failed: {inner_code}.",
+      true,
+      new String[] {"inner_code"},
+      "",
+      "Check the inner error code and the function logs for details. Verify that the function code"
+          + " runs correctly with the provided input_data. Fix the function and retry"
+          + " the test method."),
+  SDK_AGENTIC_RL_FUNCTION_TEST_TIMEOUT(
+      "sdk.agentic_rl.FunctionTestTimeout",
+      PublicErrorCode.REQUEST_TIMEOUT,
+      "Function test timed out after {timeout} seconds.",
+      true,
+      new String[] {"timeout"},
+      "",
+      "The function did not return within the timeout period. Profile your function for slow"
+          + " operations (e.g. large model inference, network calls) and optimize it. Consider"
+          + " increasing the timeout if the function legitimately takes longer."),
+  SDK_AGENTIC_RL_INPUT_ERROR(
+      "sdk.agentic_rl.InputError",
+      PublicErrorCode.INVALID_REQUEST,
+      "Invalid input data detected during validation.",
+      false,
+      new String[] {},
+      "",
+      "Check the input data passed to the function. Ensure all required fields are present and have"
+          + " valid types. Refer to the RolloutInput / RewardInput / GroupRewardInput schema"
+          + " documentation."),
+  SDK_AGENTIC_RL_OUTPUT_ERROR(
+      "sdk.agentic_rl.OutputError",
+      PublicErrorCode.INTERNAL_ERROR,
+      "Service response failed output validation checks.",
+      false,
+      new String[] {},
+      "",
+      "The function output did not pass validation. Ensure your function returns a valid"
+          + " RolloutOutput / RewardOutput / GroupRewardOutput object with all required fields"
+          + " populated."),
+  SDK_AGENTIC_RL_BASE_CONNECTION_ERROR(
+      "sdk.agentic_rl.BaseConnectionError",
+      PublicErrorCode.INTERNAL_ERROR,
+      "Connection-related error occurred.",
+      true,
+      new String[] {},
+      "",
+      "Check your network connectivity and ensure the target service endpoint is reachable. Verify"
+          + " firewall rules and proxy settings."),
+  SDK_AGENTIC_RL_OSS_CONNECTION_ERROR(
+      "sdk.agentic_rl.OSSConnectionError",
+      PublicErrorCode.INTERNAL_ERROR,
+      "Connecting to OSS storage service failed.",
+      true,
+      new String[] {},
+      "",
+      "Verify that the OSS endpoint URL is correct and the OSS service is accessible. Check your"
+          + " API key permissions for OSS access. Ensure you are in a region that supports OSS"
+          + " connectivity."),
+  SDK_AGENTIC_RL_OSS_UPLOAD_ERROR(
+      "sdk.agentic_rl.OSSUploadError",
+      PublicErrorCode.INTERNAL_ERROR,
+      "File upload operation to OSS failed.",
+      true,
+      new String[] {},
+      "",
+      "Check that the file exists, is readable, and does not exceed the upload size limit. Verify"
+          + " your OSS bucket permissions allow write operations."),
+  SDK_AGENTIC_RL_DEPLOYMENT_ERROR(
+      "sdk.agentic_rl.DeploymentError",
+      PublicErrorCode.INTERNAL_ERROR,
+      "Deployment-related error occurred.",
+      true,
+      new String[] {},
+      "",
+      "Check the deployment service status and logs. Ensure the function code package and"
+          + " dependencies are valid. Retry after the deployment service recovers."),
+  SDK_AGENTIC_RL_REGISTRATION_ERROR(
+      "sdk.agentic_rl.RegistrationError",
+      PublicErrorCode.INTERNAL_ERROR,
+      "Function registration failed in the deployment system.",
+      true,
+      new String[] {},
+      "",
+      "The function could not be registered in the deployment system. Verify the function name is"
+          + " unique and the code package is valid. Check the inner error for deployment-specific"
+          + " details."),
+  SDK_AGENTIC_RL_FUNCTION_LOAD_ERROR(
+      "sdk.agentic_rl.FunctionLoadError",
+      PublicErrorCode.INTERNAL_ERROR,
+      "Loading a registered function into runtime failed.",
+      true,
+      new String[] {},
+      "",
+      "The function could not be loaded into the runtime after registration. Check the error logs"
+          + " for import errors or missing dependencies in the function layer."),
+  SDK_AGENTIC_RL_INSTANCE_WARMUP_ERROR(
+      "sdk.agentic_rl.InstanceWarmupError",
+      PublicErrorCode.INTERNAL_ERROR,
+      "Function instance health check failed after deployment.",
+      true,
+      new String[] {},
+      "",
+      "The function instance health check failed after deployment. Check the instance logs for"
+          + " startup errors. Ensure the function initializes correctly and the health endpoint"
+          + " responds within the timeout."),
+  SDK_AGENTIC_RL_INSTANCE_QUERY_ERROR(
+      "sdk.agentic_rl.InstanceQueryError",
+      PublicErrorCode.INTERNAL_ERROR,
+      "Querying function instance status failed.",
+      true,
+      new String[] {},
+      "",
+      "Could not query the function instance status. The instance may not be ready yet. Wait and"
+          + " retry, or check the deployment logs for errors."),
+  SDK_AGENTIC_RL_FUNCTION_LAYER_ERROR(
+      "sdk.agentic_rl.FunctionLayerError",
+      PublicErrorCode.INTERNAL_ERROR,
+      "Creating a layer of function failed.",
+      true,
+      new String[] {},
+      "",
+      "Failed to create the function dependency layer. Check that the requirements.txt or setup.py"
+          + " is valid and all dependencies are installable. Review the layer build logs for"
+          + " details."),
+  SDK_AGENTIC_RL_DATASETS_ERROR(
+      "sdk.agentic_rl.DatasetsError",
+      PublicErrorCode.INTERNAL_ERROR,
+      "Update datasets failed in the deployment system.",
+      true,
+      new String[] {},
+      "",
+      "Failed to update datasets in the deployment system. Verify the dataset IDs are valid and the"
+          + " dataset files are accessible. Retry after fixing the underlying issue."),
+  SDK_AGENTIC_RL_VALIDATION_ERROR(
+      "sdk.agentic_rl.ValidationError",
+      PublicErrorCode.INVALID_REQUEST,
+      "Data validation failed.",
+      false,
+      new String[] {},
+      "",
+      "One or more data fields failed validation. Check the error message for the specific field"
+          + " and fix the value according to the schema documentation."),
+  SDK_AGENTIC_RL_CONFIGURATION_ERROR(
+      "sdk.agentic_rl.ConfigurationError",
+      PublicErrorCode.INVALID_REQUEST,
+      "Invalid system configuration detected.",
+      false,
+      new String[] {},
+      "",
+      "Check your YAML configuration file or initialization parameters. Ensure all required fields"
+          + " (model, functions, datasets) are correctly specified. Refer to the AgenticRL"
+          + " configuration documentation."),
+  SDK_AGENTIC_RL_BASE_PERMISSION_ERROR(
+      "sdk.agentic_rl.BasePermissionError",
+      PublicErrorCode.PERMISSION_DENIED,
+      "Operation lacks required permissions.",
+      false,
+      new String[] {},
+      "",
+      "Your API key does not have the required permissions. Ensure your account has access to"
+          + " AgenticRL, OSS, and Function Compute services. Contact your administrator to grant"
+          + " the necessary permissions."),
+  SDK_AGENTIC_RL_IO_ERROR_WITH_CODE(
+      "sdk.agentic_rl.IOErrorWithCode",
+      PublicErrorCode.INTERNAL_ERROR,
+      "General I/O operation failure.",
+      true,
+      new String[] {},
+      "",
+      "A file or network I/O operation failed. Check file paths, permissions, and network"
+          + " connectivity. Review the error message for the specific operation that failed."),
+  SDK_AGENTIC_RL_ERROR(
+      "sdk.agentic_rl.Error",
+      PublicErrorCode.INTERNAL_ERROR,
+      "Base client error occurred.",
+      true,
+      new String[] {},
+      "",
+      "An unexpected AgenticRL error occurred. Check the error message and logs for details. If the"
+          + " issue persists, submit a bug report at https://github.com/dashscope/dashscope-sdk-java/issues."),
+  SDK_AGENTIC_RL_RUNTIME_ERROR_WITH_CODE(
+      "sdk.agentic_rl.RuntimeErrorWithCode",
+      PublicErrorCode.INTERNAL_ERROR,
+      "Runtime error occurred in client.",
+      true,
+      new String[] {},
+      "",
+      "An unexpected runtime error occurred. Check the error message and traceback for details. If"
+          + " the issue persists, submit a bug report at https://github.com/dashscope/dashscope-sdk-java/issues."),
+  SDK_AGENTIC_RL_VALUE_ERROR_WITH_CODE(
+      "sdk.agentic_rl.ValueErrorWithCode",
+      PublicErrorCode.INVALID_REQUEST,
+      "Invalid value encountered in client.",
+      false,
+      new String[] {},
+      "",
+      "An invalid value was encountered. Check the function parameters and input data. Ensure all"
+          + " values conform to the expected types and ranges."),
+  SDK_AGENTSTUDIO_API_CONNECTION_ERROR(
+      "sdk.agentstudio.APIConnectionError",
+      PublicErrorCode.INTERNAL_ERROR,
+      "Failed to connect to the AgentStudio service.",
+      true,
+      new String[] {},
+      "",
+      "Check your network connectivity and ensure the AgentStudio endpoint "
+          + "(base_url / region) is reachable. Verify firewall and proxy settings."),
+  SDK_AGENTSTUDIO_API_TIMEOUT_ERROR(
+      "sdk.agentstudio.APITimeoutError",
+      PublicErrorCode.REQUEST_TIMEOUT,
+      "The request to the AgentStudio service timed out.",
+      true,
+      new String[] {},
+      "",
+      "The request did not complete within the timeout period. Increase the "
+          + "client timeout or retry the request."),
+  SDK_AGENTSTUDIO_STREAM_ERROR(
+      "sdk.agentstudio.StreamError",
+      PublicErrorCode.INTERNAL_ERROR,
+      "The SSE stream encountered a fatal protocol error.",
+      true,
+      new String[] {},
+      "",
+      "Retry the streaming request. If the error persists, report it at https://github.com/dashscope/dashscope-sdk-java/issues."),
+  SDK_AGENTSTUDIO_STREAM_CLOSED_ERROR(
+      "sdk.agentstudio.StreamClosedError",
+      PublicErrorCode.INVALID_REQUEST,
+      "Attempted I/O on an already-closed stream.",
+      false,
+      new String[] {},
+      "",
+      "Do not read from a stream after it has been closed. Consume the stream "
+          + "before calling close().");
+
+  private final String code;
+  private final PublicErrorCode external;
+  private final String message;
+  private final boolean allowRetry;
+  private final String[] vars;
+  private final String cause;
+  private final String solution;
+
+  SdkErrorCode(
+      String code,
+      PublicErrorCode external,
+      String message,
+      boolean allowRetry,
+      String[] vars,
+      String cause,
+      String solution) {
+    this.code = code;
+    this.external = external;
+    this.message = message;
+    this.allowRetry = allowRetry;
+    this.vars = vars;
+    this.cause = cause;
+    this.solution = solution;
+  }
+
+  public String getCode() {
+    return code;
+  }
+
+  public PublicErrorCode getExternal() {
+    return external;
+  }
+
+  public String getMessage() {
+    return message;
+  }
+
+  public boolean isAllowRetry() {
+    return allowRetry;
+  }
+
+  public String[] getVars() {
+    return vars;
+  }
+
+  public String getCause() {
+    return cause;
+  }
+
+  public String getSolution() {
+    return solution;
+  }
+
+  public String formatMessage(Map<String, String> vars) {
+    String msg = message;
+    for (Map.Entry<String, String> entry : vars.entrySet()) {
+      msg = msg.replace("{" + entry.getKey() + "}", entry.getValue());
+    }
+    return msg;
+  }
+}
