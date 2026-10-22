@@ -18,6 +18,7 @@ public final class ResolvedConfig {
   private final int maxRequests;
   private final int maxRequestsPerHost;
   private final Duration keepAlive;
+  private final Duration wsPingInterval;
 
   ResolvedConfig(
       String apiKey,
@@ -31,7 +32,8 @@ public final class ResolvedConfig {
       OkHttpClient httpClient,
       int maxRequests,
       int maxRequestsPerHost,
-      Duration keepAlive) {
+      Duration keepAlive,
+      Duration wsPingInterval) {
     this.apiKey = apiKey;
     this.baseUrl = baseUrl;
     this.wsBaseUrl = wsBaseUrl;
@@ -44,6 +46,7 @@ public final class ResolvedConfig {
     this.maxRequests = maxRequests;
     this.maxRequestsPerHost = maxRequestsPerHost;
     this.keepAlive = keepAlive;
+    this.wsPingInterval = wsPingInterval;
   }
 
   /** Resolved API key; may be null (failure surfaces at request time as SdkException). */
@@ -98,5 +101,14 @@ public final class ResolvedConfig {
 
   public Duration getKeepAlive() {
     return keepAlive;
+  }
+
+  /**
+   * WebSocket ping interval (audio design §12#1). {@link Duration#ZERO} = off (aligned with
+   * Python); behind NATs or proxies that silently drop idle connections, 20–30 s is recommended
+   * so half-open connections are detected instead of hanging forever.
+   */
+  public Duration getWsPingInterval() {
+    return wsPingInterval;
   }
 }

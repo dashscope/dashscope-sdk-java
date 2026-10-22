@@ -136,11 +136,15 @@ public final class RealtimeSession implements AutoCloseable {
     openFailure = null;
     // Read timeout must stay off the socket: server-VAD silence can exceed the inherited HTTP
     // readTimeout; receiving is already task-level (inbox poll in pumpOnce).
-    OkHttpClient wsClient =
+    OkHttpClient.Builder wsClientBuilder =
         transport.okhttp().newBuilder()
             .connectTimeout(WsSession.DEFAULT_CONNECT_TIMEOUT)
-            .readTimeout(0, TimeUnit.MILLISECONDS)
-            .build();
+            .readTimeout(0, TimeUnit.MILLISECONDS);
+    Duration pingInterval = transport.config().getWsPingInterval();
+    if (pingInterval != null && !pingInterval.isZero() && !pingInterval.isNegative()) {
+      wsClientBuilder.pingInterval(pingInterval);
+    }
+    OkHttpClient wsClient = wsClientBuilder.build();
     WebSocket ws = wsClient.newWebSocket(builder.build(), new Listener(gen));
     socket = ws;
 

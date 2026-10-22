@@ -74,8 +74,13 @@ public final class WsSession implements TaskChannel {
     for (Map.Entry<String, String> e : opts.getHeaders().entrySet()) {
       builder.header(e.getKey(), e.getValue());
     }
-    OkHttpClient wsClient =
-        transport.okhttp().newBuilder().connectTimeout(connectTimeout).build();
+    OkHttpClient.Builder wsClientBuilder =
+        transport.okhttp().newBuilder().connectTimeout(connectTimeout);
+    Duration pingInterval = transport.config().getWsPingInterval();
+    if (pingInterval != null && !pingInterval.isZero() && !pingInterval.isNegative()) {
+      wsClientBuilder.pingInterval(pingInterval);
+    }
+    OkHttpClient wsClient = wsClientBuilder.build();
     this.socket = wsClient.newWebSocket(builder.build(), new Listener());
     awaitOpen(connectTimeout);
   }

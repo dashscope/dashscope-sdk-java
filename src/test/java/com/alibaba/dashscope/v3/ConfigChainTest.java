@@ -38,6 +38,7 @@ import org.junitpioneer.jupiter.SetSystemProperty;
 @ClearEnvironmentVariable(key = "DASHSCOPE_REGION")
 @ClearEnvironmentVariable(key = "DASHSCOPE_TIMEOUT")
 @ClearEnvironmentVariable(key = "DASHSCOPE_MAX_RETRIES")
+@ClearEnvironmentVariable(key = "DASHSCOPE_WS_PING_INTERVAL")
 @SetEnvironmentVariable(key = "DASHSCOPE_CONFIG", value = "target/v3-test/config.toml")
 @SetEnvironmentVariable(key = "DASHSCOPE_API_KEY_FILE_PATH", value = "target/v3-test/api_key")
 @ClearSystemProperty(key = "dashscope.api.key")
@@ -47,6 +48,7 @@ import org.junitpioneer.jupiter.SetSystemProperty;
 @ClearSystemProperty(key = "dashscope.region")
 @ClearSystemProperty(key = "dashscope.timeout")
 @ClearSystemProperty(key = "dashscope.max.retries")
+@ClearSystemProperty(key = "dashscope.ws.ping.interval")
 class ConfigChainTest {
   private static final Path CONFIG_PATH = Paths.get("target/v3-test/config.toml");
   private static final Path KEY_PATH = Paths.get("target/v3-test/api_key");
@@ -71,6 +73,7 @@ class ConfigChainTest {
     assertEquals(Duration.ofSeconds(300), config.getTimeout());
     assertEquals(2, config.getMaxRetries());
     assertTrue(config.isRaiseOnError());
+    assertEquals(Duration.ZERO, config.getWsPingInterval());
     assertNull(config.getApiKey());
     assertNull(config.getWorkspace());
   }
@@ -183,6 +186,35 @@ class ConfigChainTest {
   void apiKeyEnvBeatsKeyFile() throws IOException {
     Files.write(KEY_PATH, "file-api-key".getBytes(StandardCharsets.UTF_8));
     assertEquals("env-key", resolve().getApiKey());
+  }
+
+  @Test
+  @SetEnvironmentVariable(key = "DASHSCOPE_WS_PING_INTERVAL", value = "25")
+  void wsPingIntervalFromEnv() {
+    assertEquals(Duration.ofSeconds(25), resolve().getWsPingInterval());
+  }
+
+  @Test
+  @SetEnvironmentVariable(key = "DASHSCOPE_WS_PING_INTERVAL", value = "25")
+  @SetSystemProperty(key = "dashscope.ws.ping.interval", value = "10.5")
+  void wsPingIntervalSyspropBeatsEnv() {
+    assertEquals(Duration.ofMillis(10500), resolve().getWsPingInterval());
+  }
+
+  @Test
+  @SetSystemProperty(key = "dashscope.ws.ping.interval", value = "10")
+  void wsPingIntervalBuilderBeatsSysprop() {
+    ResolvedConfig config =
+        ConfigResolver.resolve(
+            ClientOptions.builder().wsPingInterval(Duration.ofSeconds(3)).build());
+    assertEquals(Duration.ofSeconds(3), config.getWsPingInterval());
+  }
+
+  @Test
+  void wsPingIntervalFromConfigToml() throws IOException {
+    Files.write(
+        CONFIG_PATH, "ws_ping_interval = 15".getBytes(StandardCharsets.UTF_8));
+    assertEquals(Duration.ofSeconds(15), resolve().getWsPingInterval());
   }
 
   @Test

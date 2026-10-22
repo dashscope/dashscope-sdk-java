@@ -38,6 +38,7 @@ public final class EnvNames {
   public static final String DASHSCOPE_REGION = "DASHSCOPE_REGION";
   public static final String DASHSCOPE_TIMEOUT = "DASHSCOPE_TIMEOUT";
   public static final String DASHSCOPE_MAX_RETRIES = "DASHSCOPE_MAX_RETRIES";
+  public static final String DASHSCOPE_WS_PING_INTERVAL = "DASHSCOPE_WS_PING_INTERVAL";
   public static final String DASHSCOPE_CONFIG = "DASHSCOPE_CONFIG";
   public static final String DASHSCOPE_HTTP_MAX_CONNECTIONS = "DASHSCOPE_HTTP_MAX_CONNECTIONS";
   public static final String DASHSCOPE_HTTP_MAX_KEEPALIVE_CONNECTIONS =

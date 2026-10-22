@@ -29,6 +29,7 @@ public final class ConfigFile {
   static final String KEY_REGION = "region";
   static final String KEY_TIMEOUT = "timeout";
   static final String KEY_MAX_RETRIES = "max_retries";
+  static final String KEY_WS_PING_INTERVAL = "ws_ping_interval";
 
   /** Parse the file at {@code path}; missing file yields an empty map. Malformed lines are
    * skipped (config discovery must never crash client construction). */

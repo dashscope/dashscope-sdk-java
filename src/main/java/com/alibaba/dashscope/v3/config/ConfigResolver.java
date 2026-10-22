@@ -30,6 +30,7 @@ public final class ConfigResolver {
   static final String SYSPROP_REGION = "dashscope.region";
   static final String SYSPROP_TIMEOUT = "dashscope.timeout";
   static final String SYSPROP_MAX_RETRIES = "dashscope.max.retries";
+  static final String SYSPROP_WS_PING_INTERVAL = "dashscope.ws.ping.interval";
 
   public static final String DEFAULT_REGION = "cn-beijing";
   public static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(300);
@@ -147,6 +148,13 @@ public final class ConfigResolver {
         file.get(ConfigFile.KEY_MAX_RETRIES),
         DEFAULT_MAX_RETRIES);
 
+    Duration wsPingInterval = firstDuration(
+        options.getWsPingInterval(),
+        System.getProperty(SYSPROP_WS_PING_INTERVAL),
+        System.getenv(EnvNames.DASHSCOPE_WS_PING_INTERVAL),
+        file.get(ConfigFile.KEY_WS_PING_INTERVAL),
+        Duration.ZERO);
+
     int maxRequests = envInt(EnvNames.DASHSCOPE_HTTP_MAX_CONNECTIONS, DEFAULT_MAX_REQUESTS);
     int maxRequestsPerHost =
         envInt(EnvNames.DASHSCOPE_HTTP_MAX_KEEPALIVE_CONNECTIONS, DEFAULT_MAX_REQUESTS_PER_HOST);
@@ -167,7 +175,8 @@ public final class ConfigResolver {
         options.getHttpClient(),
         maxRequests,
         maxRequestsPerHost,
-        Duration.ofSeconds(keepAliveSeconds));
+        Duration.ofSeconds(keepAliveSeconds),
+        wsPingInterval);
   }
 
   private static void warnLegacyOnce(AtomicBoolean flag, String url) {

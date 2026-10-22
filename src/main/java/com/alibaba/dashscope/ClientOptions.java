@@ -18,6 +18,7 @@ public final class ClientOptions {
   private final Duration timeout;
   private final Integer maxRetries;
   private final Boolean raiseOnError;
+  private final Duration wsPingInterval;
   private final OkHttpClient httpClient;
 
   private ClientOptions(Builder b) {
@@ -29,6 +30,7 @@ public final class ClientOptions {
     this.timeout = b.timeout;
     this.maxRetries = b.maxRetries;
     this.raiseOnError = b.raiseOnError;
+    this.wsPingInterval = b.wsPingInterval;
     this.httpClient = b.httpClient;
   }
 
@@ -46,6 +48,7 @@ public final class ClientOptions {
     b.timeout = timeout;
     b.maxRetries = maxRetries;
     b.raiseOnError = raiseOnError;
+    b.wsPingInterval = wsPingInterval;
     b.httpClient = httpClient;
     return b;
   }
@@ -84,6 +87,15 @@ public final class ClientOptions {
     return raiseOnError;
   }
 
+  /**
+   * WebSocket ping interval (audio design §12#1). Default 0 = off (aligned with Python); behind
+   * NATs or proxies that silently drop idle connections, 20–30 s is recommended so half-open
+   * connections are detected instead of hanging forever.
+   */
+  public Duration getWsPingInterval() {
+    return wsPingInterval;
+  }
+
   /** Externally injected OkHttpClient; the caller then owns its lifecycle. */
   public OkHttpClient getHttpClient() {
     return httpClient;
@@ -98,6 +110,7 @@ public final class ClientOptions {
     private Duration timeout;
     private Integer maxRetries;
     private Boolean raiseOnError;
+    private Duration wsPingInterval;
     private OkHttpClient httpClient;
 
     private Builder() {}
@@ -140,6 +153,12 @@ public final class ClientOptions {
 
     public Builder raiseOnError(Boolean raiseOnError) {
       this.raiseOnError = raiseOnError;
+      return this;
+    }
+
+    /** See {@link #getWsPingInterval()}; {@code Duration.ZERO} disables (the default). */
+    public Builder wsPingInterval(Duration wsPingInterval) {
+      this.wsPingInterval = wsPingInterval;
       return this;
     }
 
