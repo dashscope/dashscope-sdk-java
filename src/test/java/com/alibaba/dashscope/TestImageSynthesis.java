@@ -201,4 +201,20 @@ public class TestImageSynthesis {
     assertEquals(true, requestBody.contains("\"prompt_extend\":true"));
     assertEquals(true, requestBody.contains("\"watermark\":false"));
   }
+
+  @Test
+  public void testSyncCallRejectsMultimodalModel() {
+    int port = server.getPort();
+    Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", port);
+    ImageSynthesis is = new ImageSynthesis();
+    ImageSynthesisParam param =
+        ImageSynthesisParam.builder().model("wan2.6-t2i").prompt("a cat").build();
+    IllegalArgumentException ex =
+        org.junit.jupiter.api.Assertions.assertThrows(
+            IllegalArgumentException.class, () -> is.syncCall(param));
+    org.junit.jupiter.api.Assertions.assertTrue(
+        ex.getMessage().contains("ImageGeneration"), ex.getMessage());
+    // no request should have reached the legacy endpoint
+    assertEquals(0, server.getRequestCount());
+  }
 }
