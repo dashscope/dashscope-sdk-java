@@ -8,14 +8,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.DashScopeAsyncClient;
 import com.alibaba.dashscope.DashScopeClient;
-import com.alibaba.dashscope.resources.agentstudio.AgentStudioClient;
-import com.alibaba.dashscope.resources.agentstudio.model.Agent;
-import com.alibaba.dashscope.resources.agentstudio.model.Memory;
-import com.alibaba.dashscope.resources.agentstudio.pagination.CursorPage;
-import com.alibaba.dashscope.resources.agentstudio.param.AgentCreateParam;
-import com.alibaba.dashscope.resources.agentstudio.param.MemoryListParam;
-import com.alibaba.dashscope.resources.agentstudio.support.exception.ApiException;
-import com.alibaba.dashscope.resources.agentstudio.support.utils.JsonUtils;
+import com.alibaba.dashscope.agentstudio.AgentStudioClient;
+import com.alibaba.dashscope.agentstudio.model.Agent;
+import com.alibaba.dashscope.agentstudio.model.Memory;
+import com.alibaba.dashscope.agentstudio.pagination.CursorPage;
+import com.alibaba.dashscope.agentstudio.param.AgentCreateParam;
+import com.alibaba.dashscope.agentstudio.param.MemoryListParam;
+import com.alibaba.dashscope.exception.ApiException;
+import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -34,7 +34,10 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junitpioneer.jupiter.ClearEnvironmentVariable;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
 
-/** Tests for the moved 3.0 agentstudio copy (design §7 反向搬迁) and the client mount. */
+/**
+ * Tests for the agentstudio single shared copy (design §7: the 2.x {@code agentstudio} package is
+ * the canonical implementation for both generations) and the 3.0 client mount.
+ */
 @ClearEnvironmentVariable(key = "DASHSCOPE_WORKSPACE")
 @ClearEnvironmentVariable(key = "DASHSCOPE_BASE_URL")
 @ClearEnvironmentVariable(key = "DASHSCOPE_HTTP_BASE_URL")
@@ -75,7 +78,7 @@ public class AgentStudioMockTest {
   }
 
   @Test
-  public void movedCopyAgentCreateHappyPath() throws Exception {
+  public void agentCreateHappyPath() throws Exception {
     enqueue("agent_response");
     AgentStudioClient client = newClient();
     Agent agent =
@@ -120,7 +123,7 @@ public class AgentStudioMockTest {
   }
 
   @Test
-  public void notFoundRaisesSubareaApiException() throws Exception {
+  public void notFoundRaisesApiException() throws Exception {
     server.enqueue(
         new MockResponse()
             .setResponseCode(404)

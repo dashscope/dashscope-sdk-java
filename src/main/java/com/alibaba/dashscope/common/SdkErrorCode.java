@@ -315,42 +315,7 @@ public enum SdkErrorCode {
       new String[] {"detail"},
       "",
       "The operation is not valid for the task's current state (duplicate task_id, send after"
-          + " close, receive on a closed session). Check the session lifecycle."),
-  SDK_AGENTSTUDIO_API_CONNECTION_ERROR(
-      "sdk.agentstudio.APIConnectionError",
-      PublicErrorCode.INTERNAL_ERROR,
-      "Failed to connect to the AgentStudio service.",
-      true,
-      new String[] {},
-      "",
-      "Check your network connectivity and ensure the AgentStudio endpoint "
-          + "(base_url / region) is reachable. Verify firewall and proxy settings."),
-  SDK_AGENTSTUDIO_API_TIMEOUT_ERROR(
-      "sdk.agentstudio.APITimeoutError",
-      PublicErrorCode.REQUEST_TIMEOUT,
-      "The request to the AgentStudio service timed out.",
-      true,
-      new String[] {},
-      "",
-      "The request did not complete within the timeout period. Increase the "
-          + "client timeout or retry the request."),
-  SDK_AGENTSTUDIO_STREAM_ERROR(
-      "sdk.agentstudio.StreamError",
-      PublicErrorCode.INTERNAL_ERROR,
-      "The SSE stream encountered a fatal protocol error.",
-      true,
-      new String[] {},
-      "",
-      "Retry the streaming request. If the error persists, report it at https://github.com/dashscope/dashscope-sdk-java/issues."),
-  SDK_AGENTSTUDIO_STREAM_CLOSED_ERROR(
-      "sdk.agentstudio.StreamClosedError",
-      PublicErrorCode.INVALID_REQUEST,
-      "Attempted I/O on an already-closed stream.",
-      false,
-      new String[] {},
-      "",
-      "Do not read from a stream after it has been closed. Consume the stream "
-          + "before calling close().");
+          + " close, receive on a closed session). Check the session lifecycle.");
 
   private final String code;
   private final PublicErrorCode external;

@@ -16,8 +16,8 @@ import com.alibaba.dashscope.resources.models.ModelsService;
 import com.alibaba.dashscope.resources.multimodal.MultimodalService;
 import com.alibaba.dashscope.resources.rerank.RerankService;
 import com.alibaba.dashscope.resources.tingwu.TingWuService;
+import com.alibaba.dashscope.agentstudio.AgentStudioClient;
 import com.alibaba.dashscope.resources.tokenization.TokenizationService;
-import com.alibaba.dashscope.resources.agentstudio.AgentStudioClient;
 import com.alibaba.dashscope.resources.videos.VideosService;
 import com.alibaba.dashscope.transport.HttpTransport;
 import com.alibaba.dashscope.transport.ws.WsConnection;
@@ -157,10 +157,12 @@ public final class DashScopeClient implements AutoCloseable {
   }
 
   /**
-   * AgentStudio management plane (design §7: the 2.x agentstudio codebase moved here unchanged).
-   * Created lazily — endpoint resolution requires a workspace or {@code DASHSCOPE_AGENTSTUDIO_URL},
-   * and the subarea allocates its own HTTP clients. It keeps its own 2.x-style exception style;
-   * the 3.0 {@code baseUrl} does not apply to it.
+   * AgentStudio management plane (design §7: single shared copy — the 2.x {@code agentstudio}
+   * package is the canonical implementation for both generations; not deprecated, untouched by
+   * the v3 move and by the 4.0 cleanup). Created lazily — endpoint resolution requires a
+   * workspace or {@code DASHSCOPE_AGENTSTUDIO_URL}, and the subarea allocates its own HTTP
+   * clients. It keeps its own 2.x-style exception style; the 3.0 {@code baseUrl} does not apply
+   * to it.
    */
   public AgentStudioClient agentStudio() {
     AgentStudioClient c = agentStudio;
