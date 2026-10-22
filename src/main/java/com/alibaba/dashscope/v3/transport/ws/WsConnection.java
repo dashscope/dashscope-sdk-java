@@ -1,0 +1,417 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
+package com.alibaba.dashscope.v3.transport.ws;
+
+import com.alibaba.dashscope.RequestOptions;
+import com.alibaba.dashscope.common.SdkErrorCode;
+import com.alibaba.dashscope.v3.errors.ApiConnectionException;
+import com.alibaba.dashscope.v3.errors.ApiTimeoutException;
+import com.alibaba.dashscope.v3.errors.Errors;
+import com.alibaba.dashscope.v3.errors.SdkException;
+import com.alibaba.dashscope.v3.transport.HttpTransport;
+import com.alibaba.dashscope.v3.transport.RequestTags;
+import java.nio.ByteBuffer;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.WebSocket;
+import okhttp3.WebSocketListener;
+import okio.ByteString;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * A shared physical WebSocket multiplexing many tasks by {@code header.task_id} (audio design
+ * §7). One daemon reader thread ({@code dashscope-ws-reader}) demuxes inbound frames into
+ * per-task queues; user threads block on {@link TaskHandle#recv}. Binary frames carry no task id:
+ * the uplink is claimed by the first task to {@code sendBinary}, the downlink by {@link
+ * #claimBinaryDownlink} (or implicitly when exactly one task is active). Viable mix: one ASR
+ * uplink + one TTS downlink + any number of pure-JSON tasks; two concurrent binary streams on
+ * one connection raise {@code sdk.ws.BinaryOwnerConflict}.
+ */
+public final class WsConnection implements AutoCloseable {
+  private static final Logger log = LoggerFactory.getLogger(WsConnection.class);
+  private static final RawItem POISON = RawItem.poison();
+
+  private final WebSocket socket;
+  private final LinkedBlockingQueue<RawItem> rawQueue = new LinkedBlockingQueue<>();
+  private final ConcurrentHashMap<String, TaskHandle> tasks = new ConcurrentHashMap<>();
+  private final AtomicReference<String> uplinkOwner = new AtomicReference<>();
+  private final AtomicReference<String> downlinkOwner = new AtomicReference<>();
+  private final Object sendLock = new Object();
+  private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final int maxQueueCapacity;
+  private final Thread reader;
+  private final CountDownLatch openLatch = new CountDownLatch(1);
+  private volatile RuntimeException openFailure;
+
+  public WsConnection(HttpTransport transport, String url, String module, RequestOptions options) {
+    this(transport, url, module, options, 0, WsSession.DEFAULT_CONNECT_TIMEOUT);
+  }
+
+  public WsConnection(
+      HttpTransport transport,
+      String url,
+      String module,
+      RequestOptions options,
+      int maxQueueCapacity,
+      Duration connectTimeout) {
+    this.maxQueueCapacity = maxQueueCapacity;
+    RequestOptions opts = options == null ? RequestOptions.NONE : options;
+    String apiKey = opts.getApiKey() != null ? opts.getApiKey() : transport.config().getApiKey();
+    if (apiKey == null || apiKey.isEmpty()) {
+      throw Errors.fromSdkErrorCode(SdkErrorCode.SDK_INVALID_API_KEY);
+    }
+    String workspace =
+        opts.getWorkspace() != null ? opts.getWorkspace() : transport.config().getWorkspace();
+    Request.Builder builder =
+        new Request.Builder()
+            .url(url)
+            .tag(RequestTags.NoRetry.class, RequestTags.NoRetry.INSTANCE)
+            .tag(RequestTags.Auth.class, new RequestTags.Auth(apiKey, workspace));
+    if (module != null && !module.isEmpty()) {
+      builder.tag(RequestTags.Module.class, new RequestTags.Module(module));
+    }
+    for (Map.Entry<String, String> e : opts.getHeaders().entrySet()) {
+      builder.header(e.getKey(), e.getValue());
+    }
+    // Shared connections must block forever on read (design §5): idle periods are normal and a
+    // socket read timeout would kill the single demux reader for ALL tasks. okhttp clears
+    // soTimeout on upgrade today; setting it explicitly keeps the guarantee local. Liveness is
+    // the task-level recv timeout on the demux queues, not the socket.
+    OkHttpClient wsClient =
+        transport.okhttp().newBuilder()
+            .connectTimeout(connectTimeout)
+            .readTimeout(0, TimeUnit.MILLISECONDS)
+            .build();
+    this.socket = wsClient.newWebSocket(builder.build(), new Listener());
+    this.reader = new Thread(this::demuxLoop, "dashscope-ws-reader");
+    this.reader.setDaemon(true);
+    this.reader.start();
+    awaitOpen(connectTimeout);
+  }
+
+  /** Register a task on this connection. Duplicate task_id → {@code sdk.ws.IllegalState}. */
+  public TaskHandle attach(String taskId) {
+    if (closed.get()) {
+      throw illegalState("attach on closed connection");
+    }
+    TaskHandle handle = new TaskHandle(taskId);
+    if (tasks.putIfAbsent(taskId, handle) != null) {
+      throw illegalState("duplicate task_id " + taskId);
+    }
+    return handle;
+  }
+
+  /** Explicitly claim the binary downlink for a task (TTS start does this automatically). */
+  public void claimBinaryDownlink(String taskId) {
+    if (!downlinkOwner.compareAndSet(null, taskId) && !taskId.equals(downlinkOwner.get())) {
+      throw binaryConflict(
+          "downlink already claimed by " + downlinkOwner.get() + ", " + taskId + " cannot claim");
+    }
+  }
+
+  private void awaitOpen(Duration connectTimeout) {
+    boolean opened;
+    try {
+      opened = openLatch.await(connectTimeout.toMillis(), TimeUnit.MILLISECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      socket.cancel();
+      throw new ApiConnectionException("websocket connect interrupted", e);
+    }
+    if (!opened) {
+      socket.cancel();
+      throw new ApiTimeoutException("websocket handshake timed out after " + connectTimeout, null);
+    }
+    if (openFailure != null) {
+      socket.cancel();
+      throw openFailure;
+    }
+  }
+
+  private void demuxLoop() {
+    while (true) {
+      RawItem item;
+      try {
+        item = rawQueue.take();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return;
+      }
+      if (item == POISON) {
+        return;
+      }
+      if (item.failure != null) {
+        broadcast(TaskEvent.failure(item.failure));
+        return;
+      }
+      if (item.closeCode != null) {
+        broadcast(TaskEvent.closed(item.closeCode, item.closeReason));
+        return;
+      }
+      if (item.binary != null) {
+        routeBinary(item.binary.asByteBuffer());
+        continue;
+      }
+      routeText(item.text);
+    }
+  }
+
+  private void routeText(String text) {
+    TaskEvent event;
+    try {
+      event = TaskProtocol.parse(text);
+    } catch (RuntimeException e) {
+      broadcast(TaskEvent.failure(e));
+      return;
+    }
+    TaskHandle handle = tasks.get(event.getTaskId());
+    if (handle == null) {
+      // An event for a task that already terminated (or was never attached here); dropping is
+      // safe because its terminal event was already delivered when it unregistered.
+      log.warn("ws event for unknown task {} (event={}), dropped", event.getTaskId(),
+          event.getEvent());
+      return;
+    }
+    handle.enqueue(event);
+    if (TaskProtocol.TASK_FINISHED.equals(event.getEvent())
+        || TaskProtocol.TASK_FAILED.equals(event.getEvent())) {
+      unregister(event.getTaskId());
+    }
+  }
+
+  private void routeBinary(ByteBuffer bytes) {
+    String owner = downlinkOwner.get();
+    TaskHandle target = owner != null ? tasks.get(owner) : null;
+    if (target == null) {
+      if (tasks.size() == 1) {
+        target = tasks.values().iterator().next();
+      } else {
+        broadcast(
+            TaskEvent.failure(
+                binaryConflict(
+                    "unclaimed binary frame with " + tasks.size() + " active tasks")));
+        return;
+      }
+    }
+    target.enqueue(TaskEvent.binary(bytes));
+  }
+
+  private void broadcast(TaskEvent event) {
+    for (TaskHandle handle : tasks.values()) {
+      handle.enqueue(event);
+    }
+  }
+
+  private void unregister(String taskId) {
+    tasks.remove(taskId);
+    uplinkOwner.compareAndSet(taskId, null);
+    downlinkOwner.compareAndSet(taskId, null);
+  }
+
+  private SdkException binaryConflict(String detail) {
+    return Errors.fromSdkErrorCode(
+        SdkErrorCode.SDK_WS_BINARY_OWNER_CONFLICT, Collections.singletonMap("detail", detail));
+  }
+
+  private static SdkException illegalState(String detail) {
+    return Errors.fromSdkErrorCode(
+        SdkErrorCode.SDK_WS_ILLEGAL_STATE, Collections.singletonMap("detail", detail));
+  }
+
+  private void sendText(String json) {
+    if (closed.get()) {
+      throw illegalState("send on closed connection");
+    }
+    synchronized (sendLock) {
+      if (!socket.send(json)) {
+        throw Errors.fromSdkErrorCode(SdkErrorCode.SDK_WS_UPSTREAM_QUEUE_FULL);
+      }
+    }
+  }
+
+  private void sendBinary(String taskId, ByteBuffer data) {
+    if (closed.get()) {
+      throw illegalState("send on closed connection");
+    }
+    if (!uplinkOwner.compareAndSet(null, taskId) && !taskId.equals(uplinkOwner.get())) {
+      throw binaryConflict(
+          "uplink already claimed by " + uplinkOwner.get() + ", " + taskId + " cannot send");
+    }
+    synchronized (sendLock) {
+      if (!socket.send(ByteString.of(data))) {
+        throw Errors.fromSdkErrorCode(SdkErrorCode.SDK_WS_UPSTREAM_QUEUE_FULL);
+      }
+    }
+  }
+
+  /** Broadcasts a connection-closed failure to all unfinished tasks and joins the reader (2s). */
+  @Override
+  public void close() {
+    if (!closed.compareAndSet(false, true)) {
+      return;
+    }
+    socket.close(1000, "bye");
+    rawQueue.offer(POISON);
+    try {
+      reader.join(2000);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    broadcast(
+        TaskEvent.failure(new ApiConnectionException("websocket connection closed", null)));
+    tasks.clear();
+  }
+
+  /** One task's channel over this shared connection. {@link #close} detaches the task only. */
+  public final class TaskHandle implements TaskChannel {
+    private final String taskId;
+    private final LinkedBlockingQueue<TaskEvent> inbox = new LinkedBlockingQueue<>();
+    private final AtomicBoolean detached = new AtomicBoolean(false);
+
+    private TaskHandle(String taskId) {
+      this.taskId = taskId;
+    }
+
+    @Override
+    public String taskId() {
+      return taskId;
+    }
+
+    @Override
+    public void sendText(String json) {
+      if (detached.get()) {
+        throw illegalState("send on detached task " + taskId);
+      }
+      WsConnection.this.sendText(json);
+    }
+
+    @Override
+    public void sendBinary(ByteBuffer data) {
+      if (detached.get()) {
+        throw illegalState("sendBinary on detached task " + taskId);
+      }
+      WsConnection.this.sendBinary(taskId, data);
+    }
+
+    @Override
+    public TaskEvent recv(Duration timeout) {
+      TaskEvent event;
+      try {
+        event = inbox.poll(timeout.toMillis(), TimeUnit.MILLISECONDS);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new ApiConnectionException("interrupted while waiting for task event", e);
+      }
+      if (event != null && event.getKind() == TaskEvent.Kind.FAILURE) {
+        throw event.getFailure();
+      }
+      return event;
+    }
+
+    @Override
+    public void close() {
+      if (detached.compareAndSet(false, true)) {
+        unregister(taskId);
+      }
+    }
+
+    private void enqueue(TaskEvent event) {
+      if (maxQueueCapacity > 0 && inbox.size() >= maxQueueCapacity) {
+        // Never drop frames silently (audio design §4): surface overflow, then the task is
+        // torn down because protocol sync is lost.
+        inbox.offer(
+            TaskEvent.failure(
+                Errors.fromSdkErrorCode(SdkErrorCode.SDK_WS_QUEUE_CAPACITY_EXCEEDED)));
+        unregister(taskId);
+        return;
+      }
+      inbox.offer(event);
+    }
+  }
+
+  private static final class RawItem {
+    final String text;
+    final ByteString binary;
+    final Integer closeCode;
+    final String closeReason;
+    final RuntimeException failure;
+
+    private RawItem(
+        String text, ByteString binary, Integer closeCode, String closeReason,
+        RuntimeException failure) {
+      this.text = text;
+      this.binary = binary;
+      this.closeCode = closeCode;
+      this.closeReason = closeReason;
+      this.failure = failure;
+    }
+
+    static RawItem poison() {
+      return new RawItem(null, null, null, null, null);
+    }
+
+    static RawItem text(String text) {
+      return new RawItem(text, null, null, null, null);
+    }
+
+    static RawItem binary(ByteString binary) {
+      return new RawItem(null, binary, null, null, null);
+    }
+
+    static RawItem closed(int code, String reason) {
+      return new RawItem(null, null, code, reason, null);
+    }
+
+    static RawItem failure(RuntimeException failure) {
+      return new RawItem(null, null, null, null, failure);
+    }
+  }
+
+  private final class Listener extends WebSocketListener {
+    @Override
+    public void onOpen(WebSocket webSocket, Response response) {
+      openLatch.countDown();
+    }
+
+    @Override
+    public void onMessage(WebSocket webSocket, String text) {
+      rawQueue.offer(RawItem.text(text));
+    }
+
+    @Override
+    public void onMessage(WebSocket webSocket, ByteString bytes) {
+      rawQueue.offer(RawItem.binary(bytes));
+    }
+
+    @Override
+    public void onClosing(WebSocket webSocket, int code, String reason) {
+      rawQueue.offer(RawItem.closed(code, reason));
+    }
+
+    @Override
+    public void onClosed(WebSocket webSocket, int code, String reason) {
+      rawQueue.offer(RawItem.closed(code, reason));
+    }
+
+    @Override
+    public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+      RuntimeException mapped = WsSession.mapFailure(t, response);
+      if (openLatch.getCount() > 0) {
+        openFailure = mapped;
+        openLatch.countDown();
+      } else {
+        rawQueue.offer(RawItem.failure(mapped));
+      }
+    }
+  }
+}

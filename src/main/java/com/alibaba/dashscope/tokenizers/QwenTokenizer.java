@@ -2,18 +2,18 @@ package com.alibaba.dashscope.tokenizers;
 
 import com.alibaba.dashscope.exception.NoSpecialTokenExists;
 import com.alibaba.dashscope.exception.UnSupportedSpecialTokenMode;
-import com.alibaba.dashscope.tokenization.NoSpecialTokenException;
-import com.alibaba.dashscope.tokenization.UnsupportedSpecialTokenModeException;
+import com.alibaba.dashscope.v3.tokenization.NoSpecialTokenException;
+import com.alibaba.dashscope.v3.tokenization.UnsupportedSpecialTokenModeException;
 import java.util.List;
 
 /**
  * 2.x compatibility shim: the implementation moved to the 3.0-owned {@link
- * com.alibaba.dashscope.tokenization.QwenTokenizer}; this class delegates and translates the 3.0
+ * com.alibaba.dashscope.v3.tokenization.QwenTokenizer}; this class delegates and translates the 3.0
  * unchecked exceptions back to the 2.x checked ones.
  */
 public class QwenTokenizer implements Tokenizer {
-  private final com.alibaba.dashscope.tokenization.QwenTokenizer delegate =
-      new com.alibaba.dashscope.tokenization.QwenTokenizer();
+  private final com.alibaba.dashscope.v3.tokenization.QwenTokenizer delegate =
+      new com.alibaba.dashscope.v3.tokenization.QwenTokenizer();
 
   @Override
   public List<Integer> encodeOrdinary(String text) {

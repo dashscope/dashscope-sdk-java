@@ -8,12 +8,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.ClientOptions;
-import com.alibaba.dashscope.config.ConfigResolver;
-import com.alibaba.dashscope.errors.ApiTimeoutException;
-import com.alibaba.dashscope.resources.jobs.Job;
-import com.alibaba.dashscope.resources.jobs.JobsService;
-import com.alibaba.dashscope.transport.HttpTransport;
-import com.alibaba.dashscope.types.common.Page;
+import com.alibaba.dashscope.v3.config.ConfigResolver;
+import com.alibaba.dashscope.v3.errors.ApiTimeoutException;
+import com.alibaba.dashscope.v3.resources.jobs.Job;
+import com.alibaba.dashscope.v3.resources.jobs.JobsService;
+import com.alibaba.dashscope.v3.transport.HttpTransport;
+import com.alibaba.dashscope.v3.types.common.Page;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.time.Duration;

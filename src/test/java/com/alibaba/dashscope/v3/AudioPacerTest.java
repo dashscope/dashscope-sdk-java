@@ -6,9 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.alibaba.dashscope.errors.ApiConnectionException;
-import com.alibaba.dashscope.errors.ApiTimeoutException;
-import com.alibaba.dashscope.resources.audio.AudioPacer;
+import com.alibaba.dashscope.v3.errors.ApiConnectionException;
+import com.alibaba.dashscope.v3.errors.ApiTimeoutException;
+import com.alibaba.dashscope.v3.resources.audio.AudioPacer;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

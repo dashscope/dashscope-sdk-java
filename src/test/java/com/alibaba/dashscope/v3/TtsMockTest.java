@@ -9,11 +9,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.DashScopeClient;
-import com.alibaba.dashscope.errors.SdkException;
-import com.alibaba.dashscope.resources.audio.SynthesisSession;
-import com.alibaba.dashscope.types.audio.TtsConnectParams;
-import com.alibaba.dashscope.types.audio.TtsSynthesizeParams;
-import com.alibaba.dashscope.types.common.ResponseStream;
+import com.alibaba.dashscope.v3.errors.SdkException;
+import com.alibaba.dashscope.v3.resources.audio.SynthesisSession;
+import com.alibaba.dashscope.v3.types.audio.TtsConnectParams;
+import com.alibaba.dashscope.v3.types.audio.TtsSynthesizeParams;
+import com.alibaba.dashscope.v3.types.common.ResponseStream;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;

@@ -9,11 +9,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.DashScopeAsyncClient;
 import com.alibaba.dashscope.DashScopeClient;
-import com.alibaba.dashscope.errors.ApiStatusException;
-import com.alibaba.dashscope.resources.jobs.Job;
-import com.alibaba.dashscope.resources.tingwu.TingWuRealtimeSession;
-import com.alibaba.dashscope.types.tingwu.TingWuJobParams;
-import com.alibaba.dashscope.types.tingwu.TingWuRealtimeParams;
+import com.alibaba.dashscope.v3.errors.ApiStatusException;
+import com.alibaba.dashscope.v3.resources.jobs.Job;
+import com.alibaba.dashscope.v3.resources.tingwu.TingWuRealtimeSession;
+import com.alibaba.dashscope.v3.types.tingwu.TingWuJobParams;
+import com.alibaba.dashscope.v3.types.tingwu.TingWuRealtimeParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;

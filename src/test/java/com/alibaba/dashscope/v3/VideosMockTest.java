@@ -9,9 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.RequestOptions;
-import com.alibaba.dashscope.resources.jobs.Job;
-import com.alibaba.dashscope.types.common.Page;
-import com.alibaba.dashscope.types.videos.VideoGenerateParams;
+import com.alibaba.dashscope.v3.resources.jobs.Job;
+import com.alibaba.dashscope.v3.types.common.Page;
+import com.alibaba.dashscope.v3.types.videos.VideoGenerateParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;

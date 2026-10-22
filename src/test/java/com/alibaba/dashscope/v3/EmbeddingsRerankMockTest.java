@@ -6,10 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.DashScopeClient;
-import com.alibaba.dashscope.types.embeddings.EmbeddingCreateParams;
-import com.alibaba.dashscope.types.embeddings.EmbeddingResponse;
-import com.alibaba.dashscope.types.rerank.RerankCreateParams;
-import com.alibaba.dashscope.types.rerank.RerankResponse;
+import com.alibaba.dashscope.v3.types.embeddings.EmbeddingCreateParams;
+import com.alibaba.dashscope.v3.types.embeddings.EmbeddingResponse;
+import com.alibaba.dashscope.v3.types.rerank.RerankCreateParams;
+import com.alibaba.dashscope.v3.types.rerank.RerankResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;

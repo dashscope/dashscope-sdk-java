@@ -1,26 +1,26 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope;
 
-import com.alibaba.dashscope.config.ConfigResolver;
-import com.alibaba.dashscope.config.ResolvedConfig;
-import com.alibaba.dashscope.resources.apps.AppsService;
-import com.alibaba.dashscope.resources.audio.AudioService;
-import com.alibaba.dashscope.resources.chat.ChatService;
-import com.alibaba.dashscope.resources.decision.DecisionService;
-import com.alibaba.dashscope.resources.deployments.DeploymentsService;
-import com.alibaba.dashscope.resources.embeddings.EmbeddingService;
-import com.alibaba.dashscope.resources.files.FilesService;
-import com.alibaba.dashscope.resources.finetunes.FineTunesService;
-import com.alibaba.dashscope.resources.images.ImagesService;
-import com.alibaba.dashscope.resources.models.ModelsService;
-import com.alibaba.dashscope.resources.multimodal.MultimodalService;
-import com.alibaba.dashscope.resources.rerank.RerankService;
-import com.alibaba.dashscope.resources.tingwu.TingWuService;
 import com.alibaba.dashscope.agentstudio.AgentStudioClient;
-import com.alibaba.dashscope.resources.tokenization.TokenizationService;
-import com.alibaba.dashscope.resources.videos.VideosService;
-import com.alibaba.dashscope.transport.HttpTransport;
-import com.alibaba.dashscope.transport.ws.WsConnection;
+import com.alibaba.dashscope.v3.config.ConfigResolver;
+import com.alibaba.dashscope.v3.config.ResolvedConfig;
+import com.alibaba.dashscope.v3.resources.apps.AppsService;
+import com.alibaba.dashscope.v3.resources.audio.AudioService;
+import com.alibaba.dashscope.v3.resources.chat.ChatService;
+import com.alibaba.dashscope.v3.resources.decision.DecisionService;
+import com.alibaba.dashscope.v3.resources.deployments.DeploymentsService;
+import com.alibaba.dashscope.v3.resources.embeddings.EmbeddingService;
+import com.alibaba.dashscope.v3.resources.files.FilesService;
+import com.alibaba.dashscope.v3.resources.finetunes.FineTunesService;
+import com.alibaba.dashscope.v3.resources.images.ImagesService;
+import com.alibaba.dashscope.v3.resources.models.ModelsService;
+import com.alibaba.dashscope.v3.resources.multimodal.MultimodalService;
+import com.alibaba.dashscope.v3.resources.rerank.RerankService;
+import com.alibaba.dashscope.v3.resources.tingwu.TingWuService;
+import com.alibaba.dashscope.v3.resources.tokenization.TokenizationService;
+import com.alibaba.dashscope.v3.resources.videos.VideosService;
+import com.alibaba.dashscope.v3.transport.HttpTransport;
+import com.alibaba.dashscope.v3.transport.ws.WsConnection;
 import java.time.Duration;
 import okhttp3.OkHttpClient;
 
@@ -150,7 +150,7 @@ public final class DashScopeClient implements AutoCloseable {
 
   /**
    * Server-side token counting. For the local BPE tokenizer see {@link
-   * com.alibaba.dashscope.tokenization.TokenizerFactory}.
+   * com.alibaba.dashscope.v3.tokenization.TokenizerFactory}.
    */
   public TokenizationService tokenization() {
     return tokenization;

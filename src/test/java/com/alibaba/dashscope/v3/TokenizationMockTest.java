@@ -8,9 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.DashScopeAsyncClient;
 import com.alibaba.dashscope.DashScopeClient;
-import com.alibaba.dashscope.types.messages.Message;
-import com.alibaba.dashscope.types.tokenization.TokenCount;
-import com.alibaba.dashscope.types.tokenization.TokenizationCountParams;
+import com.alibaba.dashscope.v3.types.messages.Message;
+import com.alibaba.dashscope.v3.types.tokenization.TokenCount;
+import com.alibaba.dashscope.v3.types.tokenization.TokenizationCountParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;

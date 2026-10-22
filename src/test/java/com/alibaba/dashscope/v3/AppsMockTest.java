@@ -9,11 +9,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.DashScopeClient;
-import com.alibaba.dashscope.errors.RateLimitException;
-import com.alibaba.dashscope.types.apps.AppCompletion;
-import com.alibaba.dashscope.types.apps.AppCompletionCreateParams;
-import com.alibaba.dashscope.types.common.ResponseStream;
-import com.alibaba.dashscope.types.messages.Message;
+import com.alibaba.dashscope.v3.errors.RateLimitException;
+import com.alibaba.dashscope.v3.types.apps.AppCompletion;
+import com.alibaba.dashscope.v3.types.apps.AppCompletionCreateParams;
+import com.alibaba.dashscope.v3.types.common.ResponseStream;
+import com.alibaba.dashscope.v3.types.messages.Message;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;

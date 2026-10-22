@@ -9,11 +9,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.DashScopeAsyncClient;
 import com.alibaba.dashscope.DashScopeClient;
-import com.alibaba.dashscope.errors.BadRequestException;
-import com.alibaba.dashscope.types.decision.DecisionAnswer;
-import com.alibaba.dashscope.types.decision.DecisionCreateParams;
-import com.alibaba.dashscope.types.decision.DecisionQuestion;
-import com.alibaba.dashscope.types.decision.DecisionResult;
+import com.alibaba.dashscope.v3.errors.BadRequestException;
+import com.alibaba.dashscope.v3.types.decision.DecisionAnswer;
+import com.alibaba.dashscope.v3.types.decision.DecisionCreateParams;
+import com.alibaba.dashscope.v3.types.decision.DecisionQuestion;
+import com.alibaba.dashscope.v3.types.decision.DecisionResult;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;

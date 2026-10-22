@@ -4,10 +4,10 @@ package com.alibaba.dashscope.v3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.alibaba.dashscope.tokenization.NoSpecialTokenException;
-import com.alibaba.dashscope.tokenization.Tokenizer;
-import com.alibaba.dashscope.tokenization.TokenizerFactory;
-import com.alibaba.dashscope.tokenization.UnsupportedSpecialTokenModeException;
+import com.alibaba.dashscope.v3.tokenization.NoSpecialTokenException;
+import com.alibaba.dashscope.v3.tokenization.Tokenizer;
+import com.alibaba.dashscope.v3.tokenization.TokenizerFactory;
+import com.alibaba.dashscope.v3.tokenization.UnsupportedSpecialTokenModeException;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;

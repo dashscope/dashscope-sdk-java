@@ -9,9 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.RequestOptions;
-import com.alibaba.dashscope.errors.NotFoundException;
-import com.alibaba.dashscope.types.models.Model;
-import com.alibaba.dashscope.types.models.ModelList;
+import com.alibaba.dashscope.v3.errors.NotFoundException;
+import com.alibaba.dashscope.v3.types.models.Model;
+import com.alibaba.dashscope.v3.types.models.ModelList;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import okhttp3.mockwebserver.MockResponse;

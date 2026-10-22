@@ -8,8 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.DashScopeAsyncClient;
 import com.alibaba.dashscope.DashScopeClient;
-import com.alibaba.dashscope.resources.jobs.Job;
-import com.alibaba.dashscope.types.embeddings.BatchEmbeddingCreateParams;
+import com.alibaba.dashscope.v3.resources.jobs.Job;
+import com.alibaba.dashscope.v3.types.embeddings.BatchEmbeddingCreateParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;

@@ -9,11 +9,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.ClientOptions;
 import com.alibaba.dashscope.DashScopeClient;
-import com.alibaba.dashscope.config.ConfigResolver;
-import com.alibaba.dashscope.config.ResolvedConfig;
-import com.alibaba.dashscope.errors.SdkException;
-import com.alibaba.dashscope.types.completions.ChatCompletionCreateParams;
-import com.alibaba.dashscope.types.messages.Message;
+import com.alibaba.dashscope.v3.config.ConfigResolver;
+import com.alibaba.dashscope.v3.config.ResolvedConfig;
+import com.alibaba.dashscope.v3.errors.SdkException;
+import com.alibaba.dashscope.v3.types.completions.ChatCompletionCreateParams;
+import com.alibaba.dashscope.v3.types.messages.Message;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;

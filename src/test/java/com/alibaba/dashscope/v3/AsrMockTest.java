@@ -9,14 +9,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.DashScopeClient;
-import com.alibaba.dashscope.errors.ApiStatusException;
-import com.alibaba.dashscope.errors.ApiTimeoutException;
-import com.alibaba.dashscope.resources.audio.RecognitionSession;
-import com.alibaba.dashscope.resources.jobs.Job;
-import com.alibaba.dashscope.types.audio.AsrRecognizeParams;
-import com.alibaba.dashscope.types.audio.AsrResult;
-import com.alibaba.dashscope.types.audio.AsrTranscribeParams;
-import com.alibaba.dashscope.transport.ws.WsConnection;
+import com.alibaba.dashscope.v3.errors.ApiStatusException;
+import com.alibaba.dashscope.v3.errors.ApiTimeoutException;
+import com.alibaba.dashscope.v3.resources.audio.RecognitionSession;
+import com.alibaba.dashscope.v3.resources.jobs.Job;
+import com.alibaba.dashscope.v3.types.audio.AsrRecognizeParams;
+import com.alibaba.dashscope.v3.types.audio.AsrResult;
+import com.alibaba.dashscope.v3.types.audio.AsrTranscribeParams;
+import com.alibaba.dashscope.v3.transport.ws.WsConnection;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -352,7 +352,7 @@ class AsrMockTest {
     socket.nextText();
     asr.close();
     // The shared socket stays usable after the session detaches.
-    com.alibaba.dashscope.transport.ws.TaskChannel other = connection.attach("task-other");
+    com.alibaba.dashscope.v3.transport.ws.TaskChannel other = connection.attach("task-other");
     assertNotNull(other);
     connection.close();
   }
