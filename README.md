@@ -14,6 +14,40 @@ To use the sdk in your java systems, please add the maven dependency in your pom
 </dependency>
 ```
 
+## 3.0 (new generation)
+
+Version 3.0 introduces a new client entry point while keeping every 2.x API working unchanged
+in the same artifact. Java 11+ is required.
+
+```java
+import com.alibaba.dashscope.DashScopeClient;
+import com.alibaba.dashscope.v3.types.completions.ChatCompletion;
+import com.alibaba.dashscope.v3.types.completions.ChatCompletionCreateParams;
+import com.alibaba.dashscope.v3.types.messages.Message;
+import java.util.List;
+
+// apiKey resolves from the config chain:
+// builder > -Ddashscope.api.key > DASHSCOPE_API_KEY > ~/.dashscope/config.toml
+try (DashScopeClient client = DashScopeClient.builder().build()) {
+  ChatCompletion result = client.chat().completions().create(
+      ChatCompletionCreateParams.builder()
+          .model("qwen-plus")
+          .messages(List.of(Message.user("Hello, how are you?")))
+          .build());
+  System.out.println(result.outputText());
+  System.out.println("request_id: " + result.getRequestId());
+}
+```
+
+- Resource tree: `chat / multimodal / apps / images / videos / embeddings / rerank /
+  tokenization / audio / finetunes / deployments / files / models / tingwu / decision /
+  agentStudio` — see [md/dashscope-3.0-design.md](md/dashscope-3.0-design.md).
+- Migrating from 2.x: [md/dashscope-3.0-migration.md](md/dashscope-3.0-migration.md)
+  (per-class mapping, unchecked-exception model, AgentStudio and tokenizers notes).
+- Runnable samples: [examples/README.md](examples/README.md) (four layers, CI dry-run covered).
+- Everything below this section documents the frozen 2.x API (`Generation`, `Conversation`,
+  …), which continues to work as-is.
+
 ## QuickStart
 
 ### Generation

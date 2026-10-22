@@ -14,6 +14,38 @@
 </dependency>
 ```
 
+## 3.0（新代际）
+
+3.0 引入新的客户端入口，同一 artifact 内所有 2.x API 原样可用。要求 Java 11+。
+
+```java
+import com.alibaba.dashscope.DashScopeClient;
+import com.alibaba.dashscope.v3.types.completions.ChatCompletion;
+import com.alibaba.dashscope.v3.types.completions.ChatCompletionCreateParams;
+import com.alibaba.dashscope.v3.types.messages.Message;
+import java.util.List;
+
+// apiKey 走配置链：Builder 显式参数 > -Ddashscope.api.key > DASHSCOPE_API_KEY 环境变量
+// > ~/.dashscope/config.toml
+try (DashScopeClient client = DashScopeClient.builder().build()) {
+  ChatCompletion result = client.chat().completions().create(
+      ChatCompletionCreateParams.builder()
+          .model("qwen-plus")
+          .messages(List.of(Message.user("你好，最近怎么样？")))
+          .build());
+  System.out.println(result.outputText());
+  System.out.println("request_id: " + result.getRequestId());
+}
+```
+
+- 资源树：`chat / multimodal / apps / images / videos / embeddings / rerank / tokenization /
+  audio / finetunes / deployments / files / models / tingwu / decision / agentStudio`，
+  见 [md/dashscope-3.0-design.md](md/dashscope-3.0-design.md)。
+- 2.x 迁移：[md/dashscope-3.0-migration.md](md/dashscope-3.0-migration.md)
+  （逐类对照表、unchecked 异常心智、AgentStudio 与 tokenizers 专章）。
+- 可运行示例：[examples/README.md](examples/README.md)（四层结构，CI 全量干跑）。
+- 本节以下为冻结的 2.x API 文档（`Generation`、`Conversation` 等），原样继续可用。
+
 ## 快速开始
 
 ### 文本生成
