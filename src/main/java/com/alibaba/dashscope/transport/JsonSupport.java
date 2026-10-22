@@ -198,6 +198,31 @@ public final class JsonSupport {
     return MAPPER.convertValue(node, Object.class);
   }
 
+  /**
+   * Lift {@code body.output} to the top level so public types stay flat (Python v2
+   * {@code flatten_envelope} parity). Envelope keys win — how {@code request_id}/{@code
+   * code}/{@code message} reach the flattened node; null envelope values are dropped so an
+   * absent field cannot overwrite a real payload value.
+   */
+  public static com.fasterxml.jackson.databind.node.ObjectNode flattenEnvelope(JsonNode body) {
+    com.fasterxml.jackson.databind.node.ObjectNode flat = MAPPER.createObjectNode();
+    if (body == null || !body.isObject()) {
+      return flat;
+    }
+    JsonNode output = body.get("output");
+    if (output != null && output.isObject()) {
+      flat.setAll((com.fasterxml.jackson.databind.node.ObjectNode) output);
+    }
+    body.fields()
+        .forEachRemaining(
+            e -> {
+              if (!"output".equals(e.getKey()) && !e.getValue().isNull()) {
+                flat.set(e.getKey(), e.getValue());
+              }
+            });
+    return flat;
+  }
+
   public static JsonNode missingNode() {
     return JsonNodeFactory.instance.missingNode();
   }

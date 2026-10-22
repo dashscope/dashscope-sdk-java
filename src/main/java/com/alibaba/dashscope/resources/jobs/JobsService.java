@@ -38,9 +38,18 @@ public final class JobsService {
 
   /** Submit an async job: POST {@code servicePath} with the async header. */
   public Job create(String servicePath, JsonNode body, RequestOptions options) {
-    Map<String, String> async = new LinkedHashMap<>();
-    async.put(HEADER_ASYNC, "enable");
-    return toJob(transport.execute(servicePath, body, async, module, options));
+    return create(servicePath, body, null, options);
+  }
+
+  /** Submit an async job carrying extra request headers (e.g. the OSS resolve opt-in). */
+  public Job create(
+      String servicePath, JsonNode body, Map<String, String> extraHeaders, RequestOptions options) {
+    Map<String, String> headers = new LinkedHashMap<>();
+    if (extraHeaders != null) {
+      headers.putAll(extraHeaders);
+    }
+    headers.put(HEADER_ASYNC, "enable");
+    return toJob(transport.execute(servicePath, body, headers, module, options));
   }
 
   public Job fetch(String taskId, RequestOptions options) {

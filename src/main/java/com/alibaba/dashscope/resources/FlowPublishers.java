@@ -29,4 +29,22 @@ public final class FlowPublishers {
         });
     return publisher;
   }
+
+  /** Same bridge for the job-event streams (fine-tunes/deployments), which are not SSE-framed. */
+  public static <T, S extends Iterable<T> & AutoCloseable> Flow.Publisher<T> fromIterable(
+      Supplier<S> streamSupplier, Executor executor) {
+    SubmissionPublisher<T> publisher = new SubmissionPublisher<>(executor, Flow.defaultBufferSize());
+    executor.execute(
+        () -> {
+          try (S stream = streamSupplier.get()) {
+            for (T item : stream) {
+              publisher.submit(item);
+            }
+            publisher.close();
+          } catch (Throwable e) {
+            publisher.closeExceptionally(e);
+          }
+        });
+    return publisher;
+  }
 }

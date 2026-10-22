@@ -12,15 +12,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-/** {@code embeddings} resource: {@code create}. (Batch jobs arrive with the jobs infra.) */
+/** {@code embeddings} resource: {@code create} plus the async batch-task facade {@code jobs()}. */
 public final class EmbeddingService {
   static final String PATH = "/services/embeddings/text-embedding/text-embedding";
   static final String MODULE = "embeddings";
 
   private final HttpTransport transport;
+  private final EmbeddingJobsService jobs;
 
   public EmbeddingService(HttpTransport transport) {
     this.transport = transport;
+    this.jobs = new EmbeddingJobsService(transport);
+  }
+
+  /** The async batch-task handle: create/fetch/wait/cancel/list. */
+  public EmbeddingJobsService jobs() {
+    return jobs;
   }
 
   public EmbeddingResponse create(EmbeddingCreateParams params) {

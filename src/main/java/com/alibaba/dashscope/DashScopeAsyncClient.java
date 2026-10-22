@@ -2,14 +2,38 @@
 package com.alibaba.dashscope;
 
 import com.alibaba.dashscope.config.ConfigResolver;
+import com.alibaba.dashscope.config.ResolvedConfig;
+import com.alibaba.dashscope.resources.agentstudio.AgentStudioClient;
+import com.alibaba.dashscope.resources.apps.AppsAsyncService;
+import com.alibaba.dashscope.resources.apps.AppsService;
+import com.alibaba.dashscope.resources.audio.AudioAsyncService;
+import com.alibaba.dashscope.resources.audio.AudioService;
 import com.alibaba.dashscope.resources.chat.ChatAsyncService;
 import com.alibaba.dashscope.resources.chat.ChatService;
+import com.alibaba.dashscope.resources.decision.DecisionAsyncService;
+import com.alibaba.dashscope.resources.decision.DecisionService;
+import com.alibaba.dashscope.resources.deployments.DeploymentsAsyncService;
+import com.alibaba.dashscope.resources.deployments.DeploymentsService;
 import com.alibaba.dashscope.resources.embeddings.EmbeddingAsyncService;
 import com.alibaba.dashscope.resources.embeddings.EmbeddingService;
+import com.alibaba.dashscope.resources.files.FilesAsyncService;
+import com.alibaba.dashscope.resources.files.FilesService;
+import com.alibaba.dashscope.resources.finetunes.FineTunesAsyncService;
+import com.alibaba.dashscope.resources.finetunes.FineTunesService;
+import com.alibaba.dashscope.resources.images.ImagesAsyncService;
+import com.alibaba.dashscope.resources.images.ImagesService;
+import com.alibaba.dashscope.resources.models.ModelsAsyncService;
+import com.alibaba.dashscope.resources.models.ModelsService;
 import com.alibaba.dashscope.resources.multimodal.MultimodalAsyncService;
 import com.alibaba.dashscope.resources.multimodal.MultimodalService;
 import com.alibaba.dashscope.resources.rerank.RerankAsyncService;
 import com.alibaba.dashscope.resources.rerank.RerankService;
+import com.alibaba.dashscope.resources.tingwu.TingWuAsyncService;
+import com.alibaba.dashscope.resources.tingwu.TingWuService;
+import com.alibaba.dashscope.resources.tokenization.TokenizationAsyncService;
+import com.alibaba.dashscope.resources.tokenization.TokenizationService;
+import com.alibaba.dashscope.resources.videos.VideosAsyncService;
+import com.alibaba.dashscope.resources.videos.VideosService;
 import com.alibaba.dashscope.transport.HttpTransport;
 import java.time.Duration;
 import java.util.concurrent.ExecutorService;
@@ -34,6 +58,18 @@ public final class DashScopeAsyncClient implements AutoCloseable {
   private final EmbeddingAsyncService embeddings;
   private final RerankAsyncService rerank;
   private final MultimodalAsyncService multimodal;
+  private final AudioAsyncService audio;
+  private final AppsAsyncService apps;
+  private final DecisionAsyncService decision;
+  private final ImagesAsyncService images;
+  private final VideosAsyncService videos;
+  private final FilesAsyncService files;
+  private final ModelsAsyncService models;
+  private final FineTunesAsyncService fineTunes;
+  private final DeploymentsAsyncService deployments;
+  private final TingWuAsyncService tingwu;
+  private final TokenizationAsyncService tokenization;
+  private volatile AgentStudioClient agentStudio;
 
   private DashScopeAsyncClient(
       ClientOptions options, HttpTransport transport, ExecutorService executor, boolean ownsExecutor) {
@@ -45,6 +81,18 @@ public final class DashScopeAsyncClient implements AutoCloseable {
     this.embeddings = new EmbeddingAsyncService(new EmbeddingService(transport), executor);
     this.rerank = new RerankAsyncService(new RerankService(transport), executor);
     this.multimodal = new MultimodalAsyncService(new MultimodalService(transport), executor);
+    this.audio = new AudioAsyncService(new AudioService(transport), executor);
+    this.apps = new AppsAsyncService(new AppsService(transport), executor);
+    this.decision = new DecisionAsyncService(new DecisionService(transport), executor);
+    this.images = new ImagesAsyncService(new ImagesService(transport), executor);
+    this.videos = new VideosAsyncService(new VideosService(transport), executor);
+    this.files = new FilesAsyncService(new FilesService(transport), executor);
+    this.models = new ModelsAsyncService(new ModelsService(transport), executor);
+    this.fineTunes = new FineTunesAsyncService(new FineTunesService(transport), executor);
+    this.deployments = new DeploymentsAsyncService(new DeploymentsService(transport), executor);
+    this.tingwu = new TingWuAsyncService(new TingWuService(transport), executor);
+    this.tokenization =
+        new TokenizationAsyncService(new TokenizationService(transport), executor);
   }
 
   public static Builder builder() {
@@ -67,6 +115,80 @@ public final class DashScopeAsyncClient implements AutoCloseable {
     return multimodal;
   }
 
+  public AppsAsyncService apps() {
+    return apps;
+  }
+
+  public DecisionAsyncService decision() {
+    return decision;
+  }
+
+  public ImagesAsyncService images() {
+    return images;
+  }
+
+  public VideosAsyncService videos() {
+    return videos;
+  }
+
+  /** File management: upload/list/get/delete. */
+  public FilesAsyncService files() {
+    return files;
+  }
+
+  /** Model catalog: list/get. */
+  public ModelsAsyncService models() {
+    return models;
+  }
+
+  /** Fine-tuning jobs: create/get/list/cancel/delete/logs/streamEvents/wait. */
+  public FineTunesAsyncService fineTunes() {
+    return fineTunes;
+  }
+
+  /** Model deployments: create/get/list/scale/delete/streamEvents. */
+  public DeploymentsAsyncService deployments() {
+    return deployments;
+  }
+
+  /** TingWu offline jobs only (realtime sessions stay sync-only, Python v2 parity). */
+  public TingWuAsyncService tingwu() {
+    return tingwu;
+  }
+
+  /** Server-side token counting. */
+  public TokenizationAsyncService tokenization() {
+    return tokenization;
+  }
+
+  /**
+   * AgentStudio management plane (design §7: the 2.x agentstudio codebase moved here unchanged).
+   * The same client type as on {@link DashScopeClient#agentStudio()} — it carries native async
+   * variants. Created lazily; it keeps its own 2.x-style exception style and the 3.0 {@code
+   * baseUrl} does not apply to it.
+   */
+  public AgentStudioClient agentStudio() {
+    AgentStudioClient c = agentStudio;
+    if (c == null) {
+      synchronized (this) {
+        c = agentStudio;
+        if (c == null) {
+          ResolvedConfig config = transport.config();
+          c =
+              new AgentStudioClient(
+                  config.getApiKey(), null, config.getWorkspace(), config.getRegion(), null);
+          agentStudio = c;
+        }
+      }
+    }
+    return c;
+  }
+
+  /** Audio: asr batch transcription only (ws duplex surfaces stay on the sync client). */
+  public AudioAsyncService audio() {
+    return audio;
+  }
+
   /** Derive a client with extra overrides, sharing this client's pool and executor. */
   public DashScopeAsyncClient withOptions(ClientOptions overrides) {
     ClientOptions merged = DashScopeClient.merge(options, overrides);
@@ -76,6 +198,10 @@ public final class DashScopeAsyncClient implements AutoCloseable {
 
   @Override
   public void close() {
+    AgentStudioClient c = agentStudio;
+    if (c != null) {
+      c.close();
+    }
     transport.close();
     if (ownsExecutor) {
       executor.shutdown();

@@ -8,6 +8,7 @@ import com.alibaba.dashscope.errors.ApiConnectionException;
 import com.alibaba.dashscope.errors.ApiStatusException;
 import com.alibaba.dashscope.errors.ApiTimeoutException;
 import com.alibaba.dashscope.errors.Errors;
+import com.alibaba.dashscope.transport.sse.JobEventStream;
 import com.alibaba.dashscope.transport.sse.SseStream;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
@@ -18,6 +19,7 @@ import java.util.Map;
 import okhttp3.ConnectionPool;
 import okhttp3.Dispatcher;
 import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -96,7 +98,15 @@ public final class HttpTransport implements AutoCloseable {
   /** POST {@code path} (relative to the resolved base URL) with a JSON body. */
   public ResponseEnvelope execute(
       String path, JsonNode body, String module, RequestOptions options) {
-    Request request = buildRequest(path, body, module, options, false);
+    Request request = buildRequest(path, body, module, options, false, "POST");
+    Response response = send(request, options, false);
+    return handleResponse(response, options);
+  }
+
+  /** PUT {@code path} with a JSON body (deployments scale). */
+  public ResponseEnvelope executePut(
+      String path, JsonNode body, String module, RequestOptions options) {
+    Request request = buildRequest(path, body, module, options, false, "PUT");
     Response response = send(request, options, false);
     return handleResponse(response, options);
   }
@@ -114,7 +124,7 @@ public final class HttpTransport implements AutoCloseable {
             .workspace(opts.getWorkspace())
             .headers(opts.getHeaders())
             .headers(extraHeaders);
-    Request request = buildRequest(path, body, module, merged.build(), false);
+    Request request = buildRequest(path, body, module, merged.build(), false, "POST");
     Response response = send(request, merged.build(), false);
     return handleResponse(response, merged.build());
   }
@@ -158,6 +168,76 @@ public final class HttpTransport implements AutoCloseable {
     return handleResponse(response, opts);
   }
 
+  /** DELETE {@code path} (files/fine-tunes/deployments CRUD). */
+  public ResponseEnvelope executeDelete(String path, String module, RequestOptions options) {
+    RequestOptions opts = options == null ? RequestOptions.NONE : options;
+    String apiKey = opts.getApiKey() != null ? opts.getApiKey() : config.getApiKey();
+    if (apiKey == null || apiKey.isEmpty()) {
+      throw Errors.fromSdkErrorCode(SdkErrorCode.SDK_INVALID_API_KEY);
+    }
+    String workspace = opts.getWorkspace() != null ? opts.getWorkspace() : config.getWorkspace();
+    Request.Builder builder =
+        new Request.Builder()
+            .url(config.getBaseUrl() + path)
+            .delete()
+            .tag(RequestTags.Auth.class, new RequestTags.Auth(apiKey, workspace))
+            .tag(RequestTags.MaxRetries.class, new RequestTags.MaxRetries(
+                opts.getMaxRetries() != null ? opts.getMaxRetries() : config.getMaxRetries()))
+            .header("Accept", "application/json; charset=utf-8");
+    if (module != null && !module.isEmpty()) {
+      builder.tag(RequestTags.Module.class, new RequestTags.Module(module));
+    }
+    for (Map.Entry<String, String> e : opts.getHeaders().entrySet()) {
+      builder.header(e.getKey(), e.getValue());
+    }
+    Response response = send(builder.build(), opts, false);
+    return handleResponse(response, opts);
+  }
+
+  /**
+   * Multipart POST (files upload): form fields first, the file part last; rides the same
+   * auth/retry/UA pipeline as JSON posts. Bytes, not a live handle: transport retries must be
+   * able to re-send the full body.
+   */
+  public ResponseEnvelope executeForm(
+      String path,
+      Map<String, String> fields,
+      String fileField,
+      String fileName,
+      byte[] content,
+      String contentType,
+      String module,
+      RequestOptions options) {
+    RequestOptions opts = options == null ? RequestOptions.NONE : options;
+    String apiKey = opts.getApiKey() != null ? opts.getApiKey() : config.getApiKey();
+    if (apiKey == null || apiKey.isEmpty()) {
+      throw Errors.fromSdkErrorCode(SdkErrorCode.SDK_INVALID_API_KEY);
+    }
+    String workspace = opts.getWorkspace() != null ? opts.getWorkspace() : config.getWorkspace();
+    MultipartBody.Builder body = new MultipartBody.Builder().setType(MultipartBody.FORM);
+    if (fields != null) {
+      fields.forEach(body::addFormDataPart);
+    }
+    body.addFormDataPart(
+        fileField, fileName, RequestBody.create(content, MediaType.get(contentType)));
+    Request.Builder builder =
+        new Request.Builder()
+            .url(config.getBaseUrl() + path)
+            .post(body.build())
+            .tag(RequestTags.Auth.class, new RequestTags.Auth(apiKey, workspace))
+            .tag(RequestTags.MaxRetries.class, new RequestTags.MaxRetries(
+                opts.getMaxRetries() != null ? opts.getMaxRetries() : config.getMaxRetries()))
+            .header("Accept", "application/json; charset=utf-8");
+    if (module != null && !module.isEmpty()) {
+      builder.tag(RequestTags.Module.class, new RequestTags.Module(module));
+    }
+    for (Map.Entry<String, String> e : opts.getHeaders().entrySet()) {
+      builder.header(e.getKey(), e.getValue());
+    }
+    Response response = send(builder.build(), opts, false);
+    return handleResponse(response, opts);
+  }
+
   /** POST with SSE: returns the open stream. The initial HTTP layer always raises on failure
    * (there is no response object to hand back); in-stream error frames follow raiseOnError. */
   public SseStream executeStream(
@@ -168,7 +248,7 @@ public final class HttpTransport implements AutoCloseable {
   /** SSE variant carrying a User-Agent suffix (multimodal incremental_to_full parity). */
   public SseStream executeStream(
       String path, JsonNode body, String module, String userAgentSuffix, RequestOptions options) {
-    Request request = buildRequest(path, body, module, options, true);
+    Request request = buildRequest(path, body, module, options, true, "POST");
     if (userAgentSuffix != null && !userAgentSuffix.isEmpty()) {
       request =
           request.newBuilder()
@@ -192,8 +272,54 @@ public final class HttpTransport implements AutoCloseable {
     return new SseStream(response);
   }
 
+  /**
+   * GET a job-event SSE endpoint (fine-tunes/deployments): the {@code event:error}/{@code
+   * status:} framing, not the plain {@code data:}-only shape of {@link #executeStream}. The
+   * initial HTTP layer always raises on failure.
+   */
+  public JobEventStream executeJobEventStream(String path, String module, RequestOptions options) {
+    RequestOptions opts = options == null ? RequestOptions.NONE : options;
+    String apiKey = opts.getApiKey() != null ? opts.getApiKey() : config.getApiKey();
+    if (apiKey == null || apiKey.isEmpty()) {
+      throw Errors.fromSdkErrorCode(SdkErrorCode.SDK_INVALID_API_KEY);
+    }
+    String workspace = opts.getWorkspace() != null ? opts.getWorkspace() : config.getWorkspace();
+    Request.Builder builder =
+        new Request.Builder()
+            .url(config.getBaseUrl() + path)
+            .get()
+            .tag(RequestTags.Auth.class, new RequestTags.Auth(apiKey, workspace))
+            .tag(RequestTags.MaxRetries.class, new RequestTags.MaxRetries(
+                opts.getMaxRetries() != null ? opts.getMaxRetries() : config.getMaxRetries()))
+            .tag(RequestTags.NoRetry.class, RequestTags.NoRetry.INSTANCE)
+            .header("Accept", "text/event-stream")
+            .header("Cache-Control", "no-cache")
+            .header("X-Accel-Buffering", "no");
+    if (module != null && !module.isEmpty()) {
+      builder.tag(RequestTags.Module.class, new RequestTags.Module(module));
+    }
+    for (Map.Entry<String, String> e : opts.getHeaders().entrySet()) {
+      builder.header(e.getKey(), e.getValue());
+    }
+    Response response = send(builder.build(), opts, true);
+    if (!response.isSuccessful()) {
+      String text = readBodyText(response);
+      response.close();
+      JsonNode errorBody = JsonSupport.parseErrorBody(text);
+      throw Errors.fromStatus(
+          response.code(),
+          JsonSupport.errorCode(errorBody),
+          messageOr(errorBody, text),
+          JsonSupport.requestId(errorBody, headersOf(response)),
+          JsonSupport.toPlainValue(errorBody),
+          headersOf(response));
+    }
+    return new JobEventStream(response);
+  }
+
   private Request buildRequest(
-      String path, JsonNode body, String module, RequestOptions options, boolean stream) {
+      String path, JsonNode body, String module, RequestOptions options, boolean stream,
+      String httpMethod) {
     RequestOptions opts = options == null ? RequestOptions.NONE : options;
     String apiKey = opts.getApiKey() != null ? opts.getApiKey() : config.getApiKey();
     if (apiKey == null || apiKey.isEmpty()) {
@@ -203,7 +329,8 @@ public final class HttpTransport implements AutoCloseable {
 
     Request.Builder builder =
         new Request.Builder()
-            .url(config.getBaseUrl() + path)
+            // Absolute URLs bypass the resolved base URL (decision's compatible-mode root).
+            .url(isAbsolute(path) ? path : config.getBaseUrl() + path)
             .tag(RequestTags.Auth.class, new RequestTags.Auth(apiKey, workspace))
             .tag(RequestTags.MaxRetries.class, new RequestTags.MaxRetries(
                 opts.getMaxRetries() != null ? opts.getMaxRetries() : config.getMaxRetries()))
@@ -222,14 +349,18 @@ public final class HttpTransport implements AutoCloseable {
       builder.header("Accept", "application/json; charset=utf-8");
     }
     if (body != null) {
-      builder.post(RequestBody.create(body.toString(), JSON));
+      builder.method(httpMethod, RequestBody.create(body.toString(), JSON));
     } else {
-      builder.post(RequestBody.create(new byte[0], null));
+      builder.method(httpMethod, RequestBody.create(new byte[0], null));
     }
     for (Map.Entry<String, String> e : opts.getHeaders().entrySet()) {
       builder.header(e.getKey(), e.getValue());
     }
     return builder.build();
+  }
+
+  private static boolean isAbsolute(String path) {
+    return path.startsWith("http://") || path.startsWith("https://");
   }
 
   private Response send(Request request, RequestOptions options, boolean stream) {

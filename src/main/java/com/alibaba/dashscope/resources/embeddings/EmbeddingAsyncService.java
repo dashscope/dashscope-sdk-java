@@ -12,10 +12,17 @@ public final class EmbeddingAsyncService {
 
   private final EmbeddingService sync;
   private final Executor executor;
+  private final EmbeddingJobsAsyncService jobs;
 
   public EmbeddingAsyncService(EmbeddingService sync, Executor executor) {
     this.sync = sync;
     this.executor = executor;
+    this.jobs = new EmbeddingJobsAsyncService(sync.jobs(), executor);
+  }
+
+  /** The async batch-task handle: create/fetch/wait/cancel/list. */
+  public EmbeddingJobsAsyncService jobs() {
+    return jobs;
   }
 
   public CompletableFuture<EmbeddingResponse> create(EmbeddingCreateParams params) {
