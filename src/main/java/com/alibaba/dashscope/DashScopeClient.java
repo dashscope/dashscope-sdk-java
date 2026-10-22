@@ -239,6 +239,9 @@ public final class DashScopeClient implements AutoCloseable {
     if (overrides.getRaiseOnError() != null) {
       b.raiseOnError(overrides.getRaiseOnError());
     }
+    if (overrides.getWsPingInterval() != null) {
+      b.wsPingInterval(overrides.getWsPingInterval());
+    }
     if (overrides.getHttpClient() != null) {
       b.httpClient(overrides.getHttpClient());
     }
@@ -287,6 +290,12 @@ public final class DashScopeClient implements AutoCloseable {
 
     public Builder raiseOnError(Boolean raiseOnError) {
       options.raiseOnError(raiseOnError);
+      return this;
+    }
+
+    /** WebSocket ping interval; default 0 = off (audio design §12#1). NAT/proxy: 20–30 s. */
+    public Builder wsPingInterval(Duration wsPingInterval) {
+      options.wsPingInterval(wsPingInterval);
       return this;
     }
 

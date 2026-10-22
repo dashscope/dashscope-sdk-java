@@ -268,6 +268,12 @@ public final class DashScopeAsyncClient implements AutoCloseable {
       return this;
     }
 
+    /** WebSocket ping interval; default 0 = off (audio design §12#1). NAT/proxy: 20–30 s. */
+    public Builder wsPingInterval(Duration wsPingInterval) {
+      options.wsPingInterval(wsPingInterval);
+      return this;
+    }
+
     public Builder httpClient(OkHttpClient httpClient) {
       options.httpClient(httpClient);
       return this;

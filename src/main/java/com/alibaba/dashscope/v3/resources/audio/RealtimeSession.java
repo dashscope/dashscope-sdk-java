@@ -356,14 +356,26 @@ public final class RealtimeSession implements AutoCloseable {
     return dialect;
   }
 
-  /** Idempotent; the session may be re-{@link #connect()}ed afterwards. */
+  /**
+   * Idempotent; the session may be re-{@link #connect()}ed afterwards. If a {@link #connect()} is
+   * in flight on another thread, its socket is cancelled before taking the monitor so the
+   * handshake wait fails fast instead of blocking this call for the whole connect timeout (2.x
+   * c891540 parity: okhttp's close alone does not abort an in-flight handshake).
+   */
   @Override
-  public synchronized void close() {
-    WebSocket ws = socket;
-    socket = null;
-    if (ws != null) {
-      localCloseGeneration = generation.get();
-      ws.close(1000, "bye");
+  public void close() {
+    CountDownLatch latch = openLatch;
+    WebSocket inFlight = socket;
+    if (latch != null && latch.getCount() > 0 && inFlight != null) {
+      inFlight.cancel();
+    }
+    synchronized (this) {
+      WebSocket ws = socket;
+      socket = null;
+      if (ws != null) {
+        localCloseGeneration = generation.get();
+        ws.close(1000, "bye");
+      }
     }
   }
 
