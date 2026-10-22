@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.DashScopeAsyncClient;
 import com.alibaba.dashscope.DashScopeClient;
+import com.alibaba.dashscope.shared.SdkInfo;
 import com.alibaba.dashscope.v3.types.messages.Message;
 import com.alibaba.dashscope.v3.types.tokenization.TokenCount;
 import com.alibaba.dashscope.v3.types.tokenization.TokenizationCountParams;
@@ -89,7 +90,8 @@ class TokenizationMockTest {
     RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
     assertEquals("/tokenizer", request.getPath());
     assertEquals(
-        "java-sdk/3.0.0-SNAPSHOT/tokenizers", request.getHeader("x-dashscope-sdk-client"));
+        "java-sdk/" + SdkInfo.VERSION + "/tokenizers",
+        request.getHeader("x-dashscope-sdk-client"));
     JsonNode body = MAPPER.readTree(request.getBody().readUtf8());
     assertEquals("qwen-turbo", body.get("model").asText());
     assertEquals("You are a helpful assistant.", body.get("input").get("prompt").asText());

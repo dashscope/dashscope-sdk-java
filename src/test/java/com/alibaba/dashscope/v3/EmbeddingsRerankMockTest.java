@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.DashScopeClient;
+import com.alibaba.dashscope.shared.SdkInfo;
 import com.alibaba.dashscope.v3.types.embeddings.EmbeddingCreateParams;
 import com.alibaba.dashscope.v3.types.embeddings.EmbeddingResponse;
 import com.alibaba.dashscope.v3.types.rerank.RerankCreateParams;
@@ -89,7 +90,8 @@ class EmbeddingsRerankMockTest {
     RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
     assertEquals("/services/embeddings/text-embedding/text-embedding", request.getPath());
     assertEquals(
-        "java-sdk/3.0.0-SNAPSHOT/embeddings", request.getHeader("x-dashscope-sdk-client"));
+        "java-sdk/" + SdkInfo.VERSION + "/embeddings",
+        request.getHeader("x-dashscope-sdk-client"));
     JsonNode body = MAPPER.readTree(request.getBody().readUtf8());
     assertEquals("text-embedding-v3", body.get("model").asText());
     assertEquals(2, body.get("input").get("texts").size());
@@ -145,7 +147,8 @@ class EmbeddingsRerankMockTest {
 
     RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
     assertEquals("/services/rerank/text-rerank/text-rerank", request.getPath());
-    assertEquals("java-sdk/3.0.0-SNAPSHOT/rerank", request.getHeader("x-dashscope-sdk-client"));
+    assertEquals(
+        "java-sdk/" + SdkInfo.VERSION + "/rerank", request.getHeader("x-dashscope-sdk-client"));
     JsonNode body = MAPPER.readTree(request.getBody().readUtf8());
     assertEquals("gte-rerank-v2", body.get("model").asText());
     assertEquals("什么是文本向量", body.get("input").get("query").asText());

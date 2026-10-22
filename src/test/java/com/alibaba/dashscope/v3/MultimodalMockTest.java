@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.DashScopeClient;
+import com.alibaba.dashscope.shared.SdkInfo;
 import com.alibaba.dashscope.v3.errors.BadRequestException;
 import com.alibaba.dashscope.v3.types.common.ResponseStream;
 import com.alibaba.dashscope.v3.types.multimodal.ContentPart;
@@ -105,7 +106,8 @@ class MultimodalMockTest {
 
     RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
     assertEquals("/services/aigc/multimodal-generation/generation", request.getPath());
-    assertEquals("java-sdk/3.0.0-SNAPSHOT/aigc", request.getHeader("x-dashscope-sdk-client"));
+    assertEquals(
+        "java-sdk/" + SdkInfo.VERSION + "/aigc", request.getHeader("x-dashscope-sdk-client"));
     JsonNode body = bodyOf(request);
     assertEquals("qwen-vl-plus", body.get("model").asText());
     JsonNode content = body.get("input").get("messages").get(0).get("content");
@@ -368,7 +370,9 @@ class MultimodalMockTest {
     RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
     assertEquals(
         "/services/embeddings/multimodal-embedding/multimodal-embedding", request.getPath());
-    assertEquals("java-sdk/3.0.0-SNAPSHOT/embeddings", request.getHeader("x-dashscope-sdk-client"));
+    assertEquals(
+        "java-sdk/" + SdkInfo.VERSION + "/embeddings",
+        request.getHeader("x-dashscope-sdk-client"));
     JsonNode body = bodyOf(request);
     assertEquals("multimodal-embedding-v1", body.get("model").asText());
     assertEquals("你好", body.get("input").get("contents").get(0).get("text").asText());

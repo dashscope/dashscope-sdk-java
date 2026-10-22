@@ -14,7 +14,7 @@ legacy_2x/                 # 2.x 旧样例 64 个，整体封存（不编译）�
 ## 准备
 
 ```bash
-# 仓库根目录：先把 SDK 装进本地仓库（示例模块按 3.0.0-SNAPSHOT 解析）
+# 仓库根目录：先把 SDK 装进本地仓库（示例模块按 3.0.0 解析）
 JAVA_HOME=<jdk17+> mvn -o install -DskipTests -Dgpg.skip=true -Dmaven.javadoc.skip=true
 
 export DASHSCOPE_API_KEY=sk-...

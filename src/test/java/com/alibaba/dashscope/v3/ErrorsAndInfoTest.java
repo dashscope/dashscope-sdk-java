@@ -109,7 +109,8 @@ class ErrorsAndInfoTest {
 
   @Test
   void versionSingleSourceAndSharedSession() {
-    assertEquals("3.0.0-SNAPSHOT", SdkInfo.VERSION);
+    // J1 sentinel: pom.xml is the only literal; this fails if Maven filtering breaks.
+    assertEquals("3.0.0", SdkInfo.VERSION);
     assertEquals(SdkInfo.VERSION, Version.version);
     assertFalse(SdkSession.ID.isEmpty());
     assertSame(SdkSession.ID, SdkSession.ID);

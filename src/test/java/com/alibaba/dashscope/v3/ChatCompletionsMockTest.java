@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.DashScopeAsyncClient;
 import com.alibaba.dashscope.DashScopeClient;
+import com.alibaba.dashscope.shared.SdkInfo;
 import com.alibaba.dashscope.v3.errors.ApiStatusException;
 import com.alibaba.dashscope.v3.errors.BadRequestException;
 import com.alibaba.dashscope.v3.errors.ContentFilterException;
@@ -108,8 +109,9 @@ class ChatCompletionsMockTest {
     assertEquals("POST", request.getMethod());
     assertEquals("/services/aigc/text-generation/generation", request.getPath());
     assertEquals("Bearer test-key", request.getHeader("Authorization"));
-    assertTrue(request.getHeader("user-agent").startsWith("dashscope/3.0.0-SNAPSHOT"));
-    assertEquals("java-sdk/3.0.0-SNAPSHOT/aigc", request.getHeader("x-dashscope-sdk-client"));
+    assertTrue(request.getHeader("user-agent").startsWith("dashscope/" + SdkInfo.VERSION));
+    assertEquals(
+        "java-sdk/" + SdkInfo.VERSION + "/aigc", request.getHeader("x-dashscope-sdk-client"));
     assertNotNull(request.getHeader("x-dashscope-sdk-session-id"));
 
     JsonNode body = bodyOf(request);
