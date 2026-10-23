@@ -8,7 +8,7 @@ HAS_CHANGES=false
 
 for FILE in $FILES_TO_CHECK; do
     echo "Checking file: $FILE"
-    java -jar .dev_tools/google-java-format-1.7-all-deps.jar $FILE | diff $FILE -
+    java -jar .dev_tools/google-java-format-1.16.0-all-deps.jar $FILE | diff $FILE -
     if [ $? -ne 0 ]; then
         echo "File $FILE has changes after formatting."
         HAS_CHANGES=true
