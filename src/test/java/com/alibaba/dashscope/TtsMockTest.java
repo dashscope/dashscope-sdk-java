@@ -1,5 +1,5 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
-package com.alibaba.dashscope.v3;
+package com.alibaba.dashscope;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.v3.errors.SdkException;
 import com.alibaba.dashscope.v3.resources.audio.SynthesisSession;
 import com.alibaba.dashscope.v3.types.audio.TtsConnectParams;
@@ -212,6 +211,26 @@ class TtsMockTest {
     assertEquals(2, chunks.get(0).length);
     RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
     assertEquals("/services/aigc/multimodal-generation/generation", request.getPath());
+  }
+
+  @Test
+  void httpPathRoutingFollowsModelPrefix() throws Exception {
+    // Pins the remaining AudioModelRouter table rows (audio design §8); cosyvoice-v3-flash and
+    // qwen3-tts-flash are covered by the two tests above.
+    String[][] routes = {
+      {"qwen-audio-tts", "/services/audio/tts/SpeechSynthesizer"},
+      {"qwen-tts", "/services/aigc/multimodal-generation/generation"},
+      {"sambert-v1", "/services/audio/tts/SpeechSynthesizer"},
+    };
+    for (String[] route : routes) {
+      server.enqueue(sse("data: [DONE]\n\n"));
+      client
+          .audio()
+          .tts()
+          .synthesize(TtsSynthesizeParams.builder().model(route[0]).text("hi").voice("v").build());
+      RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
+      assertEquals(route[1], request.getPath(), route[0]);
+    }
   }
 
   @Test

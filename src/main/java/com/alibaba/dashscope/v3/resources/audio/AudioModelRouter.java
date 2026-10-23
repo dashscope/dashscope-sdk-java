@@ -15,11 +15,6 @@ final class AudioModelRouter {
   static final String SPEECH_SYNTHESIZER_PATH = "/services/audio/tts/SpeechSynthesizer";
   static final String QWEN_TTS_PATH = "/services/aigc/multimodal-generation/generation";
 
-  enum PreferredRoute {
-    CONNECT,
-    HTTP
-  }
-
   private AudioModelRouter() {}
 
   static String httpPath(String model) {
@@ -31,11 +26,5 @@ final class AudioModelRouter {
       return QWEN_TTS_PATH;
     }
     return SPEECH_SYNTHESIZER_PATH;
-  }
-
-  /** Sugar-entry guidance: cosyvoice family → ws duplex; everything else → HTTP. */
-  static PreferredRoute preferredRoute(String model) {
-    String m = model == null ? "" : model.toLowerCase();
-    return m.startsWith("cosyvoice") ? PreferredRoute.CONNECT : PreferredRoute.HTTP;
   }
 }
