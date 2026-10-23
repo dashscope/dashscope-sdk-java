@@ -6,6 +6,7 @@ import com.alibaba.dashscope.v3.errors.Errors;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -221,6 +222,23 @@ public final class JsonSupport {
               }
             });
     return flat;
+  }
+
+  /**
+   * Synthetic error frame for failures whose wire body carried no usable error code (e.g. a
+   * gateway HTML error page): guarantees {@code raiseOnError(false)} responses still report
+   * {@code isError()} true.
+   */
+  public static ObjectNode errorFrame(String code, String message, String requestId) {
+    ObjectNode node = MAPPER.createObjectNode();
+    node.put("code", code);
+    if (message != null && !message.isEmpty()) {
+      node.put("message", message);
+    }
+    if (requestId != null && !requestId.isEmpty()) {
+      node.put("request_id", requestId);
+    }
+    return node;
   }
 
   public static JsonNode missingNode() {

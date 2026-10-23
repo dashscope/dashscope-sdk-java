@@ -254,6 +254,8 @@ public class Main {
         .build();
 
     try {
+      // 需要提供 workspace id：设置环境变量 DASHSCOPE_WORKSPACE，
+      // 或显式传入 new DecisionModel(workspace)
       DecisionModel decisionModel = new DecisionModel();
       DecisionModelResult result = decisionModel.call(param);
       System.out.println(JsonUtils.toJson(result));
@@ -264,4 +266,4 @@ public class Main {
 }
 ```
 
-`call` 方法接受 `DecisionModelParam`，并返回 `DecisionModelResult`，其中 `answers` 按问题 id 给出答案，不支持流式输出。API Key 默认从环境变量 `DASHSCOPE_API_KEY` 获取，也可以通过 `apiKey(...)` 指定；请求地址默认为 `https://maas.qianwenaiapi.com/compatible-mode/v1/systemone`，可通过 `new DecisionModel(baseUrl)` 或环境变量 `DASHSCOPE_HTTP_BASE_URL` 覆盖。
+`call` 方法接受 `DecisionModelParam`，并返回 `DecisionModelResult`，其中 `answers` 按问题 id 给出答案，不支持流式输出。API Key 默认从环境变量 `DASHSCOPE_API_KEY` 获取，也可以通过 `apiKey(...)` 指定。请求地址为 workspace 作用域：`https://{workspace}.{region}.maas.aliyuncs.com/compatible-mode/v1/systemone`，因此必须提供 workspace id——通过 `new DecisionModel(workspace)` 传入（也可使用 `new DecisionModel(workspace, region)`；region 默认为 `cn-beijing`，也可通过环境变量 `DASHSCOPE_API_REGION` 指定），或设置环境变量 `DASHSCOPE_WORKSPACE` 后使用 `new DecisionModel()`，否则构造函数会抛出 `IllegalArgumentException`。如需指向自定义端点（如自建网关），请使用 `DecisionModel.withBaseUrl(baseUrl)` 或环境变量 `DASHSCOPE_DECISION_BASE_URL`。

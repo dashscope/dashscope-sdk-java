@@ -40,11 +40,18 @@ public final class UserAgentInterceptor implements Interceptor {
     if (suffix != null && !suffix.value.isEmpty()) {
       userAgent += "; " + suffix.value;
     }
-    Request tagged = request.newBuilder()
-        .header("User-Agent", userAgent)
-        .header(HEADER_SDK_CLIENT, sdkClient)
-        .header(HEADER_SDK_SESSION_ID, SdkSession.ID)
-        .build();
-    return chain.proceed(tagged);
+    Request.Builder tagged = request.newBuilder();
+    // RequestOptions custom headers are documented as overriding SDK-set headers: only fill in
+    // the telemetry headers the caller did not provide.
+    if (request.header("User-Agent") == null) {
+      tagged.header("User-Agent", userAgent);
+    }
+    if (request.header(HEADER_SDK_CLIENT) == null) {
+      tagged.header(HEADER_SDK_CLIENT, sdkClient);
+    }
+    if (request.header(HEADER_SDK_SESSION_ID) == null) {
+      tagged.header(HEADER_SDK_SESSION_ID, SdkSession.ID);
+    }
+    return chain.proceed(tagged.build());
   }
 }

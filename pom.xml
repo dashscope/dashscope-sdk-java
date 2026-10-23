@@ -58,7 +58,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.34</version>
+            <version>1.18.42</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -274,7 +274,9 @@
                                 <arg>-XDcompilePolicy=simple</arg>
                                 <arg>--should-stop=ifError=FLOW</arg>
                                 <!-- javac only honors -Xep flags inside the -Xplugin arg string. -->
-                                <arg>-Xplugin:ErrorProne -Xep:EmptyCatch:ERROR -Xep:CatchAndPrintStackTrace:ERROR -Xep:DeadException:ERROR -XepExcludedPaths:.*/com/alibaba/dashscope/(aigc|audio|app|api|base|common|decision|embeddings|exception|multimodal|nlp|protocol|rerank|task|threads|tokenizers|tools|utils|agentstudio|assistants)/.*</arg>
+                                <!-- 2.x packages are excluded wholesale; inside common/ only the
+                                     two 3.0-owned catalogs stay covered by the gate. -->
+                                <arg>-Xplugin:ErrorProne -Xep:EmptyCatch:ERROR -Xep:CatchAndPrintStackTrace:ERROR -Xep:DeadException:ERROR -XepExcludedPaths:.*/com/alibaba/dashscope/(aigc|audio|app|api|base|decision|embeddings|exception|multimodal|nlp|protocol|rerank|task|threads|tokenizers|tools|utils|agentstudio|assistants)/.*|.*/com/alibaba/dashscope/common/(?!PublicErrorCode\.java|SdkErrorCode\.java).*</arg>
                             </compilerArgs>
                             <annotationProcessorPaths>
                                 <path>
@@ -287,7 +289,7 @@
                                 <path>
                                     <groupId>org.projectlombok</groupId>
                                     <artifactId>lombok</artifactId>
-                                    <version>1.18.34</version>
+                                    <version>1.18.42</version>
                                 </path>
                             </annotationProcessorPaths>
                         </configuration>
@@ -324,7 +326,9 @@
                             <parameter>
                                 <onlyModified>false</onlyModified>
                                 <breakBuildOnModifications>false</breakBuildOnModifications>
-                                <breakBuildOnBinaryIncompatibleModifications>false</breakBuildOnBinaryIncompatibleModifications>
+                                <!-- Binary-incompatible changes to the 2.x API surface must fail
+                                     the build; compatible additions (3.0 classes) stay allowed. -->
+                                <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
                             </parameter>
                         </configuration>
                     </plugin>
