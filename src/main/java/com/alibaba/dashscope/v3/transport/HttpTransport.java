@@ -18,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import okhttp3.ConnectionPool;
 import okhttp3.Dispatcher;
+import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
@@ -160,21 +161,15 @@ public final class HttpTransport implements AutoCloseable {
       throw Errors.fromSdkErrorCode(SdkErrorCode.SDK_INVALID_API_KEY);
     }
     String workspace = opts.getWorkspace() != null ? opts.getWorkspace() : config.getWorkspace();
-    StringBuilder url = new StringBuilder(config.getBaseUrl() + path);
-    if (query != null && !query.isEmpty()) {
-      boolean first = true;
+    HttpUrl.Builder urlBuilder = HttpUrl.get(config.getBaseUrl() + path).newBuilder();
+    if (query != null) {
       for (Map.Entry<String, String> e : query.entrySet()) {
-        url.append(first ? '?' : '&');
-        first = false;
-        url.append(java.net.URLEncoder.encode(e.getKey(), java.nio.charset.StandardCharsets.UTF_8))
-            .append('=')
-            .append(
-                java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.UTF_8));
+        urlBuilder.addQueryParameter(e.getKey(), e.getValue());
       }
     }
     Request.Builder builder =
         new Request.Builder()
-            .url(url.toString())
+            .url(urlBuilder.build())
             .get()
             .tag(RequestTags.Auth.class, new RequestTags.Auth(apiKey, workspace))
             .tag(

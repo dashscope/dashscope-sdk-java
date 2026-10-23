@@ -2,12 +2,12 @@
 package com.alibaba.dashscope.v3.resources.apps;
 
 import com.alibaba.dashscope.RequestOptions;
-import com.alibaba.dashscope.v3.resources.FlowPublishers;
+import com.alibaba.dashscope.v3.resources.RxStreams;
 import com.alibaba.dashscope.v3.types.apps.AppCompletion;
 import com.alibaba.dashscope.v3.types.apps.AppCompletionCreateParams;
+import io.reactivex.Flowable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Flow;
 
 /** Async variant of {@link AppCompletionsService}. */
 public final class AppCompletionsAsyncService {
@@ -45,12 +45,12 @@ public final class AppCompletionsAsyncService {
     return CompletableFuture.supplyAsync(() -> sync.create(params, options), executor);
   }
 
-  public Flow.Publisher<AppCompletion> createStreaming(AppCompletionCreateParams params) {
+  public Flowable<AppCompletion> createStreaming(AppCompletionCreateParams params) {
     return createStreaming(params, RequestOptions.NONE);
   }
 
-  public Flow.Publisher<AppCompletion> createStreaming(
+  public Flowable<AppCompletion> createStreaming(
       AppCompletionCreateParams params, RequestOptions options) {
-    return FlowPublishers.fromStream(() -> sync.createStreaming(params, options), executor);
+    return RxStreams.fromStream(() -> sync.createStreaming(params, options), executor);
   }
 }

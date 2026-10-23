@@ -2,17 +2,17 @@
 package com.alibaba.dashscope.v3.resources.finetunes;
 
 import com.alibaba.dashscope.RequestOptions;
-import com.alibaba.dashscope.v3.resources.FlowPublishers;
+import com.alibaba.dashscope.v3.resources.RxStreams;
 import com.alibaba.dashscope.v3.types.common.JobStatus;
 import com.alibaba.dashscope.v3.types.finetunes.FineTune;
 import com.alibaba.dashscope.v3.types.finetunes.FineTuneCreateParams;
 import com.alibaba.dashscope.v3.types.finetunes.FineTuneEvent;
 import com.alibaba.dashscope.v3.types.finetunes.FineTuneList;
 import com.alibaba.dashscope.v3.types.finetunes.JobLogs;
+import io.reactivex.Flowable;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Flow;
 
 /** Async variant of {@link FineTunesService}; {@code streamEvents} surfaces as a Publisher. */
 public final class FineTunesAsyncService {
@@ -73,12 +73,12 @@ public final class FineTunesAsyncService {
     return CompletableFuture.supplyAsync(() -> sync.logs(jobId, offset, lines, options), executor);
   }
 
-  public Flow.Publisher<FineTuneEvent> streamEvents(String jobId) {
+  public Flowable<FineTuneEvent> streamEvents(String jobId) {
     return streamEvents(jobId, RequestOptions.NONE);
   }
 
-  public Flow.Publisher<FineTuneEvent> streamEvents(String jobId, RequestOptions options) {
-    return FlowPublishers.fromIterable(() -> sync.streamEvents(jobId, options), executor);
+  public Flowable<FineTuneEvent> streamEvents(String jobId, RequestOptions options) {
+    return RxStreams.fromIterable(() -> sync.streamEvents(jobId, options), executor);
   }
 
   public CompletableFuture<FineTune> wait(String jobId, RequestOptions options) {

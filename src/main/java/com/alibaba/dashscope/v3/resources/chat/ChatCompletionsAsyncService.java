@@ -3,13 +3,13 @@
 package com.alibaba.dashscope.v3.resources.chat;
 
 import com.alibaba.dashscope.RequestOptions;
-import com.alibaba.dashscope.v3.resources.FlowPublishers;
+import com.alibaba.dashscope.v3.resources.RxStreams;
 import com.alibaba.dashscope.v3.types.completions.ChatCompletion;
 import com.alibaba.dashscope.v3.types.completions.ChatCompletionChunk;
 import com.alibaba.dashscope.v3.types.completions.ChatCompletionCreateParams;
+import io.reactivex.Flowable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Flow;
 
 /** Async variant of {@link ChatCompletionsService}. */
 public final class ChatCompletionsAsyncService {
@@ -31,12 +31,12 @@ public final class ChatCompletionsAsyncService {
     return CompletableFuture.supplyAsync(() -> sync.create(params, options), executor);
   }
 
-  public Flow.Publisher<ChatCompletionChunk> createStreaming(ChatCompletionCreateParams params) {
+  public Flowable<ChatCompletionChunk> createStreaming(ChatCompletionCreateParams params) {
     return createStreaming(params, RequestOptions.NONE);
   }
 
-  public Flow.Publisher<ChatCompletionChunk> createStreaming(
+  public Flowable<ChatCompletionChunk> createStreaming(
       ChatCompletionCreateParams params, RequestOptions options) {
-    return FlowPublishers.fromStream(() -> sync.createStreaming(params, options), executor);
+    return RxStreams.fromStream(() -> sync.createStreaming(params, options), executor);
   }
 }

@@ -2,15 +2,15 @@
 package com.alibaba.dashscope.v3.resources.deployments;
 
 import com.alibaba.dashscope.RequestOptions;
-import com.alibaba.dashscope.v3.resources.FlowPublishers;
+import com.alibaba.dashscope.v3.resources.RxStreams;
 import com.alibaba.dashscope.v3.types.common.JobStatus;
 import com.alibaba.dashscope.v3.types.deployments.Deployment;
 import com.alibaba.dashscope.v3.types.deployments.DeploymentCreateParams;
 import com.alibaba.dashscope.v3.types.deployments.DeploymentEvent;
 import com.alibaba.dashscope.v3.types.deployments.DeploymentList;
+import io.reactivex.Flowable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Flow;
 
 /** Async variant of {@link DeploymentsService}; {@code streamEvents} surfaces as a Publisher. */
 public final class DeploymentsAsyncService {
@@ -65,12 +65,11 @@ public final class DeploymentsAsyncService {
     return CompletableFuture.supplyAsync(() -> sync.delete(deployedModel, options), executor);
   }
 
-  public Flow.Publisher<DeploymentEvent> streamEvents(String deployedModel) {
+  public Flowable<DeploymentEvent> streamEvents(String deployedModel) {
     return streamEvents(deployedModel, RequestOptions.NONE);
   }
 
-  public Flow.Publisher<DeploymentEvent> streamEvents(
-      String deployedModel, RequestOptions options) {
-    return FlowPublishers.fromIterable(() -> sync.streamEvents(deployedModel, options), executor);
+  public Flowable<DeploymentEvent> streamEvents(String deployedModel, RequestOptions options) {
+    return RxStreams.fromIterable(() -> sync.streamEvents(deployedModel, options), executor);
   }
 }

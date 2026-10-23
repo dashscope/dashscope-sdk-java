@@ -44,8 +44,8 @@ import okhttp3.OkHttpClient;
 
 /**
  * DashScope 3.0 asynchronous client (design §2.3): same resource tree as {@link DashScopeClient},
- * returning {@link java.util.concurrent.CompletableFuture}; streaming surfaces as {@link
- * java.util.concurrent.Flow.Publisher}. Work runs on a daemon executor owned by the client ({@link
+ * returning {@link java.util.concurrent.CompletableFuture}; streaming surfaces as RxJava {@link
+ * io.reactivex.Flowable} (2.x parity). Work runs on a daemon executor owned by the client ({@link
  * #close()} shuts it down); derived clients share the parent's executor and pool.
  */
 public final class DashScopeAsyncClient implements AutoCloseable {

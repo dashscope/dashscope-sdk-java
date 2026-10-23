@@ -16,7 +16,7 @@
 
 ## 3.0（新代际）
 
-3.0 引入新的客户端入口，同一 artifact 内所有 2.x API 原样可用。要求 Java 11+。
+3.0 引入新的客户端入口，同一 artifact 内所有 2.x API 原样可用。要求 Java 8+。
 
 ```java
 import com.alibaba.dashscope.DashScopeClient;

@@ -17,7 +17,7 @@ To use the sdk in your java systems, please add the maven dependency in your pom
 ## 3.0 (new generation)
 
 Version 3.0 introduces a new client entry point while keeping every 2.x API working unchanged
-in the same artifact. Java 11+ is required.
+in the same artifact. Java 8+ is required.
 
 ```java
 import com.alibaba.dashscope.DashScopeClient;

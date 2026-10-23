@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Flow;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import okhttp3.OkHttpClient;
@@ -460,28 +459,12 @@ class ChatCompletionsMockTest {
           .completions()
           .createStreaming(params())
           .subscribe(
-              new Flow.Subscriber<ChatCompletionChunk>() {
-                @Override
-                public void onSubscribe(Flow.Subscription subscription) {
-                  subscription.request(Long.MAX_VALUE);
-                }
-
-                @Override
-                public void onNext(ChatCompletionChunk item) {
-                  items.add(item);
-                }
-
-                @Override
-                public void onError(Throwable throwable) {
-                  error.set(throwable);
-                  done.countDown();
-                }
-
-                @Override
-                public void onComplete() {
-                  done.countDown();
-                }
-              });
+              items::add,
+              t -> {
+                error.set(t);
+                done.countDown();
+              },
+              done::countDown);
       assertTrue(done.await(10, TimeUnit.SECONDS));
       assertNull(error.get());
       assertEquals(2, items.size());
