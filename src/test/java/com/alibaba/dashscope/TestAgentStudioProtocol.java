@@ -14,10 +14,16 @@ import com.alibaba.dashscope.agentstudio.model.Configs;
 import com.alibaba.dashscope.agentstudio.model.Session;
 import com.alibaba.dashscope.agentstudio.param.AgentCreateParam;
 import com.alibaba.dashscope.agentstudio.param.SessionEventListParam;
+import com.alibaba.dashscope.agentstudio.resource.AgentStudioEventStream;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import java.io.IOException;
 import java.util.Arrays;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -93,6 +99,43 @@ class TestAgentStudioProtocol {
     assertEquals("event_delta", msg.getType());
     assertEquals("sevt_a", msg.getDeltaEventId());
     assertEquals("hello", msg.getDeltaText());
+  }
+
+  @Test
+  void testMessageWithNonObjectDeltaIsStillParsed() {
+    // A frame Gson cannot fit used to abort the whole stream; now it is simply not a chunk.
+    Message msg =
+        GSON.fromJson(
+            "{\"object\":\"content\",\"status\":\"in_progress\",\"type\":\"text\","
+                + "\"index\":0,\"delta\":true,\"text\":\"hi\"}",
+            Message.class);
+    assertEquals("content", msg.getObject());
+    assertNull(msg.getEventDelta());
+    assertNull(msg.getDeltaText());
+  }
+
+  @Test
+  void testStreamIsSinglePass() throws IOException {
+    MockWebServer server = new MockWebServer();
+    server.enqueue(
+        new MockResponse()
+            .setHeader("Content-Type", "text/event-stream")
+            .setBody("data: {\"type\":\"session_status\"}\n\n"));
+    server.start();
+    OkHttpClient client = new OkHttpClient();
+    try (AgentStudioEventStream stream =
+        new AgentStudioEventStream(
+            client, new Request.Builder().url(server.url("/events")).build(), 5000L)) {
+      int seen = 0;
+      for (Message ignored : stream) {
+        seen++;
+      }
+      assertEquals(1, seen);
+      assertThrows(IllegalStateException.class, stream::iterator);
+    } finally {
+      client.dispatcher().executorService().shutdown();
+      server.shutdown();
+    }
   }
 
   @Test
