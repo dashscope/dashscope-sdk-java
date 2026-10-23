@@ -349,6 +349,28 @@ class WsTransportMockTest {
   }
 
   @Test
+  void handshakeFailureTerminatesReaderThread() throws Exception {
+    long before = liveReaderThreads();
+    server.enqueue(new MockResponse().setResponseCode(403).setBody("forbidden"));
+    assertThrows(
+        PermissionDeniedException.class,
+        () -> new WsConnection(transport, transport.config().getWsBaseUrl(), "audio", null));
+    // Regression: a failed constructor never hands out the instance, so close() is unreachable —
+    // it must poison + interrupt the demux reader itself instead of leaking it on take().
+    long deadline = System.nanoTime() + Duration.ofSeconds(5).toNanos();
+    while (liveReaderThreads() > before && System.nanoTime() < deadline) {
+      Thread.sleep(20);
+    }
+    assertEquals(before, liveReaderThreads(), "dashscope-ws-reader leaked after handshake failure");
+  }
+
+  private static long liveReaderThreads() {
+    return Thread.getAllStackTraces().keySet().stream()
+        .filter(t -> t.isAlive() && t.getName().equals("dashscope-ws-reader"))
+        .count();
+  }
+
+  @Test
   void connectionCloseFailsPendingReceivers() throws Exception {
     ServerSocket serverSocket = enqueueUpgrade();
     WsConnection conn =

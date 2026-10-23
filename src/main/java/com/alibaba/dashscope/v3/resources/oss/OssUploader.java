@@ -7,6 +7,7 @@ import com.alibaba.dashscope.v3.errors.ApiConnectionException;
 import com.alibaba.dashscope.v3.errors.Errors;
 import com.alibaba.dashscope.v3.transport.HttpTransport;
 import com.alibaba.dashscope.v3.transport.JsonSupport;
+import com.alibaba.dashscope.v3.transport.RequestTags;
 import com.alibaba.dashscope.v3.transport.ResponseEnvelope;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
@@ -60,14 +61,16 @@ public final class OssUploader {
           envelope.getHeaders(),
           null);
     }
+    // All seven fields are consumed by the upload form; fail here with a descriptive error
+    // instead of an NPE deep inside the multipart builder (2.x throws on missing fields too).
     return new Certificate(
-        textOrNull(data.get("upload_host")),
-        textOrNull(data.get("oss_access_key_id")),
-        textOrNull(data.get("signature")),
-        textOrNull(data.get("policy")),
-        textOrNull(data.get("upload_dir")),
-        textOrNull(data.get("x_oss_object_acl")),
-        textOrNull(data.get("x_oss_forbid_overwrite")));
+        requireField(data, "upload_host"),
+        requireField(data, "oss_access_key_id"),
+        requireField(data, "signature"),
+        requireField(data, "policy"),
+        requireField(data, "upload_dir"),
+        requireField(data, "x_oss_object_acl"),
+        requireField(data, "x_oss_forbid_overwrite"));
   }
 
   /** Multipart POST the file to the certificate's upload host; returns the oss:// reference. */
@@ -75,13 +78,8 @@ public final class OssUploader {
     String fileName = file.getFileName().toString();
     String key = cert.uploadDir + "/" + fileName;
     MediaType mediaType = MediaType.get(contentTypeOf(file));
-    byte[] bytes;
-    try {
-      bytes = Files.readAllBytes(file);
-    } catch (IOException e) {
-      throw new ApiConnectionException("failed to read upload file " + file, e);
-    }
-    // Field order matches the 2.x form exactly (policy/signature before key, file last).
+    // Field order matches the 2.x form exactly (policy/signature before key, file last); the file
+    // part streams from disk (2.x parity) instead of buffering the whole file in memory.
     RequestBody body =
         new MultipartBody.Builder()
             .setType(MultipartBody.FORM)
@@ -93,9 +91,16 @@ public final class OssUploader {
             .addFormDataPart("x-oss-forbid-overwrite", cert.forbidOverwrite)
             .addFormDataPart("success_action_status", "200")
             .addFormDataPart("x-oss-content-type", mediaType.toString())
-            .addFormDataPart("file", fileName, RequestBody.create(bytes, mediaType))
+            .addFormDataPart("file", fileName, RequestBody.create(file.toFile(), mediaType))
             .build();
-    Request request = new Request.Builder().url(cert.uploadHost).post(body).build();
+    // The upload is not idempotent (x-oss-forbid-overwrite): never retry. A response lost after
+    // the server stored the file would otherwise surface as a bogus 403 FileAlreadyExists.
+    Request request =
+        new Request.Builder()
+            .url(cert.uploadHost)
+            .tag(RequestTags.NoRetry.class, RequestTags.NoRetry.INSTANCE)
+            .post(body)
+            .build();
     try (Response response = transport.okhttp().newCall(request).execute()) {
       if (response.isSuccessful()) {
         return "oss://" + key;
@@ -145,6 +150,20 @@ public final class OssUploader {
       }
     }
     return "application/octet-stream";
+  }
+
+  private static String requireField(JsonNode data, String name) {
+    String value = textOrNull(data.get(name));
+    if (value == null || value.isEmpty()) {
+      throw Errors.fromCatalogEntry(
+          PublicErrorCode.RESPONSE_ERROR,
+          "uploads policy response missing field '" + name + "'",
+          JsonSupport.requestId(data, null),
+          JsonSupport.toPlainValue(data),
+          null,
+          null);
+    }
+    return value;
   }
 
   private static String textOrNull(JsonNode node) {

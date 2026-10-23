@@ -392,7 +392,14 @@ public final class SynthesisSession implements AutoCloseable {
   private void pumpOnce(Duration timeout) {
     TaskEvent event;
     synchronized (pumpLock) {
-      if (terminal || channel == null) {
+      if (terminal) {
+        return;
+      }
+      if (channel == null) {
+        // Never busy-spin on a dead session (not started / start failed / closed mid-iteration):
+        // with no channel there is no blocking recv, so returning here would spin the caller.
+        terminal = true;
+        terminalFailure = illegalState("session not started or already closed");
         return;
       }
       event = channel.recv(timeout);

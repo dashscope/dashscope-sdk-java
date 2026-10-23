@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.shared.SdkInfo;
+import com.alibaba.dashscope.v3.errors.ApiStatusException;
 import com.alibaba.dashscope.v3.errors.BadRequestException;
 import com.alibaba.dashscope.v3.types.common.ResponseStream;
 import com.alibaba.dashscope.v3.types.multimodal.ContentPart;
@@ -22,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -315,6 +317,82 @@ class MultimodalMockTest {
     // INVALID_FILE's catalog code is BadRequestError (400 family).
     assertEquals("BadRequestError", e.getCode());
     assertEquals(0, server.getRequestCount());
+  }
+
+  @Test
+  void ossUploadFailureIsNotRetried() throws Exception {
+    // The upload is non-idempotent (x-oss-forbid-overwrite): even with retries configured, the
+    // multipart POST must go out exactly once — a lost response after a successful store would
+    // otherwise surface as a bogus 403 FileAlreadyExists.
+    Path image = Files.createTempFile("mm-noretry", ".png");
+    Files.write(image, new byte[] {1, 2, 3});
+    DashScopeClient retrying =
+        DashScopeClient.builder()
+            .apiKey("test-key")
+            .baseUrl(server.url("/").toString())
+            .timeout(Duration.ofSeconds(2))
+            .maxRetries(2)
+            .build();
+    try {
+      String uploadHost = server.url("/").toString().replaceAll("/$", "");
+      server.enqueue(
+          okJson(
+              "{\"data\":{\"upload_host\":\""
+                  + uploadHost
+                  + "\",\"oss_access_key_id\":\"ak\","
+                  + "\"signature\":\"sig\",\"policy\":\"pol\",\"upload_dir\":\"dir/mm\","
+                  + "\"x_oss_object_acl\":\"private\",\"x_oss_forbid_overwrite\":\"true\"}}"));
+      server.enqueue(new MockResponse().setResponseCode(500).setBody("oss broken"));
+
+      MultimodalChatCreateParams params =
+          MultimodalChatCreateParams.builder()
+              .model("qwen-vl-plus")
+              .messages(
+                  Arrays.asList(
+                      MultimodalMessage.user(
+                          Arrays.asList(ContentPart.image(image.toAbsolutePath().toString())))))
+              .build();
+
+      ApiStatusException e =
+          assertThrows(ApiStatusException.class, () -> retrying.multimodal().chat().create(params));
+      assertEquals(500, e.getStatusCode());
+      // One policy GET + exactly one upload POST.
+      assertEquals(2, server.getRequestCount());
+    } finally {
+      retrying.close();
+      Files.deleteIfExists(image);
+    }
+  }
+
+  @Test
+  void policyResponseMissingFieldRaisesDescriptiveError() throws Exception {
+    Path image = Files.createTempFile("mm-bad-policy", ".png");
+    Files.write(image, new byte[] {1});
+    try {
+      // No "signature" in the policy payload: fail with the field name, not an NPE.
+      server.enqueue(
+          okJson(
+              "{\"data\":{\"upload_host\":\"http://localhost\",\"oss_access_key_id\":\"ak\","
+                  + "\"policy\":\"pol\",\"upload_dir\":\"dir/mm\","
+                  + "\"x_oss_object_acl\":\"private\",\"x_oss_forbid_overwrite\":\"true\"}}"));
+
+      MultimodalChatCreateParams params =
+          MultimodalChatCreateParams.builder()
+              .model("qwen-vl-plus")
+              .messages(
+                  Arrays.asList(
+                      MultimodalMessage.user(
+                          Arrays.asList(ContentPart.image(image.toAbsolutePath().toString())))))
+              .build();
+
+      ApiStatusException e =
+          assertThrows(ApiStatusException.class, () -> client.multimodal().chat().create(params));
+      assertTrue(e.getMessage().contains("signature"));
+      // Only the policy GET was issued; no upload attempt.
+      assertEquals(1, server.getRequestCount());
+    } finally {
+      Files.deleteIfExists(image);
+    }
   }
 
   @Test

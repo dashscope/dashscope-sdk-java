@@ -5,10 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.v3.errors.ApiStatusException;
 import com.alibaba.dashscope.v3.errors.ApiTimeoutException;
+import com.alibaba.dashscope.v3.errors.SdkException;
 import com.alibaba.dashscope.v3.resources.audio.RecognitionSession;
 import com.alibaba.dashscope.v3.resources.jobs.Job;
 import com.alibaba.dashscope.v3.transport.ws.WsConnection;
@@ -404,5 +406,52 @@ class AsrMockTest {
     RecordedRequest fetch = server.takeRequest(5, TimeUnit.SECONDS);
     assertEquals("GET", fetch.getMethod());
     assertEquals("/tasks/tx-1", fetch.getPath());
+  }
+
+  @Test
+  void eventsBeforeStartFailsFastInsteadOfSpinning() {
+    try (RecognitionSession asr = client.audio().asr().recognize(params())) {
+      // Regression: with no channel there is no blocking recv — the iterator must fail fast,
+      // not busy-spin forever.
+      assertTimeoutPreemptively(
+          Duration.ofSeconds(5),
+          () -> {
+            SdkException e =
+                assertThrows(
+                    SdkException.class,
+                    () -> {
+                      for (JsonNode ignored : asr.events()) {
+                        // never reached
+                      }
+                    });
+            assertEquals("sdk.ws.IllegalState", e.getCode());
+          });
+    }
+  }
+
+  @Test
+  void eventsAfterFailedStartFailsFastInsteadOfSpinning() {
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(500)
+            .setBody("{\"code\":\"InternalError\",\"message\":\"boom\"}"));
+    try (RecognitionSession asr = client.audio().asr().recognize(params())) {
+      // start() failure closes the session (channel = null, not terminal); iterating afterwards
+      // used to spin at 100% CPU.
+      assertThrows(RuntimeException.class, asr::start);
+      assertTimeoutPreemptively(
+          Duration.ofSeconds(5),
+          () -> {
+            SdkException e =
+                assertThrows(
+                    SdkException.class,
+                    () -> {
+                      for (JsonNode ignored : asr.events()) {
+                        // never reached
+                      }
+                    });
+            assertEquals("sdk.ws.IllegalState", e.getCode());
+          });
+    }
   }
 }

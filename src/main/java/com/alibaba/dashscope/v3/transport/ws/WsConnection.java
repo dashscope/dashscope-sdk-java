@@ -131,17 +131,28 @@ public final class WsConnection implements AutoCloseable {
       opened = openLatch.await(connectTimeout.toMillis(), TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      socket.cancel();
+      abortReader();
       throw new ApiConnectionException("websocket connect interrupted", e);
     }
     if (!opened) {
-      socket.cancel();
+      abortReader();
       throw new ApiTimeoutException("websocket handshake timed out after " + connectTimeout, null);
     }
     if (openFailure != null) {
-      socket.cancel();
+      abortReader();
       throw openFailure;
     }
+  }
+
+  /**
+   * Constructor failure path: the constructor never returns the instance, so {@link #close()} is
+   * unreachable; cancel the socket AND terminate the reader (poison + interrupt), otherwise it
+   * blocks on {@code rawQueue.take()} forever, leaking the thread and the whole object graph.
+   */
+  private void abortReader() {
+    socket.cancel();
+    rawQueue.offer(POISON);
+    reader.interrupt();
   }
 
   private void demuxLoop() {
