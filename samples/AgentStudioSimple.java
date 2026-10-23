@@ -42,6 +42,8 @@ public class AgentStudioSimple {
             .create(
                 AgentCreateParam.builder()
                     .name("demo-agent")
+                    // 只给模型 id；需要推理参数时改传对象：
+                    // .model(ModelConfig.builder().id("qwen3-max").temperature(0.7).build())
                     .model("qwen-plus")
                     .systemPrompt("你是一个简洁的助手。")
                     .build());
