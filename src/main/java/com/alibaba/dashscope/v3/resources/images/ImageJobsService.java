@@ -38,9 +38,7 @@ public final class ImageJobsService {
     OssMediaUpload upload = new OssMediaUpload(uploader, params.getModel(), options);
     @SuppressWarnings("unchecked")
     List<String> imageUrls =
-        params.getImageUrls() == null
-            ? null
-            : (List<String>) upload.process(params.getImageUrls());
+        params.getImageUrls() == null ? null : (List<String>) upload.process(params.getImageUrls());
     @SuppressWarnings("unchecked")
     Map<String, Object> extraInput =
         params.getExtraInput() == null

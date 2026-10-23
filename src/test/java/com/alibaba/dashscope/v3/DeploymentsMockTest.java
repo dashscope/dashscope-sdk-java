@@ -4,7 +4,6 @@ package com.alibaba.dashscope.v3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.v3.errors.BadRequestException;
@@ -145,8 +144,8 @@ class DeploymentsMockTest {
     assertEquals(2, page.getDeployments().size());
     assertEquals("d2", page.getDeployments().get(1).getDeployedModel());
     assertEquals("r3", page.getRequestId());
-    assertEquals("/deployments?page_no=1&page_size=10",
-        server.takeRequest(5, TimeUnit.SECONDS).getPath());
+    assertEquals(
+        "/deployments?page_no=1&page_size=10", server.takeRequest(5, TimeUnit.SECONDS).getPath());
   }
 
   @Test
@@ -192,8 +191,7 @@ class DeploymentsMockTest {
     }
     assertEquals(2, events.size());
     assertEquals("ready", events.get(1).getOutput().get("phase").asText());
-    assertEquals("/deployments/dep-5/stream",
-        server.takeRequest(5, TimeUnit.SECONDS).getPath());
+    assertEquals("/deployments/dep-5/stream", server.takeRequest(5, TimeUnit.SECONDS).getPath());
 
     // Error frame without a status line: the body's own code picks the class.
     server.enqueue(
@@ -201,7 +199,8 @@ class DeploymentsMockTest {
             .setResponseCode(200)
             .setHeader("Content-Type", "text/event-stream")
             .setBody(
-                "event:error\ndata: {\"code\":\"InvalidParameter\",\"message\":\"bad scale\"}\n\n"));
+                "event:error\n"
+                    + "data: {\"code\":\"InvalidParameter\",\"message\":\"bad scale\"}\n\n"));
     try (DeploymentEventStream stream = client.deployments().streamEvents("dep-5")) {
       BadRequestException e =
           assertThrows(
@@ -218,11 +217,9 @@ class DeploymentsMockTest {
   @Test
   void validationRejectsBadInput() {
     assertThrows(
-        IllegalArgumentException.class,
-        () -> DeploymentCreateParams.builder().capacity(1).build());
+        IllegalArgumentException.class, () -> DeploymentCreateParams.builder().capacity(1).build());
     assertThrows(
-        IllegalArgumentException.class,
-        () -> DeploymentCreateParams.builder().model("m").build());
+        IllegalArgumentException.class, () -> DeploymentCreateParams.builder().model("m").build());
     assertThrows(IllegalArgumentException.class, () -> client.deployments().get(""));
     assertThrows(IllegalArgumentException.class, () -> client.deployments().scale(null, 1));
   }

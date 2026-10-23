@@ -33,7 +33,9 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
-/** @author lengjiayi */
+/**
+ * @author lengjiayi
+ */
 @Slf4j
 public final class SpeechSynthesizer {
   private final Queue<AsyncCmdBuffer> cmdBuffer = new LinkedList<>();

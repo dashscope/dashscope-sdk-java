@@ -30,9 +30,9 @@ import java.util.NoSuchElementException;
  * multimodal-generation}, function {@code generation}). Pull model — no SDK threads; user
  * discipline is one send thread + one receive thread, {@code finally close()}.
  *
- * <p>Lazy: nothing connects until {@link #start()}. {@link #events()} streams raw frames live
- * until the {@code speech-end} action (or task end); a payload-level {@code task-failed} action
- * raises through the error catalog like the header-level one.
+ * <p>Lazy: nothing connects until {@link #start()}. {@link #events()} streams raw frames live until
+ * the {@code speech-end} action (or task end); a payload-level {@code task-failed} action raises
+ * through the error catalog like the header-level one.
  */
 public final class TingWuRealtimeSession implements AutoCloseable {
   private static final String TASK_GROUP = "aigc";
@@ -246,12 +246,9 @@ public final class TingWuRealtimeSession implements AutoCloseable {
             close();
             throw failure;
           }
-          JsonNode output =
-              event.getPayload() == null ? null : event.getPayload().get("output");
+          JsonNode output = event.getPayload() == null ? null : event.getPayload().get("output");
           String action =
-              output != null && output.hasNonNull("action")
-                  ? output.get("action").asText()
-                  : null;
+              output != null && output.hasNonNull("action") ? output.get("action").asText() : null;
           if (ACTION_TASK_FAILED.equals(action)) {
             terminal = true;
             String message = textOrNull(output.get("errorMessage"));

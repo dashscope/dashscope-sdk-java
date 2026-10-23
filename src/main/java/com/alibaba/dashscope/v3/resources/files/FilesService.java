@@ -27,9 +27,9 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
- * {@code files} resource (design §3, Python v2 files.py parity): upload/list/get/delete over
- * {@code /files}. Uploads are multipart posts; {@code fine-tune} purposes are validated as JSONL
- * before a byte goes out.
+ * {@code files} resource (design §3, Python v2 files.py parity): upload/list/get/delete over {@code
+ * /files}. Uploads are multipart posts; {@code fine-tune} purposes are validated as JSONL before a
+ * byte goes out.
  */
 public final class FilesService {
   static final String BASE_PATH = "/files";
@@ -190,7 +190,9 @@ public final class FilesService {
       // The endpoint always answers with a list even though one file went up.
       data = uploaded.isEmpty() ? null : uploaded.get(0);
     }
-    return data == null ? new FileObject() : JsonSupport.mapper().convertValue(data, FileObject.class);
+    return data == null
+        ? new FileObject()
+        : JsonSupport.mapper().convertValue(data, FileObject.class);
   }
 
   private static FileList parseList(JsonNode body) {

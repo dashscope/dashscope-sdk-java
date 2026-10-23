@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/** Parameters for {@code rerank.create}. Wire shape: {@code {model, input:{query, documents},
- * parameters:{...}}}. */
+/**
+ * Parameters for {@code rerank.create}. Wire shape: {@code {model, input:{query, documents},
+ * parameters:{...}}}.
+ */
 public final class RerankCreateParams {
   private final String model;
   private final String query;

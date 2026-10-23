@@ -432,7 +432,8 @@ public class TestDecisionModel {
           new MockResponse()
               .setResponseCode(400)
               .setBody(
-                  "{\"request_id\":\"req-err-1\",\"code\":\"InvalidParameter\",\"message\":\"questions is required\"}")
+                  "{\"request_id\":\"req-err-1\",\"code\":\"InvalidParameter\",\"message\":\"questions"
+                      + " is required\"}")
               .setHeader("content-type", "application/json; charset=utf-8"));
 
       DecisionModelParam param = buildDocParam();

@@ -3,7 +3,6 @@ package com.alibaba.dashscope.v3;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -91,12 +90,15 @@ class AudioManagementMockTest {
   void vocabulariesCrud() throws Exception {
     enqueueJson("{\"output\":{\"vocabulary_id\":\"vocab-1\"},\"request_id\":\"r1\"}");
     Vocabulary created =
-        client.audio().vocabularies().create(
-            VocabularyCreateParams.builder()
-                .targetModel("paraformer-v2")
-                .prefix("pre")
-                .vocabulary(Arrays.asList(word("阿里巴巴", 1.0)))
-                .build());
+        client
+            .audio()
+            .vocabularies()
+            .create(
+                VocabularyCreateParams.builder()
+                    .targetModel("paraformer-v2")
+                    .prefix("pre")
+                    .vocabulary(Arrays.asList(word("阿里巴巴", 1.0)))
+                    .build());
     assertEquals("vocab-1", created.getVocabularyId());
     assertEquals("r1", created.getRequestId());
 
@@ -114,7 +116,7 @@ class AudioManagementMockTest {
     // list: page_index/page_size + optional prefix; items keep their wire shape.
     enqueueJson(
         "{\"output\":{\"vocabulary_list\":[{\"vocabulary_id\":\"v1\",\"prefix\":\"pre\"}]},"
-          + "\"request_id\":\"r2\"}");
+            + "\"request_id\":\"r2\"}");
     VocabularyList list = client.audio().vocabularies().list("pre", 0, 10);
     assertEquals(1, list.getVocabularies().size());
     assertEquals("v1", list.getVocabularies().get(0).get("vocabulary_id"));
@@ -125,8 +127,7 @@ class AudioManagementMockTest {
     assertEquals("pre", listInput.get("prefix").asText());
 
     // get / update / delete.
-    enqueueJson(
-        "{\"output\":{\"vocabulary_id\":\"vocab-1\",\"vocabulary\":[{\"text\":\"阿里\"}]}}");
+    enqueueJson("{\"output\":{\"vocabulary_id\":\"vocab-1\",\"vocabulary\":[{\"text\":\"阿里\"}]}}");
     Vocabulary got = client.audio().vocabularies().get("vocab-1");
     assertEquals("阿里", got.getVocabulary().get(0).get("text"));
     JsonNode getInput = bodyOf(server.takeRequest(5, TimeUnit.SECONDS)).get("input");
@@ -152,15 +153,9 @@ class AudioManagementMockTest {
   void vocabulariesValidationRejectsBadInput() {
     assertThrows(
         IllegalArgumentException.class,
-        () ->
-            VocabularyCreateParams.builder()
-                .targetModel("paraformer-v2")
-                .prefix("pre")
-                .build());
-    assertThrows(
-        IllegalArgumentException.class, () -> client.audio().vocabularies().get("  "));
-    assertThrows(
-        IllegalArgumentException.class, () -> client.audio().vocabularies().delete(null));
+        () -> VocabularyCreateParams.builder().targetModel("paraformer-v2").prefix("pre").build());
+    assertThrows(IllegalArgumentException.class, () -> client.audio().vocabularies().get("  "));
+    assertThrows(IllegalArgumentException.class, () -> client.audio().vocabularies().delete(null));
     assertThrows(
         IllegalArgumentException.class,
         () -> client.audio().vocabularies().update("v1", Collections.emptyList()));
@@ -171,20 +166,23 @@ class AudioManagementMockTest {
   void voicesCreateNamedWinOverExtraInput() throws Exception {
     enqueueJson(
         "{\"output\":{\"voice_id\":\"voice-1\",\"status\":\"OK\","
-          + "\"preview_audio\":{\"url\":\"http://x/p.wav\"}},\"request_id\":\"r3\"}");
+            + "\"preview_audio\":{\"url\":\"http://x/p.wav\"}},\"request_id\":\"r3\"}");
     Map<String, Object> extra = new LinkedHashMap<>();
     extra.put("url", "http://hatch/loses.wav");
     extra.put("custom_field", "kept");
     Voice voice =
-        client.audio().voices().create(
-            VoiceCreateParams.builder()
-                .targetModel("cosyvoice-v1")
-                .prefix("pre")
-                .url("http://files/sample.wav")
-                .languageHints(Arrays.asList("zh", "en"))
-                .maxPromptAudioLength(15.0)
-                .extraInput(extra)
-                .build());
+        client
+            .audio()
+            .voices()
+            .create(
+                VoiceCreateParams.builder()
+                    .targetModel("cosyvoice-v1")
+                    .prefix("pre")
+                    .url("http://files/sample.wav")
+                    .languageHints(Arrays.asList("zh", "en"))
+                    .maxPromptAudioLength(15.0)
+                    .extraInput(extra)
+                    .build());
     assertEquals("voice-1", voice.getVoiceId());
     assertEquals("OK", voice.getStatus());
     assertEquals("http://x/p.wav", voice.getPreviewAudio().get("url"));
@@ -210,8 +208,7 @@ class AudioManagementMockTest {
 
     enqueueJson("{\"output\":{\"status\":\"SUCCEEDED\"}}");
     assertEquals(
-        "SUCCEEDED",
-        client.audio().voices().update("voice-1", "http://files/new.wav").getStatus());
+        "SUCCEEDED", client.audio().voices().update("voice-1", "http://files/new.wav").getStatus());
     JsonNode updateInput = bodyOf(server.takeRequest(5, TimeUnit.SECONDS)).get("input");
     assertEquals("update_voice", updateInput.get("action").asText());
     assertEquals("http://files/new.wav", updateInput.get("url").asText());
@@ -237,16 +234,19 @@ class AudioManagementMockTest {
     // voiceDesign: shorter action words, id field "voice".
     enqueueJson(
         "{\"output\":{\"voice\":\"vd-1\",\"language\":\"zh\",\"target_model\":\"qwen3-tts\","
-          + "\"preview_audio\":{\"url\":\"http://x/v.wav\"}}}");
+            + "\"preview_audio\":{\"url\":\"http://x/v.wav\"}}}");
     DesignedVoice designed =
-        client.audio().voiceDesign().create(
-            VoiceDesignCreateParams.builder()
-                .targetModel("qwen3-tts")
-                .voicePrompt("沉稳的男声")
-                .previewText("你好，世界")
-                .preferredName("narrator")
-                .language("zh")
-                .build());
+        client
+            .audio()
+            .voiceDesign()
+            .create(
+                VoiceDesignCreateParams.builder()
+                    .targetModel("qwen3-tts")
+                    .voicePrompt("沉稳的男声")
+                    .previewText("你好，世界")
+                    .preferredName("narrator")
+                    .language("zh")
+                    .build());
     assertEquals("vd-1", designed.getVoice());
     assertEquals("zh", designed.getLanguage());
     assertEquals("qwen3-tts", designed.getTargetModel());
@@ -283,8 +283,10 @@ class AudioManagementMockTest {
     Map<String, Object> phrases = new LinkedHashMap<>();
     phrases.put("阿里巴巴", 3);
     Phrase phrase =
-        client.audio().phrases().create(
-            PhraseCreateParams.builder().model("paraformer-v2").phrases(phrases).build());
+        client
+            .audio()
+            .phrases()
+            .create(PhraseCreateParams.builder().model("paraformer-v2").phrases(phrases).build());
     // finetuned_output is the compiled resource id (phraseId alias).
     assertEquals("phrase-1", phrase.getPhraseId());
     assertEquals("PENDING", phrase.getStatus());
@@ -307,17 +309,19 @@ class AudioManagementMockTest {
     // update carries finetuned_output = phraseId.
     enqueueJson("{\"output\":{\"finetuned_output\":\"phrase-1\",\"status\":\"RUNNING\"}}");
     Phrase updated =
-        client.audio().phrases().update(
-            "phrase-1",
-            PhraseCreateParams.builder()
-                .model("paraformer-v2")
-                .phrases(Collections.singletonMap("阿里云", 5))
-                .build());
+        client
+            .audio()
+            .phrases()
+            .update(
+                "phrase-1",
+                PhraseCreateParams.builder()
+                    .model("paraformer-v2")
+                    .phrases(Collections.singletonMap("阿里云", 5))
+                    .build());
     assertEquals("phrase-1", updated.getPhraseId());
     JsonNode updateBody = bodyOf(server.takeRequest(5, TimeUnit.SECONDS));
     assertEquals("phrase-1", updateBody.get("finetuned_output").asText());
-    assertEquals(
-        5, updateBody.get("hyper_parameters").get("phrase_list").get("阿里云").asInt());
+    assertEquals(5, updateBody.get("hyper_parameters").get("phrase_list").get("阿里云").asInt());
 
     // get rides /fine-tunes/outputs/{id}; job_id is the legacy id alias.
     enqueueJson("{\"output\":{\"job_id\":\"phrase-1\",\"status\":\"SUCCEEDED\"}}");
@@ -330,7 +334,7 @@ class AudioManagementMockTest {
     // list: page_no/page_size query; jobs + total aliases.
     enqueueJson(
         "{\"output\":{\"jobs\":[{\"job_id\":\"p1\"},{\"job_id\":\"p2\"}],"
-          + "\"page_no\":2,\"page_size\":5,\"total\":7}}");
+            + "\"page_no\":2,\"page_size\":5,\"total\":7}}");
     PhraseList list = client.audio().phrases().list(2, 5);
     assertEquals(2, list.getPageNo());
     assertEquals(5, list.getPageSize());

@@ -6,19 +6,21 @@ import java.util.Map;
 
 /**
  * Parameters for {@code videos().generate} / {@code videos().jobs().create} (design §3). One
- * service, two input protocols, picked by model name prefix ({@link #MEDIA_MODEL_PREFIXES}):
- * legacy models take {@code img_url} first-frame input (the public name is {@code imageUrl};
- * {@code prompt}-only works too); media-protocol models take a {@code media} list of typed
- * assets ({@code first_frame} / {@code last_frame} / {@code driving_audio} / {@code first_clip}),
- * with {@code imageUrl} accepted as shorthand for a lone {@code first_frame} asset.
+ * service, two input protocols, picked by model name prefix ({@link #MEDIA_MODEL_PREFIXES}): legacy
+ * models take {@code img_url} first-frame input (the public name is {@code imageUrl}; {@code
+ * prompt}-only works too); media-protocol models take a {@code media} list of typed assets ({@code
+ * first_frame} / {@code last_frame} / {@code driving_audio} / {@code first_clip}), with {@code
+ * imageUrl} accepted as shorthand for a lone {@code first_frame} asset.
  *
- * <p>Media items are wire-shaped maps ({@code {type, url}} plus any per-model extras); local
- * paths and {@code file://}/{@code oss://} values anywhere in the inputs are uploaded/resolved
- * before the call.
+ * <p>Media items are wire-shaped maps ({@code {type, url}} plus any per-model extras); local paths
+ * and {@code file://}/{@code oss://} values anywhere in the inputs are uploaded/resolved before the
+ * call.
  */
 public final class VideoGenerateParams {
-  /** Models that only answer on the media-based input protocol (prefix match, so dated variants
-   * route the same way). */
+  /**
+   * Models that only answer on the media-based input protocol (prefix match, so dated variants
+   * route the same way).
+   */
   public static final String[] MEDIA_MODEL_PREFIXES = {"wan2.7-i2v"};
 
   private final String model;

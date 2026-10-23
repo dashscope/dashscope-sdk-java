@@ -110,8 +110,12 @@ public class TestRuns {
 
   @Test
   public void testCreate()
-      throws IOException, ApiException, NoApiKeyException, InterruptedException,
-          InputRequiredException, InvalidateParameter {
+      throws IOException,
+          ApiException,
+          NoApiKeyException,
+          InterruptedException,
+          InputRequiredException,
+          InvalidateParameter {
     String inputFilePath = "./src/test/resources/runs.json";
     byte[] content = Files.readAllBytes(Paths.get(inputFilePath));
     String jsonContent = new String(content, StandardCharsets.UTF_8);
@@ -180,8 +184,12 @@ public class TestRuns {
 
   @Test
   public void testCreateThreadAndRun()
-      throws IOException, ApiException, NoApiKeyException, InterruptedException,
-          InputRequiredException, InvalidateParameter {
+      throws IOException,
+          ApiException,
+          NoApiKeyException,
+          InterruptedException,
+          InputRequiredException,
+          InvalidateParameter {
     String inputFilePath = "./src/test/resources/runs.json";
     byte[] content = Files.readAllBytes(Paths.get(inputFilePath));
     String jsonContent = new String(content, StandardCharsets.UTF_8);
@@ -265,7 +273,10 @@ public class TestRuns {
 
   @Test
   public void testList()
-      throws IOException, InterruptedException, ApiException, NoApiKeyException,
+      throws IOException,
+          InterruptedException,
+          ApiException,
+          NoApiKeyException,
           InputRequiredException {
     String inputFilePath = "./src/test/resources/runs.json";
     byte[] content = Files.readAllBytes(Paths.get(inputFilePath));
@@ -312,7 +323,10 @@ public class TestRuns {
 
   @Test
   public void testListSteps()
-      throws IOException, InterruptedException, ApiException, NoApiKeyException,
+      throws IOException,
+          InterruptedException,
+          ApiException,
+          NoApiKeyException,
           InputRequiredException {
     String inputFilePath = "./src/test/resources/runs.json";
     byte[] content = Files.readAllBytes(Paths.get(inputFilePath));
@@ -364,7 +378,10 @@ public class TestRuns {
 
   @Test
   public void testRetrieve()
-      throws IOException, ApiException, NoApiKeyException, InterruptedException,
+      throws IOException,
+          ApiException,
+          NoApiKeyException,
+          InterruptedException,
           InputRequiredException {
     String inputFilePath = "./src/test/resources/runs.json";
     byte[] content = Files.readAllBytes(Paths.get(inputFilePath));
@@ -390,7 +407,10 @@ public class TestRuns {
 
   @Test
   public void testRetrieveStep()
-      throws IOException, ApiException, NoApiKeyException, InterruptedException,
+      throws IOException,
+          ApiException,
+          NoApiKeyException,
+          InterruptedException,
           InputRequiredException {
     String inputFilePath = "./src/test/resources/runs.json";
     byte[] content = Files.readAllBytes(Paths.get(inputFilePath));
@@ -429,7 +449,10 @@ public class TestRuns {
 
   @Test
   public void testUpdate()
-      throws IOException, ApiException, NoApiKeyException, InterruptedException,
+      throws IOException,
+          ApiException,
+          NoApiKeyException,
+          InterruptedException,
           InputRequiredException {
     String inputFilePath = "./src/test/resources/runs.json";
     byte[] content = Files.readAllBytes(Paths.get(inputFilePath));
@@ -459,7 +482,10 @@ public class TestRuns {
 
   @Test
   public void testSubmitRunOutput()
-      throws IOException, ApiException, NoApiKeyException, InterruptedException,
+      throws IOException,
+          ApiException,
+          NoApiKeyException,
+          InterruptedException,
           InputRequiredException {
     String inputFilePath = "./src/test/resources/runs.json";
     byte[] content = Files.readAllBytes(Paths.get(inputFilePath));

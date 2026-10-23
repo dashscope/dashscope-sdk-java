@@ -4,7 +4,6 @@ package com.alibaba.dashscope.v3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.ClientOptions;
 import com.alibaba.dashscope.RequestOptions;
@@ -87,7 +86,8 @@ class EncryptionMockTest {
 
     Cipher rsa = Cipher.getInstance("RSA");
     rsa.init(Cipher.DECRYPT_MODE, pair.getPrivate());
-    String plain = new String(rsa.doFinal(Base64.getDecoder().decode(cipher)), StandardCharsets.UTF_8);
+    String plain =
+        new String(rsa.doFinal(Base64.getDecoder().decode(cipher)), StandardCharsets.UTF_8);
     assertEquals("wrapped-aes-key", plain);
   }
 
@@ -95,7 +95,8 @@ class EncryptionMockTest {
   void rsaEncryptRejectsGarbageKey() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> EncryptionUtils.rsaEncrypt("x", Base64.getEncoder().encodeToString(new byte[] {1, 2})));
+        () ->
+            EncryptionUtils.rsaEncrypt("x", Base64.getEncoder().encodeToString(new byte[] {1, 2})));
   }
 
   @Test
@@ -111,8 +112,7 @@ class EncryptionMockTest {
                     + base64Public
                     + "\",\"public_key_id\":\"key-42\"}}"));
 
-    EncryptionConfig config =
-        new EncryptionKeys(transport).createConfig(RequestOptions.NONE);
+    EncryptionConfig config = new EncryptionKeys(transport).createConfig(RequestOptions.NONE);
 
     assertEquals("key-42", config.getPublicKeyId());
     assertEquals(base64Public, config.getBase64PublicKey());

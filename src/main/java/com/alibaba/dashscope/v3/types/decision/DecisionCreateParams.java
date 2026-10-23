@@ -7,8 +7,8 @@ import java.util.Map;
 /**
  * Parameters for {@code decision().create}. Builder validates required fields and typed-question
  * criteria at {@code build()} (design §3); {@link DecisionQuestion#raw} questions pass through
- * unvalidated. Wire shape: {@code {model, state, questions:{id: {type, instructions?,
- * criteria?}}}} — no input/parameters envelope on this compatible-mode endpoint.
+ * unvalidated. Wire shape: {@code {model, state, questions:{id: {type, instructions?, criteria?}}}}
+ * — no input/parameters envelope on this compatible-mode endpoint.
  */
 public final class DecisionCreateParams {
   private final String model;
@@ -29,8 +29,10 @@ public final class DecisionCreateParams {
     return model;
   }
 
-  /** The business state under decision: free text (String), a structured object (Map), or a
-   * list — serialized verbatim. */
+  /**
+   * The business state under decision: free text (String), a structured object (Map), or a list —
+   * serialized verbatim.
+   */
   public Object getState() {
     return state;
   }
@@ -104,8 +106,12 @@ public final class DecisionCreateParams {
       int size = ((Map<?, ?>) criteria).size();
       if (size < DecisionQuestion.MIN_CRITERIA_SIZE || size > DecisionQuestion.MAX_CHOICE_OPTIONS) {
         throw new IllegalArgumentException(
-            "the criteria of choice question [" + id + "] must contain 1.."
-                + DecisionQuestion.MAX_CHOICE_OPTIONS + " options, got " + size);
+            "the criteria of choice question ["
+                + id
+                + "] must contain 1.."
+                + DecisionQuestion.MAX_CHOICE_OPTIONS
+                + " options, got "
+                + size);
       }
     } else if (DecisionQuestion.TYPE_SCORE.equals(type)) {
       if (!(criteria instanceof List)) {
@@ -115,13 +121,20 @@ public final class DecisionCreateParams {
       int size = ((List<?>) criteria).size();
       if (size < DecisionQuestion.MIN_SCORE_LEVELS || size > DecisionQuestion.MAX_SCORE_LEVELS) {
         throw new IllegalArgumentException(
-            "the criteria of score question [" + id + "] must contain "
-                + DecisionQuestion.MIN_SCORE_LEVELS + ".." + DecisionQuestion.MAX_SCORE_LEVELS
-                + " levels, got " + size);
+            "the criteria of score question ["
+                + id
+                + "] must contain "
+                + DecisionQuestion.MIN_SCORE_LEVELS
+                + ".."
+                + DecisionQuestion.MAX_SCORE_LEVELS
+                + " levels, got "
+                + size);
       }
     } else if (criteria != null && !(criteria instanceof Map)) {
       throw new IllegalArgumentException(
-          "the criteria of noul question [" + id + "] must be null or a Map with 'true'/'false'"
+          "the criteria of noul question ["
+              + id
+              + "] must be null or a Map with 'true'/'false'"
               + " keys");
     }
   }

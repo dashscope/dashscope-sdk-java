@@ -108,7 +108,10 @@ public class TestGeneration {
 
   @Test
   public void testHttpTextCall()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
           InputRequiredException {
     server.enqueue(
         new MockResponse()
@@ -131,7 +134,10 @@ public class TestGeneration {
 
   @Test
   public void testHttpCall()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
           InputRequiredException {
     server.enqueue(
         new MockResponse()
@@ -155,7 +161,10 @@ public class TestGeneration {
 
   @Test
   public void testHttpCallWithCallBack()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
           InputRequiredException {
     server.enqueue(
         new MockResponse()
@@ -200,7 +209,10 @@ public class TestGeneration {
   @Test
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "BODY")
   public void testHttpStream()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
           InputRequiredException {
     server.enqueue(
         new MockResponse()
@@ -225,7 +237,10 @@ public class TestGeneration {
   @Test
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "BODY")
   public void testHttpStreamWithCallBack()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
           InputRequiredException {
     server.enqueue(
         new MockResponse()
@@ -269,7 +284,10 @@ public class TestGeneration {
   @Test
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
   public void testWebSocketStream()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
           InputRequiredException {
     WebSocketRecorder serverListener = new WebSocketRecorder("server");
     server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
@@ -317,7 +335,10 @@ public class TestGeneration {
   @Test
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
   public void testWebSocketStreamWithCallBack()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
           InputRequiredException {
     WebSocketRecorder serverListener = new WebSocketRecorder("server");
     server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));

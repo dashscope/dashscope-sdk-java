@@ -49,10 +49,13 @@ public final class ConfigResolver {
     "cn-beijing", "ap-southeast-1", "cn-hongkong", "us-east-1", "eu-central-1", "ap-northeast-1"
   };
 
-  /** Legacy shared gateways (2.x endpoints), per region; used only as the no-workspace
-   * fallback so an apiKey-only quickstart keeps working. Regions without a dedicated shared
-   * gateway use the international one. */
+  /**
+   * Legacy shared gateways (2.x endpoints), per region; used only as the no-workspace fallback so
+   * an apiKey-only quickstart keeps working. Regions without a dedicated shared gateway use the
+   * international one.
+   */
   private static final Map<String, String> LEGACY_GATEWAY_HOSTS;
+
   private static final Map<String, String> LEGACY_WS_GATEWAY_HOSTS;
 
   static {
@@ -87,30 +90,33 @@ public final class ConfigResolver {
   public static ResolvedConfig resolve(ClientOptions options) {
     Map<String, String> file = ConfigFile.load(ConfigFile.defaultPath());
 
-    String region = firstNonBlank(
-        options.getRegion(),
-        System.getProperty(SYSPROP_REGION),
-        System.getenv(EnvNames.DASHSCOPE_REGION),
-        file.get(ConfigFile.KEY_REGION));
+    String region =
+        firstNonBlank(
+            options.getRegion(),
+            System.getProperty(SYSPROP_REGION),
+            System.getenv(EnvNames.DASHSCOPE_REGION),
+            file.get(ConfigFile.KEY_REGION));
     region = region == null ? DEFAULT_REGION : region;
     if (!isValidRegion(region)) {
       throw new IllegalArgumentException(
           "invalid region '" + region + "', expected one of " + String.join(", ", VALID_REGIONS));
     }
 
-    String workspace = firstNonBlank(
-        options.getWorkspace(),
-        System.getProperty(SYSPROP_WORKSPACE),
-        System.getenv(EnvNames.DASHSCOPE_WORKSPACE),
-        file.get(ConfigFile.KEY_WORKSPACE));
+    String workspace =
+        firstNonBlank(
+            options.getWorkspace(),
+            System.getProperty(SYSPROP_WORKSPACE),
+            System.getenv(EnvNames.DASHSCOPE_WORKSPACE),
+            file.get(ConfigFile.KEY_WORKSPACE));
 
-    String baseUrl = firstNonBlank(
-        options.getBaseUrl(),
-        System.getProperty(SYSPROP_BASE_URL),
-        System.getenv(EnvNames.DASHSCOPE_BASE_URL),
-        // 2.x env name, honored as fallback so existing setups keep working
-        System.getenv(EnvNames.DASHSCOPE_HTTP_BASE_URL),
-        file.get(ConfigFile.KEY_BASE_URL));
+    String baseUrl =
+        firstNonBlank(
+            options.getBaseUrl(),
+            System.getProperty(SYSPROP_BASE_URL),
+            System.getenv(EnvNames.DASHSCOPE_BASE_URL),
+            // 2.x env name, honored as fallback so existing setups keep working
+            System.getenv(EnvNames.DASHSCOPE_HTTP_BASE_URL),
+            file.get(ConfigFile.KEY_BASE_URL));
     if (baseUrl == null) {
       if (workspace != null) {
         baseUrl = String.format(WORKSPACE_GATEWAY_TEMPLATE, workspace, region) + NATIVE_API_PATH;
@@ -120,10 +126,11 @@ public final class ConfigResolver {
       }
     }
 
-    String wsBaseUrl = firstNonBlank(
-        options.getWsBaseUrl(),
-        System.getProperty(SYSPROP_WS_BASE_URL),
-        System.getenv(EnvNames.DASHSCOPE_WEBSOCKET_BASE_URL));
+    String wsBaseUrl =
+        firstNonBlank(
+            options.getWsBaseUrl(),
+            System.getProperty(SYSPROP_WS_BASE_URL),
+            System.getenv(EnvNames.DASHSCOPE_WEBSOCKET_BASE_URL));
     if (wsBaseUrl == null) {
       if (workspace != null) {
         wsBaseUrl =
@@ -134,26 +141,29 @@ public final class ConfigResolver {
       }
     }
 
-    Duration timeout = firstDuration(
-        options.getTimeout(),
-        System.getProperty(SYSPROP_TIMEOUT),
-        System.getenv(EnvNames.DASHSCOPE_TIMEOUT),
-        file.get(ConfigFile.KEY_TIMEOUT),
-        DEFAULT_TIMEOUT);
+    Duration timeout =
+        firstDuration(
+            options.getTimeout(),
+            System.getProperty(SYSPROP_TIMEOUT),
+            System.getenv(EnvNames.DASHSCOPE_TIMEOUT),
+            file.get(ConfigFile.KEY_TIMEOUT),
+            DEFAULT_TIMEOUT);
 
-    int maxRetries = firstInt(
-        options.getMaxRetries(),
-        System.getProperty(SYSPROP_MAX_RETRIES),
-        System.getenv(EnvNames.DASHSCOPE_MAX_RETRIES),
-        file.get(ConfigFile.KEY_MAX_RETRIES),
-        DEFAULT_MAX_RETRIES);
+    int maxRetries =
+        firstInt(
+            options.getMaxRetries(),
+            System.getProperty(SYSPROP_MAX_RETRIES),
+            System.getenv(EnvNames.DASHSCOPE_MAX_RETRIES),
+            file.get(ConfigFile.KEY_MAX_RETRIES),
+            DEFAULT_MAX_RETRIES);
 
-    Duration wsPingInterval = firstDuration(
-        options.getWsPingInterval(),
-        System.getProperty(SYSPROP_WS_PING_INTERVAL),
-        System.getenv(EnvNames.DASHSCOPE_WS_PING_INTERVAL),
-        file.get(ConfigFile.KEY_WS_PING_INTERVAL),
-        Duration.ZERO);
+    Duration wsPingInterval =
+        firstDuration(
+            options.getWsPingInterval(),
+            System.getProperty(SYSPROP_WS_PING_INTERVAL),
+            System.getenv(EnvNames.DASHSCOPE_WS_PING_INTERVAL),
+            file.get(ConfigFile.KEY_WS_PING_INTERVAL),
+            Duration.ZERO);
 
     int maxRequests = envInt(EnvNames.DASHSCOPE_HTTP_MAX_CONNECTIONS, DEFAULT_MAX_REQUESTS);
     int maxRequestsPerHost =

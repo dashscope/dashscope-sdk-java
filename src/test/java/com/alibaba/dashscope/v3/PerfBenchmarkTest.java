@@ -142,9 +142,8 @@ class PerfBenchmarkTest {
     }
 
     /**
-     * Streams the TTS payload on a separate thread with backpressure: okhttp closes the socket
-     * when its outgoing queue exceeds 16 MB, so production pauses while more than 4 MB is
-     * undelivered.
+     * Streams the TTS payload on a separate thread with backpressure: okhttp closes the socket when
+     * its outgoing queue exceeds 16 MB, so production pauses while more than 4 MB is undelivered.
      */
     private void streamAudio(WebSocket webSocket, String taskId) {
       Thread sender =
@@ -208,7 +207,11 @@ class PerfBenchmarkTest {
   }
 
   private static AsrRecognizeParams asrParams() {
-    return AsrRecognizeParams.builder().model("paraformer-realtime-v2").format("pcm").sampleRate(16000).build();
+    return AsrRecognizeParams.builder()
+        .model("paraformer-realtime-v2")
+        .format("pcm")
+        .sampleRate(16000)
+        .build();
   }
 
   private long oneRecognizeCycle(WsConnection shared) throws IOException {
@@ -238,8 +241,7 @@ class PerfBenchmarkTest {
   void asrRecognizeSharedVsDedicatedConnection() throws Exception {
     BenchSocket sharedSocket = enqueueUpgrade();
     WsConnection shared =
-        new WsConnection(
-            transport, transport.config().getWsBaseUrl(), "audio", null);
+        new WsConnection(transport, transport.config().getWsBaseUrl(), "audio", null);
     sharedSocket.awaitOpen();
     for (int i = 0; i < 5; i++) {
       oneRecognizeCycle(shared); // warmup
@@ -351,9 +353,15 @@ class PerfBenchmarkTest {
 
   private long runTtsAndDrain(WsConnection shared) throws IOException {
     try (SynthesisSession tts =
-        audio.tts().connect(
-            TtsConnectParams.builder().model("cosyvoice-v2").voice("longxiaochun").format("mp3").build(),
-            shared)) {
+        audio
+            .tts()
+            .connect(
+                TtsConnectParams.builder()
+                    .model("cosyvoice-v2")
+                    .voice("longxiaochun")
+                    .format("mp3")
+                    .build(),
+                shared)) {
       tts.start();
       tts.sendText("吞吐基准");
       tts.flush();

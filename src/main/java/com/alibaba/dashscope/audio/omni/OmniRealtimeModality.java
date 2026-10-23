@@ -3,7 +3,9 @@ package com.alibaba.dashscope.audio.omni;
 
 import com.google.gson.annotations.SerializedName;
 
-/** @author lengjiayi */
+/**
+ * @author lengjiayi
+ */
 public enum OmniRealtimeModality {
   @SerializedName("text")
   TEXT("text"),

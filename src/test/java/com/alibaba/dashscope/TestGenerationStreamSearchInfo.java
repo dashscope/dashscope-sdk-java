@@ -69,7 +69,10 @@ public class TestGenerationStreamSearchInfo {
 
   @Test
   public void testSearchInfoPreservedInChoicesFormat_FirstChunk()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
           InputRequiredException {
     // SearchInfo appears in first chunk, should be preserved in all subsequent chunks
     MockResponse mockResponse =
@@ -118,7 +121,10 @@ public class TestGenerationStreamSearchInfo {
 
   @Test
   public void testSearchInfoPreservedInChoicesFormat_MiddleChunk()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
           InputRequiredException {
     // SearchInfo appears in middle chunk, should be preserved in all chunks including later ones
     MockResponse mockResponse =
@@ -162,7 +168,10 @@ public class TestGenerationStreamSearchInfo {
 
   @Test
   public void testSearchInfoPreservedInLegacyFormat_FirstChunk()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
           InputRequiredException {
     // SearchInfo appears in first chunk of legacy format, should be preserved in second chunk
     MockResponse mockResponse =
@@ -201,7 +210,10 @@ public class TestGenerationStreamSearchInfo {
 
   @Test
   public void testSearchInfoPreservedInLegacyFormat_SecondChunk()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
           InputRequiredException {
     // SearchInfo appears in second chunk of legacy format
     MockResponse mockResponse =

@@ -89,16 +89,30 @@ class WsTransportMockTest {
     }
 
     void sendEvent(String taskId, String event) {
-      socket.get().send(
-          "{\"header\":{\"task_id\":\"" + taskId + "\",\"event\":\"" + event + "\"},"
-              + "\"payload\":{\"output\":{},\"usage\":{}}}");
+      socket
+          .get()
+          .send(
+              "{\"header\":{\"task_id\":\""
+                  + taskId
+                  + "\",\"event\":\""
+                  + event
+                  + "\"},"
+                  + "\"payload\":{\"output\":{},\"usage\":{}}}");
     }
 
     void sendFailed(String taskId, String code, String message) {
-      socket.get().send(
-          "{\"header\":{\"task_id\":\"" + taskId + "\",\"event\":\"task-failed\","
-              + "\"error_code\":\"" + code + "\",\"error_message\":\"" + message + "\"},"
-              + "\"payload\":{}}");
+      socket
+          .get()
+          .send(
+              "{\"header\":{\"task_id\":\""
+                  + taskId
+                  + "\",\"event\":\"task-failed\","
+                  + "\"error_code\":\""
+                  + code
+                  + "\",\"error_message\":\""
+                  + message
+                  + "\"},"
+                  + "\"payload\":{}}");
     }
   }
 
@@ -111,8 +125,8 @@ class WsTransportMockTest {
   @Test
   void multipleTasksShareOneConnectionAndDemux() throws Exception {
     ServerSocket serverSocket = enqueueUpgrade();
-    try (WsConnection conn = new WsConnection(
-        transport, transport.config().getWsBaseUrl(), "audio", null)) {
+    try (WsConnection conn =
+        new WsConnection(transport, transport.config().getWsBaseUrl(), "audio", null)) {
       serverSocket.awaitOpen();
       TaskChannel asr = conn.attach("task-asr");
       TaskChannel tts = conn.attach("task-tts");
@@ -160,8 +174,8 @@ class WsTransportMockTest {
                         .wsBaseUrl(server.url("/api-ws/v1/inference").toString())
                         .timeout(Duration.ofMillis(500))
                         .build()));
-        WsConnection conn = new WsConnection(
-            shortTimeout, shortTimeout.config().getWsBaseUrl(), "audio", null)) {
+        WsConnection conn =
+            new WsConnection(shortTimeout, shortTimeout.config().getWsBaseUrl(), "audio", null)) {
       serverSocket.awaitOpen();
       TaskChannel handle = conn.attach("task-idle");
       Thread.sleep(1200);
@@ -175,8 +189,8 @@ class WsTransportMockTest {
   @Test
   void concurrentReceiversOnSharedConnection() throws Exception {
     ServerSocket serverSocket = enqueueUpgrade();
-    try (WsConnection conn = new WsConnection(
-        transport, transport.config().getWsBaseUrl(), "audio", null)) {
+    try (WsConnection conn =
+        new WsConnection(transport, transport.config().getWsBaseUrl(), "audio", null)) {
       serverSocket.awaitOpen();
       int taskCount = 4;
       int eventsPerTask = 5;
@@ -216,8 +230,8 @@ class WsTransportMockTest {
   @Test
   void binaryDownlinkRoutesToSingleActiveTask() throws Exception {
     ServerSocket serverSocket = enqueueUpgrade();
-    try (WsConnection conn = new WsConnection(
-        transport, transport.config().getWsBaseUrl(), "audio", null)) {
+    try (WsConnection conn =
+        new WsConnection(transport, transport.config().getWsBaseUrl(), "audio", null)) {
       serverSocket.awaitOpen();
       TaskChannel only = conn.attach("task-tts");
       serverSocket.socket.get().send(ByteString.of(new byte[] {1, 2, 3}));
@@ -231,8 +245,8 @@ class WsTransportMockTest {
   @Test
   void binaryDownlinkWithTwoTasksNeedsClaim() throws Exception {
     ServerSocket serverSocket = enqueueUpgrade();
-    try (WsConnection conn = new WsConnection(
-        transport, transport.config().getWsBaseUrl(), "audio", null)) {
+    try (WsConnection conn =
+        new WsConnection(transport, transport.config().getWsBaseUrl(), "audio", null)) {
       serverSocket.awaitOpen();
       TaskChannel a = conn.attach("task-a");
       conn.attach("task-b");
@@ -247,8 +261,8 @@ class WsTransportMockTest {
   @Test
   void unclaimedBinaryWithMultipleTasksRaises() throws Exception {
     ServerSocket serverSocket = enqueueUpgrade();
-    try (WsConnection conn = new WsConnection(
-        transport, transport.config().getWsBaseUrl(), "audio", null)) {
+    try (WsConnection conn =
+        new WsConnection(transport, transport.config().getWsBaseUrl(), "audio", null)) {
       serverSocket.awaitOpen();
       TaskChannel a = conn.attach("task-a");
       conn.attach("task-b");
@@ -268,8 +282,8 @@ class WsTransportMockTest {
   @Test
   void secondBinaryUplinkIsRejected() throws Exception {
     ServerSocket serverSocket = enqueueUpgrade();
-    try (WsConnection conn = new WsConnection(
-        transport, transport.config().getWsBaseUrl(), "audio", null)) {
+    try (WsConnection conn =
+        new WsConnection(transport, transport.config().getWsBaseUrl(), "audio", null)) {
       serverSocket.awaitOpen();
       TaskChannel a = conn.attach("task-a");
       TaskChannel b = conn.attach("task-b");
@@ -283,8 +297,8 @@ class WsTransportMockTest {
   @Test
   void duplicateTaskIdIsRejected() throws Exception {
     ServerSocket serverSocket = enqueueUpgrade();
-    try (WsConnection conn = new WsConnection(
-        transport, transport.config().getWsBaseUrl(), "audio", null)) {
+    try (WsConnection conn =
+        new WsConnection(transport, transport.config().getWsBaseUrl(), "audio", null)) {
       serverSocket.awaitOpen();
       conn.attach("task-a");
       SdkException e = assertThrows(SdkException.class, () -> conn.attach("task-a"));
@@ -295,8 +309,8 @@ class WsTransportMockTest {
   @Test
   void taskFailedEventCarriesErrorFields() throws Exception {
     ServerSocket serverSocket = enqueueUpgrade();
-    try (WsConnection conn = new WsConnection(
-        transport, transport.config().getWsBaseUrl(), "audio", null)) {
+    try (WsConnection conn =
+        new WsConnection(transport, transport.config().getWsBaseUrl(), "audio", null)) {
       serverSocket.awaitOpen();
       TaskChannel handle = conn.attach("task-a");
       serverSocket.sendFailed("task-a", "InvalidParameter", "bad param");
@@ -312,8 +326,7 @@ class WsTransportMockTest {
   void crossTaskEventOnDedicatedSessionIsProtocolError() throws Exception {
     ServerSocket serverSocket = enqueueUpgrade();
     WsSession session =
-        new WsSession(
-            transport, transport.config().getWsBaseUrl(), "task-mine", "audio", null);
+        new WsSession(transport, transport.config().getWsBaseUrl(), "task-mine", "audio", null);
     try {
       serverSocket.awaitOpen();
       serverSocket.sendEvent("task-other", "result-generated");
@@ -332,11 +345,7 @@ class WsTransportMockTest {
             PermissionDeniedException.class,
             () ->
                 new WsSession(
-                    transport,
-                    transport.config().getWsBaseUrl(),
-                    "task-x",
-                    "audio",
-                    null));
+                    transport, transport.config().getWsBaseUrl(), "task-x", "audio", null));
     assertEquals(403, e.getStatusCode());
   }
 
@@ -348,10 +357,12 @@ class WsTransportMockTest {
     serverSocket.awaitOpen();
     TaskChannel handle = conn.attach("task-a");
     conn.close();
-    assertThrows(RuntimeException.class, () -> {
-      for (int i = 0; i < 4; i++) {
-        handle.recv(RECV_TIMEOUT);
-      }
-    });
+    assertThrows(
+        RuntimeException.class,
+        () -> {
+          for (int i = 0; i < 4; i++) {
+            handle.recv(RECV_TIMEOUT);
+          }
+        });
   }
 }

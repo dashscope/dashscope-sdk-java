@@ -153,9 +153,10 @@ public final class ChatCompletionCreateParams {
     return parallelToolCalls;
   }
 
-  /** Streaming output mode. Note: M1 passes this through to the wire as-is; client-side
-   * cumulative merging (incremental_output=false semantics for models without server support)
-   * arrives with M2. */
+  /**
+   * Streaming output mode. Note: M1 passes this through to the wire as-is; client-side cumulative
+   * merging (incremental_output=false semantics for models without server support) arrives with M2.
+   */
   public Boolean getIncrementalOutput() {
     return incrementalOutput;
   }

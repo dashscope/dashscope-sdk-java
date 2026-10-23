@@ -4,7 +4,9 @@ package com.alibaba.dashscope.audio.omni;
 import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.annotations.SerializedName;
 
-/** @author lengjiayi */
+/**
+ * @author lengjiayi
+ */
 public enum OmniRealtimeAudioFormat {
   @SerializedName("pcm16")
   PCM_16000HZ_MONO_16BIT("pcm", 16000, "mono", "16bit"),

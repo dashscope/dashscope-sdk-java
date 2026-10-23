@@ -18,11 +18,11 @@ import java.util.Map;
 
 /**
  * Local-file preprocessing (2.x PreprocessMessageInput parity): non-text content values that are
- * {@code file://} URIs or existing local paths are uploaded via {@link OssUploader} and replaced
- * by their {@code oss://} URL; existing {@code oss://} values pass through. Any upload or oss
- * presence sets the {@code X-DashScope-OssResourceResolve: enable} request header. Chat
- * preprocesses {@code user} messages only; embeddings preprocess all contents. The policy
- * certificate is fetched lazily once per call and reused across uploads.
+ * {@code file://} URIs or existing local paths are uploaded via {@link OssUploader} and replaced by
+ * their {@code oss://} URL; existing {@code oss://} values pass through. Any upload or oss presence
+ * sets the {@code X-DashScope-OssResourceResolve: enable} request header. Chat preprocesses {@code
+ * user} messages only; embeddings preprocess all contents. The policy certificate is fetched lazily
+ * once per call and reused across uploads.
  */
 final class MultimodalPreprocessor {
   static final String OSS_RESOLVE_HEADER = "X-DashScope-OssResourceResolve";
@@ -51,13 +51,15 @@ final class MultimodalPreprocessor {
   }
 
   static ChatResult preprocessChat(
-      String model, List<MultimodalMessage> messages, OssUploader uploader, RequestOptions options) {
+      String model,
+      List<MultimodalMessage> messages,
+      OssUploader uploader,
+      RequestOptions options) {
     Ctx ctx = new Ctx(model, uploader, options);
     List<MultimodalMessage> out = new ArrayList<>(messages.size());
     for (MultimodalMessage message : messages) {
       if (message != null && "user".equals(message.getRole()) && message.getContent() != null) {
-        out.add(
-            message.toBuilder().content(processParts(ctx, message.getContent())).build());
+        out.add(message.toBuilder().content(processParts(ctx, message.getContent())).build());
       } else {
         out.add(message);
       }
@@ -97,7 +99,8 @@ final class MultimodalPreprocessor {
       List<Object> out = new ArrayList<>(list.size());
       boolean changed = false;
       for (Object element : list) {
-        Object processed = element instanceof String ? processString(ctx, key, (String) element) : element;
+        Object processed =
+            element instanceof String ? processString(ctx, key, (String) element) : element;
         changed |= processed != element;
         out.add(processed);
       }

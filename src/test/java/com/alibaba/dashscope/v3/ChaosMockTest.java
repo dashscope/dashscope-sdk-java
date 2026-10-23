@@ -50,9 +50,9 @@ import org.junitpioneer.jupiter.SetEnvironmentVariable;
 
 /**
  * Chaos tests (M5; audio design §11): mid-stream EOF, no-response timeout, half-open connection
- * detection via {@code wsPingInterval}, and close during an in-flight connect (2.x c891540
- * parity). MockWebServer auto-answers ws pings and never hangs silently, so the ws cases run
- * against a raw scripted TCP endpoint.
+ * detection via {@code wsPingInterval}, and close during an in-flight connect (2.x c891540 parity).
+ * MockWebServer auto-answers ws pings and never hangs silently, so the ws cases run against a raw
+ * scripted TCP endpoint.
  */
 @ClearEnvironmentVariable(key = "DASHSCOPE_WORKSPACE")
 @ClearEnvironmentVariable(key = "DASHSCOPE_BASE_URL")
@@ -144,8 +144,10 @@ class ChaosMockTest {
                 .maxRetries(0)
                 .build()) {
       RealtimeSession rt =
-          client.audio().realtime().connect(
-              RealtimeParams.builder().model("qwen3-omni-flash-realtime").build());
+          client
+              .audio()
+              .realtime()
+              .connect(RealtimeParams.builder().model("qwen3-omni-flash-realtime").build());
       raw.awaitAccepted(1);
       long start = System.nanoTime();
       Iterator<JsonNode> it = rt.events().iterator();
@@ -154,7 +156,8 @@ class ChaosMockTest {
       assertThrows(ApiConnectionException.class, it::hasNext);
       long elapsedMs = (System.nanoTime() - start) / 1_000_000;
       assertTrue(
-          elapsedMs < 10_000, "ping should detect the half-open connection fast, took " + elapsedMs);
+          elapsedMs < 10_000,
+          "ping should detect the half-open connection fast, took " + elapsedMs);
       rt.close();
     }
   }
@@ -173,8 +176,10 @@ class ChaosMockTest {
                 .maxRetries(0)
                 .build()) {
       RealtimeSession rt =
-          client.audio().realtime().connect(
-              RealtimeParams.builder().model("qwen3-omni-flash-realtime").build());
+          client
+              .audio()
+              .realtime()
+              .connect(RealtimeParams.builder().model("qwen3-omni-flash-realtime").build());
       raw.awaitAccepted(1);
       rt.close();
 

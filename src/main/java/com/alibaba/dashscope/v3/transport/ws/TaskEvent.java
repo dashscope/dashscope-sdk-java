@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.nio.ByteBuffer;
 
 /**
- * One inbound item on a {@link TaskChannel}: a parsed task-protocol text event, a raw binary
- * frame, the socket-closed signal, or a transport-level failure. Binary frames carry no header,
- * hence no task id (audio design §7: ownership is claimed, not parsed).
+ * One inbound item on a {@link TaskChannel}: a parsed task-protocol text event, a raw binary frame,
+ * the socket-closed signal, or a transport-level failure. Binary frames carry no header, hence no
+ * task id (audio design §7: ownership is claimed, not parsed).
  */
 public final class TaskEvent {
   public enum Kind {
@@ -66,18 +66,15 @@ public final class TaskEvent {
   }
 
   static TaskEvent binary(ByteBuffer bytes) {
-    return new TaskEvent(
-        Kind.BINARY, null, null, null, null, null, null, bytes, 0, null, null);
+    return new TaskEvent(Kind.BINARY, null, null, null, null, null, null, bytes, 0, null, null);
   }
 
   static TaskEvent closed(int code, String reason) {
-    return new TaskEvent(
-        Kind.CLOSED, null, null, null, null, null, null, null, code, reason, null);
+    return new TaskEvent(Kind.CLOSED, null, null, null, null, null, null, null, code, reason, null);
   }
 
   static TaskEvent failure(RuntimeException failure) {
-    return new TaskEvent(
-        Kind.FAILURE, null, null, null, null, null, null, null, 0, null, failure);
+    return new TaskEvent(Kind.FAILURE, null, null, null, null, null, null, null, 0, null, failure);
   }
 
   public Kind getKind() {

@@ -3,7 +3,9 @@ package com.alibaba.dashscope.audio.protocol;
 import java.nio.ByteBuffer;
 import okhttp3.WebSocket;
 
-/** @author songsong.shao */
+/**
+ * @author songsong.shao
+ */
 public interface AudioWebsocketCallback {
 
   void onOpen();

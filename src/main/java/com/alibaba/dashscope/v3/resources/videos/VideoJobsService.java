@@ -44,8 +44,7 @@ public final class VideoJobsService {
             : (Map<String, Object>) upload.process(params.getExtraInput());
     Map<String, String> headers =
         upload.isOssResolve()
-            ? Collections.singletonMap(
-                OssMediaUpload.RESOLVE_HEADER, OssMediaUpload.RESOLVE_ENABLE)
+            ? Collections.singletonMap(OssMediaUpload.RESOLVE_HEADER, OssMediaUpload.RESOLVE_ENABLE)
             : null;
     ObjectNode body = VideosSupport.buildBody(params, imageUrl, media, extraInput);
     return jobs.create(VideosSupport.PATH, body, headers, options);

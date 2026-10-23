@@ -202,7 +202,9 @@ class ImagesMockTest {
       String uploadHost = server.url("/").toString().replaceAll("/$", "");
       server.enqueue(
           okJson(
-              "{\"data\":{\"upload_host\":\"" + uploadHost + "\",\"oss_access_key_id\":\"ak\","
+              "{\"data\":{\"upload_host\":\""
+                  + uploadHost
+                  + "\",\"oss_access_key_id\":\"ak\","
                   + "\"signature\":\"sig\",\"policy\":\"pol\",\"upload_dir\":\"dir/img\","
                   + "\"x_oss_object_acl\":\"private\",\"x_oss_forbid_overwrite\":\"true\"}}"));
       server.enqueue(new MockResponse().setResponseCode(200).setBody(""));

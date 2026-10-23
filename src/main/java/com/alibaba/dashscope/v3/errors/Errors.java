@@ -140,9 +140,9 @@ public final class Errors {
   }
 
   /**
-   * Catalog text for a failure that arrived without a message. Placeholders stay verbatim —
-   * nothing here knows the {@code {parameter}} / {@code {resource}} / {@code {limit}} values.
-   * An entry that cannot be identified yields no text rather than a sibling's guess.
+   * Catalog text for a failure that arrived without a message. Placeholders stay verbatim — nothing
+   * here knows the {@code {parameter}} / {@code {resource}} / {@code {limit}} values. An entry that
+   * cannot be identified yields no text rather than a sibling's guess.
    */
   private static String catalogMessage(String wireCode, Integer statusCode) {
     PublicErrorCode entry = wireCode == null ? null : WIRE_TO_PUBLIC.get(wireCode);
@@ -164,11 +164,14 @@ public final class Errors {
     if (isBlank(resolved)) {
       resolved = "HTTP " + statusCode;
     }
-    return factoryFor(code, statusCode).create(resolved, code, statusCode, requestId, body, headers);
+    return factoryFor(code, statusCode)
+        .create(resolved, code, statusCode, requestId, body, headers);
   }
 
-  /** Map the HTTP-200-with-business-code layer. Status is pinned to 200 so callers can tell
-   * which layer failed. */
+  /**
+   * Map the HTTP-200-with-business-code layer. Status is pinned to 200 so callers can tell which
+   * layer failed.
+   */
   public static ApiStatusException fromBusinessCode(
       String code, String message, String requestId, Object body, Map<String, String> headers) {
     int statusCode = 200;
@@ -176,13 +179,15 @@ public final class Errors {
     if (isBlank(resolved)) {
       resolved = "business error, code=" + code;
     }
-    return factoryFor(code, statusCode).create(resolved, code, statusCode, requestId, body, headers);
+    return factoryFor(code, statusCode)
+        .create(resolved, code, statusCode, requestId, body, headers);
   }
 
   /** SDK-side failure straight from the catalog. */
   public static SdkException fromSdkErrorCode(SdkErrorCode entry, Map<String, String> vars) {
     String message = vars == null ? entry.getMessage() : entry.formatMessage(vars);
-    return new SdkException(message, entry.getCode(), entry.getSolution(), entry.isAllowRetry(), null);
+    return new SdkException(
+        message, entry.getCode(), entry.getSolution(), entry.isAllowRetry(), null);
   }
 
   public static SdkException fromSdkErrorCode(SdkErrorCode entry) {
@@ -191,15 +196,16 @@ public final class Errors {
 
   /**
    * Translate a mount-layer subsystem exception into the 3.0 family. Two-tier lookup: {@code
-   * <family>.<ClassName>} when the catalog carries that exact class, otherwise the family's
-   * {@code <family>.Error} fallback. Message text and legacy numeric codes are never sniffed.
+   * <family>.<ClassName>} when the catalog carries that exact class, otherwise the family's {@code
+   * <family>.Error} fallback. Message text and legacy numeric codes are never sniffed.
    */
   public static SdkException fromSdkErrorCode(String code, String message, Throwable cause) {
     SdkErrorCode entry = SDK_BY_CODE.get(code);
     if (entry == null) {
       return new SdkException(message, code, null, false, cause);
     }
-    return new SdkException(message, entry.getCode(), entry.getSolution(), entry.isAllowRetry(), cause);
+    return new SdkException(
+        message, entry.getCode(), entry.getSolution(), entry.isAllowRetry(), cause);
   }
 
   public static SdkException fromThrowable(Throwable exc, String family) {
@@ -212,7 +218,11 @@ public final class Errors {
       return new SdkException(String.valueOf(exc.getMessage()), name, null, false, exc);
     }
     return new SdkException(
-        String.valueOf(exc.getMessage()), entry.getCode(), entry.getSolution(), entry.isAllowRetry(), exc);
+        String.valueOf(exc.getMessage()),
+        entry.getCode(),
+        entry.getSolution(),
+        entry.isAllowRetry(),
+        exc);
   }
 
   private static boolean isBlank(String s) {

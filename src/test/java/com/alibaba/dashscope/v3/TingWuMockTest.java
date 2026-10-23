@@ -156,25 +156,28 @@ class TingWuMockTest {
             .setHeader("Content-Type", "application/json")
             .setBody(
                 "{\"output\":{\"task_id\":\"tw-1\",\"task_status\":\"PENDING\"},"
-                  + "\"request_id\":\"r-submit\"}"));
+                    + "\"request_id\":\"r-submit\"}"));
     server.enqueue(
         new MockResponse()
             .setResponseCode(200)
             .setHeader("Content-Type", "application/json")
             .setBody(
                 "{\"output\":{\"task_id\":\"tw-1\",\"task_status\":\"SUCCEEDED\","
-                  + "\"TaskId\":\"tw-1\",\"Result\":\"{\\\"summary\\\":\\\"ok\\\"}\"},"
-                  + "\"request_id\":\"r-fetch\"}"));
+                    + "\"TaskId\":\"tw-1\",\"Result\":\"{\\\"summary\\\":\\\"ok\\\"}\"},"
+                    + "\"request_id\":\"r-fetch\"}"));
 
     Map<String, Object> input = new LinkedHashMap<>();
     input.put("source", Collections.singletonMap("url", "http://files/meeting.mp3"));
     Job created =
-        client.tingwu().jobs().create(
-            TingWuJobParams.builder()
-                .model("tingwu-turbo")
-                .input(input)
-                .parameters(Collections.singletonMap("maxWords", 200))
-                .build());
+        client
+            .tingwu()
+            .jobs()
+            .create(
+                TingWuJobParams.builder()
+                    .model("tingwu-turbo")
+                    .input(input)
+                    .parameters(Collections.singletonMap("maxWords", 200))
+                    .build());
     assertEquals("tw-1", created.getTaskId());
 
     Job done = client.tingwu().jobs().wait(created.getTaskId(), null);
@@ -186,8 +189,7 @@ class TingWuMockTest {
     assertEquals("enable", submit.getHeader("X-DashScope-Async"));
     JsonNode body = MAPPER.readTree(submit.getBody().readUtf8());
     assertEquals("tingwu-turbo", body.get("model").asText());
-    assertEquals(
-        "http://files/meeting.mp3", body.get("input").get("source").get("url").asText());
+    assertEquals("http://files/meeting.mp3", body.get("input").get("source").get("url").asText());
     assertEquals(200, body.get("parameters").get("maxWords").asInt());
 
     RecordedRequest fetch = server.takeRequest(5, TimeUnit.SECONDS);
@@ -203,13 +205,16 @@ class TingWuMockTest {
             .setHeader("Content-Type", "application/json")
             .setBody(
                 "{\"output\":{\"task_id\":\"tw-2\",\"task_status\":\"PENDING\"},"
-                  + "\"request_id\":\"r2\"}"));
+                    + "\"request_id\":\"r2\"}"));
 
-    client.tingwu().jobs().create(
-        TingWuJobParams.builder()
-            .model("tingwu-turbo")
-            .input(Collections.singletonMap("key", "v"))
-            .build());
+    client
+        .tingwu()
+        .jobs()
+        .create(
+            TingWuJobParams.builder()
+                .model("tingwu-turbo")
+                .input(Collections.singletonMap("key", "v"))
+                .build());
 
     RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
     JsonNode body = MAPPER.readTree(request.getBody().readUtf8());
@@ -232,17 +237,19 @@ class TingWuMockTest {
   void realtimeLifecycle() throws Exception {
     TingWuServerSocket socket = enqueueUpgrade();
     try (TingWuRealtimeSession session =
-        client.tingwu().realtime(
-            TingWuRealtimeParams.builder()
-                .model("tingwu-turbo")
-                .appId("app-1")
-                .format("pcm")
-                .sampleRate(16000)
-                .terminology("term-1")
-                .maxEndSilence(800)
-                .workspaceId("ws-1")
-                .dataId("data-1")
-                .build())) {
+        client
+            .tingwu()
+            .realtime(
+                TingWuRealtimeParams.builder()
+                    .model("tingwu-turbo")
+                    .appId("app-1")
+                    .format("pcm")
+                    .sampleRate(16000)
+                    .terminology("term-1")
+                    .maxEndSilence(800)
+                    .workspaceId("ws-1")
+                    .dataId("data-1")
+                    .build())) {
       session.start();
       socket.awaitOpen();
 
@@ -288,7 +295,8 @@ class TingWuMockTest {
         events.add(raw);
       }
       assertEquals(2, events.size());
-      assertEquals("transcription", events.get(0).get("payload").get("output").get("action").asText());
+      assertEquals(
+          "transcription", events.get(0).get("payload").get("output").get("action").asText());
       assertEquals("speech-end", events.get(1).get("payload").get("output").get("action").asText());
     }
   }
@@ -300,13 +308,15 @@ class TingWuMockTest {
     hatch.put("terminology", "hatch-term");
     hatch.put("customKnob", true);
     try (TingWuRealtimeSession session =
-        client.tingwu().realtime(
-            TingWuRealtimeParams.builder()
-                .model("tingwu-turbo")
-                .appId("app-1")
-                .terminology("named-term")
-                .parameters(hatch)
-                .build())) {
+        client
+            .tingwu()
+            .realtime(
+                TingWuRealtimeParams.builder()
+                    .model("tingwu-turbo")
+                    .appId("app-1")
+                    .terminology("named-term")
+                    .parameters(hatch)
+                    .build())) {
       session.start();
       JsonNode runTask = socket.nextText();
       JsonNode parameters = runTask.get("payload").get("parameters");
@@ -360,7 +370,7 @@ class TingWuMockTest {
             .setHeader("Content-Type", "application/json")
             .setBody(
                 "{\"output\":{\"task_id\":\"tw-3\",\"task_status\":\"PENDING\"},"
-                  + "\"request_id\":\"r3\"}"));
+                    + "\"request_id\":\"r3\"}"));
     try (DashScopeAsyncClient asyncClient =
         DashScopeAsyncClient.builder()
             .apiKey("test-key")

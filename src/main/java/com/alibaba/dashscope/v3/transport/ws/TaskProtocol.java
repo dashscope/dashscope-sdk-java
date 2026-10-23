@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Bailian task-protocol framing (audio design §2): text frames
- * {@code {header:{action,task_id,streaming}, payload:{task_group,task,function,model,...}}} for
+ * Bailian task-protocol framing (audio design §2): text frames {@code
+ * {header:{action,task_id,streaming}, payload:{task_group,task,function,model,...}}} for
  * run/continue/finish-task; inbound events are task-started / result-generated / task-finished /
  * task-failed with {@code header.error_code/error_message} carrying failures.
  */
@@ -45,7 +45,8 @@ public final class TaskProtocol {
   }
 
   /** A run/continue-task payload with the four envelope fields; caller fills input/parameters. */
-  public static ObjectNode newPayload(String model, String taskGroup, String task, String function) {
+  public static ObjectNode newPayload(
+      String model, String taskGroup, String task, String function) {
     ObjectNode payload = JsonSupport.mapper().createObjectNode();
     if (model != null) {
       payload.put("model", model);

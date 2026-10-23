@@ -7,9 +7,9 @@ import com.alibaba.dashscope.v3.errors.Errors;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
- * Fetches the server's latest encryption public key (J7): {@code GET /public-keys/latest} →
- * {@code {request_id, data:{public_key, public_key_id}}}, then bundles it with fresh AES
- * material into an {@link EncryptionConfig}.
+ * Fetches the server's latest encryption public key (J7): {@code GET /public-keys/latest} → {@code
+ * {request_id, data:{public_key, public_key_id}}}, then bundles it with fresh AES material into an
+ * {@link EncryptionConfig}.
  */
 public final class EncryptionKeys {
   static final String PATH = "/public-keys/latest";

@@ -14,8 +14,7 @@ class AudioModelRouterTest {
         AudioModelRouter.SPEECH_SYNTHESIZER_PATH, AudioModelRouter.httpPath("qwen-audio-tts"));
     assertEquals(AudioModelRouter.QWEN_TTS_PATH, AudioModelRouter.httpPath("qwen-tts"));
     assertEquals(AudioModelRouter.QWEN_TTS_PATH, AudioModelRouter.httpPath("qwen3-tts-flash"));
-    assertEquals(
-        AudioModelRouter.SPEECH_SYNTHESIZER_PATH, AudioModelRouter.httpPath("sambert-v1"));
+    assertEquals(AudioModelRouter.SPEECH_SYNTHESIZER_PATH, AudioModelRouter.httpPath("sambert-v1"));
     assertEquals(
         AudioModelRouter.SPEECH_SYNTHESIZER_PATH, AudioModelRouter.httpPath("cosyvoice-v2"));
     assertEquals(AudioModelRouter.SPEECH_SYNTHESIZER_PATH, AudioModelRouter.httpPath(null));

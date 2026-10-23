@@ -50,8 +50,12 @@ public class TestEncryption {
 
   @Test
   public void TestEncryptionRequest()
-      throws IOException, ApiException, NoApiKeyException, InterruptedException,
-          InputRequiredException, InvalidateParameter {
+      throws IOException,
+          ApiException,
+          NoApiKeyException,
+          InterruptedException,
+          InputRequiredException,
+          InvalidateParameter {
     Generation gen = new Generation(Protocol.HTTP.getValue());
     Message userMsg =
         Message.builder().role(Role.USER.getValue()).content("Tell me sometime about AI.").build();
@@ -63,7 +67,10 @@ public class TestEncryption {
             .enableEncrypt(true)
             .build();
     String plainOutput =
-        "{\"choices\":[{\"finish_reason\":\"stop\",\"message\":{\"role\":\"assistant\",\"content\":\"Certainly! Artificial Intelligence (AI) is a branch of computer science that aims to create software or machines capable of performing tasks that typically require human intelligence.\"}}]}";
+        "{\"choices\":[{\"finish_reason\":\"stop\",\"message\":{\"role\":\"assistant\",\"content\":\"Certainly!"
+            + " Artificial Intelligence (AI) is a branch of computer science that aims to create"
+            + " software or machines capable of performing tasks that typically require human"
+            + " intelligence.\"}}]}";
     String publicKeyId = "1111111111111";
     String publicKey =
         "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnojrB579xgPQN5f46SvoRAiQBPWBaPzWh7hp51fWI+OsQk7KqH0qMcw8i0eK5rfOvJIPujOQgnes1ph9/gKAst9NzXVIl9JJYUSPtzTvOabhp4yvS3KBf9g3xHYVjYgW33SOY74Ue/tgbCXn717rV6gXb4sVvq9XK/1BrDcGbEOQEZEgBTFkm/g3lpWLQtACwwqHffoA9eQtkkz15ZFKosAgbR8LedfIvxAl2zk15REzxXiRcFgc9/tLF0U1t2Sxt9FkQefxYwn6EZawTsRJvf4kqF3MaPdTcDbOp0iSNvCl2qzPSf/F+Oll2CUM1tFAEu81oaaaaWaDR3UtvqOtyQIDAQAB";

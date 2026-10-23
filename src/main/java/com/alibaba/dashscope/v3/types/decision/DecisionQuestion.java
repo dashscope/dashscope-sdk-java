@@ -8,14 +8,14 @@ import java.util.Map;
 /**
  * One question for the decision model (TypeSafe System One). Use {@link #choice}, {@link #noul},
  * {@link #score} for typed questions, or {@link #raw(Map)} to pass a wire-shaped question through
- * untouched — the escape hatch that keeps future question fields usable before this SDK models
- * them (raw questions skip client-side validation).
+ * untouched — the escape hatch that keeps future question fields usable before this SDK models them
+ * (raw questions skip client-side validation).
  *
  * <p>{@code criteria} shape follows {@code type}: {@code choice} takes a {@code Map<optionName,
- * description>} (1–255 options; give the full set and add an {@code other} fallback); {@code
- * score} takes a {@code List} of level descriptions ordered low to high (2–255 levels; 3–7
- * clearly distinguishable levels work best); {@code noul} takes an optional {@code Map} with
- * {@code "true"} / {@code "false"} keys.
+ * description>} (1–255 options; give the full set and add an {@code other} fallback); {@code score}
+ * takes a {@code List} of level descriptions ordered low to high (2–255 levels; 3–7 clearly
+ * distinguishable levels work best); {@code noul} takes an optional {@code Map} with {@code "true"}
+ * / {@code "false"} keys.
  */
 public final class DecisionQuestion {
   /** Multiple choice; the answer carries the selected option name. */

@@ -38,7 +38,9 @@ public final class Generation {
       ThreadLocal.withInitial(HashMap::new);
 
   public static class Models {
-    /** @deprecated use QWEN_TURBO instead */
+    /**
+     * @deprecated use QWEN_TURBO instead
+     */
     @Deprecated public static final String QWEN_V1 = "qwen-v1";
 
     public static final String QWEN_TURBO = "qwen-turbo";
@@ -57,7 +59,9 @@ public final class Generation {
     public static final String BAILIAN_V1 = "bailian-v1";
     public static final String DOLLY_12B_V2 = "dolly-12b-v2";
 
-    /** @deprecated use QWEN_PLUS instead */
+    /**
+     * @deprecated use QWEN_PLUS instead
+     */
     @Deprecated public static final String QWEN_PLUS_V1 = "qwen-plus-v1";
   }
 

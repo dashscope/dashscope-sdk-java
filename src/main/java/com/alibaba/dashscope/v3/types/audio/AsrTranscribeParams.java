@@ -10,7 +10,10 @@ import java.util.Map;
  * input:{file_urls:[...]}, parameters:{...}, resources?}}.
  */
 public final class AsrTranscribeParams {
-  /** Default transcription model (audio design §8 — code, not the stale Python docs, is authoritative). */
+  /**
+   * Default transcription model (audio design §8 — code, not the stale Python docs, is
+   * authoritative).
+   */
   public static final String DEFAULT_MODEL = "qwen-audio-3.1-asr-flash-filetrans";
 
   private final String model;

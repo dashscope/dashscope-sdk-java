@@ -3,7 +3,9 @@ package com.alibaba.dashscope.audio.omni;
 
 import com.google.gson.JsonObject;
 
-/** @author lengjiayi */
+/**
+ * @author lengjiayi
+ */
 public abstract class OmniRealtimeCallback {
   /** Will be called as soon as the connection is established, only for http stream request. */
   public void onOpen() {}

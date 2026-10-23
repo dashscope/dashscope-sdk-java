@@ -21,9 +21,12 @@ public final class ConfigFile {
 
   public static final String DEFAULT_PATH = "~/.dashscope/config.toml";
 
-  /** Keys honored from the file (mirrors the Python 2.0 set, minus protocol which 3.0 M1
-   * does not implement yet). */
+  /**
+   * Keys honored from the file (mirrors the Python 2.0 set, minus protocol which 3.0 M1 does not
+   * implement yet).
+   */
   static final String KEY_API_KEY = "api_key";
+
   static final String KEY_BASE_URL = "base_url";
   static final String KEY_WORKSPACE = "workspace";
   static final String KEY_REGION = "region";
@@ -31,8 +34,10 @@ public final class ConfigFile {
   static final String KEY_MAX_RETRIES = "max_retries";
   static final String KEY_WS_PING_INTERVAL = "ws_ping_interval";
 
-  /** Parse the file at {@code path}; missing file yields an empty map. Malformed lines are
-   * skipped (config discovery must never crash client construction). */
+  /**
+   * Parse the file at {@code path}; missing file yields an empty map. Malformed lines are skipped
+   * (config discovery must never crash client construction).
+   */
   public static Map<String, String> load(Path path) {
     if (path == null || !Files.isRegularFile(path)) {
       return Collections.emptyMap();
@@ -55,7 +60,8 @@ public final class ConfigFile {
           value = value.substring(0, comment).trim();
         }
         if (value.length() >= 2 && value.startsWith("\"") && value.endsWith("\"")) {
-          value = value.substring(1, value.length() - 1).replace("\\\"", "\"").replace("\\\\", "\\");
+          value =
+              value.substring(1, value.length() - 1).replace("\\\"", "\"").replace("\\\\", "\\");
         }
         if (!key.isEmpty() && !value.isEmpty()) {
           out.put(key, value);

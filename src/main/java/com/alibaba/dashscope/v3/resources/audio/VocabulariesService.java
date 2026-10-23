@@ -40,7 +40,10 @@ public final class VocabulariesService {
         transport.execute(
             PATH,
             CustomizationSupport.body(
-                DEFAULT_MODEL, params.getModel(), "create_vocabulary", fields,
+                DEFAULT_MODEL,
+                params.getModel(),
+                "create_vocabulary",
+                fields,
                 params.getParameters()),
             CustomizationSupport.MODULE,
             options),
@@ -93,7 +96,9 @@ public final class VocabulariesService {
   }
 
   public JobStatus update(
-      String vocabularyId, List<Map<String, Object>> vocabulary, String model,
+      String vocabularyId,
+      List<Map<String, Object>> vocabulary,
+      String model,
       RequestOptions options) {
     CustomizationSupport.requireId(vocabularyId, "vocabulary_id");
     if (vocabulary == null || vocabulary.isEmpty()) {

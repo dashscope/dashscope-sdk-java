@@ -96,7 +96,9 @@ class TtsMockTest {
           for (byte[] audio : audioToSend) {
             webSocket.send(ByteString.of(audio));
           }
-          send(taskId, "task-finished",
+          send(
+              taskId,
+              "task-finished",
               "{\"output\":{},\"usage\":{\"input_tokens\":3,\"output_tokens\":0,\"total_tokens\":3}}");
         }
       } catch (IOException e) {
@@ -115,9 +117,16 @@ class TtsMockTest {
 
     void send(String taskId, String event, String payloadJson) {
       String payload = payloadJson != null ? payloadJson : "{}";
-      socket.get().send(
-          "{\"header\":{\"task_id\":\"" + taskId + "\",\"event\":\"" + event
-              + "\"},\"payload\":" + payload + "}");
+      socket
+          .get()
+          .send(
+              "{\"header\":{\"task_id\":\""
+                  + taskId
+                  + "\",\"event\":\""
+                  + event
+                  + "\"},\"payload\":"
+                  + payload
+                  + "}");
     }
 
     JsonNode nextText() throws InterruptedException {
@@ -146,18 +155,24 @@ class TtsMockTest {
     byte[] a2 = {4, 5};
     server.enqueue(
         sse(
-            "data: {\"output\":{\"audio\":\"" + Base64.getEncoder().encodeToString(a1) + "\"}}\n\n"
-                + "data: {\"output\":{\"audio\":\"" + Base64.getEncoder().encodeToString(a2)
+            "data: {\"output\":{\"audio\":\""
+                + Base64.getEncoder().encodeToString(a1)
+                + "\"}}\n\n"
+                + "data: {\"output\":{\"audio\":\""
+                + Base64.getEncoder().encodeToString(a2)
                 + "\"},\"usage\":{\"input_tokens\":2}}\n\n"
                 + "data: [DONE]\n\n"));
 
     byte[] audio =
-        client.audio().tts().synthesize(
-            TtsSynthesizeParams.builder()
-                .model("cosyvoice-v3-flash")
-                .text("你好")
-                .voice("longanyang")
-                .build());
+        client
+            .audio()
+            .tts()
+            .synthesize(
+                TtsSynthesizeParams.builder()
+                    .model("cosyvoice-v3-flash")
+                    .text("你好")
+                    .voice("longanyang")
+                    .build());
 
     assertEquals(5, audio.length);
     assertEquals(1, audio[0]);
@@ -206,12 +221,15 @@ class TtsMockTest {
     socket.audioToSend.add(new byte[] {8});
 
     try (SynthesisSession tts =
-        client.audio().tts().connect(
-            TtsConnectParams.builder()
-                .model("cosyvoice-v2")
-                .voice("longxiaochun")
-                .format("mp3")
-                .build())) {
+        client
+            .audio()
+            .tts()
+            .connect(
+                TtsConnectParams.builder()
+                    .model("cosyvoice-v2")
+                    .voice("longxiaochun")
+                    .format("mp3")
+                    .build())) {
       tts.start();
       socket.awaitOpen();
 
@@ -259,8 +277,7 @@ class TtsMockTest {
     TtsServerSocket socket = enqueueUpgrade();
     socket.audioToSend.add(new byte[] {1});
     try (SynthesisSession tts =
-        client.audio().tts().connect(
-            TtsConnectParams.builder().model("cosyvoice-v2").build())) {
+        client.audio().tts().connect(TtsConnectParams.builder().model("cosyvoice-v2").build())) {
       tts.start();
       socket.nextText();
       tts.sendText("x");
@@ -290,15 +307,13 @@ class TtsMockTest {
   void cancelSendsDirectiveOnceAndNeverAfterTerminal() throws Exception {
     TtsServerSocket socket = enqueueUpgrade();
     try (SynthesisSession tts =
-        client.audio().tts().connect(
-            TtsConnectParams.builder().model("cosyvoice-v2").build())) {
+        client.audio().tts().connect(TtsConnectParams.builder().model("cosyvoice-v2").build())) {
       tts.start();
       socket.nextText();
       tts.cancel();
       JsonNode finishTask = socket.nextText();
       assertEquals("finish-task", finishTask.get("header").get("action").asText());
-      assertEquals(
-          "cancel", finishTask.get("payload").get("input").get("directive").asText());
+      assertEquals("cancel", finishTask.get("payload").get("input").get("directive").asText());
       // Second cancel and stop: no further frames.
       tts.cancel();
       tts.stop();

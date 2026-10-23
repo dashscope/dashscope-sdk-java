@@ -10,7 +10,9 @@ import com.alibaba.dashscope.protocol.*;
 import io.reactivex.Flowable;
 import lombok.extern.slf4j.Slf4j;
 
-/** @deprecated use `Generation` instead */
+/**
+ * @deprecated use `Generation` instead
+ */
 @Slf4j
 public final class Conversation {
   /* Auto history messages */
@@ -18,12 +20,16 @@ public final class Conversation {
   private final ApiServiceOption serviceOption;
 
   public static class Models {
-    /** @deprecated use QWEN_TURBO instead */
+    /**
+     * @deprecated use QWEN_TURBO instead
+     */
     @Deprecated public static final String QWEN_V1 = "qwen-v1";
 
     public static final String QWEN_TURBO = "qwen-turbo";
 
-    /** @deprecated use QWEN_PLUS instead */
+    /**
+     * @deprecated use QWEN_PLUS instead
+     */
     @Deprecated public static final String QWEN_PLUG_V1 = "qwen-plus-v1";
 
     public static final String QWEN_PLUS = "qwen-plus";

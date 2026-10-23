@@ -76,8 +76,7 @@ class FilesMockTest {
       FileObject uploaded =
           client
               .files()
-              .upload(
-                  FileUploadParams.builder().file(file).description("train set").build());
+              .upload(FileUploadParams.builder().file(file).description("train set").build());
 
       assertEquals("file-1", uploaded.getFileId());
       assertEquals("fine-tune", uploaded.getPurpose());
@@ -168,8 +167,7 @@ class FilesMockTest {
             .setBody(
                 "{\"code\":\"InvalidParameter\",\"message\":\"File not found.\","
                     + "\"request_id\":\"r4\"}"));
-    NotFoundException e =
-        assertThrows(NotFoundException.class, () -> client.files().get("gone"));
+    NotFoundException e = assertThrows(NotFoundException.class, () -> client.files().get("gone"));
     assertEquals(400, e.getStatusCode());
     assertEquals("InvalidParameter", e.getCode());
     assertEquals("r4", e.getRequestId());

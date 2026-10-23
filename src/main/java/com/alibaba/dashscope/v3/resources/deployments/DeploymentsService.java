@@ -20,8 +20,8 @@ import java.util.Map;
 
 /**
  * {@code deployments} resource (design §3, Python v2 deployments.py parity): create/get/list/
- * scale/delete over {@code /deployments} plus the {@code streamEvents} SSE feed. Module tag
- * follows the 1.x lineage (Deployments lived in dashscope.finetune).
+ * scale/delete over {@code /deployments} plus the {@code streamEvents} SSE feed. Module tag follows
+ * the 1.x lineage (Deployments lived in dashscope.finetune).
  */
 public final class DeploymentsService {
   static final String BASE_PATH = "/deployments";

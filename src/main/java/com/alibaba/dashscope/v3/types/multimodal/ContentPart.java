@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * One multimodal content part (design §4): the wire shape is a single-key object —
- * {@code {"text": "..."}}, {@code {"image": "<url>"}}, {@code {"audio": "<url>"}},
- * {@code {"video": ["f1","f2"]}} — with arbitrary keys allowed (forward compatibility). Values
- * may be String or List<String>. Instances are immutable.
+ * One multimodal content part (design §4): the wire shape is a single-key object — {@code {"text":
+ * "..."}}, {@code {"image": "<url>"}}, {@code {"audio": "<url>"}}, {@code {"video": ["f1","f2"]}} —
+ * with arbitrary keys allowed (forward compatibility). Values may be String or List<String>.
+ * Instances are immutable.
  */
 public final class ContentPart {
   private final LinkedHashMap<String, Object> entries;

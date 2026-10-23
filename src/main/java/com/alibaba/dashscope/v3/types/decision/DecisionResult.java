@@ -8,9 +8,9 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * One System One decision round (design §3). The compatible-mode endpoint answers flat (no
- * {@code output} envelope); {@code answers} keys mirror the request's question ids. Envelope
- * fields live on {@link ResponseBase}.
+ * One System One decision round (design §3). The compatible-mode endpoint answers flat (no {@code
+ * output} envelope); {@code answers} keys mirror the request's question ids. Envelope fields live
+ * on {@link ResponseBase}.
  */
 public class DecisionResult extends ResponseBase {
   @JsonProperty("model")

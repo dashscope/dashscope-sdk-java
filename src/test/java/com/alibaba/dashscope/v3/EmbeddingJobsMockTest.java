@@ -146,7 +146,8 @@ class EmbeddingJobsMockTest {
             "{\"output\":{\"task_id\":\"task-emb-3\",\"task_status\":\"SUCCEEDED\","
                 + "\"url\":\"https://files/result.txt\"},\"request_id\":\"r4\"}"));
 
-    Job job = client.embeddings().jobs().wait("task-emb-3", com.alibaba.dashscope.RequestOptions.NONE);
+    Job job =
+        client.embeddings().jobs().wait("task-emb-3", com.alibaba.dashscope.RequestOptions.NONE);
 
     assertTrue(job.isSucceeded());
     assertEquals("https://files/result.txt", job.getResultUrl());

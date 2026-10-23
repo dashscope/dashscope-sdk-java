@@ -4,8 +4,8 @@ package com.alibaba.dashscope.v3.resources.tingwu;
 import java.util.concurrent.Executor;
 
 /**
- * Async {@code tingwu}: the offline-task handle only — realtime sessions stay sync-only (Python
- * v2 parity).
+ * Async {@code tingwu}: the offline-task handle only — realtime sessions stay sync-only (Python v2
+ * parity).
  */
 public final class TingWuAsyncService {
   private final TingWuJobsAsyncService jobs;

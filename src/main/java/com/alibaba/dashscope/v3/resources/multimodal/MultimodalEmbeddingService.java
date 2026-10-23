@@ -38,7 +38,8 @@ public final class MultimodalEmbeddingService {
         MultimodalPreprocessor.preprocessContents(
             params.getModel(), params.getContents(), uploader, opts);
     ResponseEnvelope envelope =
-        transport.execute(PATH, buildBody(params, pre), MODULE, withOssResolve(opts, pre.ossResolve));
+        transport.execute(
+            PATH, buildBody(params, pre), MODULE, withOssResolve(opts, pre.ossResolve));
     MultimodalEmbeddingResponse response = mapResponse(envelope.getBody());
     response.fillEnvelope(
         JsonSupport.requestId(envelope.getBody(), envelope.getHeaders()),

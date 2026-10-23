@@ -4,7 +4,9 @@ package com.alibaba.dashscope.audio.qwen_tts_realtime;
 import com.alibaba.dashscope.utils.StringUtils;
 import com.google.gson.annotations.SerializedName;
 
-/** @author lengjiayi */
+/**
+ * @author lengjiayi
+ */
 public enum QwenTtsRealtimeAudioFormat {
   @SerializedName("pcm24")
   PCM_24000HZ_MONO_16BIT("pcm", 24000, "mono", "16bit");

@@ -74,7 +74,10 @@ public class TestTools {
 
   @Test
   public void testCallFunction()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
           InputRequiredException {
     // create jsonschema generator
     SchemaGeneratorConfigBuilder configBuilder =
@@ -124,7 +127,9 @@ public class TestTools {
 
     JsonObject toolCallOutput =
         JsonUtils.parse(
-            "{\"choices\":[{\"finish_reason\":\"tool_calls\",\"message\":{\"role\":\"assistant\",\"tool_calls\":[{\"function\":{\"name\":\"add\",\"arguments\":\"{\\\"left\\\": 32393, \\\"right\\\": 88909}\"},\"id\":\"\",\"type\":\"function\"}],\"content\":\"\"}}]}");
+            "{\"choices\":[{\"finish_reason\":\"tool_calls\",\"message\":{\"role\":\"assistant\",\"tool_calls\":[{\"function\":{\"name\":\"add\",\"arguments\":\"{\\\"left\\\":"
+                + " 32393, \\\"right\\\":"
+                + " 88909}\"},\"id\":\"\",\"type\":\"function\"}],\"content\":\"\"}}]}");
     JsonObject toolCallUsage =
         JsonUtils.parse("{\"total_tokens\":65,\"output_tokens\":35,\"input_tokens\":30}");
     TestResponse rsp =

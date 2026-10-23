@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Response-side multimodal message: role plus content parts, with optional reasoning content,
- * tool calls, and audio payload (omni models). Unknown fields are kept in {@link #getExtra()}.
+ * Response-side multimodal message: role plus content parts, with optional reasoning content, tool
+ * calls, and audio payload (omni models). Unknown fields are kept in {@link #getExtra()}.
  */
 public class MultimodalOutputMessage {
   @JsonProperty("role")

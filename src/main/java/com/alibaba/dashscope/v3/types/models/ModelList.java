@@ -6,8 +6,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Page of models (Python v2 {@code ModelList} parity). With a {@code provider} filter the items
- * are narrowed client-side while {@link #getTotalCount()} stays the server's pre-filter total.
+ * Page of models (Python v2 {@code ModelList} parity). With a {@code provider} filter the items are
+ * narrowed client-side while {@link #getTotalCount()} stays the server's pre-filter total.
  */
 public final class ModelList extends ResponseBase {
   private final int pageNo;

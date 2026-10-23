@@ -4,8 +4,8 @@ package com.alibaba.dashscope.v3.types.files;
 import java.nio.file.Path;
 
 /**
- * Parameters for {@code files().upload} (Python v2 parity): a local file plus its purpose.
- * {@code fine-tune}/{@code fine_tune} purposes are validated as JSONL before the upload.
+ * Parameters for {@code files().upload} (Python v2 parity): a local file plus its purpose. {@code
+ * fine-tune}/{@code fine_tune} purposes are validated as JSONL before the upload.
  */
 public final class FileUploadParams {
   /** Purpose value the gateway expects for fine-tuning input files. */

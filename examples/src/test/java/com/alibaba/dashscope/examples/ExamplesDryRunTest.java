@@ -80,31 +80,103 @@ class ExamplesDryRunTest {
     add(tests, "DecisionCreate", PKG + "atomic.decision.DecisionCreate");
     // 01 atomic: audio.
     add(tests, "AsrWebsocketRecognize", PKG + "atomic.audio.AsrWebsocketRecognize", speechWav);
-    add(tests, "AsrHttpStreamRecognize", PKG + "atomic.audio.AsrHttpStreamRecognize",
-        "--file", speechWav);
-    add(tests, "TtsHttpSynthesize", PKG + "atomic.audio.TtsHttpSynthesize",
-        "你好，这是一次干跑。", "out.wav", "--no-play");
-    add(tests, "TtsHttpStreamSynthesize", PKG + "atomic.audio.TtsHttpStreamSynthesize",
-        "你好，这是一次干跑。", "out.wav", "--no-play");
-    add(tests, "TtsWebsocketConnect", PKG + "atomic.audio.TtsWebsocketConnect",
-        "--text", "你好，这是第一段。", "--output", "out.wav", "--no-play");
-    add(tests, "VoiceCloneCreate", PKG + "atomic.audio.VoiceCloneManage",
-        "create", "--url", "https://example.com/ref.wav", "--prefix", "dry");
+    add(
+        tests,
+        "AsrHttpStreamRecognize",
+        PKG + "atomic.audio.AsrHttpStreamRecognize",
+        "--file",
+        speechWav);
+    add(
+        tests,
+        "TtsHttpSynthesize",
+        PKG + "atomic.audio.TtsHttpSynthesize",
+        "你好，这是一次干跑。",
+        "out.wav",
+        "--no-play");
+    add(
+        tests,
+        "TtsHttpStreamSynthesize",
+        PKG + "atomic.audio.TtsHttpStreamSynthesize",
+        "你好，这是一次干跑。",
+        "out.wav",
+        "--no-play");
+    add(
+        tests,
+        "TtsWebsocketConnect",
+        PKG + "atomic.audio.TtsWebsocketConnect",
+        "--text",
+        "你好，这是第一段。",
+        "--output",
+        "out.wav",
+        "--no-play");
+    add(
+        tests,
+        "VoiceCloneCreate",
+        PKG + "atomic.audio.VoiceCloneManage",
+        "create",
+        "--url",
+        "https://example.com/ref.wav",
+        "--prefix",
+        "dry");
     add(tests, "VoiceCloneList", PKG + "atomic.audio.VoiceCloneManage", "list", "--prefix", "dry");
-    add(tests, "VoiceCloneDelete", PKG + "atomic.audio.VoiceCloneManage",
-        "delete", "--voice-id", "voice-dry", "--yes");
-    add(tests, "TingWuJobsCreate", PKG + "atomic.audio.TingWuJobsCreate",
-        "--url", "https://example.com/audio.wav");
-    add(tests, "AudioConnectionReuseAsr", PKG + "atomic.audio.AudioConnectionReuse",
-        "asr", speechWav, "--output-dir", "reuse-asr");
-    add(tests, "AudioConnectionReuseTts", PKG + "atomic.audio.AudioConnectionReuse",
-        "tts", "--output-dir", "reuse-tts");
-    add(tests, "RealtimeOmniDialog", PKG + "atomic.audio.RealtimeOmniDialog",
-        "--wav", speechWav, "--output", "omni.wav", "--no-play");
-    add(tests, "RealtimeQwenAudioDialog", PKG + "atomic.audio.RealtimeQwenAudioDialog",
-        "--wav", speechWav, "--output", "qwen-audio.wav", "--no-play");
-    add(tests, "RealtimeTranslation", PKG + "atomic.audio.RealtimeTranslation",
-        "--wav", speechWav, "--language", "en", "--output", "translation.wav", "--no-play");
+    add(
+        tests,
+        "VoiceCloneDelete",
+        PKG + "atomic.audio.VoiceCloneManage",
+        "delete",
+        "--voice-id",
+        "voice-dry",
+        "--yes");
+    add(
+        tests,
+        "TingWuJobsCreate",
+        PKG + "atomic.audio.TingWuJobsCreate",
+        "--url",
+        "https://example.com/audio.wav");
+    add(
+        tests,
+        "AudioConnectionReuseAsr",
+        PKG + "atomic.audio.AudioConnectionReuse",
+        "asr",
+        speechWav,
+        "--output-dir",
+        "reuse-asr");
+    add(
+        tests,
+        "AudioConnectionReuseTts",
+        PKG + "atomic.audio.AudioConnectionReuse",
+        "tts",
+        "--output-dir",
+        "reuse-tts");
+    add(
+        tests,
+        "RealtimeOmniDialog",
+        PKG + "atomic.audio.RealtimeOmniDialog",
+        "--wav",
+        speechWav,
+        "--output",
+        "omni.wav",
+        "--no-play");
+    add(
+        tests,
+        "RealtimeQwenAudioDialog",
+        PKG + "atomic.audio.RealtimeQwenAudioDialog",
+        "--wav",
+        speechWav,
+        "--output",
+        "qwen-audio.wav",
+        "--no-play");
+    add(
+        tests,
+        "RealtimeTranslation",
+        PKG + "atomic.audio.RealtimeTranslation",
+        "--wav",
+        speechWav,
+        "--language",
+        "en",
+        "--output",
+        "translation.wav",
+        "--no-play");
     // 02 advanced engineering.
     add(tests, "CircuitBreakerRetry", PKG + "engineering.resilience.CircuitBreakerRetry");
     add(tests, "ClientSideCache", PKG + "engineering.cache.ClientSideCache");
@@ -113,10 +185,15 @@ class ExamplesDryRunTest {
     add(tests, "ToolCallLoop", PKG + "recipes.chat.ToolCallLoop");
     add(tests, "RagExpertSystem", PKG + "recipes.rag.RagExpertSystem");
     add(tests, "AgentStudioQuickStart", PKG + "recipes.agentstudio.AgentStudioQuickStart");
-    add(tests, "AgentStudioDeploymentsManage",
+    add(
+        tests,
+        "AgentStudioDeploymentsManage",
         PKG + "recipes.agentstudio.AgentStudioDeploymentsManage");
     // 04 real-world scenarios (default offline harness modes).
-    add(tests, "CustomerServiceAssistant", PKG + "scenarios.customerservice.CustomerServiceAssistant");
+    add(
+        tests,
+        "CustomerServiceAssistant",
+        PKG + "scenarios.customerservice.CustomerServiceAssistant");
     add(tests, "ProductionRagHarness", PKG + "scenarios.rag.ProductionRagHarness");
     add(tests, "RealtimeMeetingHarness", PKG + "scenarios.meeting.RealtimeMeetingHarness");
     add(tests, "TicketTriageHarness", PKG + "scenarios.triage.TicketTriageHarness");
@@ -162,7 +239,8 @@ class ExamplesDryRunTest {
     errPump.join(TimeUnit.SECONDS.toMillis(10));
     String output = captured.toString();
     assertTrue(finished, name + " timed out after " + CHILD_TIMEOUT_SECONDS + "s\n" + output);
-    assertEquals(0, process.exitValue(), () -> name + " exit=" + process.exitValue() + "\n" + output);
+    assertEquals(
+        0, process.exitValue(), () -> name + " exit=" + process.exitValue() + "\n" + output);
   }
 
   private static Thread pump(java.io.InputStream stream, StringBuilder target, String prefix) {

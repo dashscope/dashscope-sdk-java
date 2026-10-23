@@ -19,8 +19,8 @@ import java.util.Map;
 /**
  * {@code multimodal.chat} resource: {@code create} / {@code createStreaming}. Local-file
  * preprocessing runs before every call (2.x parity); streaming requests for models without
- * server-side cumulative output are merged client-side when the caller asked for
- * {@code incremental_output=false}.
+ * server-side cumulative output are merged client-side when the caller asked for {@code
+ * incremental_output=false}.
  */
 public final class MultimodalChatService {
   private final HttpTransport transport;
@@ -39,12 +39,12 @@ public final class MultimodalChatService {
       MultimodalChatCreateParams params, RequestOptions options) {
     RequestOptions opts = options == null ? RequestOptions.NONE : options;
     MultimodalPreprocessor.ChatResult pre =
-        MultimodalPreprocessor.preprocessChat(params.getModel(), params.getMessages(), uploader, opts);
+        MultimodalPreprocessor.preprocessChat(
+            params.getModel(), params.getMessages(), uploader, opts);
     ResponseEnvelope envelope =
         transport.execute(
             MultimodalChatSupport.PATH,
-            MultimodalChatSupport.buildBody(
-                withMessages(params, pre.messages), false, false),
+            MultimodalChatSupport.buildBody(withMessages(params, pre.messages), false, false),
             MultimodalChatSupport.MODULE,
             withOssResolve(opts, pre.ossResolve));
     MultimodalChatCompletion completion = MultimodalChatSupport.mapCompletion(envelope.getBody());
@@ -57,8 +57,10 @@ public final class MultimodalChatService {
     return completion;
   }
 
-  /** Streaming create. Always close the stream (try-with-resources); the iterator is
-   * single-use. When merging applies, every emitted chunk carries cumulative content. */
+  /**
+   * Streaming create. Always close the stream (try-with-resources); the iterator is single-use.
+   * When merging applies, every emitted chunk carries cumulative content.
+   */
   public ResponseStream<MultimodalChatChunk> createStreaming(MultimodalChatCreateParams params) {
     return createStreaming(params, RequestOptions.NONE);
   }
@@ -70,7 +72,8 @@ public final class MultimodalChatService {
         MultimodalChatSupport.shouldModifyIncrementalOutput(params.getModel())
             && Boolean.FALSE.equals(params.getIncrementalOutput());
     MultimodalPreprocessor.ChatResult pre =
-        MultimodalPreprocessor.preprocessChat(params.getModel(), params.getMessages(), uploader, opts);
+        MultimodalPreprocessor.preprocessChat(
+            params.getModel(), params.getMessages(), uploader, opts);
     SseStream sse =
         transport.executeStream(
             MultimodalChatSupport.PATH,
@@ -100,7 +103,8 @@ public final class MultimodalChatService {
   }
 
   private static MultimodalChatCreateParams withMessages(
-      MultimodalChatCreateParams params, java.util.List<com.alibaba.dashscope.v3.types.multimodal.MultimodalMessage> messages) {
+      MultimodalChatCreateParams params,
+      java.util.List<com.alibaba.dashscope.v3.types.multimodal.MultimodalMessage> messages) {
     if (messages == params.getMessages()) {
       return params;
     }

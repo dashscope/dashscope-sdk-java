@@ -90,8 +90,7 @@ class TokenizationMockTest {
     RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
     assertEquals("/tokenizer", request.getPath());
     assertEquals(
-        "java-sdk/" + SdkInfo.VERSION + "/tokenizers",
-        request.getHeader("x-dashscope-sdk-client"));
+        "java-sdk/" + SdkInfo.VERSION + "/tokenizers", request.getHeader("x-dashscope-sdk-client"));
     JsonNode body = MAPPER.readTree(request.getBody().readUtf8());
     assertEquals("qwen-turbo", body.get("model").asText());
     assertEquals("You are a helpful assistant.", body.get("input").get("prompt").asText());
@@ -116,8 +115,7 @@ class TokenizationMockTest {
                     .model("qwen-turbo")
                     .messages(
                         Arrays.asList(
-                            Message.system("You are a helpful assistant."),
-                            Message.user("hello")))
+                            Message.system("You are a helpful assistant."), Message.user("hello")))
                     .prompt("extra question")
                     .parameters(Collections.singletonMap("truncation", true))
                     .build());
@@ -164,8 +162,7 @@ class TokenizationMockTest {
       TokenCount count =
           asyncClient
               .tokenization()
-              .count(
-                  TokenizationCountParams.builder().model("qwen-turbo").prompt("a").build())
+              .count(TokenizationCountParams.builder().model("qwen-turbo").prompt("a").build())
               .get(10, TimeUnit.SECONDS);
       assertEquals(Arrays.asList(97), count.getTokenIds());
       assertEquals("tk3", count.getRequestId());

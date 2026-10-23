@@ -22,7 +22,8 @@ public class ChatCompletionChunk {
 
     private Delta delta;
     private ChatCompletionLogProbabilities logprobs;
-  };
+  }
+  ;
 
   @Data
   public static class Delta {

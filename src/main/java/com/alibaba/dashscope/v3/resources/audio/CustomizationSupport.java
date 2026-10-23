@@ -11,8 +11,8 @@ import java.util.Map;
 
 /**
  * Shared helpers for the audio customization envelope (audio design §1.4): every verb is one POST
- * carrying {@code {model, input: {action, ...}, parameters?}}; only the action words and id
- * fields differ per family. Also shared by {@code phrases} (same envelope flattening).
+ * carrying {@code {model, input: {action, ...}, parameters?}}; only the action words and id fields
+ * differ per family. Also shared by {@code phrases} (same envelope flattening).
  */
 final class CustomizationSupport {
   static final String MODULE = "audio";

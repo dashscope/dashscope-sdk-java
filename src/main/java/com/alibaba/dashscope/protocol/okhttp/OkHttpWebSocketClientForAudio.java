@@ -10,7 +10,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 
-/** @author songsong.shao */
+/**
+ * @author songsong.shao
+ */
 @Slf4j
 public class OkHttpWebSocketClientForAudio extends OkHttpWebSocketClient {
 

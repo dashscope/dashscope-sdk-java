@@ -8,8 +8,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * One model entry (Python v2 {@code Model} parity). Returned on its own by {@code get} and nested
  * in {@link ModelList#getModels()}; the envelope is filled in on the standalone result and stays
- * empty on the nested copies, because the server reports it once per response rather than once
- * per item.
+ * empty on the nested copies, because the server reports it once per response rather than once per
+ * item.
  */
 public final class Model extends ResponseBase {
   @JsonProperty("model")

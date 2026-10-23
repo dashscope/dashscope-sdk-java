@@ -28,8 +28,8 @@ final class MultimodalChatSupport {
 
   /**
    * 2.x ParamUtils parity: models containing tts/omni/qwen-deep-research manage their own output
-   * mode; for everything else a {@code incremental_output=false} request is served by flipping
-   * the wire value to incremental and merging client-side.
+   * mode; for everything else a {@code incremental_output=false} request is served by flipping the
+   * wire value to incremental and merging client-side.
    */
   static boolean shouldModifyIncrementalOutput(String model) {
     if (model == null) {
@@ -144,9 +144,9 @@ final class MultimodalChatSupport {
 
   /**
    * Stateful per-stream merger (2.x MultiModalConversation.mergeSingleResponse parity): keyed by
-   * choice loop index; text parts concat into one text item; reasoning_content appends;
-   * tool_calls merge by index (name/arguments concat, output replace-latest, id
-   * replace-if-nonempty, type/index replace). Each emitted frame carries the cumulative values.
+   * choice loop index; text parts concat into one text item; reasoning_content appends; tool_calls
+   * merge by index (name/arguments concat, output replace-latest, id replace-if-nonempty,
+   * type/index replace). Each emitted frame carries the cumulative values.
    */
   static final class IncrementalMerger {
     private final Map<Integer, Acc> byChoice = new HashMap<>();
@@ -262,8 +262,9 @@ final class MultimodalChatSupport {
       JsonNode value = current.get(field);
       if (value != null && value.isTextual()) {
         JsonNode existing = target.get(field);
-        target.put(field, (existing != null && existing.isTextual() ? existing.asText() : "")
-            + value.asText());
+        target.put(
+            field,
+            (existing != null && existing.isTextual() ? existing.asText() : "") + value.asText());
       }
     }
 

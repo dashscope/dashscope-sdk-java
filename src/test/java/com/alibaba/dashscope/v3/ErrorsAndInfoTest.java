@@ -9,6 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.Version;
 import com.alibaba.dashscope.common.SdkErrorCode;
+import com.alibaba.dashscope.shared.SdkInfo;
+import com.alibaba.dashscope.shared.SdkSession;
 import com.alibaba.dashscope.v3.errors.ApiStatusException;
 import com.alibaba.dashscope.v3.errors.AuthenticationException;
 import com.alibaba.dashscope.v3.errors.BadRequestException;
@@ -22,8 +24,6 @@ import com.alibaba.dashscope.v3.errors.RateLimitException;
 import com.alibaba.dashscope.v3.errors.RequestTooLargeException;
 import com.alibaba.dashscope.v3.errors.SdkException;
 import com.alibaba.dashscope.v3.errors.ServiceUnavailableException;
-import com.alibaba.dashscope.shared.SdkInfo;
-import com.alibaba.dashscope.shared.SdkSession;
 import java.util.Collections;
 import org.junit.jupiter.api.Test;
 
@@ -56,8 +56,7 @@ class ErrorsAndInfoTest {
   @Test
   void blankMessageUsesCatalogOnlyForUnambiguousStatus() {
     assertEquals(
-        "The requested resource was not found: {resource}.",
-        fromStatus(404, null).getMessage());
+        "The requested resource was not found: {resource}.", fromStatus(404, null).getMessage());
     assertEquals("HTTP 400", fromStatus(400, null).getMessage());
     assertEquals("HTTP 418", fromStatus(418, null).getMessage());
   }
@@ -101,8 +100,7 @@ class ErrorsAndInfoTest {
 
   @Test
   void fromThrowableFallsBackToFamilyError() {
-    SdkException e =
-        Errors.fromThrowable(new IllegalStateException("boom"), "sdk.agentic_rl");
+    SdkException e = Errors.fromThrowable(new IllegalStateException("boom"), "sdk.agentic_rl");
     assertEquals("sdk.agentic_rl.Error", e.getCode());
     assertEquals("boom", e.getMessage());
   }

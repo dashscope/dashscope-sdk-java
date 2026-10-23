@@ -9,9 +9,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * A long-running task (design §3): {@code taskId} is the primary name ({@code job_id} accepted
- * as an alias), {@code outputAs(Class)} gives a typed view over the raw output node. Terminal
- * states: SUCCEEDED / FAILED / CANCELED / UNKNOWN.
+ * A long-running task (design §3): {@code taskId} is the primary name ({@code job_id} accepted as
+ * an alias), {@code outputAs(Class)} gives a typed view over the raw output node. Terminal states:
+ * SUCCEEDED / FAILED / CANCELED / UNKNOWN.
  */
 public final class Job extends ResponseBase {
   public static final String PENDING = "PENDING";
@@ -26,8 +26,10 @@ public final class Job extends ResponseBase {
   private JsonNode output;
   private JsonNode usage;
 
-  /** Build from the task envelope body {@code {request_id, output:{task_id,task_status,...}}}.
-   * SDK-internal wiring (transport → job); users must not call it. */
+  /**
+   * Build from the task envelope body {@code {request_id, output:{task_id,task_status,...}}}.
+   * SDK-internal wiring (transport → job); users must not call it.
+   */
   public static Job fromBody(JsonNode body) {
     Job job = new Job();
     JsonNode out = body == null ? null : body.get("output");
@@ -81,9 +83,9 @@ public final class Job extends ResponseBase {
   }
 
   /**
-   * The artifacts of a finished task (Python v2 {@code Job.results} parity): {@code
-   * output.results} when present, else the image parts lifted from a choices-style output
-   * (multimodal-generation answers image tasks with chat-style choices).
+   * The artifacts of a finished task (Python v2 {@code Job.results} parity): {@code output.results}
+   * when present, else the image parts lifted from a choices-style output (multimodal-generation
+   * answers image tasks with chat-style choices).
    */
   public List<JobResult> getResults() {
     if (output == null || !output.isObject()) {
@@ -146,8 +148,7 @@ public final class Job extends ResponseBase {
     if (choices == null || !choices.isArray()) {
       return null;
     }
-    com.fasterxml.jackson.databind.node.ArrayNode lifted =
-        JsonSupport.mapper().createArrayNode();
+    com.fasterxml.jackson.databind.node.ArrayNode lifted = JsonSupport.mapper().createArrayNode();
     for (JsonNode choice : choices) {
       if (choice == null || !choice.isObject()) {
         continue;

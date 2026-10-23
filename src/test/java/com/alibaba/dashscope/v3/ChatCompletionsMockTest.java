@@ -167,8 +167,7 @@ class ChatCompletionsMockTest {
                 "{\"code\":\"InvalidParameter\",\"message\":\"bad param\",\"request_id\":\"r4\"}"));
 
     BadRequestException e =
-        assertThrows(
-            BadRequestException.class, () -> client.chat().completions().create(params()));
+        assertThrows(BadRequestException.class, () -> client.chat().completions().create(params()));
     assertEquals("InvalidParameter", e.getCode());
     assertEquals(400, e.getStatusCode());
     assertEquals("r4", e.getRequestId());
@@ -179,8 +178,7 @@ class ChatCompletionsMockTest {
   @Test
   void businessCodeLayerMapsToContentFilter() {
     server.enqueue(
-        okJson(
-            "{\"code\":\"DataInspectionFailed\",\"message\":\"unsafe\",\"request_id\":\"r5\"}"));
+        okJson("{\"code\":\"DataInspectionFailed\",\"message\":\"unsafe\",\"request_id\":\"r5\"}"));
 
     ContentFilterException e =
         assertThrows(

@@ -15,7 +15,8 @@ public final class FlowPublishers {
 
   public static <T> Flow.Publisher<T> fromStream(
       Supplier<ResponseStream<T>> streamSupplier, Executor executor) {
-    SubmissionPublisher<T> publisher = new SubmissionPublisher<>(executor, Flow.defaultBufferSize());
+    SubmissionPublisher<T> publisher =
+        new SubmissionPublisher<>(executor, Flow.defaultBufferSize());
     executor.execute(
         () -> {
           try (ResponseStream<T> stream = streamSupplier.get()) {
@@ -33,7 +34,8 @@ public final class FlowPublishers {
   /** Same bridge for the job-event streams (fine-tunes/deployments), which are not SSE-framed. */
   public static <T, S extends Iterable<T> & AutoCloseable> Flow.Publisher<T> fromIterable(
       Supplier<S> streamSupplier, Executor executor) {
-    SubmissionPublisher<T> publisher = new SubmissionPublisher<>(executor, Flow.defaultBufferSize());
+    SubmissionPublisher<T> publisher =
+        new SubmissionPublisher<>(executor, Flow.defaultBufferSize());
     executor.execute(
         () -> {
           try (S stream = streamSupplier.get()) {

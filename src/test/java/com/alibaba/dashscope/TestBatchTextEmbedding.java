@@ -49,7 +49,10 @@ public class TestBatchTextEmbedding {
   @Test
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "BODY")
   public void testCreateAsyncTask()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
           InputRequiredException {
     String responseBody =
         "{\"request_id\":\"78a74ba9-b8eb-9ca5-ab34-5a56f453cf03\",\"output\":{\"task_id\":\"2a1d8589-7148-422a-b9e7-f41682f07160\",\"task_status\":\"PENDING\"},\"status_code\":200,\"code\":\"\",\"message\":\"\"}";
@@ -78,7 +81,10 @@ public class TestBatchTextEmbedding {
   @Test
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "BODY")
   public void testFetchTask()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
           InputRequiredException {
     String responseBody =
         "{\"request_id\":\"78a74ba9-b8eb-9ca5-ab34-5a56f453cf03\",\"output\":{\"task_id\":\"2a1d8589-7148-422a-b9e7-f41682f07160\",\"task_status\":\"PENDING\"},\"status_code\":200,\"code\":\"\",\"message\":\"\"}";
@@ -98,7 +104,10 @@ public class TestBatchTextEmbedding {
   @Test
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "BODY")
   public void testFetchTaskWithDiffUrl()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
           InputRequiredException {
     String responseBody =
         "{\"request_id\":\"78a74ba9-b8eb-9ca5-ab34-5a56f453cf03\",\"output\":{\"task_id\":\"2a1d8589-7148-422a-b9e7-f41682f07160\",\"task_status\":\"PENDING\"},\"status_code\":200,\"code\":\"\",\"message\":\"\"}";

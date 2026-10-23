@@ -12,7 +12,9 @@ import lombok.Data;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
 
-/** @author lengjiayi */
+/**
+ * @author lengjiayi
+ */
 @SuperBuilder
 @Data
 public class OmniRealtimeConfig {

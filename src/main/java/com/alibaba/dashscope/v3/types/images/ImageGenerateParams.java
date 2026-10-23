@@ -8,13 +8,15 @@ import java.util.Map;
  * Parameters for {@code images().generate} / {@code images().jobs().create} (design §3). Two wire
  * protocols hide behind this one params object, picked by model name prefix ({@link
  * #MULTIMODAL_MODEL_PREFIXES}): legacy text2image takes {@code prompt} input and {@code
- * negative_prompt} in input; the multimodal-generation protocol takes a {@code messages} input
- * and {@code negative_prompt} in parameters. {@code size} accepts both {@code 1024x1024} and the
- * wire form {@code 1024*1024}.
+ * negative_prompt} in input; the multimodal-generation protocol takes a {@code messages} input and
+ * {@code negative_prompt} in parameters. {@code size} accepts both {@code 1024x1024} and the wire
+ * form {@code 1024*1024}.
  */
 public final class ImageGenerateParams {
-  /** Models that only answer on the multimodal-generation protocol (prefix match, so
-   * {@code -preview}-style variants route the same way). */
+  /**
+   * Models that only answer on the multimodal-generation protocol (prefix match, so {@code
+   * -preview}-style variants route the same way).
+   */
   public static final String[] MULTIMODAL_MODEL_PREFIXES = {"wan2.6-t2i", "wan2.6-image"};
 
   private final String model;
@@ -84,8 +86,10 @@ public final class ImageGenerateParams {
     return size;
   }
 
-  /** Reference images (multimodal-protocol models); local paths and {@code file://}/{@code
-   * oss://} values are uploaded/resolved before the call. */
+  /**
+   * Reference images (multimodal-protocol models); local paths and {@code file://}/{@code oss://}
+   * values are uploaded/resolved before the call.
+   */
   public List<String> getImageUrls() {
     return imageUrls;
   }

@@ -24,8 +24,8 @@ import org.slf4j.LoggerFactory;
  *   <li>honors {@code Retry-After} / {@code Retry-After-ms} / {@code X-Should-Retry}
  *   <li>exponential backoff 500ms → 8s with ±25% jitter
  *   <li>default maxRetries=2 (per-request override via {@link RequestTags.MaxRetries})
- *   <li>requests tagged {@link RequestTags.NoRetry} (SSE / WebSocket upgrade) are never retried:
- *       a failed stream cannot be safely replayed (double billing / duplicated results)
+ *   <li>requests tagged {@link RequestTags.NoRetry} (SSE / WebSocket upgrade) are never retried: a
+ *       failed stream cannot be safely replayed (double billing / duplicated results)
  * </ul>
  */
 public final class RetryInterceptor implements Interceptor {
@@ -82,10 +82,13 @@ public final class RetryInterceptor implements Interceptor {
       if (response != null) {
         response.close();
       }
-      long delayMs =
-          overrideDelayMs >= 0 ? overrideDelayMs : backoffMs(attempt);
-      log.debug("retrying request to {} (attempt {}/{}) after {}ms",
-          request.url(), attempt + 1, maxRetries, delayMs);
+      long delayMs = overrideDelayMs >= 0 ? overrideDelayMs : backoffMs(attempt);
+      log.debug(
+          "retrying request to {} (attempt {}/{}) after {}ms",
+          request.url(),
+          attempt + 1,
+          maxRetries,
+          delayMs);
       try {
         Thread.sleep(delayMs);
       } catch (InterruptedException e) {
@@ -101,8 +104,10 @@ public final class RetryInterceptor implements Interceptor {
     }
   }
 
-  /** Connection-level failures only: a read timeout mid-request is never retried — the server
-   * may already be processing the call, and replaying it risks double billing. */
+  /**
+   * Connection-level failures only: a read timeout mid-request is never retried — the server may
+   * already be processing the call, and replaying it risks double billing.
+   */
   private static boolean isRetryableIo(IOException e) {
     return e instanceof ConnectException
         || e instanceof UnknownHostException

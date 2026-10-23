@@ -18,6 +18,7 @@ final class AppCompletionsSupport {
 
   /** {@code POST /apps/{app_id}/completion}. */
   static final String PATH_PREFIX = "/apps/";
+
   static final String PATH_SUFFIX = "/completion";
   /** Functional-area tag for x-dashscope-sdk-client (matches 2.x "app"). */
   static final String MODULE = "app";

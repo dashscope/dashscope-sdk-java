@@ -13,11 +13,11 @@ import java.util.NoSuchElementException;
 import okhttp3.Response;
 
 /**
- * Blocking, pull-model parser for the job-event SSE framing (fine-tunes/deployments streams,
- * 1.x StreamEventMixin lineage): an {@code event:error} line flips the error flag, {@code
- * status:} carries the mapped HTTP status (optional), and each {@code data:} line is one frame;
- * an error frame ends the stream. Unlike {@link SseStream}, data lines are not joined across
- * blank lines. Single-use, no background threads.
+ * Blocking, pull-model parser for the job-event SSE framing (fine-tunes/deployments streams, 1.x
+ * StreamEventMixin lineage): an {@code event:error} line flips the error flag, {@code status:}
+ * carries the mapped HTTP status (optional), and each {@code data:} line is one frame; an error
+ * frame ends the stream. Unlike {@link SseStream}, data lines are not joined across blank lines.
+ * Single-use, no background threads.
  */
 public final class JobEventStream implements AutoCloseable, Iterable<JobEventStream.Frame> {
   private final Response response;

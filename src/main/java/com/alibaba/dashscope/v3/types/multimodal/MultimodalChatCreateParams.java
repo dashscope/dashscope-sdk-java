@@ -131,8 +131,8 @@ public final class MultimodalChatCreateParams {
 
   /**
    * Streaming output mode. For models without server-side cumulative-output support the client
-   * flips the wire value to incremental and merges frames (2.x parity); see
-   * {@code MultimodalChatService}.
+   * flips the wire value to incremental and merges frames (2.x parity); see {@code
+   * MultimodalChatService}.
    */
   public Boolean getIncrementalOutput() {
     return incrementalOutput;

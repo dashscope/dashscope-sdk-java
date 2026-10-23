@@ -19,10 +19,10 @@ import java.util.Map;
  * streaming: {@code POST {compatible-mode-root}/systemone}.
  *
  * <p>The endpoint sits under {@code /compatible-mode/v1} on every gateway, independent of the
- * native {@code /api/v1} root the rest of the SDK uses, so this resource derives its own base:
- * a resolved base URL ending in {@code /api/v1} (every default resolution does) swaps the suffix
- * for {@code /compatible-mode/v1}; any other base URL (explicit custom root, test doubles) is
- * used as-is.
+ * native {@code /api/v1} root the rest of the SDK uses, so this resource derives its own base: a
+ * resolved base URL ending in {@code /api/v1} (every default resolution does) swaps the suffix for
+ * {@code /compatible-mode/v1}; any other base URL (explicit custom root, test doubles) is used
+ * as-is.
  */
 public final class DecisionService {
   static final String PATH = "/systemone";
@@ -46,9 +46,10 @@ public final class DecisionService {
     ResponseEnvelope envelope =
         transport.execute(endpoint(transport.config()), buildBody(params), MODULE, options);
     DecisionResult result =
-        JsonSupport.mapper().convertValue(
-            envelope.getBody() == null ? JsonSupport.missingNode() : envelope.getBody(),
-            DecisionResult.class);
+        JsonSupport.mapper()
+            .convertValue(
+                envelope.getBody() == null ? JsonSupport.missingNode() : envelope.getBody(),
+                DecisionResult.class);
     result.fillEnvelope(
         JsonSupport.requestId(envelope.getBody(), envelope.getHeaders()),
         envelope.getStatusCode(),

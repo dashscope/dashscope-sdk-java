@@ -24,9 +24,9 @@ import java.util.Map;
 
 /**
  * {@code fineTunes} resource (design §3, Python v2 fine_tunes.py parity): create/get/list/cancel/
- * delete over {@code /fine-tunes}, plus training {@code logs}, the {@code streamEvents} SSE
- * feed, and {@code wait} — a poller over {@code get} (this plane has no {@code /tasks} entry;
- * UNKNOWN is deliberately not terminal here, unlike {@code Job}).
+ * delete over {@code /fine-tunes}, plus training {@code logs}, the {@code streamEvents} SSE feed,
+ * and {@code wait} — a poller over {@code get} (this plane has no {@code /tasks} entry; UNKNOWN is
+ * deliberately not terminal here, unlike {@code Job}).
  */
 public final class FineTunesService {
   static final String BASE_PATH = "/fine-tunes";
@@ -118,8 +118,7 @@ public final class FineTunesService {
 
   public JobStatus delete(String jobId, RequestOptions options) {
     requireJobId(jobId);
-    ResponseEnvelope envelope =
-        transport.executeDelete(BASE_PATH + "/" + jobId, MODULE, options);
+    ResponseEnvelope envelope = transport.executeDelete(BASE_PATH + "/" + jobId, MODULE, options);
     return toJobStatus(envelope);
   }
 
@@ -149,8 +148,7 @@ public final class FineTunesService {
   public FineTuneEventStream streamEvents(String jobId, RequestOptions options) {
     requireJobId(jobId);
     return new FineTuneEventStream(
-        transport.executeJobEventStream(
-            BASE_PATH + "/" + jobId + "/stream", MODULE, options),
+        transport.executeJobEventStream(BASE_PATH + "/" + jobId + "/stream", MODULE, options),
         transport.config().isRaiseOnError());
   }
 

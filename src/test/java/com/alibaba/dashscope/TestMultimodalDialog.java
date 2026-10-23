@@ -69,34 +69,40 @@ public class TestMultimodalDialog {
                       webSocket.send(
                           "{'header': {'task_id': '"
                               + task_id
-                              + "', 'event': 'task-started', 'attributes': {}}, 'payload': {'output':{'event':'Started','dialog_id':'bfce4b14-32d8-48f1-b30d-c98789f319be'}}}");
+                              + "', 'event': 'task-started', 'attributes': {}}, 'payload':"
+                              + " {'output':{'event':'Started','dialog_id':'bfce4b14-32d8-48f1-b30d-c98789f319be'}}}");
                       webSocket.send(
                           "{'header': {'event': 'result-generated', 'task_id': '"
                               + task_id
-                              + "', 'attributes': {}}, 'payload': {'output':{'event':'DialogStateChanged','state':'Listening','dialog_id':'bfce4b14-32d8-48f1-b30d-c98789f319be'}}}");
+                              + "', 'attributes': {}}, 'payload':"
+                              + " {'output':{'event':'DialogStateChanged','state':'Listening','dialog_id':'bfce4b14-32d8-48f1-b30d-c98789f319be'}}}");
 
                     } else if (string.contains("finish-task")) {
                       webSocket.send(
                           "{'header': {'task_id': '"
                               + task_id
-                              + "', 'event': 'task-finished', 'attributes': {}}, 'payload': {'output': {'event':'stopped'}, 'usage': {'characters': 7}}}");
+                              + "', 'event': 'task-finished', 'attributes': {}}, 'payload':"
+                              + " {'output': {'event':'stopped'}, 'usage': {'characters': 7}}}");
                       webSocket.close(1000, "close by server");
                     } else if (string.contains("continue-task")) {
                       if (string.contains("prompt")) {
                         webSocket.send(
                             "{'header': {'event': 'result-generated','task_id': '"
                                 + task_id
-                                + "', 'attributes': {}}, 'payload': {'output':{'event':'DialogStateChanged','state':'Thinking','dialog_id':'bfce4b14-32d8-48f1-b30d-c98789f319be'}}}");
+                                + "', 'attributes': {}}, 'payload':"
+                                + " {'output':{'event':'DialogStateChanged','state':'Thinking','dialog_id':'bfce4b14-32d8-48f1-b30d-c98789f319be'}}}");
 
                         webSocket.send(
                             "{'header': {'event': 'result-generated','task_id': '"
                                 + task_id
-                                + "', 'attributes': {}}, 'payload': {'output':{'event':'DialogStateChanged','state':'Responding','dialog_id':'bfce4b14-32d8-48f1-b30d-c98789f319be'}}}");
+                                + "', 'attributes': {}}, 'payload':"
+                                + " {'output':{'event':'DialogStateChanged','state':'Responding','dialog_id':'bfce4b14-32d8-48f1-b30d-c98789f319be'}}}");
 
                         webSocket.send(
                             "{'header': {'event': 'result-generated','task_id': '"
                                 + task_id
-                                + "', 'attributes': {}}, 'payload': {'output':{'event':'RespondingStarted','dialog_id':'bfce4b14-32d8-48f1-b30d-c98789f319be'}}}");
+                                + "', 'attributes': {}}, 'payload':"
+                                + " {'output':{'event':'RespondingStarted','dialog_id':'bfce4b14-32d8-48f1-b30d-c98789f319be'}}}");
                       }
 
                       if (string.contains("LocalRespondingStarted")) {
@@ -106,7 +112,8 @@ public class TestMultimodalDialog {
                         webSocket.send(
                             "{'header': {'event': 'result-generated','task_id': '"
                                 + task_id
-                                + "', 'attributes': {}}, 'payload': {'output':{'event':'RespondingEnded','dialog_id':'bfce4b14-32d8-48f1-b30d-c98789f319be'}}}");
+                                + "', 'attributes': {}}, 'payload':"
+                                + " {'output':{'event':'RespondingEnded','dialog_id':'bfce4b14-32d8-48f1-b30d-c98789f319be'}}}");
                       }
 
                       if (string.contains("LocalRespondingEnded")) {
@@ -114,7 +121,8 @@ public class TestMultimodalDialog {
                         webSocket.send(
                             "{'header': {'event': 'result-generated','task_id': '"
                                 + task_id
-                                + "', 'attributes': {}}, 'payload': {'output':{'event':'DialogStateChanged','state':'Listening','dialog_id':'bfce4b14-32d8-48f1-b30d-c98789f319be'}}}");
+                                + "', 'attributes': {}}, 'payload':"
+                                + " {'output':{'event':'DialogStateChanged','state':'Listening','dialog_id':'bfce4b14-32d8-48f1-b30d-c98789f319be'}}}");
                       }
                     }
                   }

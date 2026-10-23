@@ -12,9 +12,9 @@ import okhttp3.HttpUrl;
  * dedicated socket per session.
  *
  * <p>Endpoint resolution order: explicit {@link RealtimeParams#getUrl()} &gt; {@code
- * DASHSCOPE_WEBSOCKET_OMNI_BASE_URL} (2.x parity) &gt; derived from the resolved HTTP base url.
- * The generic ws base-url override does NOT apply to realtime (audio design §2). Since a session
- * cannot be pooled, prefer connecting slightly ahead of first use to hide the handshake latency.
+ * DASHSCOPE_WEBSOCKET_OMNI_BASE_URL} (2.x parity) &gt; derived from the resolved HTTP base url. The
+ * generic ws base-url override does NOT apply to realtime (audio design §2). Since a session cannot
+ * be pooled, prefer connecting slightly ahead of first use to hide the handshake latency.
  */
 public final class RealtimeService {
   private static final String REALTIME_PATH = "/api-ws/v1/realtime";
@@ -57,8 +57,8 @@ public final class RealtimeService {
   }
 
   /**
-   * Derives the realtime endpoint from the resolved HTTP base url: scheme swap
-   * (https→wss/http→ws), path replaced with {@code /api-ws/v1/realtime}, model on the query.
+   * Derives the realtime endpoint from the resolved HTTP base url: scheme swap (https→wss/http→ws),
+   * path replaced with {@code /api-ws/v1/realtime}, model on the query.
    */
   static String deriveRealtimeUrl(String httpBaseUrl, String model) {
     HttpUrl parsed = HttpUrl.parse(httpBaseUrl);
@@ -66,7 +66,11 @@ public final class RealtimeService {
       throw new IllegalArgumentException("invalid base url: " + httpBaseUrl);
     }
     String url =
-        parsed.newBuilder().encodedPath(REALTIME_PATH).addQueryParameter("model", model).build()
+        parsed
+            .newBuilder()
+            .encodedPath(REALTIME_PATH)
+            .addQueryParameter("model", model)
+            .build()
             .toString();
     if (url.startsWith("https:")) {
       return "wss:" + url.substring("https:".length());

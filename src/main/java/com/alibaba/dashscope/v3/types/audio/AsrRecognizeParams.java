@@ -6,8 +6,8 @@ import java.util.Map;
 /**
  * Parameters for {@code audio.asr().recognize} (ws duplex, task protocol). Known fields land in
  * {@code payload.parameters}; {@code pre_task_id} additionally pins the header task_id (2.x
- * parity); {@code phraseId} maps to top-level {@code resources}, never into parameters.
- * Unknown knobs pass through via {@link Builder#parameters(Map)}.
+ * parity); {@code phraseId} maps to top-level {@code resources}, never into parameters. Unknown
+ * knobs pass through via {@link Builder#parameters(Map)}.
  */
 public final class AsrRecognizeParams {
   private final String model;

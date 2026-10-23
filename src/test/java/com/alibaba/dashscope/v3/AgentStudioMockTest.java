@@ -146,7 +146,8 @@ public class AgentStudioMockTest {
     try (DashScopeClient client =
         DashScopeClient.builder().apiKey("test-key").workspace("ws_01").build()) {
       AgentStudioClient as = client.agentStudio();
-      assertEquals("https://ws_01.cn-beijing.maas.aliyuncs.com/api/v1/agentstudio", as.getBaseUrl());
+      assertEquals(
+          "https://ws_01.cn-beijing.maas.aliyuncs.com/api/v1/agentstudio", as.getBaseUrl());
       assertNotNull(as.agents());
     }
   }
@@ -164,7 +165,8 @@ public class AgentStudioMockTest {
         DashScopeAsyncClient.builder().apiKey("test-key").workspace("ws_01").build()) {
       AgentStudioClient as = client.agentStudio();
       assertNotNull(as);
-      assertEquals("https://ws_01.cn-beijing.maas.aliyuncs.com/api/v1/agentstudio", as.getBaseUrl());
+      assertEquals(
+          "https://ws_01.cn-beijing.maas.aliyuncs.com/api/v1/agentstudio", as.getBaseUrl());
     }
   }
 }

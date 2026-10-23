@@ -48,17 +48,23 @@ public final class SessionAgent {
     return new SessionAgent(null, override);
   }
 
-  /** @return {@code true} if this is the Agent ID string form. */
+  /**
+   * @return {@code true} if this is the Agent ID string form.
+   */
   public boolean isString() {
     return string != null;
   }
 
-  /** @return the Agent ID string, or {@code null} if this is the override form. */
+  /**
+   * @return the Agent ID string, or {@code null} if this is the override form.
+   */
   public String asString() {
     return string;
   }
 
-  /** @return the override mapping, or {@code null} if this is the string form. */
+  /**
+   * @return the override mapping, or {@code null} if this is the string form.
+   */
   public Map<String, Object> asOverride() {
     return override;
   }

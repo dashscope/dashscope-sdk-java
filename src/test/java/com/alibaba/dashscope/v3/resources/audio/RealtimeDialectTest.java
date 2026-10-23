@@ -10,7 +10,8 @@ class RealtimeDialectTest {
 
   @Test
   void dialectFollowsModelPrefix() {
-    assertEquals(RealtimeDialect.OMNI_V38, RealtimeDialect.fromModel("qwen3.8-omni-flash-realtime"));
+    assertEquals(
+        RealtimeDialect.OMNI_V38, RealtimeDialect.fromModel("qwen3.8-omni-flash-realtime"));
     assertEquals(RealtimeDialect.QWEN_AUDIO, RealtimeDialect.fromModel("qwen-audio-asr-realtime"));
     assertEquals(
         RealtimeDialect.LIVETRANSLATE_V38,

@@ -22,7 +22,9 @@ import okhttp3.*;
 import okio.ByteString;
 import org.jetbrains.annotations.NotNull;
 
-/** @author lengjiayi */
+/**
+ * @author lengjiayi
+ */
 @Slf4j
 public class OmniRealtimeConversation extends WebSocketListener {
   private static final int DEFAULT_TIMEOUT = 20;

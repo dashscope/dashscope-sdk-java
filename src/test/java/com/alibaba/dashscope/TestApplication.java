@@ -117,9 +117,11 @@ public class TestApplication {
                             "{\"userId\": \"123\", \"date\": \"202402\", \"city\": \"hangzhou\"}")
                         .actionInput(
                             JsonUtils.parse(
-                                "{\"userId\": \"123\", \"date\": \"202402\", \"city\": \"hangzhou\"}"))
+                                "{\"userId\": \"123\", \"date\": \"202402\", \"city\":"
+                                    + " \"hangzhou\"}"))
                         .observation(
-                            "{\"quantity\": 102, \"type\": \"resident\", \"date\": \"202402\", \"unit\": \"千瓦\"}")
+                            "{\"quantity\": 102, \"type\": \"resident\", \"date\": \"202402\","
+                                + " \"unit\": \"千瓦\"}")
                         .response("当月的居民用电量为102千瓦。")
                         .build()))
             .build();
@@ -307,7 +309,8 @@ public class TestApplication {
                                 + "      \"docUrl\": \"https://127.0.0.1/dl/API接口说明.pdf\",\n"
                                 + "      \"indexId\": \"1\",\n"
                                 + "      \"score\": 0.11992252,\n"
-                                + "      \"text\": \"填(0,1.0),取值越大,生成的随机性越高;启用文档检索后,文档引用类型,取值包括:simple|indexed。\",\n"
+                                + "      \"text\":"
+                                + " \"填(0,1.0),取值越大,生成的随机性越高;启用文档检索后,文档引用类型,取值包括:simple|indexed。\",\n"
                                 + "      \"title\": \"API接口说明\",\n"
                                 + "      \"titlePath\": \"API接口说明>>>接口说明>>>是否必   说明>>>填\"\n"
                                 + "    }\n"

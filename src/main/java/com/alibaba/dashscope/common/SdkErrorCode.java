@@ -250,7 +250,8 @@ public enum SdkErrorCode {
       new String[] {},
       "",
       "An unexpected AgenticRL error occurred. Check the error message and logs for details. If the"
-          + " issue persists, submit a bug report at https://github.com/dashscope/dashscope-sdk-java/issues."),
+          + " issue persists, submit a bug report at"
+          + " https://github.com/dashscope/dashscope-sdk-java/issues."),
   SDK_AGENTIC_RL_RUNTIME_ERROR_WITH_CODE(
       "sdk.agentic_rl.RuntimeErrorWithCode",
       PublicErrorCode.INTERNAL_ERROR,
@@ -259,7 +260,8 @@ public enum SdkErrorCode {
       new String[] {},
       "",
       "An unexpected runtime error occurred. Check the error message and traceback for details. If"
-          + " the issue persists, submit a bug report at https://github.com/dashscope/dashscope-sdk-java/issues."),
+          + " the issue persists, submit a bug report at"
+          + " https://github.com/dashscope/dashscope-sdk-java/issues."),
   SDK_AGENTIC_RL_VALUE_ERROR_WITH_CODE(
       "sdk.agentic_rl.ValueErrorWithCode",
       PublicErrorCode.INVALID_REQUEST,

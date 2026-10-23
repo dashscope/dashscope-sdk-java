@@ -12,7 +12,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
 
-/** @author lengjiayi */
+/**
+ * @author lengjiayi
+ */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder

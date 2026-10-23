@@ -46,8 +46,7 @@ import okhttp3.WebSocketListener;
  *
  * <p>{@link #close()} is idempotent and the session may re-{@link #connect()} afterwards; a
  * generation counter drops late frames from a previous socket so stale events never leak into the
- * new generation (2.x omni parity). {@link #endSession()} is unsupported on the qwen_audio
- * dialect.
+ * new generation (2.x omni parity). {@link #endSession()} is unsupported on the qwen_audio dialect.
  */
 public final class RealtimeSession implements AutoCloseable {
   /** Default wait bound for {@code session.finished} after {@code session.finish} (2.x parity). */
@@ -83,7 +82,8 @@ public final class RealtimeSession implements AutoCloseable {
   private Duration firstAudioDelay;
   private Duration firstTextDelay;
 
-  RealtimeSession(HttpTransport transport, String url, RealtimeParams params, RequestOptions options) {
+  RealtimeSession(
+      HttpTransport transport, String url, RealtimeParams params, RequestOptions options) {
     this.transport = transport;
     this.url = url;
     this.params = params;
@@ -116,7 +116,8 @@ public final class RealtimeSession implements AutoCloseable {
     firstAudioDelay = null;
     firstTextDelay = null;
 
-    String apiKey = options.getApiKey() != null ? options.getApiKey() : transport.config().getApiKey();
+    String apiKey =
+        options.getApiKey() != null ? options.getApiKey() : transport.config().getApiKey();
     if (apiKey == null || apiKey.isEmpty()) {
       throw Errors.fromSdkErrorCode(SdkErrorCode.SDK_INVALID_API_KEY);
     }
@@ -137,7 +138,9 @@ public final class RealtimeSession implements AutoCloseable {
     // Read timeout must stay off the socket: server-VAD silence can exceed the inherited HTTP
     // readTimeout; receiving is already task-level (inbox poll in pumpOnce).
     OkHttpClient.Builder wsClientBuilder =
-        transport.okhttp().newBuilder()
+        transport
+            .okhttp()
+            .newBuilder()
             .connectTimeout(WsSession.DEFAULT_CONNECT_TIMEOUT)
             .readTimeout(0, TimeUnit.MILLISECONDS);
     Duration pingInterval = transport.config().getWsPingInterval();
@@ -248,7 +251,9 @@ public final class RealtimeSession implements AutoCloseable {
   public void endSessionAsync() {
     if (dialect == RealtimeDialect.QWEN_AUDIO) {
       throw new UnsupportedOperationException(
-          "endSession is not supported by the qwen_audio dialect (model " + params.getModel() + ")");
+          "endSession is not supported by the qwen_audio dialect (model "
+              + params.getModel()
+              + ")");
     }
     sendFrame(newEventFrame("session.finish"));
   }
@@ -288,8 +293,8 @@ public final class RealtimeSession implements AutoCloseable {
   /**
    * Raw event frames, replayed from the beginning then live-followed; ends when the socket closes
    * (after a completion was seen or a local close) — an early disconnect raises {@link
-   * ApiConnectionException} mid-iteration, a transport failure raises its mapped exception.
-   * Server {@code error}-type frames are delivered as ordinary events.
+   * ApiConnectionException} mid-iteration, a transport failure raises its mapped exception. Server
+   * {@code error}-type frames are delivered as ordinary events.
    */
   public Iterable<JsonNode> events() {
     return () ->
@@ -358,9 +363,9 @@ public final class RealtimeSession implements AutoCloseable {
 
   /**
    * Idempotent; the session may be re-{@link #connect()}ed afterwards. If a {@link #connect()} is
-   * in flight on another thread, its socket is cancelled before taking the monitor so the
-   * handshake wait fails fast instead of blocking this call for the whole connect timeout (2.x
-   * c891540 parity: okhttp's close alone does not abort an in-flight handshake).
+   * in flight on another thread, its socket is cancelled before taking the monitor so the handshake
+   * wait fails fast instead of blocking this call for the whole connect timeout (2.x c891540
+   * parity: okhttp's close alone does not abort an in-flight handshake).
    */
   @Override
   public void close() {

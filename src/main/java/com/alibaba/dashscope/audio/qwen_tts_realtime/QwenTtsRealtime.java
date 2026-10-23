@@ -21,7 +21,9 @@ import okhttp3.*;
 import okio.ByteString;
 import org.jetbrains.annotations.NotNull;
 
-/** @author lengjiayi */
+/**
+ * @author lengjiayi
+ */
 @Slf4j
 public class QwenTtsRealtime extends WebSocketListener {
   private QwenTtsRealtimeParam parameters;

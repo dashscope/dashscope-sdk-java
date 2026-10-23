@@ -45,7 +45,8 @@ public class TestTranscription {
   public void testTranscription() throws InterruptedException {
     JsonObject jsonObject =
         JsonUtils.parse(
-            "{'output': {'task_status': 'PENDING', 'task_id': '0123456789abcd'}, 'request_id': '22427afc-6fde-9aa4-97c1-577a36803168'}");
+            "{'output': {'task_status': 'PENDING', 'task_id': '0123456789abcd'}, 'request_id':"
+                + " '22427afc-6fde-9aa4-97c1-577a36803168'}");
     JsonObject rspObject = jsonObject.getAsJsonObject();
     MockResponse response = TestUtils.createMockResponse(JsonUtils.toJson(rspObject), 200);
     mockServer.enqueue(response);
@@ -67,7 +68,12 @@ public class TestTranscription {
     System.out.println(languageHints);
     jsonObject =
         JsonUtils.parse(
-            "{\"status_code\": 200, \"request_id\": \"3e5d1ec1-883d-9050-ba08-68d0261b403a\", \"code\": null, \"message\": \"\", \"output\": {\"task_id\": \"a4dbb067-ee19-4c1b-990e-d36e9162d3f4\", \"task_status\": \"SUCCEEDED\", \"submit_time\": \"2024-07-24 11:02:14.751\", \"scheduled_time\": \"2024-07-24 11:02:14.772\", \"task_metrics\": {\"TOTAL\": 1, \"SUCCEEDED\": 1, \"FAILED\": 0}}, \"usage\": null}");
+            "{\"status_code\": 200, \"request_id\": \"3e5d1ec1-883d-9050-ba08-68d0261b403a\","
+                + " \"code\": null, \"message\": \"\", \"output\": {\"task_id\":"
+                + " \"a4dbb067-ee19-4c1b-990e-d36e9162d3f4\", \"task_status\": \"SUCCEEDED\","
+                + " \"submit_time\": \"2024-07-24 11:02:14.751\", \"scheduled_time\": \"2024-07-24"
+                + " 11:02:14.772\", \"task_metrics\": {\"TOTAL\": 1, \"SUCCEEDED\": 1, \"FAILED\":"
+                + " 0}}, \"usage\": null}");
     rspObject = jsonObject.getAsJsonObject();
     response = TestUtils.createMockResponse(JsonUtils.toJson(rspObject), 200);
     mockServer.enqueue(response);

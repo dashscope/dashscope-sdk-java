@@ -22,11 +22,12 @@ public final class ApiKeyResolver {
   private static final String DEFAULT_KEY_FILE = "~/.dashscope/api_key";
 
   public static String resolve(String explicit, Map<String, String> configFile) {
-    String key = firstNonBlank(
-        explicit,
-        System.getProperty(SYSPROP_API_KEY),
-        System.getenv(EnvNames.DASHSCOPE_API_KEY),
-        configFile.get(ConfigFile.KEY_API_KEY));
+    String key =
+        firstNonBlank(
+            explicit,
+            System.getProperty(SYSPROP_API_KEY),
+            System.getenv(EnvNames.DASHSCOPE_API_KEY),
+            configFile.get(ConfigFile.KEY_API_KEY));
     if (key != null) {
       return key;
     }

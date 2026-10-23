@@ -20,13 +20,13 @@ import javax.crypto.spec.GCMParameterSpec;
 
 /**
  * Crypto primitives for the encrypted channel (J7, ported from 2.x utils/EncryptionUtils):
- * RSA-wrapped AES-256-GCM. Wire shape: the request carries an
- * {@code X-DashScope-EncryptionKey: <publicKeyId>,<RSA(base64(aesKey))>,<base64(iv)>} header and
- * the sensitive body part is AES-GCM encrypted.
+ * RSA-wrapped AES-256-GCM. Wire shape: the request carries an {@code X-DashScope-EncryptionKey:
+ * <publicKeyId>,<RSA(base64(aesKey))>,<base64(iv)>} header and the sensitive body part is AES-GCM
+ * encrypted.
  *
- * <p>Failure model: a JDK that lacks RSA/AES-GCM is a broken environment →
- * {@link IllegalStateException}; malformed caller input (bad key/iv/ciphertext) →
- * {@link IllegalArgumentException}.
+ * <p>Failure model: a JDK that lacks RSA/AES-GCM is a broken environment → {@link
+ * IllegalStateException}; malformed caller input (bad key/iv/ciphertext) → {@link
+ * IllegalArgumentException}.
  */
 public final class EncryptionUtils {
   private static final String AES_ALGORITHM = "AES/GCM/NoPadding";
@@ -43,10 +43,13 @@ public final class EncryptionUtils {
       byte[] keyBytes = Base64.getDecoder().decode(base64PublicKey);
       KeyFactory kf = KeyFactory.getInstance("RSA");
       cipher.init(Cipher.ENCRYPT_MODE, kf.generatePublic(new X509EncodedKeySpec(keyBytes)));
-      return Base64.getEncoder().encodeToString(cipher.doFinal(input.getBytes(StandardCharsets.UTF_8)));
+      return Base64.getEncoder()
+          .encodeToString(cipher.doFinal(input.getBytes(StandardCharsets.UTF_8)));
     } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
       throw new IllegalStateException("JDK lacks RSA support", e);
-    } catch (InvalidKeyException | InvalidKeySpecException | IllegalBlockSizeException
+    } catch (InvalidKeyException
+        | InvalidKeySpecException
+        | IllegalBlockSizeException
         | BadPaddingException e) {
       throw new IllegalArgumentException("RSA encryption failed: " + e.getMessage(), e);
     }
@@ -83,7 +86,9 @@ public final class EncryptionUtils {
       return Base64.getEncoder().encodeToString(cipher.doFinal(input));
     } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
       throw new IllegalStateException("JDK lacks AES-GCM support", e);
-    } catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException
+    } catch (InvalidKeyException
+        | InvalidAlgorithmParameterException
+        | IllegalBlockSizeException
         | BadPaddingException e) {
       throw new IllegalArgumentException("AES encryption failed: " + e.getMessage(), e);
     }
@@ -98,7 +103,9 @@ public final class EncryptionUtils {
       return new String(plain, StandardCharsets.UTF_8);
     } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
       throw new IllegalStateException("JDK lacks AES-GCM support", e);
-    } catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException
+    } catch (InvalidKeyException
+        | InvalidAlgorithmParameterException
+        | IllegalBlockSizeException
         | BadPaddingException e) {
       throw new IllegalArgumentException("AES decryption failed: " + e.getMessage(), e);
     }

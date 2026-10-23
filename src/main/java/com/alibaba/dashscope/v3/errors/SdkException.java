@@ -2,9 +2,9 @@
 package com.alibaba.dashscope.v3.errors;
 
 /**
- * A failure the SDK reported itself, with no HTTP response behind it. Carries the catalog's
- * {@code solution} (fix guidance) and {@code allowRetry}. {@code statusCode} stays null: the
- * catalog gives SDK-side errors no public projection.
+ * A failure the SDK reported itself, with no HTTP response behind it. Carries the catalog's {@code
+ * solution} (fix guidance) and {@code allowRetry}. {@code statusCode} stays null: the catalog gives
+ * SDK-side errors no public projection.
  */
 public class SdkException extends DashScopeException {
   private final String solution;

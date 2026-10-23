@@ -170,8 +170,7 @@ class DecisionMockTest {
                 .model("decision-model-preview")
                 .state("这是一段自由文本")
                 .questions(
-                    Collections.singletonMap(
-                        "ok", DecisionQuestion.noul("Is this acceptable?")))
+                    Collections.singletonMap("ok", DecisionQuestion.noul("Is this acceptable?")))
                 .build());
     JsonNode body = bodyOf(server.takeRequest(5, TimeUnit.SECONDS));
     assertTrue(body.get("state").isTextual());
@@ -204,11 +203,7 @@ class DecisionMockTest {
         () -> DecisionCreateParams.builder().state("s").questions(questionsOk()).build());
     assertThrows(
         IllegalArgumentException.class,
-        () ->
-            DecisionCreateParams.builder()
-                .model("m")
-                .questions(questionsOk())
-                .build());
+        () -> DecisionCreateParams.builder().model("m").questions(questionsOk()).build());
     assertThrows(
         IllegalArgumentException.class,
         () ->

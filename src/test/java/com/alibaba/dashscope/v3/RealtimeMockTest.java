@@ -62,7 +62,8 @@ class RealtimeMockTest {
         DashScopeClient.builder()
             .apiKey("test-key")
             .baseUrl(server.url("/").toString())
-            // Deliberately dead: realtime must NOT honor the ws base-url override (audio design §2).
+            // Deliberately dead: realtime must NOT honor the ws base-url override (audio design
+            // §2).
             .wsBaseUrl("http://127.0.0.1:1/api-ws/v1/inference")
             .timeout(Duration.ofSeconds(5))
             .maxRetries(0)
@@ -130,13 +131,14 @@ class RealtimeMockTest {
   void connectDerivesRealtimeUrlFromHttpBaseUrlIgnoringWsOverride() throws Exception {
     RealtimeServerSocket socket = enqueueUpgrade();
     try (RealtimeSession rt =
-        client.audio().realtime().connect(
-            RealtimeParams.builder().model("qwen3-omni-flash-realtime").build())) {
+        client
+            .audio()
+            .realtime()
+            .connect(RealtimeParams.builder().model("qwen3-omni-flash-realtime").build())) {
       socket.awaitOpen();
       RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
       assertNotNull(request);
-      assertEquals(
-          "/api-ws/v1/realtime?model=qwen3-omni-flash-realtime", request.getPath());
+      assertEquals("/api-ws/v1/realtime?model=qwen3-omni-flash-realtime", request.getPath());
     }
   }
 
@@ -144,8 +146,10 @@ class RealtimeMockTest {
   void updateSessionSerializesOnlySetFieldsWithSentinels() throws Exception {
     RealtimeServerSocket socket = enqueueUpgrade();
     try (RealtimeSession rt =
-        client.audio().realtime().connect(
-            RealtimeParams.builder().model("qwen3-omni-flash-realtime").build())) {
+        client
+            .audio()
+            .realtime()
+            .connect(RealtimeParams.builder().model("qwen3-omni-flash-realtime").build())) {
       socket.awaitOpen();
 
       Map<String, Object> extra = new HashMap<>();
@@ -185,8 +189,10 @@ class RealtimeMockTest {
   void appendAudioBase64EncodesAndLifecycleFramesFlow() throws Exception {
     RealtimeServerSocket socket = enqueueUpgrade();
     try (RealtimeSession rt =
-        client.audio().realtime().connect(
-            RealtimeParams.builder().model("qwen3-omni-flash-realtime").build())) {
+        client
+            .audio()
+            .realtime()
+            .connect(RealtimeParams.builder().model("qwen3-omni-flash-realtime").build())) {
       socket.awaitOpen();
 
       rt.appendAudio(new byte[] {1, 2, 3});
@@ -215,8 +221,10 @@ class RealtimeMockTest {
   void eventsReplayAndTrackSessionMetrics() throws Exception {
     RealtimeServerSocket socket = enqueueUpgrade();
     try (RealtimeSession rt =
-        client.audio().realtime().connect(
-            RealtimeParams.builder().model("qwen3-omni-flash-realtime").build())) {
+        client
+            .audio()
+            .realtime()
+            .connect(RealtimeParams.builder().model("qwen3-omni-flash-realtime").build())) {
       socket.awaitOpen();
       socket.send("{\"type\":\"session.created\",\"session\":{\"id\":\"sess-9\"}}");
       socket.send("{\"type\":\"response.created\",\"response\":{\"id\":\"resp-1\"}}");
@@ -249,8 +257,10 @@ class RealtimeMockTest {
   void earlyDisconnectRaisesConnectionException() throws Exception {
     RealtimeServerSocket socket = enqueueUpgrade();
     RealtimeSession rt =
-        client.audio().realtime().connect(
-            RealtimeParams.builder().model("qwen3-omni-flash-realtime").build());
+        client
+            .audio()
+            .realtime()
+            .connect(RealtimeParams.builder().model("qwen3-omni-flash-realtime").build());
     socket.awaitOpen();
     socket.send("{\"type\":\"session.created\",\"session\":{\"id\":\"sess-1\"}}");
     socket.socket.get().close(1000, "boom");
@@ -267,8 +277,10 @@ class RealtimeMockTest {
   void endSessionSendsFinishAndWaitsForFinished() throws Exception {
     RealtimeServerSocket socket = enqueueUpgrade();
     try (RealtimeSession rt =
-        client.audio().realtime().connect(
-            RealtimeParams.builder().model("qwen3-omni-flash-realtime").build())) {
+        client
+            .audio()
+            .realtime()
+            .connect(RealtimeParams.builder().model("qwen3-omni-flash-realtime").build())) {
       socket.awaitOpen();
       // The server auto-replies session.finished upon session.finish (see listener).
       rt.endSession(Duration.ofSeconds(5));
@@ -282,8 +294,10 @@ class RealtimeMockTest {
   void qwenAudioDialectRejectsEndSession() throws Exception {
     enqueueUpgrade();
     try (RealtimeSession rt =
-        client.audio().realtime().connect(
-            RealtimeParams.builder().model("qwen-audio-asr-realtime").build())) {
+        client
+            .audio()
+            .realtime()
+            .connect(RealtimeParams.builder().model("qwen-audio-asr-realtime").build())) {
       assertThrows(UnsupportedOperationException.class, rt::endSession);
       assertThrows(UnsupportedOperationException.class, rt::endSessionAsync);
     }
@@ -293,8 +307,10 @@ class RealtimeMockTest {
   void closeThenReconnectDropsStaleGenerationEvents() throws Exception {
     RealtimeServerSocket first = enqueueUpgrade();
     RealtimeSession rt =
-        client.audio().realtime().connect(
-            RealtimeParams.builder().model("qwen3-omni-flash-realtime").build());
+        client
+            .audio()
+            .realtime()
+            .connect(RealtimeParams.builder().model("qwen3-omni-flash-realtime").build());
     first.awaitOpen();
     rt.close();
 

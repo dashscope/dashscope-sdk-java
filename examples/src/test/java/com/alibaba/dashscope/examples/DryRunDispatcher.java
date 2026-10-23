@@ -14,8 +14,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Canned DashScope backend for the examples dry-run. Routes every endpoint the examples touch
- * (HTTP, SSE and both WebSocket protocols) to minimal success responses cribbed from the SDK's
- * own mock tests.
+ * (HTTP, SSE and both WebSocket protocols) to minimal success responses cribbed from the SDK's own
+ * mock tests.
  */
 public final class DryRunDispatcher extends Dispatcher {
   private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -48,7 +48,8 @@ public final class DryRunDispatcher extends Dispatcher {
     }
     if (path.startsWith("/api-ws/v1/realtime")) {
       HttpUrl url = request.getRequestUrl();
-      return MockWs.upgrade(new MockWs.RealtimeSocket(url == null ? null : url.queryParameter("model")));
+      return MockWs.upgrade(
+          new MockWs.RealtimeSocket(url == null ? null : url.queryParameter("model")));
     }
     // AgentStudio (2.x shared service) lives under its own base URL.
     if (path.startsWith("/api/v1/agentstudio/")) {
@@ -176,7 +177,8 @@ public final class DryRunDispatcher extends Dispatcher {
           "{\"output\":{\"job_id\":\"ft-dry\",\"status\":\"SUCCEEDED\",\"finetuned_output\":\"m\","
               + "\"create_time\":\"2026-10-01\"},\"request_id\":\"r2\"}");
     }
-    return json(404, "{\"code\":\"NotFound\",\"message\":\"dry-run has no route for " + path + "\"}");
+    return json(
+        404, "{\"code\":\"NotFound\",\"message\":\"dry-run has no route for " + path + "\"}");
   }
 
   private MockResponse multimodal(RecordedRequest request, String body) throws Exception {
@@ -221,7 +223,8 @@ public final class DryRunDispatcher extends Dispatcher {
       case "update_voice":
         return json(200, "{\"output\":{\"status\":\"SUCCEEDED\"},\"request_id\":\"r4\"}");
       default:
-        return json(400, "{\"code\":\"InvalidParameter\",\"message\":\"unknown action " + action + "\"}");
+        return json(
+            400, "{\"code\":\"InvalidParameter\",\"message\":\"unknown action " + action + "\"}");
     }
   }
 
@@ -271,20 +274,23 @@ public final class DryRunDispatcher extends Dispatcher {
           "{\"data\":[{\"id\":\"run-dry\",\"status\":\"SUCCEEDED\",\"trigger_source\":\"manual\"}],"
               + "\"next_page\":null,\"requestId\":\"r-d3\"}");
     }
-    return json(404, "{\"code\":\"NotFound\",\"message\":\"dry-run agentstudio: " + resource + "\"}");
+    return json(
+        404, "{\"code\":\"NotFound\",\"message\":\"dry-run agentstudio: " + resource + "\"}");
   }
 
   private static MockResponse jobCreate(String taskId) {
     return json(
         200,
-        "{\"output\":{\"task_id\":\"" + taskId + "\",\"task_status\":\"PENDING\"},"
+        "{\"output\":{\"task_id\":\""
+            + taskId
+            + "\",\"task_status\":\"PENDING\"},"
             + "\"request_id\":\"r-submit\"}");
   }
 
   private static String taskJson(String taskId) {
     if ("dry-tw".equals(taskId)) {
       return "{\"output\":{\"task_id\":\"dry-tw\",\"task_status\":\"SUCCEEDED\",\"TaskId\":\"dry-tw\","
-          + "\"Result\":\"{\\\"summary\\\":\\\"ok\\\"}\"},\"request_id\":\"r-fetch\"}";
+                 + "\"Result\":\"{\\\"summary\\\":\\\"ok\\\"}\"},\"request_id\":\"r-fetch\"}";
     }
     return "{\"output\":{\"task_id\":\""
         + taskId
@@ -320,38 +326,35 @@ public final class DryRunDispatcher extends Dispatcher {
   }
 
   private static MockResponse json(int code, String body) {
-    return new MockResponse()
-        .setResponseCode(code)
-        .setHeader("Content-Type", JSON)
-        .setBody(body);
+    return new MockResponse().setResponseCode(code).setHeader("Content-Type", JSON).setBody(body);
   }
 
   private static MockResponse sse(String frames) {
-    return new MockResponse()
-        .setResponseCode(200)
-        .setHeader("Content-Type", SSE)
-        .setBody(frames);
+    return new MockResponse().setResponseCode(200).setHeader("Content-Type", SSE).setBody(frames);
   }
 
   private static String chatDeltaFrames() {
-    return "data: {\"output\":{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"你\"}}]},"
-        + "\"request_id\":\"s1\"}\n\n"
-        + "data: {\"output\":{\"choices\":[{\"message\":{\"content\":\"你好\"},"
-        + "\"finish_reason\":\"stop\"}]},\"usage\":{\"input_tokens\":1,\"output_tokens\":2,"
-        + "\"total_tokens\":3},\"request_id\":\"s1\"}\n\n";
+    return "data:"
+               + " {\"output\":{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"你\"}}]},\"request_id\":\"s1\"}\n\n"
+               + "data:"
+               + " {\"output\":{\"choices\":[{\"message\":{\"content\":\"你好\"},\"finish_reason\":\"stop\"}]},\"usage\":{\"input_tokens\":1,\"output_tokens\":2,\"total_tokens\":3},\"request_id\":\"s1\"}\n\n";
   }
 
   private static String appDeltaFrames() {
     return "data: {\"output\":{\"text\":\"你\",\"session_id\":\"s1\"},\"request_id\":\"rs1\"}\n\n"
-        + "data: {\"output\":{\"text\":\"你好\",\"finish_reason\":\"stop\"},\"usage\":{\"input_tokens\":1,"
-        + "\"output_tokens\":2,\"total_tokens\":3},\"request_id\":\"rs1\"}\n\n";
+               + "data:"
+               + " {\"output\":{\"text\":\"你好\",\"finish_reason\":\"stop\"},\"usage\":{\"input_tokens\":1,\"output_tokens\":2,\"total_tokens\":3},\"request_id\":\"rs1\"}\n\n";
   }
 
   private static String ttsAudioFrames() {
     String chunk1 = java.util.Base64.getEncoder().encodeToString(MockWs.pcmChunk(2400));
     String chunk2 = java.util.Base64.getEncoder().encodeToString(MockWs.pcmChunk(2400));
-    return "data: {\"output\":{\"audio\":\"" + chunk1 + "\"}}\n\n"
-        + "data: {\"output\":{\"audio\":\"" + chunk2 + "\"},\"usage\":{\"input_tokens\":2}}\n\n"
+    return "data: {\"output\":{\"audio\":\""
+        + chunk1
+        + "\"}}\n\n"
+        + "data: {\"output\":{\"audio\":\""
+        + chunk2
+        + "\"},\"usage\":{\"input_tokens\":2}}\n\n"
         + "data: [DONE]\n\n";
   }
 

@@ -27,7 +27,9 @@ public final class TingWuService {
     return jobs;
   }
 
-  /** Realtime understanding on a dedicated socket; lazy — nothing connects until {@code start()}. */
+  /**
+   * Realtime understanding on a dedicated socket; lazy — nothing connects until {@code start()}.
+   */
   public TingWuRealtimeSession realtime(TingWuRealtimeParams params) {
     return realtime(params, RequestOptions.NONE);
   }

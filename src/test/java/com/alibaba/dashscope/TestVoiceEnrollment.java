@@ -37,7 +37,8 @@ public class TestVoiceEnrollment {
     // Test create voice
     JsonObject jsonObject =
         JsonUtils.parse(
-            "{'output': {'voice_id': 'voice-nuomai-ef7bae7bef6f4baf97f13d99f9dcd8d6'}, 'usage': {}, 'request_id': '6996d372-b7a2-93ec-9c5d-c90904cbce2a'}");
+            "{'output': {'voice_id': 'voice-nuomai-ef7bae7bef6f4baf97f13d99f9dcd8d6'}, 'usage': {},"
+                + " 'request_id': '6996d372-b7a2-93ec-9c5d-c90904cbce2a'}");
     JsonObject rspObject = jsonObject.getAsJsonObject();
     MockResponse response = TestUtils.createMockResponse(JsonUtils.toJson(rspObject), 200);
     mockServer.enqueue(response);
@@ -48,7 +49,14 @@ public class TestVoiceEnrollment {
     // Test list voice
     jsonObject =
         JsonUtils.parse(
-            "{'output': {'voice_list': [{'gmt_create': '2024-08-20 10:49:08', 'voice_id': 'voice-nuomai-0b84d031ca224adca6354ad45c6efcd0', 'gmt_modified': '2024-08-20 10:49:08', 'status': 'OK'}, {'gmt_create': '2024-08-20 10:26:18', 'voice_id': 'voice-nuomai-2c40bd095ace495b92ca63482b28155e', 'gmt_modified': '2024-08-20 10:26:18', 'status': 'OK'}, {'gmt_create': '2024-08-19 16:23:54', 'voice_id': 'voice-nuomai-cef9dcfe86c04fa4863de6b041e669b8', 'gmt_modified': '2024-08-19 16:23:54', 'status': 'OK'}]}, 'usage': {}, 'request_id': '2828c61b-0c39-9238-b6e1-bd84e3ef9142'}");
+            "{'output': {'voice_list': [{'gmt_create': '2024-08-20 10:49:08', 'voice_id':"
+                + " 'voice-nuomai-0b84d031ca224adca6354ad45c6efcd0', 'gmt_modified': '2024-08-20"
+                + " 10:49:08', 'status': 'OK'}, {'gmt_create': '2024-08-20 10:26:18', 'voice_id':"
+                + " 'voice-nuomai-2c40bd095ace495b92ca63482b28155e', 'gmt_modified': '2024-08-20"
+                + " 10:26:18', 'status': 'OK'}, {'gmt_create': '2024-08-19 16:23:54', 'voice_id':"
+                + " 'voice-nuomai-cef9dcfe86c04fa4863de6b041e669b8', 'gmt_modified': '2024-08-19"
+                + " 16:23:54', 'status': 'OK'}]}, 'usage': {}, 'request_id':"
+                + " '2828c61b-0c39-9238-b6e1-bd84e3ef9142'}");
     rspObject = jsonObject.getAsJsonObject();
     response = TestUtils.createMockResponse(JsonUtils.toJson(rspObject), 200);
     mockServer.enqueue(response);
@@ -58,7 +66,10 @@ public class TestVoiceEnrollment {
     // Test query voice
     jsonObject =
         JsonUtils.parse(
-            " {'output': {'gmt_create': '2024-08-19 16:23:54', 'resource_link': 'http://xxxx', 'target_model': 'cosyvoice-v1', 'gmt_modified': '2024-08-19 16:23:54', 'status': 'OK'}, 'usage': {}, 'request_id': 'bc8c570e-310e-909a-9f06-93743d4ce87d'}");
+            " {'output': {'gmt_create': '2024-08-19 16:23:54', 'resource_link': 'http://xxxx',"
+                + " 'target_model': 'cosyvoice-v1', 'gmt_modified': '2024-08-19 16:23:54',"
+                + " 'status': 'OK'}, 'usage': {}, 'request_id':"
+                + " 'bc8c570e-310e-909a-9f06-93743d4ce87d'}");
     rspObject = jsonObject.getAsJsonObject();
     response = TestUtils.createMockResponse(JsonUtils.toJson(rspObject), 200);
     mockServer.enqueue(response);

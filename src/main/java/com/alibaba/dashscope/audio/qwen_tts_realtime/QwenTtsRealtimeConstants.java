@@ -2,7 +2,9 @@
 
 package com.alibaba.dashscope.audio.qwen_tts_realtime;
 
-/** @author lengjiayi */
+/**
+ * @author lengjiayi
+ */
 public class QwenTtsRealtimeConstants {
   public static final String MODALITIES = "modalities";
   public static final String VOICE = "voice";

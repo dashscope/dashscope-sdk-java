@@ -28,7 +28,9 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.WebSocket;
 
-/** @author songsong.sss */
+/**
+ * @author songsong.sss
+ */
 @Slf4j
 public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
   private SpeechSynthesisState state = SpeechSynthesisState.IDLE;

@@ -102,7 +102,8 @@ public class TestTtsV2SpeechSynthesizerV2 {
                       webSocket.send(
                           "{'header': {'task_id': '"
                               + task_id
-                              + "', 'event': 'task-finished', 'attributes': {}}, 'payload': {'output': None, 'usage': {'characters': 7}}}");
+                              + "', 'event': 'task-finished', 'attributes': {}}, 'payload':"
+                              + " {'output': None, 'usage': {'characters': 7}}}");
                       webSocket.close(1000, "close by server");
                     } else if (string.contains("continue-task")) {
                       try {

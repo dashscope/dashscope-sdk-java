@@ -24,8 +24,8 @@ import okhttp3.Response;
  * OSS upload for local multimodal files (design J8, ported from 2.x OSSUtils): two-step flow —
  * {@code GET /uploads?action=getPolicy&model=} fetches a short-lived policy certificate, then a
  * multipart POST to the returned {@code upload_host} stores the file. The resulting reference is
- * {@code oss://<upload_dir>/<fileName>}. Credentials ride on the 3.0 transport (auth
- * interceptor); failures raise the 3.0 error family.
+ * {@code oss://<upload_dir>/<fileName>}. Credentials ride on the 3.0 transport (auth interceptor);
+ * failures raise the 3.0 error family.
  */
 public final class OssUploader {
   private static final String POLICY_PATH = "/uploads";

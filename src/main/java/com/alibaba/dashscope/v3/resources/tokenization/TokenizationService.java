@@ -14,8 +14,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
- * {@code tokenization} resource (Python v2 tokenization.py parity): server-side token counting
- * over {@code POST /tokenizer}. For the local BPE tokenizer see {@link
+ * {@code tokenization} resource (Python v2 tokenization.py parity): server-side token counting over
+ * {@code POST /tokenizer}. For the local BPE tokenizer see {@link
  * com.alibaba.dashscope.v3.tokenization.TokenizerFactory}.
  */
 public final class TokenizationService {

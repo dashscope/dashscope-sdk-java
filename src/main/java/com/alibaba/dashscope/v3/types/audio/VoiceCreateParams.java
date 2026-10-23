@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Parameters for {@code audio().voices().create} (voice cloning). Named fields win over the
- * {@link Builder#extraInput(Map)} escape hatch; {@code model} overrides the default customization
- * model ({@code voice-enrollment}).
+ * Parameters for {@code audio().voices().create} (voice cloning). Named fields win over the {@link
+ * Builder#extraInput(Map)} escape hatch; {@code model} overrides the default customization model
+ * ({@code voice-enrollment}).
  */
 public final class VoiceCreateParams {
   private final String targetModel;

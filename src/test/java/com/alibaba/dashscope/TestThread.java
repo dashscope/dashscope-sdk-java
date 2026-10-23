@@ -131,7 +131,10 @@ public class TestThread {
 
   @Test
   public void testUpdate()
-      throws IOException, ApiException, NoApiKeyException, InterruptedException,
+      throws IOException,
+          ApiException,
+          NoApiKeyException,
+          InterruptedException,
           InputRequiredException {
     String inputFilePath = "./src/test/resources/threads.json";
     byte[] content = Files.readAllBytes(Paths.get(inputFilePath));

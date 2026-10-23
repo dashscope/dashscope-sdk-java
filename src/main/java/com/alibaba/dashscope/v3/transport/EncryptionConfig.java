@@ -6,8 +6,8 @@ import javax.crypto.SecretKey;
 
 /**
  * One-shot encryption material for a single encrypted-channel request (J7): server public key +
- * freshly generated AES key + IV. {@link #keyHeader()} renders the {@code X-DashScope-EncryptionKey}
- * header value.
+ * freshly generated AES key + IV. {@link #keyHeader()} renders the {@code
+ * X-DashScope-EncryptionKey} header value.
  */
 public final class EncryptionConfig {
   private final String publicKeyId;

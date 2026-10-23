@@ -26,7 +26,11 @@ class TokenizerLocalTest {
   void encodeWithSpecialTokensRoundTrips() {
     Tokenizer tokenizer = TokenizerFactory.qwen();
     String prompt =
-        "<|im_start|>system\nYour are a helpful assistant.<|im_end|>\n<|im_start|>user\nSanFrancisco is a<|im_end|>\n<|im_start|>assistant\n";
+        "<|im_start|>system\n"
+            + "Your are a helpful assistant.<|im_end|>\n"
+            + "<|im_start|>user\n"
+            + "SanFrancisco is a<|im_end|>\n"
+            + "<|im_start|>assistant\n";
     List<Integer> ids = tokenizer.encode(prompt, "all");
     assertEquals(
         Arrays.asList(

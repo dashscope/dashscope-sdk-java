@@ -73,7 +73,10 @@ public class TestTokenizor {
 
   @Test
   public void testTokenization()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
           InputRequiredException {
     server.enqueue(
         new MockResponse()

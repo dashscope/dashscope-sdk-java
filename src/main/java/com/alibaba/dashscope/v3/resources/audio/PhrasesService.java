@@ -14,10 +14,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * {@code audio.phrases} — paraformer hot phrases (audio design §1.4, Python v2 phrases parity):
- * a compile job in disguise. {@code create}/{@code update} POST {@code /fine-tunes} with {@code
- * training_type=compile_asr_phrase} and an empty file set; {@code get}/{@code list}/{@code
- * delete} hit {@code /fine-tunes/outputs}. The result's {@code phraseId} (wire aliases {@code
+ * {@code audio.phrases} — paraformer hot phrases (audio design §1.4, Python v2 phrases parity): a
+ * compile job in disguise. {@code create}/{@code update} POST {@code /fine-tunes} with {@code
+ * training_type=compile_asr_phrase} and an empty file set; {@code get}/{@code list}/{@code delete}
+ * hit {@code /fine-tunes/outputs}. The result's {@code phraseId} (wire aliases {@code
  * phrase_id}/{@code finetuned_output}/{@code job_id}) is what {@code asr.recognize} consumes.
  */
 public final class PhrasesService {
@@ -63,8 +63,8 @@ public final class PhrasesService {
   public Phrase get(String phraseId, RequestOptions options) {
     CustomizationSupport.requireId(phraseId, "phrase_id");
     return CustomizationSupport.parse(
-        transport.executeGet(OUTPUTS_PATH + "/" + phraseId, null, CustomizationSupport.MODULE,
-            options),
+        transport.executeGet(
+            OUTPUTS_PATH + "/" + phraseId, null, CustomizationSupport.MODULE, options),
         Phrase.class);
   }
 

@@ -52,8 +52,7 @@ public final class ModelsService {
       }
       // totalCount stays the pre-filter total of the whole catalog (Python parity).
       result =
-          new ModelList(
-              result.getPageNo(), result.getPageSize(), result.getTotalCount(), filtered);
+          new ModelList(result.getPageNo(), result.getPageSize(), result.getTotalCount(), filtered);
     }
     fillEnvelope(result, envelope);
     return result;

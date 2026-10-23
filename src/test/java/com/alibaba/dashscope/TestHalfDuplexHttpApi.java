@@ -80,7 +80,8 @@ public class TestHalfDuplexHttpApi {
     DashScopeResult result = syncApi.call(param);
     assertEquals(
         JsonUtils.toJson(result),
-        "{\"headers\":{\"content-length\":\"2\",\"content-type\":\"application/json; charset=utf-8\"},\"statusCode\":200,\"code\":\"\",\"message\":\"\"}");
+        "{\"headers\":{\"content-length\":\"2\",\"content-type\":\"application/json;"
+            + " charset=utf-8\"},\"statusCode\":200,\"code\":\"\",\"message\":\"\"}");
     server.close();
   }
 

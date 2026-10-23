@@ -191,7 +191,10 @@ public class TestAssistants {
 
   @Test
   public void testRetrieve()
-      throws IOException, ApiException, NoApiKeyException, InterruptedException,
+      throws IOException,
+          ApiException,
+          NoApiKeyException,
+          InterruptedException,
           InputRequiredException {
     String inputFilePath = "./src/test/resources/assistant.json";
     byte[] content = Files.readAllBytes(Paths.get(inputFilePath));
@@ -211,7 +214,10 @@ public class TestAssistants {
 
   @Test
   public void testUpdate()
-      throws IOException, ApiException, NoApiKeyException, InterruptedException,
+      throws IOException,
+          ApiException,
+          NoApiKeyException,
+          InterruptedException,
           InputRequiredException {
     String inputFilePath = "./src/test/resources/assistant.json";
     byte[] content = Files.readAllBytes(Paths.get(inputFilePath));
@@ -253,7 +259,10 @@ public class TestAssistants {
 
   @Test
   public void testDelete()
-      throws IOException, ApiException, NoApiKeyException, InterruptedException,
+      throws IOException,
+          ApiException,
+          NoApiKeyException,
+          InterruptedException,
           InputRequiredException {
     String id = UUID.randomUUID().toString();
     String deleteStatusString =
@@ -271,7 +280,10 @@ public class TestAssistants {
 
   @Test
   public void testCreateFile()
-      throws IOException, ApiException, NoApiKeyException, InterruptedException,
+      throws IOException,
+          ApiException,
+          NoApiKeyException,
+          InterruptedException,
           InputRequiredException {
     String inputFilePath = "./src/test/resources/assistant.json";
     byte[] content = Files.readAllBytes(Paths.get(inputFilePath));
@@ -296,7 +308,10 @@ public class TestAssistants {
 
   @Test
   public void testRetrieveFile()
-      throws IOException, ApiException, NoApiKeyException, InterruptedException,
+      throws IOException,
+          ApiException,
+          NoApiKeyException,
+          InterruptedException,
           InputRequiredException {
     String inputFilePath = "./src/test/resources/assistant.json";
     byte[] content = Files.readAllBytes(Paths.get(inputFilePath));
@@ -320,7 +335,10 @@ public class TestAssistants {
 
   @Test
   public void testListFile()
-      throws IOException, ApiException, NoApiKeyException, InterruptedException,
+      throws IOException,
+          ApiException,
+          NoApiKeyException,
+          InterruptedException,
           InputRequiredException {
     String inputFilePath = "./src/test/resources/assistant.json";
     byte[] content = Files.readAllBytes(Paths.get(inputFilePath));

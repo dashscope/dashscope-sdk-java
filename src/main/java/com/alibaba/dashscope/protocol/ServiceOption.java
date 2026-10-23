@@ -9,21 +9,25 @@ import com.alibaba.dashscope.utils.Constants;
 public interface ServiceOption {
   public default String getTaskGroup() {
     return null;
-  };
+  }
+  ;
 
   public default String getTask() {
     return null;
-  };
+  }
+  ;
 
   public default String getFunction() {
     return null;
-  };
+  }
+  ;
 
   public StreamingMode getStreamingMode();
 
   public default OutputMode getOutputMode() {
     return null;
-  };
+  }
+  ;
 
   public Protocol getProtocol();
 

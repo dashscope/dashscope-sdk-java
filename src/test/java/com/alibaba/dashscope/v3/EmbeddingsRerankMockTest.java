@@ -90,8 +90,7 @@ class EmbeddingsRerankMockTest {
     RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
     assertEquals("/services/embeddings/text-embedding/text-embedding", request.getPath());
     assertEquals(
-        "java-sdk/" + SdkInfo.VERSION + "/embeddings",
-        request.getHeader("x-dashscope-sdk-client"));
+        "java-sdk/" + SdkInfo.VERSION + "/embeddings", request.getHeader("x-dashscope-sdk-client"));
     JsonNode body = MAPPER.readTree(request.getBody().readUtf8());
     assertEquals("text-embedding-v3", body.get("model").asText());
     assertEquals(2, body.get("input").get("texts").size());

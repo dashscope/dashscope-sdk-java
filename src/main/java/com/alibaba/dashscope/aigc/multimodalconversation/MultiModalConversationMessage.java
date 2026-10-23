@@ -11,7 +11,9 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @Deprecated
 public class MultiModalConversationMessage {
-  /** @Deprecated use MultiModalMessage instead. */
+  /**
+   * @Deprecated use MultiModalMessage instead.
+   */
 
   /** The role, can be `user` and `bot`. */
   String role;

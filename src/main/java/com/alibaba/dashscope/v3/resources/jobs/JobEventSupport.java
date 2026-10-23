@@ -9,10 +9,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
 /**
- * Shared payload/error mapping for the job-event streams (fine-tunes/deployments; Python v2
- * _sse.py parity): payloads parse as JSON when possible, and an {@code event:error} frame maps
- * through the catalog — {@code status:} absent means a business failure on an HTTP-200 stream,
- * so the body's own code picks the class.
+ * Shared payload/error mapping for the job-event streams (fine-tunes/deployments; Python v2 _sse.py
+ * parity): payloads parse as JSON when possible, and an {@code event:error} frame maps through the
+ * catalog — {@code status:} absent means a business failure on an HTTP-200 stream, so the body's
+ * own code picks the class.
  */
 public final class JobEventSupport {
   private JobEventSupport() {}

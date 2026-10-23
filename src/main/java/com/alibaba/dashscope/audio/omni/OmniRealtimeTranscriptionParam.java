@@ -4,7 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.Data;
 
-/** @author songsong.shao */
+/**
+ * @author songsong.shao
+ */
 @Data
 public class OmniRealtimeTranscriptionParam {
   /** input audio sample rate */

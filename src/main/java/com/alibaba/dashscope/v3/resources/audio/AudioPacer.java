@@ -15,10 +15,10 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.locks.LockSupport;
 
 /**
- * PCM chunking + pacing helpers (audio design §4/§12): chunk size is derived from the sample
- * rate — one chunk carries exactly {@value #CHUNK_MILLIS} ms of audio, so the classic "sleep 100
- * ms per chunk" upload loop stays real-time at any format. This fixes the 2.x pattern of a fixed
- * 16 KB chunk + sleep(100) that drifted off real time for non-16kHz/mono/16-bit sources.
+ * PCM chunking + pacing helpers (audio design §4/§12): chunk size is derived from the sample rate —
+ * one chunk carries exactly {@value #CHUNK_MILLIS} ms of audio, so the classic "sleep 100 ms per
+ * chunk" upload loop stays real-time at any format. This fixes the 2.x pattern of a fixed 16 KB
+ * chunk + sleep(100) that drifted off real time for non-16kHz/mono/16-bit sources.
  */
 public final class AudioPacer {
   private static final long CHUNK_MILLIS = 100;
@@ -42,8 +42,8 @@ public final class AudioPacer {
 
   /**
    * Lazily split a PCM file into {@code bytesPerChunk} byte chunks (the final short chunk is
-   * included; an empty file yields no chunks). The file is opened when iteration starts and
-   * closed when it ends.
+   * included; an empty file yields no chunks). The file is opened when iteration starts and closed
+   * when it ends.
    */
   public static Iterable<byte[]> pcmChunks(Path path, int bytesPerChunk) {
     if (bytesPerChunk <= 0) {

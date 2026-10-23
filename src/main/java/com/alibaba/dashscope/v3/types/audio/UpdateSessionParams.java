@@ -12,9 +12,9 @@ import java.util.Map;
  * Session configuration for {@code RealtimeSession.updateSession} (audio design §1.3).
  *
  * <p>Only explicitly-set fields are serialized — unlike 2.x, unset fields are omitted rather than
- * sent with defaults. To force a JSON {@code null} on the wire (the explicit-null sentinel, e.g.
- * to clear a server-side setting), put a {@code null} value into {@link #parameters}; a typed
- * field that was never set simply does not appear.
+ * sent with defaults. To force a JSON {@code null} on the wire (the explicit-null sentinel, e.g. to
+ * clear a server-side setting), put a {@code null} value into {@link #parameters}; a typed field
+ * that was never set simply does not appear.
  *
  * <p>{@code enableInputAudioTranscription}/{@code enableTurnDetection} follow Python semantics:
  * {@code TRUE} emits the config object, {@code FALSE} emits an explicit {@code null} (disables the
@@ -369,7 +369,10 @@ public final class UpdateSessionParams {
       return this;
     }
 
-    /** Legacy flat format (e.g. {@code pcm16}/{@code pcm24}); ignored when {@link #inputAudio} is set. */
+    /**
+     * Legacy flat format (e.g. {@code pcm16}/{@code pcm24}); ignored when {@link #inputAudio} is
+     * set.
+     */
     public Builder inputAudioFormat(String inputAudioFormat) {
       this.inputAudioFormat = inputAudioFormat;
       return this;

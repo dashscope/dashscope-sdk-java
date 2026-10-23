@@ -6,8 +6,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-/** Parameters for {@code embeddings.create}. Wire shape: {@code {model, input:{texts},
- * parameters:{...}}}. */
+/**
+ * Parameters for {@code embeddings.create}. Wire shape: {@code {model, input:{texts},
+ * parameters:{...}}}.
+ */
 public final class EmbeddingCreateParams {
   private final String model;
   private final List<String> texts;

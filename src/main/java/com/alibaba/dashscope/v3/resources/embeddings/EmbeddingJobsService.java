@@ -13,8 +13,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Map;
 
 /**
- * Async batch-embedding task facade (design §3, Python v2 EmbeddingJobs parity): the submit goes
- * to the same service path as the sync endpoint with the async header and a file-url input; the
+ * Async batch-embedding task facade (design §3, Python v2 EmbeddingJobs parity): the submit goes to
+ * the same service path as the sync endpoint with the async header and a file-url input; the
  * finished {@link Job}'s {@code getResultUrl()} carries the output file.
  */
 public final class EmbeddingJobsService {

@@ -105,8 +105,8 @@ public final class ResolvedConfig {
 
   /**
    * WebSocket ping interval (audio design §12#1). {@link Duration#ZERO} = off (aligned with
-   * Python); behind NATs or proxies that silently drop idle connections, 20–30 s is recommended
-   * so half-open connections are detected instead of hanging forever.
+   * Python); behind NATs or proxies that silently drop idle connections, 20–30 s is recommended so
+   * half-open connections are detected instead of hanging forever.
    */
   public Duration getWsPingInterval() {
     return wsPingInterval;

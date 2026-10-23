@@ -5,7 +5,9 @@ import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
 
-/** @author songsong.shao */
+/**
+ * @author songsong.shao
+ */
 @Builder
 @Data
 public class OmniRealtimeTranslationParam {

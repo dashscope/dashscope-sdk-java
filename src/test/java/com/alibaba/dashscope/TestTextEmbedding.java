@@ -83,7 +83,10 @@ public class TestTextEmbedding {
 
   @Test
   public void testEmbeddings()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
           InputRequiredException {
     server.enqueue(
         new MockResponse()

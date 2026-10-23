@@ -6,14 +6,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Parameters for {@code apps().completions().create / createStreaming}. Builder validates
- * required fields at {@code build()} (design §3). Wire shape: {@code {input:{prompt|messages,
- * ...}, parameters:{...}}} — known model knobs land in {@code parameters}; unknown passthrough
- * only via {@link Builder#parameters(Map)}.
+ * Parameters for {@code apps().completions().create / createStreaming}. Builder validates required
+ * fields at {@code build()} (design §3). Wire shape: {@code {input:{prompt|messages, ...},
+ * parameters:{...}}} — known model knobs land in {@code parameters}; unknown passthrough only via
+ * {@link Builder#parameters(Map)}.
  *
  * <p>Send {@code prompt} for one turn, {@code messages} for a transcript the caller maintains, or
- * both — {@code prompt} is then appended as the latest user turn. {@code sessionId} /
- * {@code memoryId} ask the service to keep the conversation state instead.
+ * both — {@code prompt} is then appended as the latest user turn. {@code sessionId} / {@code
+ * memoryId} ask the service to keep the conversation state instead.
  */
 public final class AppCompletionCreateParams {
   private final String appId;
@@ -251,8 +251,7 @@ public final class AppCompletionCreateParams {
       if (appId == null || appId.isEmpty()) {
         throw new IllegalArgumentException("app_id is required");
       }
-      if ((prompt == null || prompt.isEmpty())
-          && (messages == null || messages.isEmpty())) {
+      if ((prompt == null || prompt.isEmpty()) && (messages == null || messages.isEmpty())) {
         throw new IllegalArgumentException("prompt or messages is required");
       }
       return new AppCompletionCreateParams(this);

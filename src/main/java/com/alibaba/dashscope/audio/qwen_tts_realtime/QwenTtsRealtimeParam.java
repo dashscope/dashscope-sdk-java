@@ -11,7 +11,9 @@ import lombok.Getter;
 import lombok.Singular;
 import lombok.experimental.SuperBuilder;
 
-/** @author lengjiayi */
+/**
+ * @author lengjiayi
+ */
 @Data
 @SuperBuilder
 public class QwenTtsRealtimeParam {

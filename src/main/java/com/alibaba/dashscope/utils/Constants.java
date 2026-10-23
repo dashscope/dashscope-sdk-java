@@ -33,7 +33,8 @@ public final class Constants {
 
   public static final String DASHSCOPE_HTTP_BASE_URL_ENV = EnvNames.DASHSCOPE_HTTP_BASE_URL;
 
-  public static final String DASHSCOPE_WEBSOCKET_BASE_URL_ENV = EnvNames.DASHSCOPE_WEBSOCKET_BASE_URL;
+  public static final String DASHSCOPE_WEBSOCKET_BASE_URL_ENV =
+      EnvNames.DASHSCOPE_WEBSOCKET_BASE_URL;
   public static final String DASHSCOPE_WEBSOCKET_OMNI_BASE_URL_ENV =
       EnvNames.DASHSCOPE_WEBSOCKET_OMNI_BASE_URL;
   public static final String DASHSCOPE_WEBSOCKET_QWEN_TTS_REALTIME_BASE_URL_ENV =
@@ -48,7 +49,8 @@ public final class Constants {
       EnvNames.DASHSCOPE_CONNECTION_IDLE_TIME;
   public static final String DASHSCOPE_WRITE_TIMEOUT_ENV = EnvNames.DASHSCOPE_WRITE_TIMEOUT;
   public static final String DASHSCOPE_READ_TIMEOUT_ENV = EnvNames.DASHSCOPE_READ_TIMEOUT;
-  public static final String DASHSCOPE_CONNECTION_TIMEOUT_ENV = EnvNames.DASHSCOPE_CONNECTION_TIMEOUT;
+  public static final String DASHSCOPE_CONNECTION_TIMEOUT_ENV =
+      EnvNames.DASHSCOPE_CONNECTION_TIMEOUT;
 
   public static final int DASHSCOPE_WEBSOCKET_FAILED_STATUS_CODE = 44;
 

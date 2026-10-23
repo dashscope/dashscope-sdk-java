@@ -40,7 +40,11 @@ public class TestTikTokenTokenizer {
   @Test
   public void testSplitByStrings() throws NoSpecialTokenExists, UnSupportedSpecialTokenMode {
     String prompt =
-        "<|im_start|>system\nYour are a helpful assistant.<|im_end|>\n<|im_start|>user\nSanFrancisco is a<|im_end|>\n<|im_start|>assistant\n";
+        "<|im_start|>system\n"
+            + "Your are a helpful assistant.<|im_end|>\n"
+            + "<|im_start|>user\n"
+            + "SanFrancisco is a<|im_end|>\n"
+            + "<|im_start|>assistant\n";
     List<String> spliters = Arrays.asList("<|im_start|>", "<|im_end|>");
     List<String> chunks = StringUtils.splitByStrings(prompt, spliters);
     for (String chunk : chunks) {
@@ -65,7 +69,11 @@ public class TestTikTokenTokenizer {
   public void testEncode() throws NoSpecialTokenExists, UnSupportedSpecialTokenMode {
     Tokenizer tokenizer = TokenizerFactory.qwen();
     String prompt =
-        "<|im_start|>system\nYour are a helpful assistant.<|im_end|>\n<|im_start|>user\nSanFrancisco is a<|im_end|>\n<|im_start|>assistant\n";
+        "<|im_start|>system\n"
+            + "Your are a helpful assistant.<|im_end|>\n"
+            + "<|im_start|>user\n"
+            + "SanFrancisco is a<|im_end|>\n"
+            + "<|im_start|>assistant\n";
     List<Integer> ids = tokenizer.encode(prompt, "all");
     // python: 24 tokens [151644, 8948, 198, 7771, 525, 264, 10950, 17847, 13,
     // 151645, 198, 151644,

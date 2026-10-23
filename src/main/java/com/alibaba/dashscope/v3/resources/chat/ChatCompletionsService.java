@@ -3,13 +3,13 @@ package com.alibaba.dashscope.v3.resources.chat;
 
 import com.alibaba.dashscope.RequestOptions;
 import com.alibaba.dashscope.v3.transport.HttpTransport;
+import com.alibaba.dashscope.v3.transport.JsonSupport;
 import com.alibaba.dashscope.v3.transport.ResponseEnvelope;
+import com.alibaba.dashscope.v3.transport.sse.SseStream;
+import com.alibaba.dashscope.v3.types.common.ResponseStream;
 import com.alibaba.dashscope.v3.types.completions.ChatCompletion;
 import com.alibaba.dashscope.v3.types.completions.ChatCompletionChunk;
 import com.alibaba.dashscope.v3.types.completions.ChatCompletionCreateParams;
-import com.alibaba.dashscope.v3.types.common.ResponseStream;
-import com.alibaba.dashscope.v3.transport.JsonSupport;
-import com.alibaba.dashscope.v3.transport.sse.SseStream;
 
 /** {@code chat.completions} resource: {@code create} / {@code createStreaming}. */
 public final class ChatCompletionsService {
@@ -40,9 +40,11 @@ public final class ChatCompletionsService {
     return completion;
   }
 
-  /** Streaming create. Always close the stream (try-with-resources); the iterator is
-   * single-use. In-stream error frames throw (or surface as a final error chunk under
-   * {@code raiseOnError(false)}). */
+  /**
+   * Streaming create. Always close the stream (try-with-resources); the iterator is single-use.
+   * In-stream error frames throw (or surface as a final error chunk under {@code
+   * raiseOnError(false)}).
+   */
   public ResponseStream<ChatCompletionChunk> createStreaming(ChatCompletionCreateParams params) {
     return createStreaming(params, RequestOptions.NONE);
   }

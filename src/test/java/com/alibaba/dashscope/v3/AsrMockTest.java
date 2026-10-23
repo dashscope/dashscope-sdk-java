@@ -4,7 +4,6 @@ package com.alibaba.dashscope.v3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -13,10 +12,10 @@ import com.alibaba.dashscope.v3.errors.ApiStatusException;
 import com.alibaba.dashscope.v3.errors.ApiTimeoutException;
 import com.alibaba.dashscope.v3.resources.audio.RecognitionSession;
 import com.alibaba.dashscope.v3.resources.jobs.Job;
+import com.alibaba.dashscope.v3.transport.ws.WsConnection;
 import com.alibaba.dashscope.v3.types.audio.AsrRecognizeParams;
 import com.alibaba.dashscope.v3.types.audio.AsrResult;
 import com.alibaba.dashscope.v3.types.audio.AsrTranscribeParams;
-import com.alibaba.dashscope.v3.transport.ws.WsConnection;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -237,17 +236,21 @@ class AsrMockTest {
   void preTaskIdWinsOverRandomUuid() throws Exception {
     AsrServerSocket socket = enqueueUpgrade();
     try (RecognitionSession asr =
-        client.audio().asr().recognize(
-            AsrRecognizeParams.builder()
-                .model("paraformer-realtime-v2")
-                .format("pcm")
-                .sampleRate(16000)
-                .preTaskId("fixed-task-id")
-                .build())) {
+        client
+            .audio()
+            .asr()
+            .recognize(
+                AsrRecognizeParams.builder()
+                    .model("paraformer-realtime-v2")
+                    .format("pcm")
+                    .sampleRate(16000)
+                    .preTaskId("fixed-task-id")
+                    .build())) {
       asr.start();
       JsonNode runTask = socket.nextText();
       assertEquals("fixed-task-id", runTask.get("header").get("task_id").asText());
-      assertEquals("fixed-task-id", runTask.get("payload").get("parameters").get("pre_task_id").asText());
+      assertEquals(
+          "fixed-task-id", runTask.get("payload").get("parameters").get("pre_task_id").asText());
       assertEquals("fixed-task-id", asr.getTaskId());
     }
   }
@@ -256,11 +259,14 @@ class AsrMockTest {
   void phraseIdMapsToTopLevelResources() throws Exception {
     AsrServerSocket socket = enqueueUpgrade();
     try (RecognitionSession asr =
-        client.audio().asr().recognize(
-            AsrRecognizeParams.builder()
-                .model("paraformer-realtime-v2")
-                .phraseId("phrase-123")
-                .build())) {
+        client
+            .audio()
+            .asr()
+            .recognize(
+                AsrRecognizeParams.builder()
+                    .model("paraformer-realtime-v2")
+                    .phraseId("phrase-123")
+                    .build())) {
       asr.start();
       JsonNode runTask = socket.nextText();
       JsonNode resources = runTask.get("payload").get("resources");
@@ -278,14 +284,16 @@ class AsrMockTest {
       asr.start();
       socket.nextText();
       String taskId = asr.getTaskId();
-      socket.send(
-          taskId,
-          "result-generated",
-          "{\"output\":{\"sentence\":{\"text\":\"你\"}}}");
-      socket.socket.get().send(
-          "{\"header\":{\"task_id\":\"" + taskId + "\",\"event\":\"task-failed\","
-              + "\"error_code\":\"DecodingError\",\"error_message\":\"decode failed\"},"
-              + "\"payload\":{}}");
+      socket.send(taskId, "result-generated", "{\"output\":{\"sentence\":{\"text\":\"你\"}}}");
+      socket
+          .socket
+          .get()
+          .send(
+              "{\"header\":{\"task_id\":\""
+                  + taskId
+                  + "\",\"event\":\"task-failed\","
+                  + "\"error_code\":\"DecodingError\",\"error_message\":\"decode failed\"},"
+                  + "\"payload\":{}}");
 
       List<String> texts = new ArrayList<>();
       ApiStatusException e =
@@ -365,21 +373,24 @@ class AsrMockTest {
             .setHeader("Content-Type", "application/json")
             .setBody(
                 "{\"output\":{\"task_id\":\"tx-1\",\"task_status\":\"PENDING\"},"
-                  + "\"request_id\":\"r-submit\"}"));
+                    + "\"request_id\":\"r-submit\"}"));
     server.enqueue(
         new MockResponse()
             .setResponseCode(200)
             .setHeader("Content-Type", "application/json")
             .setBody(
                 "{\"output\":{\"task_id\":\"tx-1\",\"task_status\":\"SUCCEEDED\","
-                  + "\"results\":[{\"transcription_url\":\"http://x/1.json\"}]},"
-                  + "\"usage\":{\"input_tokens\":10},\"request_id\":\"r-fetch\"}"));
+                    + "\"results\":[{\"transcription_url\":\"http://x/1.json\"}]},"
+                    + "\"usage\":{\"input_tokens\":10},\"request_id\":\"r-fetch\"}"));
 
     Job job =
-        client.audio().asr().transcribe(
-            AsrTranscribeParams.builder()
-                .fileUrls(java.util.Arrays.asList("http://files/a.wav"))
-                .build());
+        client
+            .audio()
+            .asr()
+            .transcribe(
+                AsrTranscribeParams.builder()
+                    .fileUrls(java.util.Arrays.asList("http://files/a.wav"))
+                    .build());
 
     assertEquals("tx-1", job.getTaskId());
     assertTrue(job.isSucceeded());

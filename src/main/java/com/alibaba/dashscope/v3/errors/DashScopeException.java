@@ -5,8 +5,10 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/** Base class for all DashScope 3.0 SDK errors. Unchecked by design (2.x checked exceptions
- * leaked into every signature). */
+/**
+ * Base class for all DashScope 3.0 SDK errors. Unchecked by design (2.x checked exceptions leaked
+ * into every signature).
+ */
 public class DashScopeException extends RuntimeException {
   private final String code;
   private final Integer statusCode;

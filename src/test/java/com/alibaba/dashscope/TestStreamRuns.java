@@ -111,8 +111,12 @@ public class TestStreamRuns {
 
   @Test
   public void testCreateStreamRun()
-      throws IOException, ApiException, NoApiKeyException, InterruptedException,
-          InputRequiredException, InvalidateParameter {
+      throws IOException,
+          ApiException,
+          NoApiKeyException,
+          InterruptedException,
+          InputRequiredException,
+          InvalidateParameter {
     String inputFilePath = "./src/test/resources/stream_runs.json";
     byte[] content = Files.readAllBytes(Paths.get(inputFilePath));
     String jsonContent = new String(content, StandardCharsets.UTF_8);
@@ -148,15 +152,23 @@ public class TestStreamRuns {
     TextMessageParam msg2 =
         TextMessageParam.builder().role("user").content(UUID.randomUUID().toString()).build();
     RunParam param =
-        RunParam.builder().assistantId(assistantId).model(model).instructions(instructions)
-            .additionalInstructions(additionalInstructions).additionalMessage(msg2)
+        RunParam.builder()
+            .assistantId(assistantId)
+            .model(model)
+            .instructions(instructions)
+            .additionalInstructions(additionalInstructions)
+            .additionalMessage(msg2)
             .additionalMessage(msg1)
             .tools(
                 Arrays.asList(
                     buildFunction(), ToolQuarkSearch.builder().build(), ToolWanX.builder().build()))
-            .metadata(metadata).temperature(temperature).maxCompletionTokens(maxCompletionTokens)
-            .maxPromptTokens(maxPromptTokens).truncationStrategy(truncationStrategy)
-            .toolChoice(ToolQuarkSearch.builder().build()).stream(true)
+            .metadata(metadata)
+            .temperature(temperature)
+            .maxCompletionTokens(maxCompletionTokens)
+            .maxPromptTokens(maxPromptTokens)
+            .truncationStrategy(truncationStrategy)
+            .toolChoice(ToolQuarkSearch.builder().build())
+            .stream(true)
             .build();
 
     Runs runs = new Runs();
@@ -177,8 +189,12 @@ public class TestStreamRuns {
 
   @Test
   public void testCreateStreamSubmitRunOutputs()
-      throws IOException, ApiException, NoApiKeyException, InterruptedException,
-          InputRequiredException, InvalidateParameter {
+      throws IOException,
+          ApiException,
+          NoApiKeyException,
+          InterruptedException,
+          InputRequiredException,
+          InvalidateParameter {
     String inputFilePath = "./src/test/resources/stream_runs.json";
     byte[] content = Files.readAllBytes(Paths.get(inputFilePath));
     String jsonContent = new String(content, StandardCharsets.UTF_8);
@@ -215,15 +231,23 @@ public class TestStreamRuns {
     TextMessageParam msg2 =
         TextMessageParam.builder().role("user").content(UUID.randomUUID().toString()).build();
     RunParam param =
-        RunParam.builder().assistantId(assistantId).model(model).instructions(instructions)
-            .additionalInstructions(additionalInstructions).additionalMessage(msg2)
+        RunParam.builder()
+            .assistantId(assistantId)
+            .model(model)
+            .instructions(instructions)
+            .additionalInstructions(additionalInstructions)
+            .additionalMessage(msg2)
             .additionalMessage(msg1)
             .tools(
                 Arrays.asList(
                     buildFunction(), ToolQuarkSearch.builder().build(), ToolWanX.builder().build()))
-            .metadata(metadata).temperature(temperature).maxCompletionTokens(maxCompletionTokens)
-            .maxPromptTokens(maxPromptTokens).truncationStrategy(truncationStrategy)
-            .toolChoice(ToolQuarkSearch.builder().build()).stream(true)
+            .metadata(metadata)
+            .temperature(temperature)
+            .maxCompletionTokens(maxCompletionTokens)
+            .maxPromptTokens(maxPromptTokens)
+            .truncationStrategy(truncationStrategy)
+            .toolChoice(ToolQuarkSearch.builder().build())
+            .stream(true)
             .build();
 
     Runs runs = new Runs();
@@ -277,8 +301,12 @@ public class TestStreamRuns {
 
   @Test
   public void testCreateStreamThreadAndRun()
-      throws IOException, ApiException, NoApiKeyException, InterruptedException,
-          InputRequiredException, InvalidateParameter {
+      throws IOException,
+          ApiException,
+          NoApiKeyException,
+          InterruptedException,
+          InputRequiredException,
+          InvalidateParameter {
     String inputFilePath = "./src/test/resources/stream_runs.json";
     byte[] content = Files.readAllBytes(Paths.get(inputFilePath));
     String jsonContent = new String(content, StandardCharsets.UTF_8);
@@ -329,15 +357,24 @@ public class TestStreamRuns {
     ThreadParam threadParam =
         ThreadParam.builder().message(threadMsg1).message(threadMsg2).metadata(metadata).build();
     ThreadAndRunParam param =
-        ThreadAndRunParam.builder().thread(threadParam).assistantId(assistantId).model(model)
-            .instructions(instructions).additionalInstructions(additionalInstructions)
-            .additionalMessage(msg2).additionalMessage(msg1)
+        ThreadAndRunParam.builder()
+            .thread(threadParam)
+            .assistantId(assistantId)
+            .model(model)
+            .instructions(instructions)
+            .additionalInstructions(additionalInstructions)
+            .additionalMessage(msg2)
+            .additionalMessage(msg1)
             .tools(
                 Arrays.asList(
                     buildFunction(), ToolQuarkSearch.builder().build(), ToolWanX.builder().build()))
-            .metadata(metadata).temperature(temperature).maxCompletionTokens(maxCompletionTokens)
-            .maxPromptTokens(maxPromptTokens).truncationStrategy(truncationStrategy)
-            .toolChoice(ToolQuarkSearch.builder().build()).stream(true)
+            .metadata(metadata)
+            .temperature(temperature)
+            .maxCompletionTokens(maxCompletionTokens)
+            .maxPromptTokens(maxPromptTokens)
+            .truncationStrategy(truncationStrategy)
+            .toolChoice(ToolQuarkSearch.builder().build())
+            .stream(true)
             .build();
 
     Runs runs = new Runs();
@@ -360,8 +397,12 @@ public class TestStreamRuns {
 
   @Test
   public void testCreateStreamRunCallBack()
-      throws IOException, ApiException, NoApiKeyException, InterruptedException,
-          InputRequiredException, InvalidateParameter {
+      throws IOException,
+          ApiException,
+          NoApiKeyException,
+          InterruptedException,
+          InputRequiredException,
+          InvalidateParameter {
     String inputFilePath = "./src/test/resources/stream_runs.json";
     byte[] content = Files.readAllBytes(Paths.get(inputFilePath));
     String jsonContent = new String(content, StandardCharsets.UTF_8);
@@ -398,15 +439,23 @@ public class TestStreamRuns {
     TextMessageParam msg2 =
         TextMessageParam.builder().role("user").content(UUID.randomUUID().toString()).build();
     RunParam param =
-        RunParam.builder().assistantId(assistantId).model(model).instructions(instructions)
-            .additionalInstructions(additionalInstructions).additionalMessage(msg2)
+        RunParam.builder()
+            .assistantId(assistantId)
+            .model(model)
+            .instructions(instructions)
+            .additionalInstructions(additionalInstructions)
+            .additionalMessage(msg2)
             .additionalMessage(msg1)
             .tools(
                 Arrays.asList(
                     buildFunction(), ToolQuarkSearch.builder().build(), ToolWanX.builder().build()))
-            .metadata(metadata).temperature(temperature).maxCompletionTokens(maxCompletionTokens)
-            .maxPromptTokens(maxPromptTokens).truncationStrategy(truncationStrategy)
-            .toolChoice(ToolQuarkSearch.builder().build()).stream(true)
+            .metadata(metadata)
+            .temperature(temperature)
+            .maxCompletionTokens(maxCompletionTokens)
+            .maxPromptTokens(maxPromptTokens)
+            .truncationStrategy(truncationStrategy)
+            .toolChoice(ToolQuarkSearch.builder().build())
+            .stream(true)
             .build();
 
     Runs runs = new Runs();

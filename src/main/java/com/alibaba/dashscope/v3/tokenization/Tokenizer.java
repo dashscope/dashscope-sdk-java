@@ -37,8 +37,8 @@ public interface Tokenizer {
   /**
    * Decode token ids to String.
    *
-   * @param ids The input token ids, eg: [2610, 525, 264, 10950, 17847, 13], will be decoded to
-   *     "You are a helpful assistant."
+   * @param ids The input token ids, eg: [2610, 525, 264, 10950, 17847, 13], will be decoded to "You
+   *     are a helpful assistant."
    * @return The token ids corresponding string.
    */
   String decode(List<Integer> ids);

@@ -1,7 +1,6 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.v3.resources.finetunes;
 
-import com.alibaba.dashscope.v3.transport.JsonSupport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 

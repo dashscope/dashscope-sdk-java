@@ -12,9 +12,9 @@ import okhttp3.mockwebserver.MockResponse;
 import okio.ByteString;
 
 /**
- * Server-side WebSocket players for the examples dry-run: reactive counterparts of the v3
- * task protocol ({@code /api-ws/v1/inference}) and the realtime protocol ({@code
- * /api-ws/v1/realtime}), mirroring the SDK's own mock tests.
+ * Server-side WebSocket players for the examples dry-run: reactive counterparts of the v3 task
+ * protocol ({@code /api-ws/v1/inference}) and the realtime protocol ({@code /api-ws/v1/realtime}),
+ * mirroring the SDK's own mock tests.
  */
 public final class MockWs {
   private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -55,9 +55,9 @@ public final class MockWs {
   }
 
   /**
-   * Task protocol (ASR recognition, TTS synthesis, reusable connections): answers {@code
-   * run-task} with task-started plus one canned payload (sentence for asr, binary PCM for tts)
-   * and {@code finish-task} with task-finished carrying usage.
+   * Task protocol (ASR recognition, TTS synthesis, reusable connections): answers {@code run-task}
+   * with task-started plus one canned payload (sentence for asr, binary PCM for tts) and {@code
+   * finish-task} with task-finished carrying usage.
    */
   public static final class TaskSocket extends WebSocketListener {
     @Override
@@ -112,8 +112,8 @@ public final class MockWs {
   }
 
   /**
-   * Realtime protocol: answers session.update, drives one response on commit (dialog models) or
-   * on the first audio append (livetranslate), and finishes the session on session.finish.
+   * Realtime protocol: answers session.update, drives one response on commit (dialog models) or on
+   * the first audio append (livetranslate), and finishes the session on session.finish.
    */
   public static final class RealtimeSocket extends WebSocketListener {
     private final boolean translation;
@@ -130,9 +130,7 @@ public final class MockWs {
         String type = frame.path("type").asText();
         switch (type) {
           case "session.update":
-            send(
-                webSocket,
-                "{\"type\":\"session.updated\",\"session\":{\"id\":\"sess-dry\"}}");
+            send(webSocket, "{\"type\":\"session.updated\",\"session\":{\"id\":\"sess-dry\"}}");
             break;
           case "input_audio_buffer.append":
             if (translation && responseSent.compareAndSet(false, true)) {
@@ -145,9 +143,7 @@ public final class MockWs {
             }
             break;
           case "session.finish":
-            send(
-                webSocket,
-                "{\"type\":\"session.finished\",\"session\":{\"id\":\"sess-dry\"}}");
+            send(webSocket, "{\"type\":\"session.finished\",\"session\":{\"id\":\"sess-dry\"}}");
             break;
           default:
             break;
@@ -171,9 +167,7 @@ public final class MockWs {
 
     private void emitDialog(WebSocket webSocket) {
       sendAudioDelta(webSocket);
-      send(
-          webSocket,
-          "{\"type\":\"response.audio_transcript.done\",\"transcript\":\"你好\"}");
+      send(webSocket, "{\"type\":\"response.audio_transcript.done\",\"transcript\":\"你好\"}");
       sendResponseDone(webSocket);
     }
 
@@ -183,9 +177,7 @@ public final class MockWs {
           "{\"type\":\"conversation.item.input_audio_transcription.completed\","
               + "\"transcript\":\"你好\"}");
       sendAudioDelta(webSocket);
-      send(
-          webSocket,
-          "{\"type\":\"response.audio_transcript.done\",\"transcript\":\"hello\"}");
+      send(webSocket, "{\"type\":\"response.audio_transcript.done\",\"transcript\":\"hello\"}");
       sendResponseDone(webSocket);
     }
 

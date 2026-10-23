@@ -32,7 +32,13 @@ public class QwenTokenizer implements Tokenizer {
   private static final String IMSTART = "<|im_start|>";
   private static final String IMEND = "<|im_end|>";
   private static final String PATTEN_STRING =
-      "(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\\r\\n\\p{L}\\p{N}]?\\p{L}+|\\p{N}| ?[^\\s\\p{L}\\p{N}]+[\\r\\n]*|\\s*[\\r\\n]+|\\s+(?!\\S)|\\s+";
+      "(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\\r"
+          + "\\n"
+          + "\\p{L}\\p{N}]?\\p{L}+|\\p{N}| ?[^\\s\\p{L}\\p{N}]+[\\r"
+          + "\\n"
+          + "]*|\\s*[\\r"
+          + "\\n"
+          + "]+|\\s+(?!\\S)|\\s+";
   private static final int SPECIAL_START_ID = 151643;
   private static final String TOKEN_RANK_SEPARATOR = " ";
   private static final String vocabularyBpeFile = "qwen.tiktoken";

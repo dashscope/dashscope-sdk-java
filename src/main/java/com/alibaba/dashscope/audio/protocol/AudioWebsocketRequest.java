@@ -14,7 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import okio.ByteString;
 
-/** @author songsong.shao */
+/**
+ * @author songsong.shao
+ */
 @Slf4j
 public class AudioWebsocketRequest extends WebSocketListener {
 

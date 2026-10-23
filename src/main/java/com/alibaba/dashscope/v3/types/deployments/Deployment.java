@@ -8,8 +8,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * One model deployment (Python v2 parity). The same type comes back from {@code create} / {@code
  * get} / {@code scale} and is nested in {@link DeploymentList#getDeployments()}, so there is one
- * shape to learn; the envelope rides along on the nested copies too, empty there because the
- * server reports it once per response.
+ * shape to learn; the envelope rides along on the nested copies too, empty there because the server
+ * reports it once per response.
  */
 public final class Deployment extends ResponseBase {
   @JsonProperty("deployed_model")

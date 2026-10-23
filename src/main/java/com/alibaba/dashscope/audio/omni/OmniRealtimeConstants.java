@@ -2,7 +2,9 @@
 
 package com.alibaba.dashscope.audio.omni;
 
-/** @author lengjiayi */
+/**
+ * @author lengjiayi
+ */
 public class OmniRealtimeConstants {
   public static final String MODALITIES = "modalities";
   public static final String VOICE = "voice";

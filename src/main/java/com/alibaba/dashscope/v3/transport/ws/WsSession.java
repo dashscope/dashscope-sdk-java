@@ -45,7 +45,9 @@ public final class WsSession implements TaskChannel {
     this(transport, url, taskId, module, options, 0, DEFAULT_CONNECT_TIMEOUT);
   }
 
-  /** @param maxQueueCapacity 0 = unbounded downlink queue; overflow raises QueueCapacityExceeded. */
+  /**
+   * @param maxQueueCapacity 0 = unbounded downlink queue; overflow raises QueueCapacityExceeded.
+   */
   public WsSession(
       HttpTransport transport,
       String url,
@@ -109,8 +111,7 @@ public final class WsSession implements TaskChannel {
       // Never drop frames silently: surface the overflow to the consumer, then the connection
       // is torn down because protocol sync is lost (audio design §4).
       inbox.offer(
-          TaskEvent.failure(
-              Errors.fromSdkErrorCode(SdkErrorCode.SDK_WS_QUEUE_CAPACITY_EXCEEDED)));
+          TaskEvent.failure(Errors.fromSdkErrorCode(SdkErrorCode.SDK_WS_QUEUE_CAPACITY_EXCEEDED)));
       socket.cancel();
       return;
     }

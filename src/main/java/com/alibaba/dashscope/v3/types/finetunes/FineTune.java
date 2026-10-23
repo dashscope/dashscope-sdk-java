@@ -9,10 +9,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * One fine-tune job (Python v2 parity). The same type comes back from {@code create} / {@code
- * get} and is nested in {@link FineTuneList#getJobs()}, so there is one shape to learn. The
- * server reports a failure {@code code} per job, so the envelope is meaningful in both roles: a
- * failed job in a list flags itself through {@link #isError()} as well.
+ * One fine-tune job (Python v2 parity). The same type comes back from {@code create} / {@code get}
+ * and is nested in {@link FineTuneList#getJobs()}, so there is one shape to learn. The server
+ * reports a failure {@code code} per job, so the envelope is meaningful in both roles: a failed job
+ * in a list flags itself through {@link #isError()} as well.
  */
 public final class FineTune extends ResponseBase {
   public static final String SUCCEEDED = "SUCCEEDED";

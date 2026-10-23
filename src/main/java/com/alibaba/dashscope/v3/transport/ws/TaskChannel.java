@@ -5,11 +5,10 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 
 /**
- * One task's view over a WebSocket (audio design §3): implemented by {@link WsSession}
- * (dedicated socket) and by {@link WsConnection.TaskHandle} (a demultiplexed task on a shared
- * socket). Sends are lock-protected; {@link #recv} blocks on the caller's thread — the SDK
- * starts no per-task callback thread (pull model; users run one send thread + one receive
- * thread).
+ * One task's view over a WebSocket (audio design §3): implemented by {@link WsSession} (dedicated
+ * socket) and by {@link WsConnection.TaskHandle} (a demultiplexed task on a shared socket). Sends
+ * are lock-protected; {@link #recv} blocks on the caller's thread — the SDK starts no per-task
+ * callback thread (pull model; users run one send thread + one receive thread).
  */
 public interface TaskChannel extends AutoCloseable {
   String taskId();

@@ -41,8 +41,10 @@ public final class RequestTags {
     }
   }
 
-  /** Suffix appended to the User-Agent (e.g. {@code incremental_to_full/1} for client-side
-   * stream accumulation, 2.x parity). */
+  /**
+   * Suffix appended to the User-Agent (e.g. {@code incremental_to_full/1} for client-side stream
+   * accumulation, 2.x parity).
+   */
   public static final class UserAgentSuffix {
     public final String value;
 

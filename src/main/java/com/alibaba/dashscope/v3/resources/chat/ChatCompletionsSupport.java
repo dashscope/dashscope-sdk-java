@@ -33,7 +33,8 @@ final class ChatCompletionsSupport {
     // 3.0 always speaks the message-shaped protocol; streaming asks for incremental frames.
     parameters.put("result_format", "message");
     if (stream) {
-      parameters.put("incremental_output",
+      parameters.put(
+          "incremental_output",
           params.getIncrementalOutput() == null || params.getIncrementalOutput());
     } else if (params.getIncrementalOutput() != null) {
       parameters.put("incremental_output", params.getIncrementalOutput());

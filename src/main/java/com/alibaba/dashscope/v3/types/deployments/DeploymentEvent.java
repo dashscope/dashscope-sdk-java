@@ -4,9 +4,9 @@ package com.alibaba.dashscope.v3.types.deployments;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
- * One SSE frame from {@code deployments().streamEvents} (Python v2 {@code DeploymentEvent}
- * parity). {@code output} is the frame payload parsed as JSON when possible (a plain string
- * arrives as a textual node); {@code isError} marks the terminal {@code event:error} frame.
+ * One SSE frame from {@code deployments().streamEvents} (Python v2 {@code DeploymentEvent} parity).
+ * {@code output} is the frame payload parsed as JSON when possible (a plain string arrives as a
+ * textual node); {@code isError} marks the terminal {@code event:error} frame.
  */
 public final class DeploymentEvent {
   private final JsonNode output;

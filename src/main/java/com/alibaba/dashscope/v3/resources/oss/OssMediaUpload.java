@@ -17,11 +17,11 @@ import java.util.Map;
 
 /**
  * Recursive media upload walk (Python v2 {@code upload_media_value} parity): strings, lists and
- * maps are walked; every string that is a {@code file://} URI or an existing local path is
- * uploaded via {@link OssUploader} and replaced by its {@code oss://} URL; existing {@code
- * oss://} strings pass through and also flag the resolve header. Any upload or oss presence sets
- * {@link #isOssResolve()}, and the caller then sends {@code X-DashScope-OssResourceResolve:
- * enable}. The policy certificate is fetched lazily once per walk and reused.
+ * maps are walked; every string that is a {@code file://} URI or an existing local path is uploaded
+ * via {@link OssUploader} and replaced by its {@code oss://} URL; existing {@code oss://} strings
+ * pass through and also flag the resolve header. Any upload or oss presence sets {@link
+ * #isOssResolve()}, and the caller then sends {@code X-DashScope-OssResourceResolve: enable}. The
+ * policy certificate is fetched lazily once per walk and reused.
  */
 public final class OssMediaUpload {
   public static final String RESOLVE_HEADER = "X-DashScope-OssResourceResolve";

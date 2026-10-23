@@ -76,9 +76,7 @@ class JobsMockTest {
     ObjectMapper mapper = new ObjectMapper();
     Job job =
         jobs.create(
-            "/services/audio/asr/transcription",
-            mapper.createObjectNode().put("model", "m"),
-            null);
+            "/services/audio/asr/transcription", mapper.createObjectNode().put("model", "m"), null);
     assertEquals("task-123", job.getTaskId());
     assertEquals("PENDING", job.getTaskStatus());
     assertFalse(job.isFinished());
@@ -118,8 +116,7 @@ class JobsMockTest {
     }
     ApiTimeoutException e =
         assertThrows(
-            ApiTimeoutException.class,
-            () -> jobs.wait("task-1", Duration.ofMillis(1500), null));
+            ApiTimeoutException.class, () -> jobs.wait("task-1", Duration.ofMillis(1500), null));
     assertTrue(e.getMessage().contains("task-1"));
   }
 

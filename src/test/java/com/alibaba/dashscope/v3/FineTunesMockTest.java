@@ -3,7 +3,6 @@ package com.alibaba.dashscope.v3;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -151,8 +150,8 @@ class FineTunesMockTest {
     assertTrue(failed.isError());
     assertEquals("boom", failed.getMessage());
     assertEquals("r3", page.getRequestId());
-    assertEquals("/fine-tunes?page_no=1&page_size=10",
-        server.takeRequest(5, TimeUnit.SECONDS).getPath());
+    assertEquals(
+        "/fine-tunes?page_no=1&page_size=10", server.takeRequest(5, TimeUnit.SECONDS).getPath());
   }
 
   @Test
@@ -176,8 +175,7 @@ class FineTunesMockTest {
 
   @Test
   void logsNormalizesArrayContent() throws Exception {
-    server.enqueue(
-        okJson("{\"output\":{\"logs\":[\"l1\",null,\"l3\"]},\"request_id\":\"r6\"}"));
+    server.enqueue(okJson("{\"output\":{\"logs\":[\"l1\",null,\"l3\"]},\"request_id\":\"r6\"}"));
     JobLogs logs = client.fineTunes().logs("ft-4", 5, 100);
     assertEquals("ft-4", logs.getJobId());
     assertEquals("l1\n\nl3", logs.getContent());
@@ -283,8 +281,7 @@ class FineTunesMockTest {
                 + "\"request_id\":\"r8\"}"));
     ApiStatusException e =
         assertThrows(
-            ApiStatusException.class,
-            () -> client.fineTunes().wait("ft-8", RequestOptions.NONE));
+            ApiStatusException.class, () -> client.fineTunes().wait("ft-8", RequestOptions.NONE));
     assertEquals("boom", e.getMessage());
     assertEquals(200, e.getStatusCode().intValue());
     assertEquals("r8", e.getRequestId());
@@ -317,9 +314,7 @@ class FineTunesMockTest {
     assertThrows(
         IllegalArgumentException.class,
         () ->
-            FineTuneCreateParams.builder()
-                .trainingFileIds(Collections.singletonList("f"))
-                .build());
+            FineTuneCreateParams.builder().trainingFileIds(Collections.singletonList("f")).build());
     assertThrows(
         IllegalArgumentException.class,
         () -> FineTuneCreateParams.builder().model("qwen-turbo").build());
@@ -332,7 +327,8 @@ class FineTunesMockTest {
   @Test
   void asyncCreateCompletes() throws Exception {
     server.enqueue(
-        okJson("{\"output\":{\"job_id\":\"ft-10\",\"status\":\"PENDING\"},\"request_id\":\"r10\"}"));
+        okJson(
+            "{\"output\":{\"job_id\":\"ft-10\",\"status\":\"PENDING\"},\"request_id\":\"r10\"}"));
     try (com.alibaba.dashscope.DashScopeAsyncClient async =
         com.alibaba.dashscope.DashScopeAsyncClient.builder()
             .apiKey("test-key")

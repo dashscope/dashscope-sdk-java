@@ -78,7 +78,10 @@ public class TestUnderstanding {
 
   @Test
   public void testHttpTextCall()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
           InputRequiredException {
     server.enqueue(
         new MockResponse()
@@ -101,7 +104,10 @@ public class TestUnderstanding {
 
   @Test
   public void testHttpCallWithCallBack()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
           InputRequiredException {
     server.enqueue(
         new MockResponse()

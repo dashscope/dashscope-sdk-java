@@ -39,7 +39,11 @@ public class TestMultiModalConversationQwenTTS {
     this.server.start();
 
     String responseStr =
-        "{\"output\": {\"audio\": {\"data\": \"\", \"expires_at\": 1758187426, \"id\": \"audio_d8ab01f8-2793-4f65-a656-664e6e6c0d19\", \"url\": \"http://dashscope-result.demo.reuslt/abc\"}, \"finish_reason\": \"stop\"}, \"usage\": {\"characters\": 56}, \"request_id\": \"d8ab01f8-2793-4f65-a656-664e6e6c0d19\"}";
+        "{\"output\": {\"audio\": {\"data\": \"\", \"expires_at\": 1758187426, \"id\":"
+            + " \"audio_d8ab01f8-2793-4f65-a656-664e6e6c0d19\", \"url\":"
+            + " \"http://dashscope-result.demo.reuslt/abc\"}, \"finish_reason\": \"stop\"},"
+            + " \"usage\": {\"characters\": 56}, \"request_id\":"
+            + " \"d8ab01f8-2793-4f65-a656-664e6e6c0d19\"}";
     server.enqueue(
         new MockResponse()
             .setBody(responseStr)
@@ -54,8 +58,12 @@ public class TestMultiModalConversationQwenTTS {
   @Test
   @SetEnvironmentVariable(key = "DASHSCOPE_NETWORK_LOGGING_LEVEL", value = "HEADERS")
   public void testSendAndReceive()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
-          InputRequiredException, UploadFileException {
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
+          InputRequiredException,
+          UploadFileException {
     int port = server.getPort();
     Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", port);
     MultiModalConversation conv = new MultiModalConversation();

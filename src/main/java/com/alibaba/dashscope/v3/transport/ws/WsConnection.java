@@ -29,13 +29,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A shared physical WebSocket multiplexing many tasks by {@code header.task_id} (audio design
- * §7). One daemon reader thread ({@code dashscope-ws-reader}) demuxes inbound frames into
- * per-task queues; user threads block on {@link TaskHandle#recv}. Binary frames carry no task id:
- * the uplink is claimed by the first task to {@code sendBinary}, the downlink by {@link
- * #claimBinaryDownlink} (or implicitly when exactly one task is active). Viable mix: one ASR
- * uplink + one TTS downlink + any number of pure-JSON tasks; two concurrent binary streams on
- * one connection raise {@code sdk.ws.BinaryOwnerConflict}.
+ * A shared physical WebSocket multiplexing many tasks by {@code header.task_id} (audio design §7).
+ * One daemon reader thread ({@code dashscope-ws-reader}) demuxes inbound frames into per-task
+ * queues; user threads block on {@link TaskHandle#recv}. Binary frames carry no task id: the uplink
+ * is claimed by the first task to {@code sendBinary}, the downlink by {@link #claimBinaryDownlink}
+ * (or implicitly when exactly one task is active). Viable mix: one ASR uplink + one TTS downlink +
+ * any number of pure-JSON tasks; two concurrent binary streams on one connection raise {@code
+ * sdk.ws.BinaryOwnerConflict}.
  */
 public final class WsConnection implements AutoCloseable {
   private static final Logger log = LoggerFactory.getLogger(WsConnection.class);
@@ -88,7 +88,9 @@ public final class WsConnection implements AutoCloseable {
     // soTimeout on upgrade today; setting it explicitly keeps the guarantee local. Liveness is
     // the task-level recv timeout on the demux queues, not the socket.
     OkHttpClient.Builder wsClientBuilder =
-        transport.okhttp().newBuilder()
+        transport
+            .okhttp()
+            .newBuilder()
             .connectTimeout(connectTimeout)
             .readTimeout(0, TimeUnit.MILLISECONDS);
     Duration pingInterval = transport.config().getWsPingInterval();
@@ -182,8 +184,8 @@ public final class WsConnection implements AutoCloseable {
     if (handle == null) {
       // An event for a task that already terminated (or was never attached here); dropping is
       // safe because its terminal event was already delivered when it unregistered.
-      log.warn("ws event for unknown task {} (event={}), dropped", event.getTaskId(),
-          event.getEvent());
+      log.warn(
+          "ws event for unknown task {} (event={}), dropped", event.getTaskId(), event.getEvent());
       return;
     }
     handle.enqueue(event);
@@ -202,8 +204,7 @@ public final class WsConnection implements AutoCloseable {
       } else {
         broadcast(
             TaskEvent.failure(
-                binaryConflict(
-                    "unclaimed binary frame with " + tasks.size() + " active tasks")));
+                binaryConflict("unclaimed binary frame with " + tasks.size() + " active tasks")));
         return;
       }
     }
@@ -271,8 +272,7 @@ public final class WsConnection implements AutoCloseable {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-    broadcast(
-        TaskEvent.failure(new ApiConnectionException("websocket connection closed", null)));
+    broadcast(TaskEvent.failure(new ApiConnectionException("websocket connection closed", null)));
     tasks.clear();
   }
 
@@ -351,7 +351,10 @@ public final class WsConnection implements AutoCloseable {
     final RuntimeException failure;
 
     private RawItem(
-        String text, ByteString binary, Integer closeCode, String closeReason,
+        String text,
+        ByteString binary,
+        Integer closeCode,
+        String closeReason,
         RuntimeException failure) {
       this.text = text;
       this.binary = binary;

@@ -173,7 +173,8 @@ public class TestSseErrorHandling {
             .setResponseCode(200)
             .setHeader("content-type", "text/event-stream")
             .setBody(
-                "data:{\"output\":{\"text\":\"hello\"}}\n\ndata:{\"output\":{\"text\":\"world\"}}\n\n"));
+                "data:{\"output\":{\"text\":\"hello\"}}\n\n"
+                    + "data:{\"output\":{\"text\":\"world\"}}\n\n"));
     Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", server.getPort());
     HalfDuplexTestParam param = HalfDuplexTestParam.builder().model("qwen-turbo").build();
     List<DashScopeResult> results = syncApi.streamCall(param).toList().blockingGet();

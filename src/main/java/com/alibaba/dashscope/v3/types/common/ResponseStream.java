@@ -11,10 +11,10 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * Typed streaming response (design §3): blocking pull iterator over SSE frames mapped to
- * {@code T}. Single-use, {@link AutoCloseable} — always close (try-with-resources) so the
- * underlying connection is released. In-stream error frames throw the mapped exception, or — with
- * {@code raiseOnError(false)} — surface as a final error-carrying item.
+ * Typed streaming response (design §3): blocking pull iterator over SSE frames mapped to {@code T}.
+ * Single-use, {@link AutoCloseable} — always close (try-with-resources) so the underlying
+ * connection is released. In-stream error frames throw the mapped exception, or — with {@code
+ * raiseOnError(false)} — surface as a final error-carrying item.
  */
 public final class ResponseStream<T> implements Iterable<T>, AutoCloseable {
   private final SseStream stream;

@@ -40,11 +40,13 @@ public final class UserAgentInterceptor implements Interceptor {
     if (suffix != null && !suffix.value.isEmpty()) {
       userAgent += "; " + suffix.value;
     }
-    Request tagged = request.newBuilder()
-        .header("User-Agent", userAgent)
-        .header(HEADER_SDK_CLIENT, sdkClient)
-        .header(HEADER_SDK_SESSION_ID, SdkSession.ID)
-        .build();
+    Request tagged =
+        request
+            .newBuilder()
+            .header("User-Agent", userAgent)
+            .header(HEADER_SDK_CLIENT, sdkClient)
+            .header(HEADER_SDK_SESSION_ID, SdkSession.ID)
+            .build();
     return chain.proceed(tagged);
   }
 }

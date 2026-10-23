@@ -85,7 +85,8 @@ public final class FineTunesAsyncService {
     return CompletableFuture.supplyAsync(() -> sync.wait(jobId, options), executor);
   }
 
-  public CompletableFuture<FineTune> wait(String jobId, Duration waitTimeout, RequestOptions options) {
+  public CompletableFuture<FineTune> wait(
+      String jobId, Duration waitTimeout, RequestOptions options) {
     return CompletableFuture.supplyAsync(() -> sync.wait(jobId, waitTimeout, options), executor);
   }
 }

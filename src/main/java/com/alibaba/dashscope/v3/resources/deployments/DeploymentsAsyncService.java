@@ -26,7 +26,8 @@ public final class DeploymentsAsyncService {
     return create(params, RequestOptions.NONE);
   }
 
-  public CompletableFuture<Deployment> create(DeploymentCreateParams params, RequestOptions options) {
+  public CompletableFuture<Deployment> create(
+      DeploymentCreateParams params, RequestOptions options) {
     return CompletableFuture.supplyAsync(() -> sync.create(params, options), executor);
   }
 

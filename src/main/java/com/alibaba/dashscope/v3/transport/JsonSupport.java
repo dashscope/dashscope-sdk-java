@@ -21,9 +21,11 @@ public final class JsonSupport {
   // (design §4).
   private static final ObjectMapper MAPPER =
       new ObjectMapper()
-          .setVisibility(com.fasterxml.jackson.annotation.PropertyAccessor.FIELD,
+          .setVisibility(
+              com.fasterxml.jackson.annotation.PropertyAccessor.FIELD,
               com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY)
-          .configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
+          .configure(
+              com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
               false);
 
   public static ObjectMapper mapper() {
@@ -50,8 +52,8 @@ public final class JsonSupport {
 
   /**
    * Parse an error response body, preferring a plain JSON object; falls back to extracting the
-   * error frame from SSE-shaped text (older gateways answer streaming requests with SSE frames
-   * even on failure). Never throws: unparseable bodies yield null.
+   * error frame from SSE-shaped text (older gateways answer streaming requests with SSE frames even
+   * on failure). Never throws: unparseable bodies yield null.
    */
   public static JsonNode parseErrorBody(String text) {
     if (text == null || text.isEmpty()) {
@@ -114,8 +116,10 @@ public final class JsonSupport {
     }
   }
 
-  /** A frame is an error frame when it carries a top-level "code" or a nested "error" object
-   * with code/type/message. */
+  /**
+   * A frame is an error frame when it carries a top-level "code" or a nested "error" object with
+   * code/type/message.
+   */
   public static boolean isErrorFrame(JsonNode body) {
     if (body == null || !body.isObject()) {
       return false;
@@ -199,10 +203,10 @@ public final class JsonSupport {
   }
 
   /**
-   * Lift {@code body.output} to the top level so public types stay flat (Python v2
-   * {@code flatten_envelope} parity). Envelope keys win — how {@code request_id}/{@code
-   * code}/{@code message} reach the flattened node; null envelope values are dropped so an
-   * absent field cannot overwrite a real payload value.
+   * Lift {@code body.output} to the top level so public types stay flat (Python v2 {@code
+   * flatten_envelope} parity). Envelope keys win — how {@code request_id}/{@code code}/{@code
+   * message} reach the flattened node; null envelope values are dropped so an absent field cannot
+   * overwrite a real payload value.
    */
   public static com.fasterxml.jackson.databind.node.ObjectNode flattenEnvelope(JsonNode body) {
     com.fasterxml.jackson.databind.node.ObjectNode flat = MAPPER.createObjectNode();
@@ -229,18 +233,19 @@ public final class JsonSupport {
 
   /** Shallow iterable over array elements; empty when the node is not an array. */
   public static Iterable<JsonNode> arrayElements(JsonNode node) {
-    return () -> (node != null && node.isArray())
-        ? node.elements()
-        : new Iterator<JsonNode>() {
-          @Override
-          public boolean hasNext() {
-            return false;
-          }
+    return () ->
+        (node != null && node.isArray())
+            ? node.elements()
+            : new Iterator<JsonNode>() {
+              @Override
+              public boolean hasNext() {
+                return false;
+              }
 
-          @Override
-          public JsonNode next() {
-            throw new java.util.NoSuchElementException();
-          }
-        };
+              @Override
+              public JsonNode next() {
+                throw new java.util.NoSuchElementException();
+              }
+            };
   }
 }

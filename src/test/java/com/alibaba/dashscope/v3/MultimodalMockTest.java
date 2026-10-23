@@ -71,7 +71,8 @@ class MultimodalMockTest {
         .messages(
             Arrays.asList(
                 MultimodalMessage.user(
-                    Arrays.asList(ContentPart.text("描述这张图"), ContentPart.image("http://img/x.png")))))
+                    Arrays.asList(
+                        ContentPart.text("描述这张图"), ContentPart.image("http://img/x.png")))))
         .build();
   }
 
@@ -183,10 +184,10 @@ class MultimodalMockTest {
             .setResponseCode(200)
             .setHeader("Content-Type", "text/event-stream")
             .setBody(
-                "data: {\"output\":{\"choices\":[{\"message\":{\"role\":\"assistant\","
-                    + "\"content\":[{\"text\":\"你\"}]}}]},\"request_id\":\"m2\"}\n\n"
-                    + "data: {\"output\":{\"choices\":[{\"message\":{\"content\":[{\"text\":\"好\"}]}}]},"
-                    + "\"request_id\":\"m2\"}\n\n"));
+                "data:"
+                    + " {\"output\":{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":[{\"text\":\"你\"}]}}]},\"request_id\":\"m2\"}\n\n"
+                    + "data:"
+                    + " {\"output\":{\"choices\":[{\"message\":{\"content\":[{\"text\":\"好\"}]}}]},\"request_id\":\"m2\"}\n\n"));
 
     MultimodalChatCreateParams params =
         MultimodalChatCreateParams.builder()
@@ -219,10 +220,10 @@ class MultimodalMockTest {
             .setResponseCode(200)
             .setHeader("Content-Type", "text/event-stream")
             .setBody(
-                "data: {\"output\":{\"choices\":[{\"message\":{\"role\":\"assistant\","
-                    + "\"content\":[{\"text\":\"你\"}]}}]},\"request_id\":\"m3\"}\n\n"
-                    + "data: {\"output\":{\"choices\":[{\"message\":{\"content\":[{\"text\":\"你好\"}]}}]},"
-                    + "\"request_id\":\"m3\"}\n\n"));
+                "data:"
+                    + " {\"output\":{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":[{\"text\":\"你\"}]}}]},\"request_id\":\"m3\"}\n\n"
+                    + "data:"
+                    + " {\"output\":{\"choices\":[{\"message\":{\"content\":[{\"text\":\"你好\"}]}}]},\"request_id\":\"m3\"}\n\n"));
 
     MultimodalChatCreateParams params =
         MultimodalChatCreateParams.builder()
@@ -255,7 +256,9 @@ class MultimodalMockTest {
       String uploadHost = server.url("/").toString().replaceAll("/$", "");
       server.enqueue(
           okJson(
-              "{\"data\":{\"upload_host\":\"" + uploadHost + "\",\"oss_access_key_id\":\"ak\","
+              "{\"data\":{\"upload_host\":\""
+                  + uploadHost
+                  + "\",\"oss_access_key_id\":\"ak\","
                   + "\"signature\":\"sig\",\"policy\":\"pol\",\"upload_dir\":\"dir/mm\","
                   + "\"x_oss_object_acl\":\"private\",\"x_oss_forbid_overwrite\":\"true\"}}"));
       server.enqueue(new MockResponse().setResponseCode(200).setBody(""));
@@ -288,8 +291,7 @@ class MultimodalMockTest {
       assertTrue(multipart.contains("name=\"file\""));
 
       RecordedRequest generation = server.takeRequest(5, TimeUnit.SECONDS);
-      assertEquals(
-          "enable", generation.getHeader("X-DashScope-OssResourceResolve"));
+      assertEquals("enable", generation.getHeader("X-DashScope-OssResourceResolve"));
       JsonNode content =
           bodyOf(generation).get("input").get("messages").get(0).get("content").get(0);
       assertTrue(content.get("image").asText().startsWith("oss://dir/mm/mm-test"));
@@ -371,8 +373,7 @@ class MultimodalMockTest {
     assertEquals(
         "/services/embeddings/multimodal-embedding/multimodal-embedding", request.getPath());
     assertEquals(
-        "java-sdk/" + SdkInfo.VERSION + "/embeddings",
-        request.getHeader("x-dashscope-sdk-client"));
+        "java-sdk/" + SdkInfo.VERSION + "/embeddings", request.getHeader("x-dashscope-sdk-client"));
     JsonNode body = bodyOf(request);
     assertEquals("multimodal-embedding-v1", body.get("model").asText());
     assertEquals("你好", body.get("input").get("contents").get(0).get("text").asText());

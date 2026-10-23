@@ -33,7 +33,8 @@ public class TestGenerationStream {
   private String msg1 =
       "{\"output\":{\"choices\":[{\"message\":{\"content\":\"材料\",\"role\":\"assistant\"},\"finish_reason\":\"null\"}]},\"usage\":{\"total_tokens\":27,\"input_tokens\":26,\"output_tokens\":1},\"request_id\":\"975de90c-a678-98d1-a4dd-eb48e7736ec4\"}";
   private String msg2 =
-      "{\"output\":{\"choices\":[{\"message\":{\"content\":\"：\n\",\"role\":\"assistant\"},\"finish_reason\":\"null\"}]},\"usage\":{\"total_tokens\":28,\"input_tokens\":26,\"output_tokens\":2},\"request_id\":\"975de90c-a678-98d1-a4dd-eb48e7736ec4\"}";
+      "{\"output\":{\"choices\":[{\"message\":{\"content\":\"：\n"
+          + "\",\"role\":\"assistant\"},\"finish_reason\":\"null\"}]},\"usage\":{\"total_tokens\":28,\"input_tokens\":26,\"output_tokens\":2},\"request_id\":\"975de90c-a678-98d1-a4dd-eb48e7736ec4\"}";
   private static MockWebServer mockServer;
 
   @BeforeAll
@@ -49,7 +50,10 @@ public class TestGenerationStream {
 
   @Test
   public void testHttpStream()
-      throws ApiException, NoApiKeyException, IOException, InterruptedException,
+      throws ApiException,
+          NoApiKeyException,
+          IOException,
+          InterruptedException,
           InputRequiredException {
     MockResponse mockResponse = TestUtils.createStreamMockResponse(Arrays.asList(msg1, msg2), 200);
     mockServer.enqueue(mockResponse);
