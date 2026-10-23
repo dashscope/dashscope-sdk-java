@@ -40,6 +40,9 @@ public class DecisionModelUsage {
             .questions(questions)
             .build();
 
+    // A workspace id is required: pass it here (new DecisionModel("your-workspace-id"))
+    // or set the DASHSCOPE_WORKSPACE environment variable before running.
+    // For a fully custom endpoint, use DecisionModel.withBaseUrl(baseUrl) instead.
     DecisionModel decisionModel = new DecisionModel();
     DecisionModelResult result = decisionModel.call(param);
     System.out.println(JsonUtils.toJson(result));

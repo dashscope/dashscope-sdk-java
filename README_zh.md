@@ -222,6 +222,8 @@ public class Main {
         .build();
 
     try {
+      // 必须提供 workspace：可在此传入（new DecisionModel("你的-workspace-id")），
+      // 或在运行前设置 DASHSCOPE_WORKSPACE 环境变量。
       DecisionModel decisionModel = new DecisionModel();
       DecisionModelResult result = decisionModel.call(param);
       System.out.println(JsonUtils.toJson(result));
@@ -232,4 +234,8 @@ public class Main {
 }
 ```
 
-`call` 方法接受 `DecisionModelParam`，并返回 `DecisionModelResult`，其中 `answers` 按问题 id 给出答案，不支持流式输出。API Key 默认从环境变量 `DASHSCOPE_API_KEY` 获取，也可以通过 `apiKey(...)` 指定；请求地址默认为 `https://maas.qianwenaiapi.com/compatible-mode/v1/systemone`，可通过 `new DecisionModel(baseUrl)` 或环境变量 `DASHSCOPE_HTTP_BASE_URL` 覆盖。
+`call` 方法接受 `DecisionModelParam`，并返回 `DecisionModelResult`，其中 `answers` 按问题 id 给出答案，不支持流式输出。API Key 默认从环境变量 `DASHSCOPE_API_KEY` 获取，也可以通过 `apiKey(...)` 指定。
+
+请求地址是 workspace 作用域的：base URL 由 `https://{workspace}.{region}.maas.aliyuncs.com/compatible-mode/v1` 拼接而成（`systemone` 路径会自动追加）。**必须**提供 workspace id——通过构造函数传入（`new DecisionModel(workspace)` 或 `new DecisionModel(workspace, region)`），或设置环境变量 `DASHSCOPE_WORKSPACE`；否则构造客户端时会抛出 `IllegalArgumentException`。region 默认为 `cn-beijing`，可通过环境变量 `DASHSCOPE_API_REGION` 设置。
+
+若要指向完全自定义的端点（例如 Token Plan 网关），请使用静态工厂方法 `DecisionModel.withBaseUrl(baseUrl)`。注意 `new DecisionModel(String)` 会把参数当作 **workspace id**，而不是 base URL。你也可以用环境变量 `DASHSCOPE_DECISION_BASE_URL` 覆盖整个 base URL；此处的实现有意不读取全局的 `DASHSCOPE_HTTP_BASE_URL`。
