@@ -36,8 +36,8 @@ import java.util.NoSuchElementException;
  *
  * <p>Pumped events are buffered inside the session, so {@code stop()} may be called before
  * consuming results (the design-doc pattern) and {@link #events()}/{@link #results()} can replay
- * from the beginning at any time. {@link #close()} is idempotent and the session can be
- * re-{@link #start()}ed (new task, new socket unless a shared {@link WsConnection} was supplied).
+ * from the beginning at any time. {@link #close()} is idempotent and the session can be re-{@link
+ * #start()}ed (new task, new socket unless a shared {@link WsConnection} was supplied).
  */
 public final class RecognitionSession implements AutoCloseable {
   private static final String TASK_GROUP = "audio";
@@ -131,7 +131,10 @@ public final class RecognitionSession implements AutoCloseable {
           .put("resource_type", "asr_phrase");
     }
 
-    channel = shared != null ? shared.attach(taskId) : new WsSession(transport, url, taskId, TASK_GROUP, options);
+    channel =
+        shared != null
+            ? shared.attach(taskId)
+            : new WsSession(transport, url, taskId, TASK_GROUP, options);
     try {
       channel.sendText(
           TaskProtocol.frame(TaskProtocol.RUN_TASK, taskId, TaskProtocol.STREAMING_DUPLEX, payload)
@@ -190,7 +193,8 @@ public final class RecognitionSession implements AutoCloseable {
     ObjectNode payload = TaskProtocol.newPayload(params.getModel(), TASK_GROUP, TASK, FUNCTION);
     payload.set("input", mapper.valueToTree(payloadInput));
     channel.sendText(
-        TaskProtocol.frame(TaskProtocol.CONTINUE_TASK, taskId, TaskProtocol.STREAMING_DUPLEX, payload)
+        TaskProtocol.frame(
+                TaskProtocol.CONTINUE_TASK, taskId, TaskProtocol.STREAMING_DUPLEX, payload)
             .toString());
   }
 
@@ -201,8 +205,8 @@ public final class RecognitionSession implements AutoCloseable {
 
   /**
    * finish-task and wait for task-finished, bounded by {@code timeout} (fixes the 2.x unbounded
-   * {@code stopLatch.await()} deadlock). Events pumped while waiting stay buffered for
-   * {@link #events()}/{@link #results()}.
+   * {@code stopLatch.await()} deadlock). Events pumped while waiting stay buffered for {@link
+   * #events()}/{@link #results()}.
    */
   public void stop(Duration timeout) {
     TaskChannel ch = channel;
@@ -210,7 +214,8 @@ public final class RecognitionSession implements AutoCloseable {
       return;
     }
     if (!terminal) {
-      ch.sendText(TaskProtocol.finishTaskFrame(taskId, TaskProtocol.STREAMING_DUPLEX, null).toString());
+      ch.sendText(
+          TaskProtocol.finishTaskFrame(taskId, TaskProtocol.STREAMING_DUPLEX, null).toString());
       if (stopNanos < 0) {
         stopNanos = System.nanoTime();
       }
@@ -218,12 +223,14 @@ public final class RecognitionSession implements AutoCloseable {
       while (!terminal) {
         long remaining = deadline - System.nanoTime();
         if (remaining <= 0) {
-          throw new ApiTimeoutException("timed out waiting for task-finished after finish-task", null);
+          throw new ApiTimeoutException(
+              "timed out waiting for task-finished after finish-task", null);
         }
         pumpOnce(Duration.ofNanos(Math.min(remaining, receiveTimeout.toNanos())));
         if (!terminal && terminalFailure == null && System.nanoTime() >= deadline) {
           // recv timed out without delivering anything.
-          throw new ApiTimeoutException("timed out waiting for task-finished after finish-task", null);
+          throw new ApiTimeoutException(
+              "timed out waiting for task-finished after finish-task", null);
         }
       }
     }
@@ -276,7 +283,8 @@ public final class RecognitionSession implements AutoCloseable {
                 continue;
               }
               AsrResult result =
-                  JsonSupport.mapper().convertValue(event.getPayload().get("output"), AsrResult.class);
+                  JsonSupport.mapper()
+                      .convertValue(event.getPayload().get("output"), AsrResult.class);
               if (result.getSentence() != null
                   && Boolean.TRUE.equals(result.getSentence().getHeartbeat())) {
                 continue;
@@ -390,7 +398,7 @@ public final class RecognitionSession implements AutoCloseable {
           if (TaskProtocol.TASK_FAILED.equals(event.getEvent())) {
             terminal = true;
             terminalFailure = failTask(event);
-            // §6 close 时序: record (recordText above) → close → rethrow.
+            // §6 close ordering: record (recordText above) -> close -> rethrow.
             close();
             throw terminalFailure;
           }
@@ -412,7 +420,8 @@ public final class RecognitionSession implements AutoCloseable {
           break;
         case CLOSED:
           terminal = true;
-          terminalFailure = new ApiConnectionException("websocket closed before task-finished", null);
+          terminalFailure =
+              new ApiConnectionException("websocket closed before task-finished", null);
           close();
           throw terminalFailure;
         case FAILURE:

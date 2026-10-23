@@ -16,13 +16,13 @@ import java.util.Map;
 
 /**
  * Generic async-task service (design §3): submit with {@code X-DashScope-Async: enable}, poll
- * {@code GET /tasks/{taskId}}, cancel via {@code POST /tasks/{taskId}/cancel}, list via {@code
- * GET /tasks}. {@code wait} polls with a 1s → 8s backoff and a 24h default budget.
+ * {@code GET /tasks/{taskId}}, cancel via {@code POST /tasks/{taskId}/cancel}, list via {@code GET
+ * /tasks}. {@code wait} polls with a 1s → 8s backoff and a 24h default budget.
  */
 public final class JobsService {
   static final String HEADER_ASYNC = "X-DashScope-Async";
   static final String TASKS_PATH = "/tasks";
-  /** 等待总预算上限（design §3）. */
+  /** Upper bound on the total wait budget (design §3). */
   public static final Duration DEFAULT_WAIT_TIMEOUT = Duration.ofHours(24);
 
   private static final long INITIAL_POLL_MS = 1000;
@@ -56,14 +56,17 @@ public final class JobsService {
     return toJob(transport.executeGet(TASKS_PATH + "/" + taskId, null, module, options));
   }
 
-  /** 阻塞至任务终态，等价反复 jobs().fetch 直至终态（退避轮询 1s→8s，默认上限 24h）。 */
+  /**
+   * Blocks until a terminal state; equivalent to repeatedly {@code jobs().fetch} with a 1s→8s
+   * backoff (default budget 24h).
+   */
   public Job wait(String taskId, RequestOptions options) {
     return wait(taskId, DEFAULT_WAIT_TIMEOUT, options);
   }
 
   public Job wait(String taskId, Duration waitTimeout, RequestOptions options) {
-    long timeoutMillis = waitTimeout == null ? DEFAULT_WAIT_TIMEOUT.toMillis()
-        : waitTimeout.toMillis();
+    long timeoutMillis =
+        waitTimeout == null ? DEFAULT_WAIT_TIMEOUT.toMillis() : waitTimeout.toMillis();
     long start = System.currentTimeMillis();
     long pollMs = INITIAL_POLL_MS;
     while (true) {
@@ -82,16 +85,13 @@ public final class JobsService {
         Thread.sleep(sleepMs);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
-        throw new ApiTimeoutException(
-            "interrupted while waiting for task [" + taskId + "]", e);
+        throw new ApiTimeoutException("interrupted while waiting for task [" + taskId + "]", e);
       }
     }
   }
 
   public Job cancel(String taskId, RequestOptions options) {
-    return toJob(
-        transport.execute(
-            TASKS_PATH + "/" + taskId + "/cancel", null, module, options));
+    return toJob(transport.execute(TASKS_PATH + "/" + taskId + "/cancel", null, module, options));
   }
 
   /** List jobs; query keys follow the wire names (page_no/page_size/model_name/status/...). */

@@ -44,9 +44,9 @@ import okhttp3.OkHttpClient;
 
 /**
  * DashScope 3.0 asynchronous client (design §2.3): same resource tree as {@link DashScopeClient},
- * returning {@link java.util.concurrent.CompletableFuture}; streaming surfaces as
- * {@link java.util.concurrent.Flow.Publisher}. Work runs on a daemon executor owned by the client
- * ({@link #close()} shuts it down); derived clients share the parent's executor and pool.
+ * returning {@link java.util.concurrent.CompletableFuture}; streaming surfaces as {@link
+ * java.util.concurrent.Flow.Publisher}. Work runs on a daemon executor owned by the client ({@link
+ * #close()} shuts it down); derived clients share the parent's executor and pool.
  */
 public final class DashScopeAsyncClient implements AutoCloseable {
 
@@ -72,7 +72,10 @@ public final class DashScopeAsyncClient implements AutoCloseable {
   private volatile AgentStudioClient agentStudio;
 
   private DashScopeAsyncClient(
-      ClientOptions options, HttpTransport transport, ExecutorService executor, boolean ownsExecutor) {
+      ClientOptions options,
+      HttpTransport transport,
+      ExecutorService executor,
+      boolean ownsExecutor) {
     this.options = options;
     this.transport = transport;
     this.executor = executor;
@@ -91,8 +94,7 @@ public final class DashScopeAsyncClient implements AutoCloseable {
     this.fineTunes = new FineTunesAsyncService(new FineTunesService(transport), executor);
     this.deployments = new DeploymentsAsyncService(new DeploymentsService(transport), executor);
     this.tingwu = new TingWuAsyncService(new TingWuService(transport), executor);
-    this.tokenization =
-        new TokenizationAsyncService(new TokenizationService(transport), executor);
+    this.tokenization = new TokenizationAsyncService(new TokenizationService(transport), executor);
   }
 
   public static Builder builder() {
@@ -164,8 +166,8 @@ public final class DashScopeAsyncClient implements AutoCloseable {
   /**
    * AgentStudio management plane (design §7: single shared copy — returns the 2.x {@code
    * agentstudio} client type used by both generations). The same client type as on {@link
-   * DashScopeClient#agentStudio()} — it carries native async variants. Created lazily; it keeps
-   * its own 2.x-style exception style and the 3.0 {@code baseUrl} does not apply to it.
+   * DashScopeClient#agentStudio()} — it carries native async variants. Created lazily; it keeps its
+   * own 2.x-style exception style and the 3.0 {@code baseUrl} does not apply to it.
    */
   public AgentStudioClient agentStudio() {
     AgentStudioClient c = agentStudio;
@@ -190,6 +192,10 @@ public final class DashScopeAsyncClient implements AutoCloseable {
   }
 
   /** Derive a client with extra overrides, sharing this client's pool and executor. */
+  /**
+   * Derive a client with extra overrides, sharing this client's pool and executor. An override that
+   * injects a different {@code httpClient} is honored as-is and does not share the pool.
+   */
   public DashScopeAsyncClient withOptions(ClientOptions overrides) {
     ClientOptions merged = DashScopeClient.merge(options, overrides);
     return new DashScopeAsyncClient(

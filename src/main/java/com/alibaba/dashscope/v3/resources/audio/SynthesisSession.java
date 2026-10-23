@@ -31,15 +31,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * TTS duplex session (audio design §1.2): ws task protocol, text up, binary audio down. Pull
- * model — no SDK threads.
+ * TTS duplex session (audio design §1.2): ws task protocol, text up, binary audio down. Pull model
+ * — no SDK threads.
  *
  * <p>{@link #events()} (mixed JsonNode + byte[]) and {@link #audioChunks()} (audio only) are
  * mutually exclusive single readers: the first claim wins, a conflicting claim throws {@link
  * SdkException} immediately. Pumped items are buffered, so a reader may also start after {@link
  * #stop()} and replay. {@link #close()} is idempotent but the session is NOT restartable (Python
- * parity — asymmetric with ASR). On a shared {@link WsConnection} the binary downlink is claimed
- * at {@code start()} and released at task end.
+ * parity — asymmetric with ASR). On a shared {@link WsConnection} the binary downlink is claimed at
+ * {@code start()} and released at task end.
  */
 public final class SynthesisSession implements AutoCloseable {
   private static final String TASK_GROUP = "audio";
@@ -130,7 +130,10 @@ public final class SynthesisSession implements AutoCloseable {
     payload.set("input", mapper.createObjectNode());
     payload.set("parameters", mapper.valueToTree(parameters));
 
-    channel = shared != null ? shared.attach(taskId) : new WsSession(transport, url, taskId, TASK_GROUP, options);
+    channel =
+        shared != null
+            ? shared.attach(taskId)
+            : new WsSession(transport, url, taskId, TASK_GROUP, options);
     if (shared != null) {
       shared.claimBinaryDownlink(taskId);
     }
@@ -221,7 +224,8 @@ public final class SynthesisSession implements AutoCloseable {
     }
     if (!terminal) {
       ch.sendText(
-          TaskProtocol.finishTaskFrame(taskId, TaskProtocol.STREAMING_DUPLEX, directive).toString());
+          TaskProtocol.finishTaskFrame(taskId, TaskProtocol.STREAMING_DUPLEX, directive)
+              .toString());
       if (stopNanos < 0) {
         stopNanos = System.nanoTime();
       }
@@ -229,11 +233,13 @@ public final class SynthesisSession implements AutoCloseable {
       while (!terminal) {
         long remaining = deadline - System.nanoTime();
         if (remaining <= 0) {
-          throw new ApiTimeoutException("timed out waiting for task-finished after finish-task", null);
+          throw new ApiTimeoutException(
+              "timed out waiting for task-finished after finish-task", null);
         }
         pumpOnce(Duration.ofNanos(Math.min(remaining, receiveTimeout.toNanos())));
         if (!terminal && terminalFailure == null && System.nanoTime() >= deadline) {
-          throw new ApiTimeoutException("timed out waiting for task-finished after finish-task", null);
+          throw new ApiTimeoutException(
+              "timed out waiting for task-finished after finish-task", null);
         }
       }
     }
@@ -378,7 +384,8 @@ public final class SynthesisSession implements AutoCloseable {
     ObjectNode payload = JsonSupport.mapper().createObjectNode();
     payload.set("input", input);
     channel.sendText(
-        TaskProtocol.frame(TaskProtocol.CONTINUE_TASK, taskId, TaskProtocol.STREAMING_DUPLEX, payload)
+        TaskProtocol.frame(
+                TaskProtocol.CONTINUE_TASK, taskId, TaskProtocol.STREAMING_DUPLEX, payload)
             .toString());
   }
 
@@ -398,7 +405,7 @@ public final class SynthesisSession implements AutoCloseable {
           if (TaskProtocol.TASK_FAILED.equals(event.getEvent())) {
             terminal = true;
             terminalFailure = failTask(event);
-            // §6 close 时序: lastResponse 已由 recordText 记录 → close → 重抛.
+            // §6 close ordering: lastResponse already recorded via recordText -> close -> rethrow.
             close();
             throw terminalFailure;
           }
@@ -414,7 +421,8 @@ public final class SynthesisSession implements AutoCloseable {
           break;
         case CLOSED:
           terminal = true;
-          terminalFailure = new ApiConnectionException("websocket closed before task-finished", null);
+          terminalFailure =
+              new ApiConnectionException("websocket closed before task-finished", null);
           close();
           throw terminalFailure;
         case FAILURE:

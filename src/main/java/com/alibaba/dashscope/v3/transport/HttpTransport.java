@@ -29,9 +29,9 @@ import okhttp3.ResponseBody;
 /**
  * 3.0 HTTP transport (design §6): one OkHttpClient (pool maxRequests=100 / perHost=20, keepAlive
  * 5s, env-tunable), application-level retry/auth/UA interceptors, and the dual error layer —
- * non-2xx status and HTTP-200-with-business-code both map through {@link Errors}; with
- * {@code raiseOnError(false)} they instead surface on the returned envelope (2.x-style
- * {@code isError()} semantics). Network failures always raise.
+ * non-2xx status and HTTP-200-with-business-code both map through {@link Errors}; with {@code
+ * raiseOnError(false)} they instead surface on the returned envelope (2.x-style {@code isError()}
+ * semantics). Network failures always raise.
  */
 public final class HttpTransport implements AutoCloseable {
   private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
@@ -56,7 +56,8 @@ public final class HttpTransport implements AutoCloseable {
               .dispatcher(dispatcher)
               .connectionPool(
                   new ConnectionPool(
-                      config.getMaxRequestsPerHost(), config.getKeepAlive().toMillis(),
+                      config.getMaxRequestsPerHost(),
+                      config.getKeepAlive().toMillis(),
                       java.util.concurrent.TimeUnit.MILLISECONDS))
               .connectTimeout(CONNECT_TIMEOUT)
               .writeTimeout(WRITE_TIMEOUT)
@@ -78,12 +79,16 @@ public final class HttpTransport implements AutoCloseable {
     this.ownsClient = false;
   }
 
-  /** Derive a transport reusing this one's connection pool (design §2 withOptions). */
+  /**
+   * Derive a transport reusing this one's connection pool (design §2 withOptions) — unless the
+   * override injects a different {@link okhttp3.OkHttpClient}, which must be honored as-is.
+   */
   public HttpTransport derive(ResolvedConfig newConfig) {
-    if (config.getHttpClient() != null || ownsClient) {
-      return new HttpTransport(newConfig, client);
+    OkHttpClient injected = newConfig.getHttpClient();
+    if (injected != null && injected != client) {
+      return new HttpTransport(newConfig);
     }
-    return new HttpTransport(newConfig);
+    return new HttpTransport(newConfig, client);
   }
 
   public ResolvedConfig config() {
@@ -113,7 +118,10 @@ public final class HttpTransport implements AutoCloseable {
 
   /** POST with extra request headers (e.g. {@code X-DashScope-Async: enable} for job submit). */
   public ResponseEnvelope execute(
-      String path, JsonNode body, Map<String, String> extraHeaders, String module,
+      String path,
+      JsonNode body,
+      Map<String, String> extraHeaders,
+      String module,
       RequestOptions options) {
     RequestOptions opts = options == null ? RequestOptions.NONE : options;
     RequestOptions.Builder merged =
@@ -155,8 +163,10 @@ public final class HttpTransport implements AutoCloseable {
             .url(url.toString())
             .get()
             .tag(RequestTags.Auth.class, new RequestTags.Auth(apiKey, workspace))
-            .tag(RequestTags.MaxRetries.class, new RequestTags.MaxRetries(
-                opts.getMaxRetries() != null ? opts.getMaxRetries() : config.getMaxRetries()))
+            .tag(
+                RequestTags.MaxRetries.class,
+                new RequestTags.MaxRetries(
+                    opts.getMaxRetries() != null ? opts.getMaxRetries() : config.getMaxRetries()))
             .header("Accept", "application/json; charset=utf-8");
     if (module != null && !module.isEmpty()) {
       builder.tag(RequestTags.Module.class, new RequestTags.Module(module));
@@ -181,8 +191,10 @@ public final class HttpTransport implements AutoCloseable {
             .url(config.getBaseUrl() + path)
             .delete()
             .tag(RequestTags.Auth.class, new RequestTags.Auth(apiKey, workspace))
-            .tag(RequestTags.MaxRetries.class, new RequestTags.MaxRetries(
-                opts.getMaxRetries() != null ? opts.getMaxRetries() : config.getMaxRetries()))
+            .tag(
+                RequestTags.MaxRetries.class,
+                new RequestTags.MaxRetries(
+                    opts.getMaxRetries() != null ? opts.getMaxRetries() : config.getMaxRetries()))
             .header("Accept", "application/json; charset=utf-8");
     if (module != null && !module.isEmpty()) {
       builder.tag(RequestTags.Module.class, new RequestTags.Module(module));
@@ -196,8 +208,8 @@ public final class HttpTransport implements AutoCloseable {
 
   /**
    * Multipart POST (files upload): form fields first, the file part last; rides the same
-   * auth/retry/UA pipeline as JSON posts. Bytes, not a live handle: transport retries must be
-   * able to re-send the full body.
+   * auth/retry/UA pipeline as JSON posts. Bytes, not a live handle: transport retries must be able
+   * to re-send the full body.
    */
   public ResponseEnvelope executeForm(
       String path,
@@ -225,8 +237,10 @@ public final class HttpTransport implements AutoCloseable {
             .url(config.getBaseUrl() + path)
             .post(body.build())
             .tag(RequestTags.Auth.class, new RequestTags.Auth(apiKey, workspace))
-            .tag(RequestTags.MaxRetries.class, new RequestTags.MaxRetries(
-                opts.getMaxRetries() != null ? opts.getMaxRetries() : config.getMaxRetries()))
+            .tag(
+                RequestTags.MaxRetries.class,
+                new RequestTags.MaxRetries(
+                    opts.getMaxRetries() != null ? opts.getMaxRetries() : config.getMaxRetries()))
             .header("Accept", "application/json; charset=utf-8");
     if (module != null && !module.isEmpty()) {
       builder.tag(RequestTags.Module.class, new RequestTags.Module(module));
@@ -238,8 +252,10 @@ public final class HttpTransport implements AutoCloseable {
     return handleResponse(response, opts);
   }
 
-  /** POST with SSE: returns the open stream. The initial HTTP layer always raises on failure
-   * (there is no response object to hand back); in-stream error frames follow raiseOnError. */
+  /**
+   * POST with SSE: returns the open stream. The initial HTTP layer always raises on failure (there
+   * is no response object to hand back); in-stream error frames follow raiseOnError.
+   */
   public SseStream executeStream(
       String path, JsonNode body, String module, RequestOptions options) {
     return executeStream(path, body, module, null, options);
@@ -251,8 +267,10 @@ public final class HttpTransport implements AutoCloseable {
     Request request = buildRequest(path, body, module, options, true, "POST");
     if (userAgentSuffix != null && !userAgentSuffix.isEmpty()) {
       request =
-          request.newBuilder()
-              .tag(RequestTags.UserAgentSuffix.class,
+          request
+              .newBuilder()
+              .tag(
+                  RequestTags.UserAgentSuffix.class,
                   new RequestTags.UserAgentSuffix(userAgentSuffix))
               .build();
     }
@@ -273,9 +291,9 @@ public final class HttpTransport implements AutoCloseable {
   }
 
   /**
-   * GET a job-event SSE endpoint (fine-tunes/deployments): the {@code event:error}/{@code
-   * status:} framing, not the plain {@code data:}-only shape of {@link #executeStream}. The
-   * initial HTTP layer always raises on failure.
+   * GET a job-event SSE endpoint (fine-tunes/deployments): the {@code event:error}/{@code status:}
+   * framing, not the plain {@code data:}-only shape of {@link #executeStream}. The initial HTTP
+   * layer always raises on failure.
    */
   public JobEventStream executeJobEventStream(String path, String module, RequestOptions options) {
     RequestOptions opts = options == null ? RequestOptions.NONE : options;
@@ -289,8 +307,10 @@ public final class HttpTransport implements AutoCloseable {
             .url(config.getBaseUrl() + path)
             .get()
             .tag(RequestTags.Auth.class, new RequestTags.Auth(apiKey, workspace))
-            .tag(RequestTags.MaxRetries.class, new RequestTags.MaxRetries(
-                opts.getMaxRetries() != null ? opts.getMaxRetries() : config.getMaxRetries()))
+            .tag(
+                RequestTags.MaxRetries.class,
+                new RequestTags.MaxRetries(
+                    opts.getMaxRetries() != null ? opts.getMaxRetries() : config.getMaxRetries()))
             .tag(RequestTags.NoRetry.class, RequestTags.NoRetry.INSTANCE)
             .header("Accept", "text/event-stream")
             .header("Cache-Control", "no-cache")
@@ -318,7 +338,11 @@ public final class HttpTransport implements AutoCloseable {
   }
 
   private Request buildRequest(
-      String path, JsonNode body, String module, RequestOptions options, boolean stream,
+      String path,
+      JsonNode body,
+      String module,
+      RequestOptions options,
+      boolean stream,
       String httpMethod) {
     RequestOptions opts = options == null ? RequestOptions.NONE : options;
     String apiKey = opts.getApiKey() != null ? opts.getApiKey() : config.getApiKey();
@@ -332,8 +356,10 @@ public final class HttpTransport implements AutoCloseable {
             // Absolute URLs bypass the resolved base URL (decision's compatible-mode root).
             .url(isAbsolute(path) ? path : config.getBaseUrl() + path)
             .tag(RequestTags.Auth.class, new RequestTags.Auth(apiKey, workspace))
-            .tag(RequestTags.MaxRetries.class, new RequestTags.MaxRetries(
-                opts.getMaxRetries() != null ? opts.getMaxRetries() : config.getMaxRetries()))
+            .tag(
+                RequestTags.MaxRetries.class,
+                new RequestTags.MaxRetries(
+                    opts.getMaxRetries() != null ? opts.getMaxRetries() : config.getMaxRetries()))
             .header("Content-Type", "application/json");
     if (module != null && !module.isEmpty()) {
       builder.tag(RequestTags.Module.class, new RequestTags.Module(module));
@@ -378,10 +404,7 @@ public final class HttpTransport implements AutoCloseable {
     if (stream) {
       // Streams must not carry a whole-call timeout; readTimeout bounds the gap between frames.
       if (override != null) {
-        return client.newBuilder()
-            .callTimeout(Duration.ZERO)
-            .readTimeout(override)
-            .build();
+        return client.newBuilder().callTimeout(Duration.ZERO).readTimeout(override).build();
       }
       return client.newBuilder().callTimeout(Duration.ZERO).build();
     }

@@ -11,9 +11,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * {@code audio.voiceDesign} — qwen voice design (声音设计; audio design §1.4). Shares the tts
- * customization endpoint with shorter action words and a {@code voice} id field instead of
- * {@code voice_id}; there is no {@code update} verb on this family.
+ * {@code audio.voiceDesign} — qwen voice design (audio design §1.4). Shares the tts customization
+ * endpoint with shorter action words and a {@code voice} id field instead of {@code voice_id};
+ * there is no {@code update} verb on this family.
  */
 public final class VoiceDesignService {
   static final String PATH = "/services/audio/tts/customization";

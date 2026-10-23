@@ -13,7 +13,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-/** {@code audio.asr} resource: realtime {@code recognize} (ws duplex) and async {@code transcribe}. */
+/**
+ * {@code audio.asr} resource: realtime {@code recognize} (ws duplex) and async {@code transcribe}.
+ */
 public final class AsrService {
   static final String TRANSCRIBE_PATH = "/services/audio/asr/transcription";
   static final String MODULE = "audio";
@@ -50,11 +52,16 @@ public final class AsrService {
         transport, transport.config().getWsBaseUrl(), params, connection, options);
   }
 
-  /** Blocking sugar: submit the transcription job and wait for its terminal state. */
+  /**
+   * Blocks until a terminal state; equivalent to jobs().create + jobs().wait.
+   *
+   * @see #transcribe(AsrTranscribeParams, RequestOptions)
+   */
   public Job transcribe(AsrTranscribeParams params) {
     return transcribe(params, RequestOptions.NONE);
   }
 
+  /** Blocks until a terminal state; equivalent to jobs().create + jobs().wait. */
   public Job transcribe(AsrTranscribeParams params, RequestOptions options) {
     Job created = jobs.create(TRANSCRIBE_PATH, buildTranscribeBody(params), options);
     return jobs.wait(created.getTaskId(), options);

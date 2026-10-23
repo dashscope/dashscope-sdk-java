@@ -4,6 +4,7 @@ package com.alibaba.dashscope.v3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -12,6 +13,7 @@ import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.v3.config.ConfigResolver;
 import com.alibaba.dashscope.v3.config.ResolvedConfig;
 import com.alibaba.dashscope.v3.errors.SdkException;
+import com.alibaba.dashscope.v3.transport.HttpTransport;
 import com.alibaba.dashscope.v3.types.completions.ChatCompletionCreateParams;
 import com.alibaba.dashscope.v3.types.messages.Message;
 import java.io.IOException;
@@ -22,6 +24,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
+import okhttp3.OkHttpClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.ClearEnvironmentVariable;
@@ -83,7 +86,8 @@ class ConfigChainTest {
   void workspaceGatewayDerived() {
     ResolvedConfig config = resolve();
     assertEquals("https://ws1.cn-beijing.maas.aliyuncs.com/api/v1", config.getBaseUrl());
-    assertEquals("wss://ws1.cn-beijing.maas.aliyuncs.com/api-ws/v1/inference", config.getWsBaseUrl());
+    assertEquals(
+        "wss://ws1.cn-beijing.maas.aliyuncs.com/api-ws/v1/inference", config.getWsBaseUrl());
   }
 
   @Test
@@ -99,8 +103,7 @@ class ConfigChainTest {
   @SetEnvironmentVariable(key = "DASHSCOPE_WORKSPACE", value = "ws-env")
   @SetSystemProperty(key = "dashscope.workspace", value = "ws-sys")
   void syspropBeatsEnv() {
-    assertEquals(
-        "https://ws-sys.cn-beijing.maas.aliyuncs.com/api/v1", resolve().getBaseUrl());
+    assertEquals("https://ws-sys.cn-beijing.maas.aliyuncs.com/api/v1", resolve().getBaseUrl());
   }
 
   @Test
@@ -108,12 +111,13 @@ class ConfigChainTest {
   void builderBeatsSysprop() {
     ResolvedConfig config =
         ConfigResolver.resolve(ClientOptions.builder().workspace("ws-builder").build());
-    assertEquals(
-        "https://ws-builder.cn-beijing.maas.aliyuncs.com/api/v1", config.getBaseUrl());
+    assertEquals("https://ws-builder.cn-beijing.maas.aliyuncs.com/api/v1", config.getBaseUrl());
   }
 
   @Test
-  @SetEnvironmentVariable(key = "DASHSCOPE_HTTP_BASE_URL", value = "https://legacy.example.com/api/v1")
+  @SetEnvironmentVariable(
+      key = "DASHSCOPE_HTTP_BASE_URL",
+      value = "https://legacy.example.com/api/v1")
   void legacyHttpBaseUrlEnvHonored() {
     assertEquals("https://legacy.example.com/api/v1", resolve().getBaseUrl());
   }
@@ -148,8 +152,7 @@ class ConfigChainTest {
   @Test
   @SetEnvironmentVariable(key = "DASHSCOPE_WORKSPACE", value = "ws-env")
   void envBeatsConfigToml() throws IOException {
-    Files.write(
-        CONFIG_PATH, "workspace = \"ws-file\"".getBytes(StandardCharsets.UTF_8));
+    Files.write(CONFIG_PATH, "workspace = \"ws-file\"".getBytes(StandardCharsets.UTF_8));
     assertEquals("ws-env", resolve().getWorkspace());
   }
 
@@ -212,8 +215,7 @@ class ConfigChainTest {
 
   @Test
   void wsPingIntervalFromConfigToml() throws IOException {
-    Files.write(
-        CONFIG_PATH, "ws_ping_interval = 15".getBytes(StandardCharsets.UTF_8));
+    Files.write(CONFIG_PATH, "ws_ping_interval = 15".getBytes(StandardCharsets.UTF_8));
     assertEquals(Duration.ofSeconds(15), resolve().getWsPingInterval());
   }
 
@@ -243,6 +245,48 @@ class ConfigChainTest {
       assertEquals("sdk.InvalidApiKey", e.getCode());
       assertFalse(e.isAllowRetry());
       assertTrue(e.getSolution().contains("DASHSCOPE_API_KEY"));
+    }
+  }
+
+  @Test
+  void deriveHonorsNewlyInjectedHttpClient() {
+    ResolvedConfig base = ConfigResolver.resolve(ClientOptions.builder().build());
+    try (HttpTransport transport = new HttpTransport(base)) {
+      OkHttpClient injected = new OkHttpClient();
+      try {
+        ResolvedConfig withInjected =
+            ConfigResolver.resolve(ClientOptions.builder().httpClient(injected).build());
+        try (HttpTransport derived = transport.derive(withInjected)) {
+          assertSame(injected, derived.okhttp());
+        }
+        ResolvedConfig withoutInjected =
+            ConfigResolver.resolve(ClientOptions.builder().timeout(Duration.ofSeconds(9)).build());
+        try (HttpTransport derived = transport.derive(withoutInjected)) {
+          assertSame(transport.okhttp(), derived.okhttp());
+        }
+      } finally {
+        injected.connectionPool().evictAll();
+        injected.dispatcher().executorService().shutdown();
+      }
+    }
+  }
+
+  @Test
+  void withOptionsHonorsInjectedHttpClient() {
+    OkHttpClient injected = new OkHttpClient();
+    try (DashScopeClient client =
+        DashScopeClient.builder().apiKey("k").baseUrl("http://127.0.0.1:1").maxRetries(0).build()) {
+      try (DashScopeClient derived =
+          client.withOptions(ClientOptions.builder().httpClient(injected).build())) {
+        assertSame(injected, derived.config().getHttpClient());
+      }
+      try (DashScopeClient derived =
+          client.withOptions(ClientOptions.builder().timeout(Duration.ofSeconds(9)).build())) {
+        assertNull(derived.config().getHttpClient());
+      }
+    } finally {
+      injected.connectionPool().evictAll();
+      injected.dispatcher().executorService().shutdown();
     }
   }
 }

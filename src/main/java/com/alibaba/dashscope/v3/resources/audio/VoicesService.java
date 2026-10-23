@@ -11,9 +11,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * {@code audio.voices} — voice cloning (声音复刻; audio design §1.4, Python v2 customization
- * parity). All verbs POST the tts customization endpoint with an action word; {@code
- * update}/{@code delete} return {@link JobStatus}.
+ * {@code audio.voices} — voice cloning (audio design §1.4, Python v2 customization parity). All
+ * verbs POST the tts customization endpoint with an action word; {@code update}/{@code delete}
+ * return {@link JobStatus}.
  */
 public final class VoicesService {
   static final String PATH = "/services/audio/tts/customization";

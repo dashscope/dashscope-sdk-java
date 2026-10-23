@@ -23,6 +23,18 @@ public final class AppCompletionsService {
     return create(params, RequestOptions.NONE);
   }
 
+  /** Sugar for the two required fields (2.x {@code Application.call} parity). */
+  public AppCompletion create(String appId, String prompt) {
+    return create(
+        AppCompletionCreateParams.builder().appId(appId).prompt(prompt).build(),
+        RequestOptions.NONE);
+  }
+
+  /** Sugar for the two required fields (2.x {@code Application.call} parity). */
+  public AppCompletion create(String appId, String prompt, RequestOptions options) {
+    return create(AppCompletionCreateParams.builder().appId(appId).prompt(prompt).build(), options);
+  }
+
   public AppCompletion create(AppCompletionCreateParams params, RequestOptions options) {
     ResponseEnvelope envelope =
         transport.execute(
@@ -40,9 +52,11 @@ public final class AppCompletionsService {
     return completion;
   }
 
-  /** Streaming create. Always close the stream (try-with-resources); the iterator is
-   * single-use. In-stream error frames throw (or surface as a final error frame under
-   * {@code raiseOnError(false)}). */
+  /**
+   * Streaming create. Always close the stream (try-with-resources); the iterator is single-use.
+   * In-stream error frames throw (or surface as a final error frame under {@code
+   * raiseOnError(false)}).
+   */
   public ResponseStream<AppCompletion> createStreaming(AppCompletionCreateParams params) {
     return createStreaming(params, RequestOptions.NONE);
   }

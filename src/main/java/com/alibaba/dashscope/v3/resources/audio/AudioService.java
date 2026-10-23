@@ -45,12 +45,12 @@ public final class AudioService {
     return phrases;
   }
 
-  /** Voice cloning (声音复刻): create/get/list/update/delete. */
+  /** Voice cloning: create/get/list/update/delete. */
   public VoicesService voices() {
     return voices;
   }
 
-  /** Qwen voice design (声音设计): create/get/list/delete. */
+  /** Qwen voice design: create/get/list/delete. */
   public VoiceDesignService voiceDesign() {
     return voiceDesign;
   }

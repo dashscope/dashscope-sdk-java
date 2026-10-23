@@ -158,11 +158,10 @@ public final class DashScopeClient implements AutoCloseable {
 
   /**
    * AgentStudio management plane (design §7: single shared copy — the 2.x {@code agentstudio}
-   * package is the canonical implementation for both generations; not deprecated, untouched by
-   * the v3 move and by the 4.0 cleanup). Created lazily — endpoint resolution requires a
-   * workspace or {@code DASHSCOPE_AGENTSTUDIO_URL}, and the subarea allocates its own HTTP
-   * clients. It keeps its own 2.x-style exception style; the 3.0 {@code baseUrl} does not apply
-   * to it.
+   * package is the canonical implementation for both generations; not deprecated, untouched by the
+   * v3 move and by the 4.0 cleanup). Created lazily — endpoint resolution requires a workspace or
+   * {@code DASHSCOPE_AGENTSTUDIO_URL}, and the subarea allocates its own HTTP clients. It keeps its
+   * own 2.x-style exception style; the 3.0 {@code baseUrl} does not apply to it.
    */
   public AgentStudioClient agentStudio() {
     AgentStudioClient c = agentStudio;
@@ -186,9 +185,9 @@ public final class DashScopeClient implements AutoCloseable {
   }
 
   /**
-   * Open a shared WebSocket connection multiplexing many task-protocol tasks (audio design §7).
-   * The caller owns it and must close it; pass it to {@code asr().recognize(params, connection)}
-   * / {@code tts().connect(params, connection)} to reuse the handshake.
+   * Open a shared WebSocket connection multiplexing many task-protocol tasks (audio design §7). The
+   * caller owns it and must close it; pass it to {@code asr().recognize(params, connection)} /
+   * {@code tts().connect(params, connection)} to reuse the handshake.
    */
   public WsConnection wsConnection() {
     return wsConnection(RequestOptions.NONE);
@@ -199,6 +198,10 @@ public final class DashScopeClient implements AutoCloseable {
   }
 
   /** Derive a client with extra overrides, sharing this client's connection pool. */
+  /**
+   * Derive a client with extra overrides, sharing this client's connection pool. An override that
+   * injects a different {@code httpClient} is honored as-is and does not share the pool.
+   */
   public DashScopeClient withOptions(ClientOptions overrides) {
     ClientOptions merged = merge(options, overrides);
     return new DashScopeClient(merged, transport.derive(ConfigResolver.resolve(merged)));

@@ -16,8 +16,8 @@ import java.util.Map;
 /**
  * {@code images} resource (design §3): {@code generate} is the blocking sugar — legacy models
  * submit an async task and wait; multimodal-protocol models (wan2.6-t2i / wan2.6-image) answer
- * synchronously in one request. Both return the unified {@link Job} — {@code getImageUrls()}
- * reads the same for both output shapes.
+ * synchronously in one request. Both return the unified {@link Job} — {@code getImageUrls()} reads
+ * the same for both output shapes.
  */
 public final class ImagesService {
   private final ImageJobsService jobs;
@@ -31,23 +31,30 @@ public final class ImagesService {
     return jobs;
   }
 
+  /**
+   * Blocks until a terminal state; equivalent to jobs().create + jobs().wait (multimodal-protocol
+   * models answer in one synchronous request).
+   *
+   * @see #generate(ImageGenerateParams, RequestOptions)
+   */
   public Job generate(ImageGenerateParams params) {
     return generate(params, RequestOptions.NONE);
   }
 
+  /**
+   * Blocks until a terminal state; equivalent to jobs().create + jobs().wait (multimodal-protocol
+   * models answer in one synchronous request).
+   */
   public Job generate(ImageGenerateParams params, RequestOptions options) {
     if (!ImageGenerateParams.usesMultimodalProtocol(params.getModel())) {
       Job created = jobs.create(params, options);
       return jobs.wait(created.getTaskId(), options);
     }
     // Multimodal protocol: one-shot sync call wrapped in the unified Job contract.
-    OssMediaUpload upload =
-        new OssMediaUpload(jobs.uploader(), params.getModel(), options);
+    OssMediaUpload upload = new OssMediaUpload(jobs.uploader(), params.getModel(), options);
     @SuppressWarnings("unchecked")
     List<String> imageUrls =
-        params.getImageUrls() == null
-            ? null
-            : (List<String>) upload.process(params.getImageUrls());
+        params.getImageUrls() == null ? null : (List<String>) upload.process(params.getImageUrls());
     @SuppressWarnings("unchecked")
     Map<String, Object> extraInput =
         params.getExtraInput() == null

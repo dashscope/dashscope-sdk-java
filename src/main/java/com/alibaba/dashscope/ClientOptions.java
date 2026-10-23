@@ -5,9 +5,9 @@ import java.time.Duration;
 import okhttp3.OkHttpClient;
 
 /**
- * Immutable client options (design §2). Every field is an <em>explicit</em> value: null means
- * "fall through the config chain" (builder &gt; JVM system property &gt; environment variable
- * &gt; {@code ~/.dashscope/config.toml} &gt; default, see {@code config/ConfigResolver}).
+ * Immutable client options (design §2). Every field is an <em>explicit</em> value: null means "fall
+ * through the config chain" (builder &gt; JVM system property &gt; environment variable &gt; {@code
+ * ~/.dashscope/config.toml} &gt; default, see {@code config/ConfigResolver}).
  */
 public final class ClientOptions {
   private final String apiKey;
@@ -73,7 +73,7 @@ public final class ClientOptions {
     return region;
   }
 
-  /** Single-request timeout (design §3 三语义之一). */
+  /** Single-request timeout (design §3). */
   public Duration getTimeout() {
     return timeout;
   }
