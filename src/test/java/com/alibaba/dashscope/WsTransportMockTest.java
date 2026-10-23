@@ -163,6 +163,9 @@ class WsTransportMockTest {
   void sharedConnectionSurvivesIdlePeriodBeyondHttpReadTimeout() throws Exception {
     // Design §5: WsConnection sockets block forever on read; the configured HTTP timeout must
     // not kill the demux reader during a quiet period (regression: inherited readTimeout).
+    // The 1200ms idle also exceeds the inherited 500ms callTimeout, so both timeout paths are
+    // covered. This is an end-to-end behavioral guard: it pins observable behavior (against
+    // future okhttp upgrades), not the explicit readTimeout(0)/callTimeout(0) lines themselves.
     ServerSocket serverSocket = enqueueUpgrade();
     try (HttpTransport shortTimeout =
             new HttpTransport(

@@ -85,14 +85,16 @@ public final class WsConnection implements AutoCloseable {
     }
     // Shared connections must block forever on read (design §5): idle periods are normal and a
     // socket read timeout would kill the single demux reader for ALL tasks. okhttp clears
-    // soTimeout on upgrade today; setting it explicitly keeps the guarantee local. Liveness is
-    // the task-level recv timeout on the demux queues, not the socket.
+    // soTimeout and exits the callTimeout watchdog on upgrade today; setting both explicitly
+    // keeps the guarantee local. Liveness is the task-level recv timeout on the demux queues,
+    // not the socket.
     OkHttpClient.Builder wsClientBuilder =
         transport
             .okhttp()
             .newBuilder()
             .connectTimeout(connectTimeout)
-            .readTimeout(0, TimeUnit.MILLISECONDS);
+            .readTimeout(0, TimeUnit.MILLISECONDS)
+            .callTimeout(0, TimeUnit.MILLISECONDS);
     Duration pingInterval = transport.config().getWsPingInterval();
     if (pingInterval != null && !pingInterval.isZero() && !pingInterval.isNegative()) {
       wsClientBuilder.pingInterval(pingInterval);
