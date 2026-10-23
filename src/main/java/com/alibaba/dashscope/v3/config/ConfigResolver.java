@@ -166,7 +166,11 @@ public final class ConfigResolver {
             Duration.ZERO);
 
     int maxRequests = envInt(EnvNames.DASHSCOPE_HTTP_MAX_CONNECTIONS, DEFAULT_MAX_REQUESTS);
+    // Per-host concurrency (dispatcher) and idle keep-alive pool size are separate knobs:
+    // conflating them meant raising the pool size silently raised per-host concurrency too.
     int maxRequestsPerHost =
+        envInt(EnvNames.DASHSCOPE_HTTP_MAX_REQUESTS_PER_HOST, DEFAULT_MAX_REQUESTS_PER_HOST);
+    int maxIdleConnections =
         envInt(EnvNames.DASHSCOPE_HTTP_MAX_KEEPALIVE_CONNECTIONS, DEFAULT_MAX_REQUESTS_PER_HOST);
     long keepAliveSeconds =
         envLong(EnvNames.DASHSCOPE_HTTP_KEEPALIVE_EXPIRY, DEFAULT_KEEP_ALIVE.getSeconds());
@@ -185,6 +189,7 @@ public final class ConfigResolver {
         options.getHttpClient(),
         maxRequests,
         maxRequestsPerHost,
+        maxIdleConnections,
         Duration.ofSeconds(keepAliveSeconds),
         wsPingInterval);
   }
@@ -215,7 +220,12 @@ public final class ConfigResolver {
     for (String raw : new String[] {sysprop, env, fileValue}) {
       if (raw != null && !raw.trim().isEmpty()) {
         try {
-          return Duration.ofMillis((long) (Double.parseDouble(raw.trim()) * 1000));
+          double seconds = Double.parseDouble(raw.trim());
+          if (seconds < 0) {
+            throw new IllegalArgumentException(
+                "duration value must be >= 0 seconds: '" + raw + "'");
+          }
+          return Duration.ofMillis((long) (seconds * 1000));
         } catch (NumberFormatException e) {
           throw new IllegalArgumentException("invalid timeout value: '" + raw + "'", e);
         }
@@ -232,7 +242,11 @@ public final class ConfigResolver {
     for (String raw : new String[] {sysprop, env, fileValue}) {
       if (raw != null && !raw.trim().isEmpty()) {
         try {
-          return Integer.parseInt(raw.trim());
+          int value = Integer.parseInt(raw.trim());
+          if (value < 0) {
+            throw new IllegalArgumentException("integer value must be >= 0: '" + raw + "'");
+          }
+          return value;
         } catch (NumberFormatException e) {
           throw new IllegalArgumentException("invalid integer value: '" + raw + "'", e);
         }

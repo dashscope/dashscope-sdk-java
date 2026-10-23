@@ -45,7 +45,18 @@ public final class HttpTransport implements AutoCloseable {
   public HttpTransport(ResolvedConfig config) {
     this.config = config;
     if (config.getHttpClient() != null) {
-      this.client = config.getHttpClient();
+      // Derive from the injected client rather than using it as-is: the derivation shares the
+      // caller's connection pool and dispatcher (lifecycle stays with the caller) while
+      // guaranteeing auth/UA/retry interceptors run — without them every request would go out
+      // without the Authorization header and fail with 401.
+      this.client =
+          config
+              .getHttpClient()
+              .newBuilder()
+              .addInterceptor(new AuthInterceptor())
+              .addInterceptor(new UserAgentInterceptor())
+              .addInterceptor(new RetryInterceptor())
+              .build();
       this.ownsClient = false;
     } else {
       Dispatcher dispatcher = new Dispatcher();
@@ -56,7 +67,7 @@ public final class HttpTransport implements AutoCloseable {
               .dispatcher(dispatcher)
               .connectionPool(
                   new ConnectionPool(
-                      config.getMaxRequestsPerHost(),
+                      config.getMaxIdleConnections(),
                       config.getKeepAlive().toMillis(),
                       java.util.concurrent.TimeUnit.MILLISECONDS))
               .connectTimeout(CONNECT_TIMEOUT)
@@ -81,13 +92,16 @@ public final class HttpTransport implements AutoCloseable {
 
   /**
    * Derive a transport reusing this one's connection pool (design §2 withOptions) — unless the
-   * override injects a different {@link okhttp3.OkHttpClient}, which must be honored as-is.
+   * override injects a different {@link okhttp3.OkHttpClient}, which is honored by deriving from it
+   * (sharing its pool, with interceptors ensured by the constructor).
    */
   public HttpTransport derive(ResolvedConfig newConfig) {
     OkHttpClient injected = newConfig.getHttpClient();
     if (injected != null && injected != client) {
       return new HttpTransport(newConfig);
     }
+    // Always share: a derived transport never owns the client, and the owner's close() governs
+    // the pool — derived transports must not outlive their owner either way.
     return new HttpTransport(newConfig, client);
   }
 
@@ -433,7 +447,16 @@ public final class HttpTransport implements AutoCloseable {
       if (raiseOnError) {
         throw error;
       }
-      return new ResponseEnvelope(response.code(), headers, errorBody);
+      // raiseOnError(false) callers judge failure via isError(), which keys off the envelope
+      // "code". Unparseable (gateway HTML error pages) or code-less bodies must still surface
+      // as errors, so backfill a synthetic frame when the wire body carried no code.
+      JsonNode body = errorBody;
+      if (JsonSupport.errorCode(body) == null) {
+        body =
+            JsonSupport.errorFrame(
+                "HTTP_" + response.code(), error.getMessage(), error.getRequestId());
+      }
+      return new ResponseEnvelope(response.code(), headers, body);
     }
 
     JsonNode body = text.isEmpty() ? null : JsonSupport.readTree(text);

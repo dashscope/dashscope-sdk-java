@@ -28,6 +28,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Flow;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -274,6 +275,78 @@ class ChatCompletionsMockTest {
       assertEquals("Throttling.RateQuota", e.getCode());
       assertEquals(2, server.getRequestCount());
     }
+  }
+
+  @Test
+  void injectedHttpClientStillGetsAuthAndTelemetryHeaders() throws Exception {
+    try (DashScopeClient injectedClient =
+        DashScopeClient.builder()
+            .apiKey("test-key")
+            .baseUrl(server.url("/").toString())
+            .httpClient(new OkHttpClient())
+            .maxRetries(0)
+            .build()) {
+      server.enqueue(
+          okJson(
+              "{\"output\":{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"hi\"}}]},"
+                  + "\"request_id\":\"inj1\"}"));
+
+      ChatCompletion result = injectedClient.chat().completions().create(params());
+      assertEquals("hi", result.outputText());
+
+      RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
+      assertEquals("Bearer test-key", request.getHeader("Authorization"));
+      assertTrue(request.getHeader("user-agent").startsWith("dashscope/" + SdkInfo.VERSION));
+      assertNotNull(request.getHeader("x-dashscope-sdk-session-id"));
+      assertEquals(
+          "java-sdk/" + SdkInfo.VERSION + "/aigc", request.getHeader("x-dashscope-sdk-client"));
+    }
+  }
+
+  @Test
+  void raiseOnErrorFalseWithUnparseableErrorBodyStillReportsError() {
+    try (DashScopeClient laxClient =
+        DashScopeClient.builder()
+            .apiKey("test-key")
+            .baseUrl(server.url("/").toString())
+            .maxRetries(0)
+            .raiseOnError(false)
+            .build()) {
+      // Gateway HTML error page: no JSON, no code — the envelope must still isError().
+      server.enqueue(
+          new MockResponse()
+              .setResponseCode(502)
+              .setHeader("Content-Type", "text/html")
+              .setBody("<html><body>Bad Gateway</body></html>"));
+
+      ChatCompletion result = laxClient.chat().completions().create(params());
+      assertTrue(result.isError());
+      assertEquals(502, result.getStatusCode());
+      assertEquals("HTTP_502", result.getCode());
+      assertNotNull(result.getMessage());
+    }
+  }
+
+  @Test
+  void customRequestOptionsHeadersOverrideSdkSetHeaders() throws Exception {
+    server.enqueue(
+        okJson(
+            "{\"output\":{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"hi\"}}]},"
+                + "\"request_id\":\"ovr1\"}"));
+
+    client
+        .chat()
+        .completions()
+        .create(
+            params(),
+            RequestOptions.builder()
+                .header("Authorization", "Bearer custom-key")
+                .header("User-Agent", "custom-agent/1.0")
+                .build());
+
+    RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
+    assertEquals("Bearer custom-key", request.getHeader("Authorization"));
+    assertEquals("custom-agent/1.0", request.getHeader("User-Agent"));
   }
 
   @Test

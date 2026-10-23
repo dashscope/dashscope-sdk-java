@@ -1,6 +1,8 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.v3.resources.chat;
 
+import com.alibaba.dashscope.common.PublicErrorCode;
+import com.alibaba.dashscope.v3.errors.Errors;
 import com.alibaba.dashscope.v3.transport.JsonSupport;
 import com.alibaba.dashscope.v3.types.completions.ChatCompletion;
 import com.alibaba.dashscope.v3.types.completions.ChatCompletionChunk;
@@ -102,6 +104,17 @@ final class ChatCompletionsSupport {
       if (choices != null && choices.isArray()) {
         ArrayNode normalized = flat.putArray("choices");
         for (JsonNode choice : choices) {
+          if (!choice.isObject()) {
+            // Malformed server data: report a parse failure, never a raw ClassCastException.
+            PublicErrorCode entry = PublicErrorCode.RESPONSE_ERROR;
+            throw Errors.fromStatus(
+                entry.getStatusCode(),
+                entry.getErrorCode(),
+                "malformed choice element in response: " + choice.getNodeType(),
+                null,
+                null,
+                null);
+          }
           normalized.add(normalizeChoice((ObjectNode) choice, streaming));
         }
       } else if (output.hasNonNull("text")) {

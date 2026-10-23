@@ -191,10 +191,10 @@ public final class DashScopeAsyncClient implements AutoCloseable {
     return audio;
   }
 
-  /** Derive a client with extra overrides, sharing this client's pool and executor. */
   /**
    * Derive a client with extra overrides, sharing this client's pool and executor. An override that
-   * injects a different {@code httpClient} is honored as-is and does not share the pool.
+   * injects a different {@code httpClient} is honored: the transport derives from it, sharing its
+   * pool and ensuring the auth/UA/retry interceptors apply.
    */
   public DashScopeAsyncClient withOptions(ClientOptions overrides) {
     ClientOptions merged = DashScopeClient.merge(options, overrides);

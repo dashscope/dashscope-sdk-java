@@ -17,6 +17,7 @@ public final class ResolvedConfig {
   private final OkHttpClient httpClient;
   private final int maxRequests;
   private final int maxRequestsPerHost;
+  private final int maxIdleConnections;
   private final Duration keepAlive;
   private final Duration wsPingInterval;
 
@@ -32,6 +33,7 @@ public final class ResolvedConfig {
       OkHttpClient httpClient,
       int maxRequests,
       int maxRequestsPerHost,
+      int maxIdleConnections,
       Duration keepAlive,
       Duration wsPingInterval) {
     this.apiKey = apiKey;
@@ -45,6 +47,7 @@ public final class ResolvedConfig {
     this.httpClient = httpClient;
     this.maxRequests = maxRequests;
     this.maxRequestsPerHost = maxRequestsPerHost;
+    this.maxIdleConnections = maxIdleConnections;
     this.keepAlive = keepAlive;
     this.wsPingInterval = wsPingInterval;
   }
@@ -95,8 +98,14 @@ public final class ResolvedConfig {
     return maxRequests;
   }
 
+  /** Dispatcher cap on concurrent requests per host. */
   public int getMaxRequestsPerHost() {
     return maxRequestsPerHost;
+  }
+
+  /** Connection-pool cap on idle keep-alive connections. */
+  public int getMaxIdleConnections() {
+    return maxIdleConnections;
   }
 
   public Duration getKeepAlive() {

@@ -3,6 +3,7 @@ package com.alibaba.dashscope;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -255,7 +256,9 @@ class ConfigChainTest {
         ResolvedConfig withInjected =
             ConfigResolver.resolve(ClientOptions.builder().httpClient(injected).build());
         try (HttpTransport derived = transport.derive(withInjected)) {
-          assertSame(injected, derived.okhttp());
+          // The constructor derives from the injected client: same pool, interceptors ensured.
+          assertNotSame(injected, derived.okhttp());
+          assertSame(injected.connectionPool(), derived.okhttp().connectionPool());
         }
         ResolvedConfig withoutInjected =
             ConfigResolver.resolve(ClientOptions.builder().timeout(Duration.ofSeconds(9)).build());

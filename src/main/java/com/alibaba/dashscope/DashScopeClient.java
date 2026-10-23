@@ -197,10 +197,10 @@ public final class DashScopeClient implements AutoCloseable {
     return new WsConnection(transport, config.getWsBaseUrl(), "audio", options);
   }
 
-  /** Derive a client with extra overrides, sharing this client's connection pool. */
   /**
    * Derive a client with extra overrides, sharing this client's connection pool. An override that
-   * injects a different {@code httpClient} is honored as-is and does not share the pool.
+   * injects a different {@code httpClient} is honored: the transport derives from it, sharing its
+   * pool and ensuring the auth/UA/retry interceptors apply.
    */
   public DashScopeClient withOptions(ClientOptions overrides) {
     ClientOptions merged = merge(options, overrides);
