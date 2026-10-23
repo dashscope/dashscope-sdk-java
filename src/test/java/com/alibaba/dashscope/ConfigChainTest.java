@@ -1,5 +1,5 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
-package com.alibaba.dashscope.v3;
+package com.alibaba.dashscope;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -8,8 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.alibaba.dashscope.ClientOptions;
-import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.v3.config.ConfigResolver;
 import com.alibaba.dashscope.v3.config.ResolvedConfig;
 import com.alibaba.dashscope.v3.errors.SdkException;

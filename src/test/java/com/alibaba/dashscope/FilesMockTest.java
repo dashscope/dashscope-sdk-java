@@ -1,11 +1,10 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
-package com.alibaba.dashscope.v3;
+package com.alibaba.dashscope;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.v3.errors.BadRequestException;
 import com.alibaba.dashscope.v3.errors.NotFoundException;
 import com.alibaba.dashscope.v3.types.files.DeletionStatus;
