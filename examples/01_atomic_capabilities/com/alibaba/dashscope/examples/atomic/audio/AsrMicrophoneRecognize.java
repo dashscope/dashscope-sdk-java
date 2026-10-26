@@ -8,6 +8,7 @@ import com.alibaba.dashscope.v3.types.audio.AsrRecognizeParams;
 import com.alibaba.dashscope.v3.types.audio.AsrResult;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,7 +23,9 @@ import javax.sound.sampled.TargetDataLine;
  * sentences to stderr and final sentences to stdout. {@code --seconds N} bounds the capture window
  * (default 5); {@code --recording take.wav} additionally saves the captured PCM.
  *
- * <pre>mvn -q -f examples/pom.xml exec:java -Dexec.mainClass=com.alibaba.dashscope.examples.atomic.audio.AsrMicrophoneRecognize -Dexec.args="--seconds 10 --recording take.wav"</pre>
+ * <pre>
+ * mvn -q -f examples/pom.xml exec:java -Dexec.mainClass=com.alibaba.dashscope.examples.atomic.audio.AsrMicrophoneRecognize -Dexec.args="--seconds 10 --recording take.wav"
+ * </pre>
  */
 public final class AsrMicrophoneRecognize {
 
@@ -39,7 +42,7 @@ public final class AsrMicrophoneRecognize {
           model = args[++i];
           break;
         case "--recording":
-          recording = Path.of(args[++i]);
+          recording = Paths.get(args[++i]);
           break;
         default:
           System.err.println("unknown argument: " + args[i]);

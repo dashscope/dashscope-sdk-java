@@ -1,8 +1,8 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.v3.transport.ws;
 
-import com.alibaba.dashscope.common.SdkErrorCode;
 import com.alibaba.dashscope.v3.errors.Errors;
+import com.alibaba.dashscope.v3.errors.SdkErrorCode;
 import com.alibaba.dashscope.v3.transport.JsonSupport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;

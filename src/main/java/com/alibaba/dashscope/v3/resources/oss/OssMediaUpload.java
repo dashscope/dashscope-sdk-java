@@ -2,9 +2,9 @@
 package com.alibaba.dashscope.v3.resources.oss;
 
 import com.alibaba.dashscope.RequestOptions;
-import com.alibaba.dashscope.common.PublicErrorCode;
 import com.alibaba.dashscope.v3.errors.ApiStatusException;
 import com.alibaba.dashscope.v3.errors.Errors;
+import com.alibaba.dashscope.v3.errors.PublicErrorCode;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;

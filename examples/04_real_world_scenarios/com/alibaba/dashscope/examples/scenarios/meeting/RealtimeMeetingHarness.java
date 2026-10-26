@@ -6,6 +6,7 @@ import com.alibaba.dashscope.examples.ExampleSupport;
 import com.alibaba.dashscope.examples.atomic.audio.AudioCommon;
 import com.alibaba.dashscope.v3.errors.ApiConnectionException;
 import com.alibaba.dashscope.v3.errors.Errors;
+import com.alibaba.dashscope.v3.errors.SdkErrorCode;
 import com.alibaba.dashscope.v3.resources.audio.AudioPacer;
 import com.alibaba.dashscope.v3.resources.tingwu.TingWuRealtimeSession;
 import com.alibaba.dashscope.v3.types.tingwu.TingWuRealtimeParams;
@@ -13,7 +14,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,7 +65,8 @@ import java.util.concurrent.Future;
  * engine at the real gateway with {@code DASHSCOPE_API_KEY} + {@code DASHSCOPE_TINGWU_APP_ID} and a
  * PCM WAV via {@code DASHSCOPE_DEMO_AUDIO}.
  *
- * <p>Translation of the Python blueprint example 04_real_world_scenarios/realtime_audio_meeting_harness.py.
+ * <p>Translation of the Python blueprint example
+ * 04_real_world_scenarios/realtime_audio_meeting_harness.py.
  */
 public final class RealtimeMeetingHarness {
 
@@ -76,12 +78,12 @@ public final class RealtimeMeetingHarness {
   private static final String AUDIO_FILE = System.getenv("DASHSCOPE_DEMO_AUDIO");
 
   /** Bounded worker pool == bounded live sockets == admission control. */
-  private static final int MAX_CONCURRENT =
-      Integer.parseInt(envOr("MEETING_MAX_CONCURRENT", "4"));
+  private static final int MAX_CONCURRENT = Integer.parseInt(envOr("MEETING_MAX_CONCURRENT", "4"));
   /** Per-meeting reconnects before degrading. */
   private static final int RECONNECT_ATTEMPTS = 2;
   /** 0 keeps the offline demo instant; use ~0.5 in prod. */
   private static final double BASE_DELAY = 0.0;
+
   private static final Duration SESSION_TIMEOUT = Duration.ofSeconds(30);
 
   private static final int SAMPLE_RATE = 16000;
@@ -109,10 +111,10 @@ public final class RealtimeMeetingHarness {
   /**
    * Merge streaming partials into final segments, keyed by sentenceId.
    *
-   * <p>TingWu realtime re-sends the same {@code sentenceId} with growing text until the sentence
-   * is final. Keeping the latest text per id and preserving first-seen order is the local half of
-   * the cloud/local split — and because the assembler outlives a single socket, the transcript
-   * keeps its place across a mid-stream reconnect.
+   * <p>TingWu realtime re-sends the same {@code sentenceId} with growing text until the sentence is
+   * final. Keeping the latest text per id and preserving first-seen order is the local half of the
+   * cloud/local split — and because the assembler outlives a single socket, the transcript keeps
+   * its place across a mid-stream reconnect.
    */
   static final class TranscriptAssembler {
     private final List<String> order = new ArrayList<>();
@@ -229,13 +231,15 @@ public final class RealtimeMeetingHarness {
     @Override
     public void start() {
       if (cursor >= inbox.size()) {
-        throw new ApiConnectionException("websocket closed before task-started", null);
+        throw Errors.connection(
+            SdkErrorCode.SDK_CONNECTION_ERROR, "websocket closed before task-started", null);
       }
       JsonNode first = inbox.get(cursor++);
       raiseIfTaskFailed(first);
       String event = first.path("header").path("event").asText("");
       if (!"task-started".equals(event)) {
-        throw new ApiConnectionException("websocket closed before task-started", null);
+        throw Errors.connection(
+            SdkErrorCode.SDK_CONNECTION_ERROR, "websocket closed before task-started", null);
       }
     }
 
@@ -262,7 +266,8 @@ public final class RealtimeMeetingHarness {
                 return true;
               }
               // Premature EOF: the real session raises here when the socket drops mid-stream.
-              throw new ApiConnectionException("websocket closed before speech-end", null);
+              throw Errors.connection(
+                  SdkErrorCode.SDK_CONNECTION_ERROR, "websocket closed before speech-end", null);
             }
 
             @Override
@@ -336,8 +341,7 @@ public final class RealtimeMeetingHarness {
     private final DashScopeClient client;
 
     LiveMeetingGateway(String apiKey) {
-      this.client =
-          DashScopeClient.builder().apiKey(apiKey).timeout(SESSION_TIMEOUT).build();
+      this.client = DashScopeClient.builder().apiKey(apiKey).timeout(SESSION_TIMEOUT).build();
     }
 
     @Override
@@ -369,6 +373,7 @@ public final class RealtimeMeetingHarness {
     final List<byte[]> frames;
     /** True only for the live path (realtime cadence). */
     final boolean pace;
+
     volatile String state = PENDING;
     final TranscriptAssembler assembler = new TranscriptAssembler();
     int attempts;
@@ -399,8 +404,8 @@ public final class RealtimeMeetingHarness {
    * Only a dropped/timed-out socket is worth reopening.
    *
    * <p>A {@code task-failed} event (bad app id, content policy, parameter error) surfaces as a
-   * non-connection DashScopeException; reconnecting would just fail again, so those degrade
-   * instead of retry. A raw socket timeout from the websocket layer is classified by name.
+   * non-connection DashScopeException; reconnecting would just fail again, so those degrade instead
+   * of retry. A raw socket timeout from the websocket layer is classified by name.
    */
   private static boolean isReconnectable(Exception exc) {
     if (exc instanceof ApiConnectionException) {
@@ -425,10 +430,9 @@ public final class RealtimeMeetingHarness {
   /**
    * Send every frame, then signal end of audio (stop).
    *
-   * <p>Production variant: to transcribe <i>live</i> rather than after stop, drain {@code
-   * events()} on a reader thread while frames are still being sent — the socket is duplex. The
-   * sequential shape here matches 01_atomic_capabilities/audio and keeps the offline mock
-   * deterministic.
+   * <p>Production variant: to transcribe <i>live</i> rather than after stop, drain {@code events()}
+   * on a reader thread while frames are still being sent — the socket is duplex. The sequential
+   * shape here matches 01_atomic_capabilities/audio and keeps the offline mock deterministic.
    */
   private static void pumpAudio(MeetingSession session, MeetingLink link) {
     long start = System.nanoTime();
@@ -471,8 +475,7 @@ public final class RealtimeMeetingHarness {
       session.attempts++;
       try {
         runOnce(session, gateway);
-        session.transition(
-            COMPLETED, session.assembler.segments().size() + " segment(s)");
+        session.transition(COMPLETED, session.assembler.segments().size() + " segment(s)");
         return session;
       } catch (Exception exc) { // isolated per meeting by design
         session.error = exc;
@@ -510,8 +513,8 @@ public final class RealtimeMeetingHarness {
    * Run many meetings concurrently over bounded dedicated sockets.
    *
    * <p>The pool size is deliberately the concurrency <i>and</i> the admission cap: because each
-   * realtime session owns a socket + worker, holding the pool bounded is what keeps a burst of
-   * join requests from opening an unbounded number of live connections.
+   * realtime session owns a socket + worker, holding the pool bounded is what keeps a burst of join
+   * requests from opening an unbounded number of live connections.
    */
   static final class MeetingSupervisor {
     private final MeetingGateway gateway;
@@ -669,9 +672,7 @@ public final class RealtimeMeetingHarness {
         Arrays.asList(
             // attempt 0: socket drops mid-sentence (no speech-end).
             Arrays.asList(
-                STARTED,
-                recognize("这个季度的目标很明确。", "s1", true),
-                recognize("今天我们讨论", "s2", false)),
+                STARTED, recognize("这个季度的目标很明确。", "s1", true), recognize("今天我们讨论", "s2", false)),
             // attempt 1: resumes and completes sentence s2, then ends.
             Arrays.asList(
                 STARTED,
@@ -685,8 +686,7 @@ public final class RealtimeMeetingHarness {
   }
 
   private static void runOfflineDemo() {
-    System.out.printf(
-        "离线并发实时会议转写演示（%d 路并发上限，每场会议独占一条 websocket）%n%n", MAX_CONCURRENT);
+    System.out.printf("离线并发实时会议转写演示（%d 路并发上限，每场会议独占一条 websocket）%n%n", MAX_CONCURRENT);
     Map<String, List<List<JsonNode>>> scripts = offlineScripts();
     MockMeetingGateway gateway = new MockMeetingGateway(scripts);
     List<MeetingSession> meetings = new ArrayList<>();
@@ -709,12 +709,12 @@ public final class RealtimeMeetingHarness {
           "MEETING_HARNESS_LIVE=1 需要设置 DASHSCOPE_TINGWU_APP_ID （听悟应用 ID）与 DASHSCOPE_API_KEY。");
       return;
     }
-    if (AUDIO_FILE == null || !Files.exists(Path.of(AUDIO_FILE))) {
+    if (AUDIO_FILE == null || !Files.exists(Paths.get(AUDIO_FILE))) {
       System.out.println(
           "找不到音频文件：" + AUDIO_FILE + "（可用 DASHSCOPE_DEMO_AUDIO 指定 16kHz 单声道 16-bit WAV）");
       return;
     }
-    AudioCommon.PcmAudio audio = AudioCommon.readWav(Path.of(AUDIO_FILE), SAMPLE_RATE);
+    AudioCommon.PcmAudio audio = AudioCommon.readWav(Paths.get(AUDIO_FILE), SAMPLE_RATE);
     List<byte[]> frames = new ArrayList<>();
     for (byte[] chunk : AudioPacer.pcmChunks(audio.pcm, FRAME_BYTES)) {
       frames.add(chunk);

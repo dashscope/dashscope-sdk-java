@@ -2,12 +2,10 @@
 package com.alibaba.dashscope.v3.resources.files;
 
 import com.alibaba.dashscope.RequestOptions;
-import com.alibaba.dashscope.common.PublicErrorCode;
-import com.alibaba.dashscope.v3.errors.ApiConnectionException;
 import com.alibaba.dashscope.v3.errors.ApiStatusException;
-import com.alibaba.dashscope.v3.errors.BadRequestException;
 import com.alibaba.dashscope.v3.errors.Errors;
-import com.alibaba.dashscope.v3.errors.NotFoundException;
+import com.alibaba.dashscope.v3.errors.PublicErrorCode;
+import com.alibaba.dashscope.v3.errors.SdkErrorCode;
 import com.alibaba.dashscope.v3.transport.HttpTransport;
 import com.alibaba.dashscope.v3.transport.JsonSupport;
 import com.alibaba.dashscope.v3.transport.ResponseEnvelope;
@@ -24,7 +22,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  * {@code files} resource (design §3, Python v2 files.py parity): upload/list/get/delete over {@code
@@ -34,13 +31,6 @@ import java.util.regex.Pattern;
 public final class FilesService {
   static final String BASE_PATH = "/files";
   static final String MODULE = "files";
-
-  // DashScope reports a missing file as a 400-family InvalidParameter whose message ("File not
-  // found.") is the only field stating the file is gone; get/delete match it narrowly and
-  // re-raise as NotFoundException (Python _check_by_id_response parity). The real status/code
-  // are preserved — never an invented 404.
-  private static final Pattern FILE_NOT_FOUND =
-      Pattern.compile("not\\s+found|not\\s+exist|no\\s+such\\s+file", Pattern.CASE_INSENSITIVE);
 
   private final HttpTransport transport;
 
@@ -59,7 +49,7 @@ public final class FilesService {
     try {
       content = Files.readAllBytes(file);
     } catch (IOException e) {
-      throw new ApiConnectionException("failed to read upload file " + file, e);
+      throw Errors.io(SdkErrorCode.SDK_IO_ERROR, "read upload file " + file, e);
     }
     Map<String, String> fields = new LinkedHashMap<>();
     if (params.getDescription() != null) {
@@ -112,12 +102,7 @@ public final class FilesService {
 
   public DeletionStatus delete(String fileId, RequestOptions options) {
     requireFileId(fileId);
-    ResponseEnvelope envelope;
-    try {
-      envelope = transport.executeDelete(BASE_PATH + "/" + fileId, MODULE, options);
-    } catch (BadRequestException e) {
-      throw refineNotFound(e);
-    }
+    ResponseEnvelope envelope = transport.executeDelete(BASE_PATH + "/" + fileId, MODULE, options);
     boolean deleted = true;
     JsonNode data = envelope.getBody() == null ? null : envelope.getBody().get("data");
     if (data != null && data.isObject() && data.has("deleted")) {
@@ -129,20 +114,10 @@ public final class FilesService {
   }
 
   private ResponseEnvelope getById(String fileId, RequestOptions options) {
-    try {
-      return transport.executeGet(BASE_PATH + "/" + fileId, null, MODULE, options);
-    } catch (BadRequestException e) {
-      throw refineNotFound(e);
-    }
-  }
-
-  private static ApiStatusException refineNotFound(BadRequestException e) {
-    String message = e.getMessage();
-    if (message != null && FILE_NOT_FOUND.matcher(message).find()) {
-      return new NotFoundException(
-          message, e.getCode(), e.getStatusCode(), e.getRequestId(), e.getBody(), e.getHeaders());
-    }
-    return e;
+    // The gateway reports a missing file as a 400 InvalidParameter; per the error discipline
+    // (unmapped wire codes are never guessed, message text is never sniffed) it surfaces as the
+    // catalog-driven BadRequestException with the gateway's real status/code/message.
+    return transport.executeGet(BASE_PATH + "/" + fileId, null, MODULE, options);
   }
 
   private static void requireFileId(String fileId) {

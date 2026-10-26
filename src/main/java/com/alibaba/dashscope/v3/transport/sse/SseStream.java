@@ -1,8 +1,8 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.v3.transport.sse;
 
-import com.alibaba.dashscope.v3.errors.ApiConnectionException;
-import com.alibaba.dashscope.v3.errors.ApiTimeoutException;
+import com.alibaba.dashscope.v3.errors.Errors;
+import com.alibaba.dashscope.v3.errors.SdkErrorCode;
 import com.alibaba.dashscope.v3.transport.JsonSupport;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
@@ -136,8 +136,9 @@ public final class SseStream implements AutoCloseable, Iterable<JsonNode> {
 
   private static RuntimeException toException(IOException e) {
     if (e instanceof InterruptedIOException) {
-      return new ApiTimeoutException("timeout reading SSE stream: " + e.getMessage(), e);
+      return Errors.timeout(SdkErrorCode.SDK_TIMEOUT, "reading SSE stream: " + e.getMessage(), e);
     }
-    return new ApiConnectionException("connection error reading SSE stream: " + e.getMessage(), e);
+    return Errors.connection(
+        SdkErrorCode.SDK_CONNECTION_ERROR, "reading SSE stream: " + e.getMessage(), e);
   }
 }

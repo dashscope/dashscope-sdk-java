@@ -2,8 +2,8 @@
 package com.alibaba.dashscope.v3.resources.multimodal;
 
 import com.alibaba.dashscope.RequestOptions;
-import com.alibaba.dashscope.common.PublicErrorCode;
 import com.alibaba.dashscope.v3.errors.Errors;
+import com.alibaba.dashscope.v3.errors.PublicErrorCode;
 import com.alibaba.dashscope.v3.resources.oss.OssUploader;
 import com.alibaba.dashscope.v3.types.multimodal.ContentPart;
 import com.alibaba.dashscope.v3.types.multimodal.MultimodalMessage;

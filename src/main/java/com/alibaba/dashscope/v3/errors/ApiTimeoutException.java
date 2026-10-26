@@ -6,4 +6,8 @@ public class ApiTimeoutException extends ApiConnectionException {
   public ApiTimeoutException(String message, Throwable cause) {
     super(message, cause);
   }
+
+  public ApiTimeoutException(String message, String code, Throwable cause) {
+    super(message, code, cause);
+  }
 }

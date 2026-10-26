@@ -13,8 +13,10 @@ import com.alibaba.dashscope.v3.types.audio.TtsConnectParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.util.LinkedHashMap;
@@ -30,7 +32,9 @@ import java.util.concurrent.Future;
  * <p>ASR and TTS run separately (subcommand {@code asr}/{@code tts}), each on its own connection;
  * no automatic reconnect. Per-round summary lines are printed as JSON with the request id.
  *
- * <pre>mvn -q -f examples/pom.xml exec:java -Dexec.mainClass=com.alibaba.dashscope.examples.atomic.audio.AudioConnectionReuse -Dexec.args="asr speech.wav --output-dir reuse-asr"</pre>
+ * <pre>
+ * mvn -q -f examples/pom.xml exec:java -Dexec.mainClass=com.alibaba.dashscope.examples.atomic.audio.AudioConnectionReuse -Dexec.args="asr speech.wav --output-dir reuse-asr"
+ * </pre>
  */
 public final class AudioConnectionReuse {
   private static final int RUNS = 5;
@@ -59,11 +63,11 @@ public final class AudioConnectionReuse {
           text = args[++i];
           break;
         case "--output-dir":
-          outputDir = Path.of(args[++i]);
+          outputDir = Paths.get(args[++i]);
           break;
         default:
           if ("asr".equals(kind) && wav == null && !args[i].startsWith("--")) {
-            wav = Path.of(args[i]);
+            wav = Paths.get(args[i]);
           } else {
             System.err.println("unknown argument: " + args[i]);
             usage();
@@ -158,7 +162,10 @@ public final class AudioConnectionReuse {
         throw new RuntimeException("没有最终转写，请使用包含清晰语音的 WAV");
       }
       String name = String.format("asr-%02d.txt", index);
-      Files.writeString(outputDir.resolve(name), text + "\n", StandardOpenOption.CREATE_NEW);
+      Files.write(
+          outputDir.resolve(name),
+          (text + "\n").getBytes(StandardCharsets.UTF_8),
+          StandardOpenOption.CREATE_NEW);
       result.put("transcript", name);
       result.put("text", text);
       return result;

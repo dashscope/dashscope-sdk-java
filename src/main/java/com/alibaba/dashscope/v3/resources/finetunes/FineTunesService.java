@@ -2,9 +2,8 @@
 package com.alibaba.dashscope.v3.resources.finetunes;
 
 import com.alibaba.dashscope.RequestOptions;
-import com.alibaba.dashscope.v3.errors.ApiTimeoutException;
-import com.alibaba.dashscope.v3.errors.DashScopeException;
 import com.alibaba.dashscope.v3.errors.Errors;
+import com.alibaba.dashscope.v3.errors.SdkErrorCode;
 import com.alibaba.dashscope.v3.transport.HttpTransport;
 import com.alibaba.dashscope.v3.transport.JsonSupport;
 import com.alibaba.dashscope.v3.transport.ResponseEnvelope;
@@ -188,8 +187,9 @@ public final class FineTunesService {
       long elapsed = System.currentTimeMillis() - start;
       long remaining = timeoutMillis - elapsed;
       if (remaining <= 0) {
-        throw new ApiTimeoutException(
-            "timed out after " + timeoutMillis / 1000 + "s waiting for fine-tune job " + jobId,
+        throw Errors.timeout(
+            SdkErrorCode.SDK_TIMEOUT,
+            "waiting for fine-tune job " + jobId + " after " + timeoutMillis / 1000 + "s",
             null);
       }
       long sleepMs = Math.min(pollMs, remaining);
@@ -198,7 +198,8 @@ public final class FineTunesService {
         Thread.sleep(sleepMs);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
-        throw new DashScopeException("interrupted while waiting for fine-tune job " + jobId, e);
+        throw Errors.connection(
+            SdkErrorCode.SDK_CONNECTION_INTERRUPTED, "waiting for fine-tune job " + jobId, e);
       }
       current = get(jobId, options);
     }
@@ -217,16 +218,7 @@ public final class FineTunesService {
           null,
           job.getHeaders());
     }
-    if (FineTune.CANCELED.equals(job.getStatus())) {
-      throw new DashScopeException(
-          "fine-tune job " + jobId + " was canceled while waiting",
-          null,
-          null,
-          job.getRequestId(),
-          null,
-          null,
-          null);
-    }
+    // CANCELED is a caller-initiated terminal state, not a failure: hand the job back.
     return job;
   }
 

@@ -15,11 +15,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
 /**
- * Local mock debugging: develop against a canned gateway with zero network calls (beyond
- * loopback) and zero token cost. A JDK {@link HttpServer} serves canned chat envelopes
- * in-process; pointing the client at it via {@code builder.baseUrl(...)} (equivalently
- * {@code -Ddashscope.base.url=...}) exercises both the success path and the error paths (bad
- * parameter, rate limit, content filter) deterministically — before spending a single real token.
+ * Local mock debugging: develop against a canned gateway with zero network calls (beyond loopback)
+ * and zero token cost. A JDK {@link HttpServer} serves canned chat envelopes in-process; pointing
+ * the client at it via {@code builder.baseUrl(...)} (equivalently {@code -Ddashscope.base.url=...})
+ * exercises both the success path and the error paths (bad parameter, rate limit, content filter)
+ * deterministically — before spending a single real token.
  *
  * <p>Translation of the Python blueprint example 02_advanced_engineering/local_mock_debugging.py.
  *
@@ -33,22 +33,25 @@ public final class LocalMockDebugging {
   /** The native chat-completion envelope the real gateway returns. */
   private static String chatEnvelope(String text, String requestId) {
     return "{\"output\":{\"choices\":[{\"finish_reason\":\"stop\",\"message\":"
-        + "{\"role\":\"assistant\",\"content\":\"" + text + "\"}}]},"
+        + "{\"role\":\"assistant\",\"content\":\""
+        + text
+        + "\"}}]},"
         + "\"usage\":{\"input_tokens\":8,\"output_tokens\":4,\"total_tokens\":12},"
-        + "\"request_id\":\"" + requestId + "\"}";
+        + "\"request_id\":\""
+        + requestId
+        + "\"}";
   }
 
   /**
-   * Route by request body so one server serves many scenarios: send a message containing
-   * {@code trigger-error} to exercise the error path; anything else returns a normal completion.
+   * Route by request body so one server serves many scenarios: send a message containing {@code
+   * trigger-error} to exercise the error path; anything else returns a normal completion.
    */
   private static HttpServer startMockGateway() throws IOException {
     HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
     server.createContext(
         "/",
         exchange -> {
-          String body =
-              new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+          String body = new String(readAll(exchange.getRequestBody()), StandardCharsets.UTF_8);
           byte[] payload;
           int status;
           if (body.contains("trigger-error")) {
@@ -59,8 +62,7 @@ public final class LocalMockDebugging {
           } else {
             status = 200;
             payload =
-                chatEnvelope("你好，这是本地 Mock 返回。", "mock-req-1")
-                    .getBytes(StandardCharsets.UTF_8);
+                chatEnvelope("你好，这是本地 Mock 返回。", "mock-req-1").getBytes(StandardCharsets.UTF_8);
           }
           exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
           exchange.sendResponseHeaders(status, payload.length);
@@ -124,5 +126,15 @@ public final class LocalMockDebugging {
     } finally {
       server.stop(0);
     }
+  }
+
+  private static byte[] readAll(java.io.InputStream in) throws IOException {
+    java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+    byte[] buf = new byte[8192];
+    int n;
+    while ((n = in.read(buf)) >= 0) {
+      out.write(buf, 0, n);
+    }
+    return out.toByteArray();
   }
 }

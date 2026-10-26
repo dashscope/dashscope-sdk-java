@@ -2,7 +2,8 @@
 package com.alibaba.dashscope.v3.resources.jobs;
 
 import com.alibaba.dashscope.RequestOptions;
-import com.alibaba.dashscope.v3.errors.ApiTimeoutException;
+import com.alibaba.dashscope.v3.errors.Errors;
+import com.alibaba.dashscope.v3.errors.SdkErrorCode;
 import com.alibaba.dashscope.v3.transport.HttpTransport;
 import com.alibaba.dashscope.v3.transport.JsonSupport;
 import com.alibaba.dashscope.v3.transport.ResponseEnvelope;
@@ -76,8 +77,10 @@ public final class JobsService {
       }
       long elapsed = System.currentTimeMillis() - start;
       if (elapsed >= timeoutMillis) {
-        throw new ApiTimeoutException(
-            "waiting for task [" + taskId + "] timed out after " + elapsed + " ms", null);
+        throw Errors.timeout(
+            SdkErrorCode.SDK_TIMEOUT,
+            "waiting for task [" + taskId + "] after " + elapsed + " ms",
+            null);
       }
       long sleepMs = Math.min(pollMs, timeoutMillis - elapsed);
       pollMs = Math.min(pollMs * 2, MAX_POLL_MS);
@@ -85,7 +88,8 @@ public final class JobsService {
         Thread.sleep(sleepMs);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
-        throw new ApiTimeoutException("interrupted while waiting for task [" + taskId + "]", e);
+        throw Errors.connection(
+            SdkErrorCode.SDK_CONNECTION_INTERRUPTED, "waiting for task [" + taskId + "]", e);
       }
     }
   }

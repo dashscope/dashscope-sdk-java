@@ -2,12 +2,10 @@
 package com.alibaba.dashscope.v3.transport;
 
 import com.alibaba.dashscope.RequestOptions;
-import com.alibaba.dashscope.common.SdkErrorCode;
 import com.alibaba.dashscope.v3.config.ResolvedConfig;
-import com.alibaba.dashscope.v3.errors.ApiConnectionException;
 import com.alibaba.dashscope.v3.errors.ApiStatusException;
-import com.alibaba.dashscope.v3.errors.ApiTimeoutException;
 import com.alibaba.dashscope.v3.errors.Errors;
+import com.alibaba.dashscope.v3.errors.SdkErrorCode;
 import com.alibaba.dashscope.v3.transport.sse.JobEventStream;
 import com.alibaba.dashscope.v3.transport.sse.SseStream;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -497,9 +495,9 @@ public final class HttpTransport implements AutoCloseable {
 
   private static RuntimeException toException(IOException e) {
     if (e instanceof InterruptedIOException) {
-      return new ApiTimeoutException("request timed out: " + e.getMessage(), e);
+      return Errors.timeout(SdkErrorCode.SDK_TIMEOUT, "request: " + e.getMessage(), e);
     }
-    return new ApiConnectionException("connection error: " + e.getMessage(), e);
+    return Errors.connection(SdkErrorCode.SDK_CONNECTION_ERROR, "request: " + e.getMessage(), e);
   }
 
   @Override

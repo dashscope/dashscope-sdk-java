@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.v3.errors.ApiConnectionException;
-import com.alibaba.dashscope.v3.errors.ApiTimeoutException;
+import com.alibaba.dashscope.v3.errors.SdkException;
 import com.alibaba.dashscope.v3.resources.audio.AudioPacer;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -72,10 +72,10 @@ class AudioPacerTest {
   }
 
   @Test
-  void missingFileRaisesConnectionException() {
-    ApiConnectionException e =
+  void missingFileRaisesSdkIoException() {
+    SdkException e =
         assertThrows(
-            ApiConnectionException.class,
+            SdkException.class,
             () -> collect(AudioPacer.pcmChunks(dir.resolve("nope.pcm"), 100)));
     assertTrue(e.getMessage().contains("nope.pcm"));
   }
@@ -104,7 +104,7 @@ class AudioPacerTest {
     Thread.currentThread().interrupt();
     long start = System.nanoTime();
     try {
-      assertThrows(ApiTimeoutException.class, () -> AudioPacer.pace(start, 1));
+      assertThrows(ApiConnectionException.class, () -> AudioPacer.pace(start, 1));
       assertTrue(Thread.currentThread().isInterrupted(), "interrupt flag must be restored");
     } finally {
       Thread.interrupted();

@@ -2,10 +2,8 @@
 package com.alibaba.dashscope.v3.transport.ws;
 
 import com.alibaba.dashscope.RequestOptions;
-import com.alibaba.dashscope.common.SdkErrorCode;
-import com.alibaba.dashscope.v3.errors.ApiConnectionException;
-import com.alibaba.dashscope.v3.errors.ApiTimeoutException;
 import com.alibaba.dashscope.v3.errors.Errors;
+import com.alibaba.dashscope.v3.errors.SdkErrorCode;
 import com.alibaba.dashscope.v3.transport.HttpTransport;
 import com.alibaba.dashscope.v3.transport.RequestTags;
 import java.nio.ByteBuffer;
@@ -94,11 +92,12 @@ public final class WsSession implements TaskChannel {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       socket.cancel();
-      throw new ApiConnectionException("websocket connect interrupted", e);
+      throw Errors.connection(SdkErrorCode.SDK_CONNECTION_INTERRUPTED, "websocket connect", e);
     }
     if (!opened) {
       socket.cancel();
-      throw new ApiTimeoutException("websocket handshake timed out after " + connectTimeout, null);
+      throw Errors.timeout(
+          SdkErrorCode.SDK_TIMEOUT, "websocket handshake after " + connectTimeout, null);
     }
     if (openFailure != null) {
       socket.cancel();
@@ -150,7 +149,7 @@ public final class WsSession implements TaskChannel {
       event = inbox.poll(timeout.toMillis(), TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new ApiConnectionException("interrupted while waiting for task event", e);
+      throw Errors.connection(SdkErrorCode.SDK_CONNECTION_INTERRUPTED, "waiting for task event", e);
     }
     if (event != null && event.getKind() == TaskEvent.Kind.FAILURE) {
       throw event.getFailure();
@@ -241,6 +240,7 @@ public final class WsSession implements TaskChannel {
           null,
           null);
     }
-    return new ApiConnectionException("websocket failure: " + t.getMessage(), t);
+    return Errors.connection(
+        SdkErrorCode.SDK_CONNECTION_ERROR, "websocket failure: " + t.getMessage(), t);
   }
 }

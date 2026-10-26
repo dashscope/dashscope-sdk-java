@@ -1,8 +1,8 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.v3.resources.chat;
 
-import com.alibaba.dashscope.common.PublicErrorCode;
 import com.alibaba.dashscope.v3.errors.Errors;
+import com.alibaba.dashscope.v3.errors.PublicErrorCode;
 import com.alibaba.dashscope.v3.transport.JsonSupport;
 import com.alibaba.dashscope.v3.types.completions.ChatCompletion;
 import com.alibaba.dashscope.v3.types.completions.ChatCompletionChunk;

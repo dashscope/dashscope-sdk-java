@@ -9,22 +9,24 @@ import com.alibaba.dashscope.v3.types.audio.UpdateSessionParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Base64;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
  * Translate speech with Qwen3.8-LiveTranslate, saving the spoken translation as a 24 kHz WAV.
- * Translation of the Python blueprint example
- * 01_atomic_capabilities/audio/realtime_translation.py.
+ * Translation of the Python blueprint example 01_atomic_capabilities/audio/realtime_translation.py.
  *
  * <p>Server-side turn detection stays enabled: no commit/createResponse; {@code endSession()} at
  * input end, and the receiver drains until {@code session.finished} (not the first {@code
  * response.done}) so every translation segment is collected. Default target language {@code en}.
  *
- * <pre>mvn -q -f examples/pom.xml exec:java -Dexec.mainClass=com.alibaba.dashscope.examples.atomic.audio.RealtimeTranslation -Dexec.args="--wav input.wav --language en --output translation.wav"</pre>
+ * <pre>
+ * mvn -q -f examples/pom.xml exec:java -Dexec.mainClass=com.alibaba.dashscope.examples.atomic.audio.RealtimeTranslation -Dexec.args="--wav input.wav --language en --output translation.wav"
+ * </pre>
  */
 public final class RealtimeTranslation {
   private static final String MODEL = "qwen3.8-livetranslate-flash-realtime";
@@ -39,7 +41,7 @@ public final class RealtimeTranslation {
     for (int i = 0; i < args.length; i++) {
       switch (args[i]) {
         case "--wav":
-          wav = Path.of(args[++i]);
+          wav = Paths.get(args[++i]);
           break;
         case "--microphone":
           microphone = true;
@@ -51,7 +53,7 @@ public final class RealtimeTranslation {
           language = args[++i];
           break;
         case "--output":
-          output = Path.of(args[++i]);
+          output = Paths.get(args[++i]);
           break;
         case "--no-play":
           noPlay = true;
@@ -92,11 +94,12 @@ public final class RealtimeTranslation {
         session.connect();
         session.updateSession(
             UpdateSessionParams.builder()
-                .modalities(List.of("text", "audio"))
+                .modalities(Arrays.asList("text", "audio"))
                 .translation(UpdateSessionParams.Translation.of(language))
                 .build());
         receiveUntil(session, "session.updated", null);
-        Future<Integer> receiver = pool.submit(() -> receiveUntil(session, "session.finished", pcm));
+        Future<Integer> receiver =
+            pool.submit(() -> receiveUntil(session, "session.finished", pcm));
         if (audio != null) {
           RealtimeOmniDialog.sendWav(session, receiver, audio);
         } else {
@@ -125,7 +128,8 @@ public final class RealtimeTranslation {
    * Consume events until {@code target} (normally {@code session.finished}); translation audio
    * deltas go to {@code output}. Prints 原文 (source transcription) and 译文 (translated text).
    */
-  private static int receiveUntil(RealtimeSession session, String target, ByteArrayOutputStream output) {
+  private static int receiveUntil(
+      RealtimeSession session, String target, ByteArrayOutputStream output) {
     int size = 0;
     int responses = 0;
     for (JsonNode event : session.events()) {

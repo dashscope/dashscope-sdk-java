@@ -8,16 +8,20 @@ import com.alibaba.dashscope.v3.resources.audio.RecognitionSession;
 import com.alibaba.dashscope.v3.types.audio.AsrRecognizeParams;
 import com.alibaba.dashscope.v3.types.audio.AsrResult;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
  * WebSocket duplex ASR (translation of the Python blueprint's {@code asr_websocket.py}): send PCM
- * from a local WAV while receiving sentences. Default model {@code qwen-audio-3.1-asr-flash-streaming};
- * input must be mono 16-bit 16 kHz PCM WAV (no resampling). Usage:
+ * from a local WAV while receiving sentences. Default model {@code
+ * qwen-audio-3.1-asr-flash-streaming}; input must be mono 16-bit 16 kHz PCM WAV (no resampling).
+ * Usage:
  *
- * <pre>mvn -q -f examples/pom.xml exec:java -Dexec.mainClass=com.alibaba.dashscope.examples.atomic.audio.AsrWebsocketRecognize -Dexec.args="speech.wav"</pre>
+ * <pre>
+ * mvn -q -f examples/pom.xml exec:java -Dexec.mainClass=com.alibaba.dashscope.examples.atomic.audio.AsrWebsocketRecognize -Dexec.args="speech.wav"
+ * </pre>
  */
 public final class AsrWebsocketRecognize {
 
@@ -26,7 +30,7 @@ public final class AsrWebsocketRecognize {
       System.err.println("usage: AsrWebsocketRecognize <speech.wav> [model]");
       System.exit(2);
     }
-    Path wav = Path.of(args[0]);
+    Path wav = Paths.get(args[0]);
     String model = args.length > 1 ? args[1] : "qwen-audio-3.1-asr-flash-streaming";
 
     AudioCommon.PcmAudio audio = AudioCommon.readWav(wav, 16000);

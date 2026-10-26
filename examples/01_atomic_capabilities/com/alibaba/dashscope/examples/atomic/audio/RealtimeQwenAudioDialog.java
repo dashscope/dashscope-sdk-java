@@ -8,8 +8,9 @@ import com.alibaba.dashscope.v3.types.audio.RealtimeParams;
 import com.alibaba.dashscope.v3.types.audio.UpdateSessionParams;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -24,7 +25,9 @@ import java.util.concurrent.Future;
  * {@code input_audio_format}/{@code output_audio_format} session fields. WAV input must be mono
  * 16-bit 16 kHz, 0.1–20 s.
  *
- * <pre>mvn -q -f examples/pom.xml exec:java -Dexec.mainClass=com.alibaba.dashscope.examples.atomic.audio.RealtimeQwenAudioDialog -Dexec.args="--wav input.wav --output reply.wav"</pre>
+ * <pre>
+ * mvn -q -f examples/pom.xml exec:java -Dexec.mainClass=com.alibaba.dashscope.examples.atomic.audio.RealtimeQwenAudioDialog -Dexec.args="--wav input.wav --output reply.wav"
+ * </pre>
  */
 public final class RealtimeQwenAudioDialog {
   private static final String MODEL = "qwen-audio-3.0-realtime-plus";
@@ -40,7 +43,7 @@ public final class RealtimeQwenAudioDialog {
     for (int i = 0; i < args.length; i++) {
       switch (args[i]) {
         case "--wav":
-          wav = Path.of(args[++i]);
+          wav = Paths.get(args[++i]);
           break;
         case "--microphone":
           microphone = true;
@@ -55,7 +58,7 @@ public final class RealtimeQwenAudioDialog {
           instructions = args[++i];
           break;
         case "--output":
-          output = Path.of(args[++i]);
+          output = Paths.get(args[++i]);
           break;
         case "--no-play":
           noPlay = true;
@@ -92,12 +95,12 @@ public final class RealtimeQwenAudioDialog {
         session.connect();
         session.updateSession(
             UpdateSessionParams.builder()
-                .modalities(List.of("text", "audio"))
+                .modalities(Arrays.asList("text", "audio"))
                 .voice(voice)
                 .inputAudioFormat("pcm")
                 .outputAudioFormat("pcm")
                 .enableTurnDetection(false)
-                .parameters(Map.of("instructions", instructions))
+                .parameters(Collections.singletonMap("instructions", instructions))
                 .build());
         RealtimeOmniDialog.receiveUntil(session, "session.updated", null);
         Future<Integer> receiver =

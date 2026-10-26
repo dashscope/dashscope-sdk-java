@@ -22,10 +22,9 @@ public final class FilesManage {
   public static void main(String[] args) throws Exception {
     // Build a small local file to upload
     Path filePath = Files.createTempFile("dashscope-example", ".jsonl");
-    Files.writeString(
+    Files.write(
         filePath,
-        "{\"prompt\": \"你好\", \"completion\": \"你好！有什么可以帮你？\"}\n",
-        StandardCharsets.UTF_8);
+        "{\"prompt\": \"你好\", \"completion\": \"你好！有什么可以帮你？\"}\n".getBytes(StandardCharsets.UTF_8));
 
     try (DashScopeClient client = ExampleSupport.client()) {
       // Upload

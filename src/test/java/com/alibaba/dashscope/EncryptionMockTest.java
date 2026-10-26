@@ -5,9 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.alibaba.dashscope.common.PublicErrorCode;
 import com.alibaba.dashscope.v3.config.ConfigResolver;
 import com.alibaba.dashscope.v3.errors.ApiStatusException;
+import com.alibaba.dashscope.v3.errors.PublicErrorCode;
 import com.alibaba.dashscope.v3.transport.EncryptionConfig;
 import com.alibaba.dashscope.v3.transport.EncryptionKeys;
 import com.alibaba.dashscope.v3.transport.EncryptionUtils;

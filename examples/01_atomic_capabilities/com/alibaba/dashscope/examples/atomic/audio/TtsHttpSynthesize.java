@@ -5,13 +5,13 @@ import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.examples.ExampleSupport;
 import com.alibaba.dashscope.v3.types.audio.TtsSynthesizeParams;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
- * HTTP one-shot TTS: synthesize the whole text in one call, wrap the returned raw PCM into one
- * WAV, save it, then play it (unless {@code --no-play}). Default model {@code
- * qwen-audio-3.1-tts-flash} with voice {@code longanhuan_v3.1} at 24000 Hz. A real request may
- * incur charges. The one-shot aggregate holds the whole audio in memory; prefer the streaming
- * variant for long text. Usage:
+ * HTTP one-shot TTS: synthesize the whole text in one call, wrap the returned raw PCM into one WAV,
+ * save it, then play it (unless {@code --no-play}). Default model {@code qwen-audio-3.1-tts-flash}
+ * with voice {@code longanhuan_v3.1} at 24000 Hz. A real request may incur charges. The one-shot
+ * aggregate holds the whole audio in memory; prefer the streaming variant for long text. Usage:
  *
  * <pre>TtsHttpSynthesize &lt;text&gt; &lt;output.wav&gt; [--model M] [--voice V] [--no-play]</pre>
  *
@@ -27,7 +27,7 @@ public final class TtsHttpSynthesize {
       System.exit(2);
     }
     String text = args[0];
-    Path output = Path.of(args[1]);
+    Path output = Paths.get(args[1]);
     String model = "qwen-audio-3.1-tts-flash";
     String voice = "longanhuan_v3.1";
     boolean play = true;
@@ -47,7 +47,7 @@ public final class TtsHttpSynthesize {
           System.exit(2);
       }
     }
-    if (text.isBlank()) {
+    if (text.trim().isEmpty()) {
       System.err.println("error: text must not be empty or blank");
       System.exit(2);
     }

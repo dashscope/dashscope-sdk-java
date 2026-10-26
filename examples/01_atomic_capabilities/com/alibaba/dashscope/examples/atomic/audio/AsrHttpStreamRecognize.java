@@ -11,23 +11,25 @@ import com.alibaba.dashscope.v3.types.multimodal.MultimodalChatCreateParams;
 import com.alibaba.dashscope.v3.types.multimodal.MultimodalChoice;
 import com.alibaba.dashscope.v3.types.multimodal.MultimodalMessage;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
  * REST ASR: submit complete WAV audio once and receive cumulative transcripts over SSE. The Python
- * original POSTs {@code /services/aigc/multimodal-generation/generation} through the raw
- * transport; Java 3.0 has no raw transport API, so the SAME endpoint semantics are expressed as
- * {@code client.multimodal().chat().createStreaming(...)} with model {@code
- * qwen-audio-3.1-asr-flash}, one audio content part, and the ASR knobs ({@code format}, {@code
- * sample_rate}) carried in the {@code parameters} passthrough. A local file is uploaded by the
- * SDK's OSS preprocessing (an {@code oss://} URL plus the resolve header) instead of Python's
- * base64 data URI; an {@code --url} value is sent as-is. This is NOT realtime audio input: the
- * service officially returns batched results only for audio of at least 60 seconds, so the first
- * SSE event of a long file may be slow. Usage:
+ * original POSTs {@code /services/aigc/multimodal-generation/generation} through the raw transport;
+ * Java 3.0 has no raw transport API, so the SAME endpoint semantics are expressed as {@code
+ * client.multimodal().chat().createStreaming(...)} with model {@code qwen-audio-3.1-asr-flash}, one
+ * audio content part, and the ASR knobs ({@code format}, {@code sample_rate}) carried in the {@code
+ * parameters} passthrough. A local file is uploaded by the SDK's OSS preprocessing (an {@code
+ * oss://} URL plus the resolve header) instead of Python's base64 data URI; an {@code --url} value
+ * is sent as-is. This is NOT realtime audio input: the service officially returns batched results
+ * only for audio of at least 60 seconds, so the first SSE event of a long file may be slow. Usage:
  *
- * <pre>AsrHttpStreamRecognize (--file &lt;speech.wav&gt; | --url &lt;https audio url&gt;) [--model M]</pre>
+ * <pre>
+ * AsrHttpStreamRecognize (--file &lt;speech.wav&gt; | --url &lt;https audio url&gt;) [--model M]
+ * </pre>
  *
  * Translation of the Python blueprint example 01_atomic_capabilities/audio/asr_http_stream.py.
  */
@@ -40,7 +42,7 @@ public final class AsrHttpStreamRecognize {
     for (int i = 0; i < args.length; i++) {
       switch (args[i]) {
         case "--file":
-          file = Path.of(value(args, ++i));
+          file = Paths.get(value(args, ++i));
           break;
         case "--url":
           url = value(args, ++i);
@@ -79,7 +81,8 @@ public final class AsrHttpStreamRecognize {
         MultimodalChatCreateParams.builder()
             .model(model)
             .messages(
-                List.of(MultimodalMessage.user(List.of(ContentPart.audio(audioRef)))))
+                Collections.singletonList(
+                    MultimodalMessage.user(Collections.singletonList(ContentPart.audio(audioRef)))))
             // Same wire body as the Python original: no incremental_output flag; this model
             // answers with cumulative output.text frames (each may revise an earlier partial).
             .parameters(asrParameters)
@@ -137,6 +140,7 @@ public final class AsrHttpStreamRecognize {
 
   private static void usage() {
     System.err.println(
-        "usage: AsrHttpStreamRecognize (--file <speech.wav> | --url <https audio url>) [--model M]");
+        "usage: AsrHttpStreamRecognize (--file <speech.wav> | --url <https audio url>) [--model"
+            + " M]");
   }
 }

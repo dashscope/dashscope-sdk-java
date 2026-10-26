@@ -2,10 +2,9 @@
 package com.alibaba.dashscope.v3.resources.audio;
 
 import com.alibaba.dashscope.RequestOptions;
-import com.alibaba.dashscope.common.SdkErrorCode;
 import com.alibaba.dashscope.v3.errors.ApiConnectionException;
-import com.alibaba.dashscope.v3.errors.ApiTimeoutException;
 import com.alibaba.dashscope.v3.errors.Errors;
+import com.alibaba.dashscope.v3.errors.SdkErrorCode;
 import com.alibaba.dashscope.v3.errors.SdkException;
 import com.alibaba.dashscope.v3.transport.HttpTransport;
 import com.alibaba.dashscope.v3.transport.JsonSupport;
@@ -160,13 +159,15 @@ public final class RealtimeSession implements AutoCloseable {
       Thread.currentThread().interrupt();
       ws.cancel();
       socket = null;
-      throw new ApiConnectionException("websocket connect interrupted", e);
+      throw Errors.connection(SdkErrorCode.SDK_CONNECTION_INTERRUPTED, "websocket connect", e);
     }
     if (!opened) {
       ws.cancel();
       socket = null;
-      throw new ApiTimeoutException(
-          "websocket handshake timed out after " + WsSession.DEFAULT_CONNECT_TIMEOUT, null);
+      throw Errors.timeout(
+          SdkErrorCode.SDK_TIMEOUT,
+          "websocket handshake after " + WsSession.DEFAULT_CONNECT_TIMEOUT,
+          null);
     }
     if (openFailure != null) {
       ws.cancel();
@@ -281,12 +282,13 @@ public final class RealtimeSession implements AutoCloseable {
           return;
         }
         if (terminal) {
-          throw new ApiConnectionException("websocket closed before session.finished", null);
+          throw Errors.connection(
+              SdkErrorCode.SDK_CONNECTION_ERROR, "websocket closed before session.finished", null);
         }
       }
       long remaining = deadline - System.nanoTime();
       if (remaining <= 0) {
-        throw new ApiTimeoutException("timed out waiting for session.finished", null);
+        throw Errors.timeout(SdkErrorCode.SDK_TIMEOUT, "waiting for session.finished", null);
       }
       pumpOnce(Duration.ofNanos(Math.min(remaining, receiveTimeout.toNanos())));
     }
@@ -431,7 +433,8 @@ public final class RealtimeSession implements AutoCloseable {
         in = inbox.poll(remaining, TimeUnit.NANOSECONDS);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
-        throw new ApiConnectionException("interrupted while waiting for realtime event", e);
+        throw Errors.connection(
+            SdkErrorCode.SDK_CONNECTION_INTERRUPTED, "waiting for realtime event", e);
       }
       if (in == null) {
         return;
@@ -451,8 +454,10 @@ public final class RealtimeSession implements AutoCloseable {
         terminal = true;
         if (!sawCompletion && localCloseGeneration != in.generation) {
           terminalFailure =
-              new ApiConnectionException(
-                  "websocket closed before session.finished/response.done", null);
+              Errors.connection(
+                  SdkErrorCode.SDK_CONNECTION_ERROR,
+                  "websocket closed before session.finished/response.done",
+                  null);
           throw terminalFailure;
         }
         return;

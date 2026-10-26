@@ -1,7 +1,6 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.v3.errors;
 
-import com.alibaba.dashscope.common.PublicErrorCode;
 import java.util.Map;
 
 /** HTTP 500: the server encountered an internal error. Retryable per the retry policy. */

@@ -6,4 +6,8 @@ public class ApiConnectionException extends DashScopeException {
   public ApiConnectionException(String message, Throwable cause) {
     super(message, cause);
   }
+
+  public ApiConnectionException(String message, String code, Throwable cause) {
+    super(message, code, null, null, null, null, cause);
+  }
 }

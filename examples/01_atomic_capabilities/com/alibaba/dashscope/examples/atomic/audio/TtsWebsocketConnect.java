@@ -12,8 +12,11 @@ import com.alibaba.dashscope.v3.types.completions.Delta;
 import com.alibaba.dashscope.v3.types.messages.Message;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -24,19 +27,23 @@ import java.util.concurrent.Future;
  * WebSocket duplex TTS: send text while receiving audio into one WAV, then play it. Translation of
  * the Python blueprint example 01_atomic_capabilities/audio/tts_websocket.py.
  *
- * <p>Default model {@code qwen-audio-3.1-tts-flash}, voice {@code longanhuan_v3.1}. With
- * {@code --prompt}, an LLM answer is streamed first ({@code chat.completions.createStreaming}) and
- * every delta text is fed straight into the synthesizer.
+ * <p>Default model {@code qwen-audio-3.1-tts-flash}, voice {@code longanhuan_v3.1}. With {@code
+ * --prompt}, an LLM answer is streamed first ({@code chat.completions.createStreaming}) and every
+ * delta text is fed straight into the synthesizer.
  *
- * <pre>mvn -q -f examples/pom.xml exec:java -Dexec.mainClass=com.alibaba.dashscope.examples.atomic.audio.TtsWebsocketConnect -Dexec.args="--text '你好，欢迎使用语音合成。' --output hello.wav"</pre>
+ * <pre>
+ * mvn -q -f examples/pom.xml exec:java -Dexec.mainClass=com.alibaba.dashscope.examples.atomic.audio.TtsWebsocketConnect -Dexec.args="--text '你好，欢迎使用语音合成。' --output hello.wav"
+ * </pre>
  */
 public final class TtsWebsocketConnect {
-  private static final Map<String, String> DEFAULT_VOICES =
-      Map.of(
-          "qwen-audio-3.1-tts-flash", "longanhuan_v3.1",
-          "qwen-audio-3.0-tts-flash", "longanhuan_v3.6",
-          "cosyvoice-v3-flash", "longanhuan",
-          "cosyvoice-v3-plus", "longanhuan");
+  private static final Map<String, String> DEFAULT_VOICES = new HashMap<>();
+
+  static {
+    DEFAULT_VOICES.put("qwen-audio-3.1-tts-flash", "longanhuan_v3.1");
+    DEFAULT_VOICES.put("qwen-audio-3.0-tts-flash", "longanhuan_v3.6");
+    DEFAULT_VOICES.put("cosyvoice-v3-flash", "longanhuan");
+    DEFAULT_VOICES.put("cosyvoice-v3-plus", "longanhuan");
+  }
 
   public static void main(String[] args) throws Exception {
     List<String> texts = new ArrayList<>();
@@ -72,7 +79,7 @@ public final class TtsWebsocketConnect {
           sampleRate = Integer.parseInt(args[++i]);
           break;
         case "--output":
-          output = Path.of(args[++i]);
+          output = Paths.get(args[++i]);
           break;
         case "--no-play":
           noPlay = true;
@@ -82,7 +89,9 @@ public final class TtsWebsocketConnect {
           usage();
       }
     }
-    if (output == null || (texts.isEmpty() && prompt == null) || (prompt != null && !texts.isEmpty())) {
+    if (output == null
+        || (texts.isEmpty() && prompt == null)
+        || (prompt != null && !texts.isEmpty())) {
       usage();
     }
     if (prompt != null && prompt.trim().isEmpty()) {
@@ -99,13 +108,9 @@ public final class TtsWebsocketConnect {
 
     try (DashScopeClient client = ExampleSupport.client()) {
       TtsConnectParams.Builder params =
-          TtsConnectParams.builder()
-              .model(model)
-              .voice(voice)
-              .format("pcm")
-              .sampleRate(sampleRate);
+          TtsConnectParams.builder().model(model).voice(voice).format("pcm").sampleRate(sampleRate);
       if (instruction != null) {
-        params.parameters(Map.of("instruction", instruction));
+        params.parameters(Collections.singletonMap("instruction", instruction));
       }
       SynthesisSession session = client.audio().tts().connect(params.build());
       ExecutorService receiverPool = Executors.newSingleThreadExecutor();
@@ -182,7 +187,7 @@ public final class TtsWebsocketConnect {
             .createStreaming(
                 ChatCompletionCreateParams.builder()
                     .model(llmModel)
-                    .messages(List.of(Message.user(prompt)))
+                    .messages(Collections.singletonList(Message.user(prompt)))
                     .incrementalOutput(true)
                     .build())) {
       for (ChatCompletionChunk chunk : stream) {

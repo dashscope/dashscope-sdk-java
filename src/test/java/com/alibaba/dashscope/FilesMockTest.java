@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.v3.errors.BadRequestException;
-import com.alibaba.dashscope.v3.errors.NotFoundException;
 import com.alibaba.dashscope.v3.types.files.DeletionStatus;
 import com.alibaba.dashscope.v3.types.files.FileList;
 import com.alibaba.dashscope.v3.types.files.FileObject;
@@ -157,8 +156,9 @@ class FilesMockTest {
   }
 
   @Test
-  void getNotFoundMapsToNotFoundException() throws Exception {
-    // The gateway reports a missing file as 400 InvalidParameter; get re-raises NotFound.
+  void getNotFoundSurfacesAsBadRequestException() throws Exception {
+    // The gateway reports a missing file as 400 InvalidParameter; message text is never sniffed,
+    // so the catalog-driven BadRequestException surfaces with the gateway's real status/code.
     server.enqueue(
         new MockResponse()
             .setResponseCode(400)
@@ -166,7 +166,8 @@ class FilesMockTest {
             .setBody(
                 "{\"code\":\"InvalidParameter\",\"message\":\"File not found.\","
                     + "\"request_id\":\"r4\"}"));
-    NotFoundException e = assertThrows(NotFoundException.class, () -> client.files().get("gone"));
+    BadRequestException e =
+        assertThrows(BadRequestException.class, () -> client.files().get("gone"));
     assertEquals(400, e.getStatusCode());
     assertEquals("InvalidParameter", e.getCode());
     assertEquals("r4", e.getRequestId());

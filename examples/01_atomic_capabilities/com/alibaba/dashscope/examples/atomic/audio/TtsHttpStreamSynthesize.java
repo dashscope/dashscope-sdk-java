@@ -7,16 +7,18 @@ import com.alibaba.dashscope.v3.types.audio.TtsSynthesizeParams;
 import com.alibaba.dashscope.v3.types.common.ResponseStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
- * HTTP SSE TTS: stream decoded PCM chunks, accumulate them into one WAV at 24000 Hz, save after
- * the stream completes, then play (unless {@code --no-play}). Default model {@code
+ * HTTP SSE TTS: stream decoded PCM chunks, accumulate them into one WAV at 24000 Hz, save after the
+ * stream completes, then play (unless {@code --no-play}). Default model {@code
  * qwen-audio-3.1-tts-flash} with voice {@code longanhuan_v3.1}. A real request may incur charges.
  * The SDK's {@code byte[]} stream skips frames that carry no audio (usage-only tails), so the
  * finish flag and requestId/usage of the Python original are not observable here; an in-stream
  * business error still surfaces as an exception. Usage:
  *
- * <pre>TtsHttpStreamSynthesize &lt;text&gt; &lt;output.wav&gt; [--model M] [--voice V] [--no-play]</pre>
+ * <pre>TtsHttpStreamSynthesize &lt;text&gt; &lt;output.wav&gt; [--model M] [--voice V] [--no-play]
+ * </pre>
  *
  * Translation of the Python blueprint example 01_atomic_capabilities/audio/tts_http_stream.py.
  */
@@ -30,7 +32,7 @@ public final class TtsHttpStreamSynthesize {
       System.exit(2);
     }
     String text = args[0];
-    Path output = Path.of(args[1]);
+    Path output = Paths.get(args[1]);
     String model = "qwen-audio-3.1-tts-flash";
     String voice = "longanhuan_v3.1";
     boolean play = true;
@@ -50,7 +52,7 @@ public final class TtsHttpStreamSynthesize {
           System.exit(2);
       }
     }
-    if (text.isBlank()) {
+    if (text.trim().isEmpty()) {
       System.err.println("error: text must not be empty or blank");
       System.exit(2);
     }
@@ -58,18 +60,14 @@ public final class TtsHttpStreamSynthesize {
     ByteArrayOutputStream pcm = new ByteArrayOutputStream();
     try (DashScopeClient client = ExampleSupport.client();
         ResponseStream<byte[]> stream =
-            client
-                .audio()
-                .tts()
-                .http()
-                .stream(
-                    TtsSynthesizeParams.builder()
-                        .model(model)
-                        .voice(voice)
-                        .text(text)
-                        .format("wav")
-                        .sampleRate(SAMPLE_RATE)
-                        .build())) {
+            client.audio().tts().http().stream(
+                TtsSynthesizeParams.builder()
+                    .model(model)
+                    .voice(voice)
+                    .text(text)
+                    .format("wav")
+                    .sampleRate(SAMPLE_RATE)
+                    .build())) {
       for (byte[] chunk : stream) {
         pcm.write(chunk, 0, chunk.length);
       }

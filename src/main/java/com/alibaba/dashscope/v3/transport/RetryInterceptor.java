@@ -1,7 +1,8 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.v3.transport;
 
-import com.alibaba.dashscope.v3.errors.ApiConnectionException;
+import com.alibaba.dashscope.v3.errors.Errors;
+import com.alibaba.dashscope.v3.errors.SdkErrorCode;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketException;
@@ -97,8 +98,10 @@ public final class RetryInterceptor implements Interceptor {
         // call after a cancel signal risks a duplicated, billable, non-idempotent request. Abort
         // instead, preserving the prior network failure as the cause when there was one.
         Thread.currentThread().interrupt();
-        throw new ApiConnectionException(
-            "retry interrupted before attempt " + (attempt + 1), failure != null ? failure : e);
+        throw Errors.connection(
+            SdkErrorCode.SDK_CONNECTION_INTERRUPTED,
+            "retry before attempt " + (attempt + 1),
+            failure != null ? failure : e);
       }
       attempt++;
     }

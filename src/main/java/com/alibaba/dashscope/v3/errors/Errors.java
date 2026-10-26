@@ -1,8 +1,6 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.v3.errors;
 
-import com.alibaba.dashscope.common.PublicErrorCode;
-import com.alibaba.dashscope.common.SdkErrorCode;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -214,6 +212,51 @@ public final class Errors {
 
   public static SdkException fromSdkErrorCode(SdkErrorCode entry) {
     return fromSdkErrorCode(entry, null);
+  }
+
+  /**
+   * SDK-side connection failure from the catalog, keeping the {@link ApiConnectionException} type.
+   * {@code detail} fills the entry's {@code {detail}} placeholder; pass {@code null} for the raw
+   * template.
+   */
+  public static ApiConnectionException connection(
+      SdkErrorCode entry, String detail, Throwable cause) {
+    return new ApiConnectionException(
+        detail == null ? entry.getMessage() : entry.formatMessage(detailVars(detail)),
+        entry.getCode(),
+        cause);
+  }
+
+  /**
+   * SDK-side timeout from the catalog, keeping the {@link ApiTimeoutException} type. {@code detail}
+   * fills the entry's {@code {detail}} placeholder; pass {@code null} for the raw template.
+   */
+  public static ApiTimeoutException timeout(SdkErrorCode entry, String detail, Throwable cause) {
+    return new ApiTimeoutException(
+        detail == null ? entry.getMessage() : entry.formatMessage(detailVars(detail)),
+        entry.getCode(),
+        cause);
+  }
+
+  /**
+   * SDK-side local I/O failure from the catalog, kept as plain {@link SdkException}: a filesystem
+   * failure is not a connection problem, so it must not masquerade as {@link
+   * ApiConnectionException}. {@code detail} fills the entry's {@code {detail}} placeholder; pass
+   * {@code null} for the raw template.
+   */
+  public static SdkException io(SdkErrorCode entry, String detail, Throwable cause) {
+    return new SdkException(
+        detail == null ? entry.getMessage() : entry.formatMessage(detailVars(detail)),
+        entry.getCode(),
+        entry.getSolution(),
+        entry.isAllowRetry(),
+        cause);
+  }
+
+  private static Map<String, String> detailVars(String detail) {
+    Map<String, String> vars = new HashMap<>();
+    vars.put("detail", detail);
+    return vars;
   }
 
   /**

@@ -1,8 +1,8 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.v3.resources.audio;
 
-import com.alibaba.dashscope.v3.errors.ApiConnectionException;
-import com.alibaba.dashscope.v3.errors.ApiTimeoutException;
+import com.alibaba.dashscope.v3.errors.Errors;
+import com.alibaba.dashscope.v3.errors.SdkErrorCode;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -89,7 +89,7 @@ public final class AudioPacer {
               }
             } catch (IOException e) {
               closeQuietly();
-              throw new ApiConnectionException("failed to read audio file " + path, e);
+              throw Errors.io(SdkErrorCode.SDK_IO_ERROR, "read audio file " + path, e);
             }
             if (off == 0) {
               finished = true;
@@ -108,7 +108,7 @@ public final class AudioPacer {
             try {
               in.close();
             } catch (IOException e) {
-              throw new ApiConnectionException("failed to close audio file " + path, e);
+              throw Errors.io(SdkErrorCode.SDK_IO_ERROR, "close audio file " + path, e);
             }
           }
         };
@@ -141,7 +141,8 @@ public final class AudioPacer {
       LockSupport.parkNanos(remaining);
       if (Thread.interrupted()) {
         Thread.currentThread().interrupt();
-        throw new ApiTimeoutException("interrupted while pacing audio chunks", null);
+        throw Errors.connection(
+            SdkErrorCode.SDK_CONNECTION_INTERRUPTED, "pacing audio chunks", null);
       }
     }
   }
@@ -150,7 +151,7 @@ public final class AudioPacer {
     try {
       return Files.newInputStream(path);
     } catch (IOException e) {
-      throw new ApiConnectionException("failed to open audio file " + path, e);
+      throw Errors.io(SdkErrorCode.SDK_IO_ERROR, "open audio file " + path, e);
     }
   }
 }

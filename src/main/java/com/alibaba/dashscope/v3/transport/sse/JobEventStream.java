@@ -1,8 +1,8 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.v3.transport.sse;
 
-import com.alibaba.dashscope.v3.errors.ApiConnectionException;
-import com.alibaba.dashscope.v3.errors.ApiTimeoutException;
+import com.alibaba.dashscope.v3.errors.Errors;
+import com.alibaba.dashscope.v3.errors.SdkErrorCode;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -119,9 +119,10 @@ public final class JobEventStream implements AutoCloseable, Iterable<JobEventStr
         }
         finished = true;
       } catch (InterruptedIOException e) {
-        throw new ApiTimeoutException("stream read timed out: " + e.getMessage(), e);
+        throw Errors.timeout(SdkErrorCode.SDK_TIMEOUT, "stream read: " + e.getMessage(), e);
       } catch (IOException e) {
-        throw new ApiConnectionException("stream read failed: " + e.getMessage(), e);
+        throw Errors.connection(
+            SdkErrorCode.SDK_CONNECTION_ERROR, "stream read: " + e.getMessage(), e);
       }
     }
   }

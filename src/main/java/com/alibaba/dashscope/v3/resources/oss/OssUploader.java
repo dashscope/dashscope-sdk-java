@@ -2,9 +2,9 @@
 package com.alibaba.dashscope.v3.resources.oss;
 
 import com.alibaba.dashscope.RequestOptions;
-import com.alibaba.dashscope.common.PublicErrorCode;
-import com.alibaba.dashscope.v3.errors.ApiConnectionException;
 import com.alibaba.dashscope.v3.errors.Errors;
+import com.alibaba.dashscope.v3.errors.PublicErrorCode;
+import com.alibaba.dashscope.v3.errors.SdkErrorCode;
 import com.alibaba.dashscope.v3.transport.HttpTransport;
 import com.alibaba.dashscope.v3.transport.JsonSupport;
 import com.alibaba.dashscope.v3.transport.RequestTags;
@@ -117,7 +117,8 @@ public final class OssUploader {
           JsonSupport.toPlainValue(errorBody),
           null);
     } catch (IOException e) {
-      throw new ApiConnectionException("oss upload failed: " + e.getMessage(), e);
+      throw Errors.connection(
+          SdkErrorCode.SDK_CONNECTION_ERROR, "oss upload: " + e.getMessage(), e);
     }
   }
 

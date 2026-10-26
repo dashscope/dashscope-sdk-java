@@ -2,10 +2,8 @@
 package com.alibaba.dashscope.v3.resources.audio;
 
 import com.alibaba.dashscope.RequestOptions;
-import com.alibaba.dashscope.common.SdkErrorCode;
-import com.alibaba.dashscope.v3.errors.ApiConnectionException;
-import com.alibaba.dashscope.v3.errors.ApiTimeoutException;
 import com.alibaba.dashscope.v3.errors.Errors;
+import com.alibaba.dashscope.v3.errors.SdkErrorCode;
 import com.alibaba.dashscope.v3.errors.SdkException;
 import com.alibaba.dashscope.v3.transport.HttpTransport;
 import com.alibaba.dashscope.v3.transport.JsonSupport;
@@ -156,7 +154,8 @@ public final class RecognitionSession implements AutoCloseable {
         } else if (event.getKind() == TaskEvent.Kind.FAILURE) {
           throw event.getFailure();
         } else if (event.getKind() == TaskEvent.Kind.CLOSED) {
-          throw new ApiConnectionException("websocket closed before task-started", null);
+          throw Errors.connection(
+              SdkErrorCode.SDK_CONNECTION_ERROR, "websocket closed before task-started", null);
         }
       }
     } catch (RuntimeException e) {
@@ -223,14 +222,14 @@ public final class RecognitionSession implements AutoCloseable {
       while (!terminal) {
         long remaining = deadline - System.nanoTime();
         if (remaining <= 0) {
-          throw new ApiTimeoutException(
-              "timed out waiting for task-finished after finish-task", null);
+          throw Errors.timeout(
+              SdkErrorCode.SDK_TIMEOUT, "waiting for task-finished after finish-task", null);
         }
         pumpOnce(Duration.ofNanos(Math.min(remaining, receiveTimeout.toNanos())));
         if (!terminal && terminalFailure == null && System.nanoTime() >= deadline) {
           // recv timed out without delivering anything.
-          throw new ApiTimeoutException(
-              "timed out waiting for task-finished after finish-task", null);
+          throw Errors.timeout(
+              SdkErrorCode.SDK_TIMEOUT, "waiting for task-finished after finish-task", null);
         }
       }
     }
@@ -428,7 +427,8 @@ public final class RecognitionSession implements AutoCloseable {
         case CLOSED:
           terminal = true;
           terminalFailure =
-              new ApiConnectionException("websocket closed before task-finished", null);
+              Errors.connection(
+                  SdkErrorCode.SDK_CONNECTION_ERROR, "websocket closed before task-finished", null);
           close();
           throw terminalFailure;
         case FAILURE:

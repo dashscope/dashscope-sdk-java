@@ -53,8 +53,8 @@ import java.util.regex.Pattern;
  * must get right into one runnable blueprint:
  *
  * <ol>
- *   <li><b>Streaming semantic retrieval</b> — embed once, cosine top-k, then a cross-encoder
- *       {@code client.rerank()} pass for precision.
+ *   <li><b>Streaming semantic retrieval</b> — embed once, cosine top-k, then a cross-encoder {@code
+ *       client.rerank()} pass for precision.
  *   <li><b>Local token watermark</b> — every retrieved passage is measured with {@code
  *       client.tokenization().count} and only the passages that fit a local token budget reach the
  *       model, so a fat context can never blow the window or the bill.
@@ -73,7 +73,8 @@ import java.util.regex.Pattern;
  * watermark logic work without spending a token. Set {@code RAG_HARNESS_LIVE=1} to point the exact
  * same engine at the real gateway with {@code DASHSCOPE_API_KEY}.
  *
- * <p>Translation of the Python blueprint example 04_real_world_scenarios/production_ready_rag_harness.py.
+ * <p>Translation of the Python blueprint example
+ * 04_real_world_scenarios/production_ready_rag_harness.py.
  */
 public final class ProductionRagHarness {
 
@@ -83,8 +84,10 @@ public final class ProductionRagHarness {
   private static final String CHAT_MODEL = envOr("DASHSCOPE_MODEL", "qwen3.7-plus");
   private static final boolean LIVE = "1".equals(System.getenv("RAG_HARNESS_LIVE"));
 
-  /** Fail over across these regions, in order (offline demo only; real cross-region use needs a
-   * region-specific key + workspace). */
+  /**
+   * Fail over across these regions, in order (offline demo only; real cross-region use needs a
+   * region-specific key + workspace).
+   */
   private static final List<String> REGIONS = Arrays.asList("cn-beijing", "ap-southeast-1");
 
   /** Candidates pulled from the vector store before rerank. */
@@ -391,11 +394,15 @@ public final class ProductionRagHarness {
       for (int i = 0; i < vectors.size(); i++) {
         order.add(i);
       }
-      order.sort((a, b) -> Double.compare(cosine(queryVec, vectors.get(b)), cosine(queryVec, vectors.get(a))));
+      order.sort(
+          (a, b) ->
+              Double.compare(cosine(queryVec, vectors.get(b)), cosine(queryVec, vectors.get(a))));
       List<Map.Entry<String, Double>> hits = new ArrayList<>();
       for (int i = 0; i < Math.min(topK, order.size()); i++) {
         int idx = order.get(i);
-        hits.add(new AbstractMap.SimpleImmutableEntry<>(texts.get(idx), cosine(queryVec, vectors.get(idx))));
+        hits.add(
+            new AbstractMap.SimpleImmutableEntry<>(
+                texts.get(idx), cosine(queryVec, vectors.get(idx))));
       }
       return hits;
     }
@@ -422,8 +429,7 @@ public final class ProductionRagHarness {
               client ->
                   client
                       .tokenization()
-                      .count(
-                          TokenizationCountParams.builder().model(model).prompt(text).build())
+                      .count(TokenizationCountParams.builder().model(model).prompt(text).build())
                       .getInputTokens(),
               true);
       return outcome.getValue();
@@ -573,9 +579,8 @@ public final class ProductionRagHarness {
     /**
      * Run the full pipeline and return a {@link RagAnswer}.
      *
-     * <p>Every stage (retrieval, rerank, watermark, generation) sits inside one guard, so a
-     * failure anywhere — not just generation — degrades gracefully instead of raising to the
-     * caller.
+     * <p>Every stage (retrieval, rerank, watermark, generation) sits inside one guard, so a failure
+     * anywhere — not just generation — degrades gracefully instead of raising to the caller.
      */
     RagAnswer answer(String query) {
       try {
@@ -601,8 +606,7 @@ public final class ProductionRagHarness {
           "    token watermark: kept %d passage(s), %d/%d tokens, dropped %d%n",
           fit.kept.size(), fit.used, CONTEXT_TOKEN_BUDGET, fit.dropped);
       if (fit.kept.isEmpty()) {
-        return new RagAnswer(
-            "资料不足，无法回答该问题。", null, null, null, null, 0, fit.dropped, true, null);
+        return new RagAnswer("资料不足，无法回答该问题。", null, null, null, null, 0, fit.dropped, true, null);
       }
       String prompt = buildPrompt(fit.kept, query);
       Map.Entry<String, StreamedAnswer> generated = generate(prompt);
@@ -675,9 +679,9 @@ public final class ProductionRagHarness {
   // ===================== offline mock gateway w/ faults =====================
 
   /**
-   * Per-region mock servers routing by path, serving canned envelopes, injecting faults on
-   * demand. A region outage takes down every endpoint together, so the breaker accumulates
-   * failures across the whole pipeline.
+   * Per-region mock servers routing by path, serving canned envelopes, injecting faults on demand.
+   * A region outage takes down every endpoint together, so the breaker accumulates failures across
+   * the whole pipeline.
    */
   static final class MockGateway {
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -706,7 +710,7 @@ public final class ProductionRagHarness {
 
     private void route(String region, HttpExchange exchange) throws IOException {
       try {
-        byte[] requestBytes = exchange.getRequestBody().readAllBytes();
+        byte[] requestBytes = readAll(exchange.getRequestBody());
         if (downRegions.contains(region)) {
           respondFault(exchange, 503, "ServiceUnavailable", "mocked regional outage in " + region);
           return;
@@ -727,8 +731,8 @@ public final class ProductionRagHarness {
     }
 
     /** Retry-After: 0 keeps the SDK/harness backoff instant in the demo. */
-    private static void respondFault(
-        HttpExchange exchange, int status, String code, String message) throws IOException {
+    private static void respondFault(HttpExchange exchange, int status, String code, String message)
+        throws IOException {
       ObjectNode body = MAPPER.createObjectNode();
       body.put("code", code);
       body.put("message", message);
@@ -851,7 +855,9 @@ public final class ProductionRagHarness {
         ObjectNode frame = MAPPER.createObjectNode();
         ObjectNode choice = frame.putObject("output").putArray("choices").addObject();
         choice.putNull("finish_reason");
-        choice.putObject("message").put("content", text.substring(i, Math.min(i + 12, text.length())));
+        choice
+            .putObject("message")
+            .put("content", text.substring(i, Math.min(i + 12, text.length())));
         frame.put("request_id", "mock-chat-" + region);
         sse.append("id: ").append(++id).append('\n');
         sse.append("data: ").append(MAPPER.writeValueAsString(frame)).append("\n\n");
@@ -914,10 +920,7 @@ public final class ProductionRagHarness {
   private static Map.Entry<ProductionRagEngine, MockGateway> buildEngine() throws IOException {
     if (LIVE) {
       DashScopeClient live =
-          DashScopeClient.builder()
-              .apiKey(ExampleSupport.requireApiKey())
-              .maxRetries(2)
-              .build();
+          DashScopeClient.builder().apiKey(ExampleSupport.requireApiKey()).maxRetries(2).build();
       ResilientGateway gateway =
           new ResilientGateway(Collections.singletonList("default"), region -> live);
       return new AbstractMap.SimpleImmutableEntry<>(new ProductionRagEngine(gateway, 0.5), null);
@@ -999,5 +1002,15 @@ public final class ProductionRagHarness {
         mock.stopAll();
       }
     }
+  }
+
+  private static byte[] readAll(java.io.InputStream in) throws IOException {
+    java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+    byte[] buf = new byte[8192];
+    int n;
+    while ((n = in.read(buf)) >= 0) {
+      out.write(buf, 0, n);
+    }
+    return out.toByteArray();
   }
 }

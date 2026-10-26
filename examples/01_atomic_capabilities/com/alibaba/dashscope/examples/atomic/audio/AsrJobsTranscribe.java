@@ -11,13 +11,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * HTTP recorded-file ASR: submit HTTPS audio URLs as a batch transcription job, wait for the
@@ -28,7 +27,9 @@ import java.util.List;
  * run can be resumed with {@code --task-id} (same region/workspace) instead of a new paid
  * submission. Usage:
  *
- * <pre>AsrJobsTranscribe (--url &lt;https audio url&gt; [--url ...] | --task-id &lt;id&gt;) [--model M] [--wait-timeout SEC]</pre>
+ * <pre>
+ * AsrJobsTranscribe (--url &lt;https audio url&gt; [--url ...] | --task-id &lt;id&gt;) [--model M] [--wait-timeout SEC]
+ * </pre>
  *
  * Translation of the Python blueprint example 01_atomic_capabilities/audio/asr_file.py.
  */
@@ -95,7 +96,8 @@ public final class AsrJobsTranscribe {
                   + "); check the service before submitting again");
         }
         System.out.println("task_id: " + created.getTaskId());
-        System.err.println("Resume without a new paid submission: --task-id " + created.getTaskId());
+        System.err.println(
+            "Resume without a new paid submission: --task-id " + created.getTaskId());
         job =
             client
                 .audio()
@@ -132,12 +134,10 @@ public final class AsrJobsTranscribe {
       throw new IllegalStateException("Task returned no per-file results");
     }
     ObjectMapper mapper = new ObjectMapper();
-    // Never reuse the SDK transport for downloads: signed URLs need no API key.
-    HttpClient downloader =
-        HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(30))
-            .followRedirects(HttpClient.Redirect.NORMAL)
-            .build();
+    // Never reuse the SDK transport for downloads: signed URLs need no API key. OkHttp follows
+    // redirects by default, matching the python.org/requests behavior of the blueprint.
+    OkHttpClient downloader =
+        new OkHttpClient.Builder().connectTimeout(Duration.ofSeconds(30)).build();
     int failures = 0;
     int index = 0;
     for (JobResult result : results) {
@@ -148,15 +148,16 @@ public final class AsrJobsTranscribe {
           throw new IllegalStateException("subtask did not succeed");
         }
         String url = httpsUrl(result.getTranscriptionUrl());
-        HttpResponse<String> response =
-            downloader.send(
-                HttpRequest.newBuilder(URI.create(url)).GET().build(),
-                HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() / 100 != 2) {
-          throw new IllegalStateException("download failed");
+        try (Response response =
+            downloader.newCall(new Request.Builder().url(url).get().build()).execute()) {
+          if (!response.isSuccessful()) {
+            throw new IllegalStateException("download failed");
+          }
+          System.out.println("File " + index + ": " + url);
+          System.out.println(
+              transcriptText(
+                  mapper.readTree(response.body() == null ? "" : response.body().string())));
         }
-        System.out.println("File " + index + ": " + url);
-        System.out.println(transcriptText(mapper.readTree(response.body())));
       } catch (Exception e) {
         failures++;
         // Exception messages can contain presigned URLs; keep them out of logs.

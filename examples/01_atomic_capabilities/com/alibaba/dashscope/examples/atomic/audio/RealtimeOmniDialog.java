@@ -10,9 +10,10 @@ import com.alibaba.dashscope.v3.types.audio.UpdateSessionParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Base64;
-import java.util.List;
-import java.util.Map;
+import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -25,7 +26,9 @@ import javax.sound.sampled.TargetDataLine;
  * <p>Manual end-of-turn (commit + createResponse), no server VAD; default voice {@code
  * longanlingxin}. WAV input must be mono 16-bit 16 kHz, 0.1–20 s.
  *
- * <pre>mvn -q -f examples/pom.xml exec:java -Dexec.mainClass=com.alibaba.dashscope.examples.atomic.audio.RealtimeOmniDialog -Dexec.args="--wav input.wav --output reply.wav"</pre>
+ * <pre>
+ * mvn -q -f examples/pom.xml exec:java -Dexec.mainClass=com.alibaba.dashscope.examples.atomic.audio.RealtimeOmniDialog -Dexec.args="--wav input.wav --output reply.wav"
+ * </pre>
  */
 public final class RealtimeOmniDialog {
   private static final String MODEL = "qwen3.8-omni-flash-realtime";
@@ -41,7 +44,7 @@ public final class RealtimeOmniDialog {
     for (int i = 0; i < args.length; i++) {
       switch (args[i]) {
         case "--wav":
-          wav = Path.of(args[++i]);
+          wav = Paths.get(args[++i]);
           break;
         case "--microphone":
           microphone = true;
@@ -56,7 +59,7 @@ public final class RealtimeOmniDialog {
           instructions = args[++i];
           break;
         case "--output":
-          output = Path.of(args[++i]);
+          output = Paths.get(args[++i]);
           break;
         case "--no-play":
           noPlay = true;
@@ -93,13 +96,13 @@ public final class RealtimeOmniDialog {
         session.connect();
         session.updateSession(
             UpdateSessionParams.builder()
-                .modalities(List.of("text", "audio"))
+                .modalities(Arrays.asList("text", "audio"))
                 .voice(voice)
                 .inputAudio(UpdateSessionParams.AudioFormat.of("pcm", 16000))
                 .outputAudio(UpdateSessionParams.AudioFormat.of("pcm", 24000))
                 .enableInputAudioTranscription(false)
                 .enableTurnDetection(false)
-                .parameters(Map.of("instructions", instructions))
+                .parameters(Collections.singletonMap("instructions", instructions))
                 .build());
         receiveUntil(session, "session.updated", null);
         Future<Integer> receiver = pool.submit(() -> receiveUntil(session, "response.done", pcm));

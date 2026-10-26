@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.examples.atomic.audio;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,7 +43,13 @@ public final class AudioCommon {
     byte[] pcm;
     try (AudioInputStream in = AudioSystem.getAudioInputStream(path.toFile())) {
       format = in.getFormat();
-      pcm = in.readAllBytes();
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      byte[] buf = new byte[8192];
+      int n;
+      while ((n = in.read(buf)) >= 0) {
+        out.write(buf, 0, n);
+      }
+      pcm = out.toByteArray();
     }
     if (format.getChannels() != 1
         || format.getSampleSizeInBits() != 16
