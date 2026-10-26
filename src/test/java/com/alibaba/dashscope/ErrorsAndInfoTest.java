@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.alibaba.dashscope.common.PublicErrorCode;
 import com.alibaba.dashscope.common.SdkErrorCode;
 import com.alibaba.dashscope.shared.SdkInfo;
 import com.alibaba.dashscope.shared.SdkSession;
@@ -102,6 +103,33 @@ class ErrorsAndInfoTest {
     SdkException e = Errors.fromThrowable(new IllegalStateException("boom"), "sdk.agentic_rl");
     assertEquals("sdk.agentic_rl.Error", e.getCode());
     assertEquals("boom", e.getMessage());
+  }
+
+  @Test
+  void catalogEntryStaysPlainAndKeepsCause() {
+    // An unparseable 2xx body is an SDK-side failure: no status subclass is fabricated,
+    // statusCode stays null (the exchange never failed with 500), and the parse error
+    // survives as the cause.
+    Exception parseFailure = new java.io.IOException("unexpected character at line 1");
+    ApiStatusException e =
+        Errors.fromCatalogEntry(
+            PublicErrorCode.RESPONSE_ERROR,
+            "failed to parse response JSON: " + parseFailure.getMessage(),
+            "req-9",
+            null,
+            Collections.emptyMap(),
+            parseFailure);
+    assertSame(ApiStatusException.class, e.getClass());
+    assertEquals("ResponseError", e.getCode());
+    assertNull(e.getStatusCode());
+    assertEquals("req-9", e.getRequestId());
+    assertSame(parseFailure, e.getCause());
+
+    // A blank message resolves to the catalog text.
+    ApiStatusException blank =
+        Errors.fromCatalogEntry(
+            PublicErrorCode.RESPONSE_ERROR, null, null, null, Collections.emptyMap(), null);
+    assertEquals(PublicErrorCode.RESPONSE_ERROR.getErrorMsg(), blank.getMessage());
   }
 
   @Test

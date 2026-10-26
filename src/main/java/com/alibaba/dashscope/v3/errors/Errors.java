@@ -7,10 +7,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Registry-driven error factory (design §5). Three entries: {@link #fromStatus} for non-2xx HTTP,
+ * Registry-driven error factory (design §5). Four entries: {@link #fromStatus} for non-2xx HTTP,
  * {@link #fromBusinessCode} for the HTTP-200-with-business-code layer, {@link #fromSdkErrorCode}
- * for SDK-side failures. Unmapped wire codes are never guessed into a subclass: they land on plain
- * {@link ApiStatusException}.
+ * for SDK-side failures, and {@link #fromCatalogEntry} for SDK-side response-shape failures that
+ * carry a public catalog code. Unmapped wire codes are never guessed into a subclass: they land
+ * on plain {@link ApiStatusException}.
  *
  * <p>Class selection is catalog-driven: the wire-code crosswalk only picks <em>which</em> {@link
  * PublicErrorCode} applies, and the exception class comes from that entry. The single sanctioned
@@ -181,6 +182,27 @@ public final class Errors {
     }
     return factoryFor(code, statusCode)
         .create(resolved, code, statusCode, requestId, body, headers);
+  }
+
+  /**
+   * Public catalog entry raised verbatim for an SDK-side response-shape failure (an
+   * unparseable or malformed 2xx body). The exchange itself succeeded, so {@link #fromStatus}'s
+   * status→class crosswalk must not run: it would fabricate e.g. {@link InternalServerException}
+   * and a statusCode of 500 for an exchange that returned 200. The exception stays a plain
+   * {@link ApiStatusException} with {@code statusCode} null — {@code getStatusCode()}'s contract
+   * is "HTTP status of the failed exchange; null for SDK-side failures" — and the originating
+   * parse/validation failure rides as {@code cause}.
+   */
+  public static ApiStatusException fromCatalogEntry(
+      PublicErrorCode entry,
+      String message,
+      String requestId,
+      Object body,
+      Map<String, String> headers,
+      Throwable cause) {
+    String resolved = isBlank(message) ? entry.getErrorMsg() : message;
+    return new ApiStatusException(
+        resolved, entry.getErrorCode(), null, requestId, body, headers, cause);
   }
 
   /** SDK-side failure straight from the catalog. */

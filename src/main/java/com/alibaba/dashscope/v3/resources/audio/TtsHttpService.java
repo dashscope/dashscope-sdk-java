@@ -21,6 +21,9 @@ import java.util.Base64;
 public final class TtsHttpService {
   static final String MODULE = "audio";
 
+  private static final org.slf4j.Logger log =
+      org.slf4j.LoggerFactory.getLogger(TtsHttpService.class);
+
   private final HttpTransport transport;
 
   public TtsHttpService(HttpTransport transport) {
@@ -117,6 +120,9 @@ public final class TtsHttpService {
     try {
       return Base64.getDecoder().decode(base64);
     } catch (IllegalArgumentException e) {
+      // Usage-only frames legitimately carry no audio, but an undecodable payload is corrupted
+      // data — never drop it silently.
+      log.warn("dropping tts frame with undecodable base64 audio (length {})", base64.length());
       return null;
     }
   }

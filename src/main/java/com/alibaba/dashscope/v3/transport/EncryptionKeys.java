@@ -26,14 +26,13 @@ public final class EncryptionKeys {
     ResponseEnvelope envelope = transport.executeGet(PATH, null, MODULE, options);
     JsonNode data = envelope.getBody() == null ? null : envelope.getBody().get("data");
     if (data == null || !data.isObject()) {
-      PublicErrorCode entry = PublicErrorCode.RESPONSE_ERROR;
-      throw Errors.fromStatus(
-          entry.getStatusCode(),
-          entry.getErrorCode(),
+      throw Errors.fromCatalogEntry(
+          PublicErrorCode.RESPONSE_ERROR,
           "public-keys response carries no data object",
           JsonSupport.requestId(envelope.getBody(), envelope.getHeaders()),
           JsonSupport.toPlainValue(envelope.getBody()),
-          envelope.getHeaders());
+          envelope.getHeaders(),
+          null);
     }
     return new EncryptionConfig(
         text(data.get("public_key_id")),

@@ -38,16 +38,17 @@ public final class JsonSupport {
       return MAPPER.readTree(text);
     } catch (IOException e) {
       // Catalog-sourced, never an ad-hoc code: PublicErrorCode.RESPONSE_ERROR is exactly
-      // "the server returned a response that could not be parsed". Route through the same
-      // Errors factory every other error uses.
-      PublicErrorCode entry = PublicErrorCode.RESPONSE_ERROR;
-      throw Errors.fromStatus(
-          entry.getStatusCode(),
-          entry.getErrorCode(),
+      // "the server returned a response that could not be parsed". The HTTP exchange itself
+      // succeeded, so raise the catalog entry verbatim — never routed through fromStatus,
+      // whose status→class crosswalk would fabricate an InternalServerException (and a
+      // statusCode of 500) for a 200 exchange. The Jackson failure stays as the cause.
+      throw Errors.fromCatalogEntry(
+          PublicErrorCode.RESPONSE_ERROR,
           "failed to parse response JSON: " + e.getMessage(),
           null,
           null,
-          null);
+          null,
+          e);
     }
   }
 

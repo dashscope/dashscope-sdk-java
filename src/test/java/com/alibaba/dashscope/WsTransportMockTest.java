@@ -163,6 +163,9 @@ class WsTransportMockTest {
   void sharedConnectionSurvivesIdlePeriodBeyondHttpReadTimeout() throws Exception {
     // Design §5: WsConnection sockets block forever on read; the configured HTTP timeout must
     // not kill the demux reader during a quiet period (regression: inherited readTimeout).
+    // The 1200ms idle also exceeds the inherited 500ms callTimeout, so both timeout paths are
+    // covered. This is an end-to-end behavioral guard: it pins observable behavior (against
+    // future okhttp upgrades), not the explicit readTimeout(0)/callTimeout(0) lines themselves.
     ServerSocket serverSocket = enqueueUpgrade();
     try (HttpTransport shortTimeout =
             new HttpTransport(
@@ -346,6 +349,28 @@ class WsTransportMockTest {
                 new WsSession(
                     transport, transport.config().getWsBaseUrl(), "task-x", "audio", null));
     assertEquals(403, e.getStatusCode());
+  }
+
+  @Test
+  void handshakeFailureTerminatesReaderThread() throws Exception {
+    long before = liveReaderThreads();
+    server.enqueue(new MockResponse().setResponseCode(403).setBody("forbidden"));
+    assertThrows(
+        PermissionDeniedException.class,
+        () -> new WsConnection(transport, transport.config().getWsBaseUrl(), "audio", null));
+    // Regression: a failed constructor never hands out the instance, so close() is unreachable —
+    // it must poison + interrupt the demux reader itself instead of leaking it on take().
+    long deadline = System.nanoTime() + Duration.ofSeconds(5).toNanos();
+    while (liveReaderThreads() > before && System.nanoTime() < deadline) {
+      Thread.sleep(20);
+    }
+    assertEquals(before, liveReaderThreads(), "dashscope-ws-reader leaked after handshake failure");
+  }
+
+  private static long liveReaderThreads() {
+    return Thread.getAllStackTraces().keySet().stream()
+        .filter(t -> t.isAlive() && t.getName().equals("dashscope-ws-reader"))
+        .count();
   }
 
   @Test

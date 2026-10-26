@@ -85,14 +85,16 @@ public final class WsConnection implements AutoCloseable {
     }
     // Shared connections must block forever on read (design §5): idle periods are normal and a
     // socket read timeout would kill the single demux reader for ALL tasks. okhttp clears
-    // soTimeout on upgrade today; setting it explicitly keeps the guarantee local. Liveness is
-    // the task-level recv timeout on the demux queues, not the socket.
+    // soTimeout and exits the callTimeout watchdog on upgrade today; setting both explicitly
+    // keeps the guarantee local. Liveness is the task-level recv timeout on the demux queues,
+    // not the socket.
     OkHttpClient.Builder wsClientBuilder =
         transport
             .okhttp()
             .newBuilder()
             .connectTimeout(connectTimeout)
-            .readTimeout(0, TimeUnit.MILLISECONDS);
+            .readTimeout(0, TimeUnit.MILLISECONDS)
+            .callTimeout(0, TimeUnit.MILLISECONDS);
     Duration pingInterval = transport.config().getWsPingInterval();
     if (pingInterval != null && !pingInterval.isZero() && !pingInterval.isNegative()) {
       wsClientBuilder.pingInterval(pingInterval);
@@ -131,17 +133,28 @@ public final class WsConnection implements AutoCloseable {
       opened = openLatch.await(connectTimeout.toMillis(), TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      socket.cancel();
+      abortReader();
       throw new ApiConnectionException("websocket connect interrupted", e);
     }
     if (!opened) {
-      socket.cancel();
+      abortReader();
       throw new ApiTimeoutException("websocket handshake timed out after " + connectTimeout, null);
     }
     if (openFailure != null) {
-      socket.cancel();
+      abortReader();
       throw openFailure;
     }
+  }
+
+  /**
+   * Constructor failure path: the constructor never returns the instance, so {@link #close()} is
+   * unreachable; cancel the socket AND terminate the reader (poison + interrupt), otherwise it
+   * blocks on {@code rawQueue.take()} forever, leaking the thread and the whole object graph.
+   */
+  private void abortReader() {
+    socket.cancel();
+    rawQueue.offer(POISON);
+    reader.interrupt();
   }
 
   private void demuxLoop() {

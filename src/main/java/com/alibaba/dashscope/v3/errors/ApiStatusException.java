@@ -16,6 +16,17 @@ public class ApiStatusException extends DashScopeException {
       String requestId,
       Object body,
       Map<String, String> headers) {
-    super(message, code, statusCode, requestId, body, headers, null);
+    this(message, code, statusCode, requestId, body, headers, null);
+  }
+
+  public ApiStatusException(
+      String message,
+      String code,
+      Integer statusCode,
+      String requestId,
+      Object body,
+      Map<String, String> headers,
+      Throwable cause) {
+    super(message, code, statusCode, requestId, body, headers, cause);
   }
 }

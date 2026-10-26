@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.v3.errors.SdkException;
@@ -350,5 +351,26 @@ class TtsMockTest {
     tts.close();
     SdkException e = assertThrows(SdkException.class, tts::start);
     assertEquals("sdk.ws.IllegalState", e.getCode());
+  }
+
+  @Test
+  void audioChunksBeforeStartFailsFastInsteadOfSpinning() {
+    try (SynthesisSession tts =
+        client.audio().tts().connect(TtsConnectParams.builder().model("cosyvoice-v2").build())) {
+      // Regression: iterating an unstarted session must fail fast, not busy-spin.
+      assertTimeoutPreemptively(
+          Duration.ofSeconds(5),
+          () -> {
+            SdkException e =
+                assertThrows(
+                    SdkException.class,
+                    () -> {
+                      for (byte[] ignored : tts.audioChunks()) {
+                        // never reached
+                      }
+                    });
+            assertEquals("sdk.ws.IllegalState", e.getCode());
+          });
+    }
   }
 }
