@@ -3,13 +3,13 @@ package com.alibaba.dashscope.examples.atomic.multimodal;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.types.common.ResponseStream;
-import com.alibaba.dashscope.v3.types.multimodal.ContentPart;
-import com.alibaba.dashscope.v3.types.multimodal.MultimodalChatChunk;
-import com.alibaba.dashscope.v3.types.multimodal.MultimodalChatCompletion;
-import com.alibaba.dashscope.v3.types.multimodal.MultimodalChatCreateParams;
-import com.alibaba.dashscope.v3.types.multimodal.MultimodalChoice;
-import com.alibaba.dashscope.v3.types.multimodal.MultimodalMessage;
+import com.alibaba.dashscope.types.common.ResponseStream;
+import com.alibaba.dashscope.types.multimodal.ContentPart;
+import com.alibaba.dashscope.types.multimodal.MultimodalChatChunk;
+import com.alibaba.dashscope.types.multimodal.MultimodalChatCompletion;
+import com.alibaba.dashscope.types.multimodal.MultimodalChatCreateParams;
+import com.alibaba.dashscope.types.multimodal.MultimodalChoice;
+import com.alibaba.dashscope.types.multimodal.MultimodalMessage;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -29,8 +29,7 @@ public final class MultimodalChatCreate {
     List<MultimodalMessage> messages =
         Collections.singletonList(
             MultimodalMessage.user(
-                Arrays.asList(
-                    ContentPart.image(imageUrl), ContentPart.text("图中描绘的是什么景象?"))));
+                Arrays.asList(ContentPart.image(imageUrl), ContentPart.text("图中描绘的是什么景象?"))));
 
     try (DashScopeClient client = ExampleSupport.client()) {
       // Non-streaming
@@ -39,11 +38,7 @@ public final class MultimodalChatCreate {
           client
               .multimodal()
               .chat()
-              .create(
-                  MultimodalChatCreateParams.builder()
-                      .model(model)
-                      .messages(messages)
-                      .build());
+              .create(MultimodalChatCreateParams.builder().model(model).messages(messages).build());
       System.out.println(resp.outputText());
       System.out.println(
           "usage: "
@@ -58,10 +53,7 @@ public final class MultimodalChatCreate {
               .multimodal()
               .chat()
               .createStreaming(
-                  MultimodalChatCreateParams.builder()
-                      .model(model)
-                      .messages(messages)
-                      .build())) {
+                  MultimodalChatCreateParams.builder().model(model).messages(messages).build())) {
         for (MultimodalChatChunk chunk : stream) {
           MultimodalChoice choice = chunk.firstChoice();
           if (choice == null || choice.getMessage() == null) {

@@ -16,13 +16,15 @@
 
 ## 3.0（新代际）
 
-3.0 引入新的客户端入口，同一 artifact 内所有 2.x API 原样可用。要求 Java 8+。
+3.0 在同一 artifact 中引入新的客户端入口，实现包直接使用 `com.alibaba.dashscope.*`。
+除 AgentStudio 外，旧 2.x API 已迁至 `com.alibaba.dashscope.legacy_2x.*`，均已废弃并将在
+4.0 删除。这是有意的 FQCN、源码与二进制破坏性变更，存量 2.x imports 必须调整。要求 Java 8+。
 
 ```java
 import com.alibaba.dashscope.DashScopeClient;
-import com.alibaba.dashscope.v3.types.completions.ChatCompletion;
-import com.alibaba.dashscope.v3.types.completions.ChatCompletionCreateParams;
-import com.alibaba.dashscope.v3.types.messages.Message;
+import com.alibaba.dashscope.types.completions.ChatCompletion;
+import com.alibaba.dashscope.types.completions.ChatCompletionCreateParams;
+import com.alibaba.dashscope.types.messages.Message;
 import java.util.List;
 
 // apiKey 走配置链：Builder 显式参数 > -Ddashscope.api.key > DASHSCOPE_API_KEY 环境变量
@@ -44,7 +46,8 @@ try (DashScopeClient client = DashScopeClient.builder().build()) {
 - 2.x 迁移：[md/dashscope-3.0-migration.md](md/dashscope-3.0-migration.md)
   （逐类对照表、unchecked 异常心智、AgentStudio 与 tokenizers 专章）。
 - 可运行示例：[examples/README.md](examples/README.md)（四层结构，CI 全量干跑）。
-- 本节以下为冻结的 2.x API 文档（`Generation`、`Conversation` 等），原样继续可用。
+- 本节以下为已废弃的 2.x API 文档（`Generation`、`Conversation` 等），示例已使用当前
+  `legacy_2x` imports；这些 API 将在 4.0 删除。
 
 ## 快速开始
 
@@ -63,14 +66,14 @@ Generation generation = new Generation();
 #### 支持流式和非流式模式，通过回调接收输出
 
 ```java
-import com.alibaba.dashscope.aigc.generation.Generation;
-import com.alibaba.dashscope.aigc.generation.GenerationParam;
-import com.alibaba.dashscope.aigc.generation.GenerationResult;
-import com.alibaba.dashscope.common.Message;
-import com.alibaba.dashscope.common.ResultCallback;
-import com.alibaba.dashscope.common.Role;
-import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.legacy_2x.aigc.generation.Generation;
+import com.alibaba.dashscope.legacy_2x.aigc.generation.GenerationParam;
+import com.alibaba.dashscope.legacy_2x.aigc.generation.GenerationResult;
+import com.alibaba.dashscope.legacy_2x.common.Message;
+import com.alibaba.dashscope.legacy_2x.common.ResultCallback;
+import com.alibaba.dashscope.legacy_2x.common.Role;
+import com.alibaba.dashscope.legacy_2x.exception.ApiException;
+import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
 import java.util.Arrays;
 
 public class Main {
@@ -116,15 +119,15 @@ public class Main {
 #### 仅流式模式，通过响应式 IO 接收
 
 ```java
-import com.alibaba.dashscope.aigc.generation.Generation;
-import com.alibaba.dashscope.aigc.generation.GenerationParam;
-import com.alibaba.dashscope.aigc.generation.GenerationResult;
-import com.alibaba.dashscope.common.Message;
-import com.alibaba.dashscope.common.Role;
-import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.exception.InputRequiredException;
-import com.alibaba.dashscope.exception.NoApiKeyException;
-import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.legacy_2x.aigc.generation.Generation;
+import com.alibaba.dashscope.legacy_2x.aigc.generation.GenerationParam;
+import com.alibaba.dashscope.legacy_2x.aigc.generation.GenerationResult;
+import com.alibaba.dashscope.legacy_2x.common.Message;
+import com.alibaba.dashscope.legacy_2x.common.Role;
+import com.alibaba.dashscope.legacy_2x.exception.ApiException;
+import com.alibaba.dashscope.legacy_2x.exception.InputRequiredException;
+import com.alibaba.dashscope.legacy_2x.exception.NoApiKeyException;
+import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
 import io.reactivex.Flowable;
 import java.util.Arrays;
 
@@ -163,15 +166,15 @@ public class Main {
 #### 仅非流式模式
 
 ```java
-import com.alibaba.dashscope.aigc.generation.Generation;
-import com.alibaba.dashscope.aigc.generation.GenerationParam;
-import com.alibaba.dashscope.aigc.generation.GenerationResult;
-import com.alibaba.dashscope.common.Message;
-import com.alibaba.dashscope.common.Role;
-import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.exception.InputRequiredException;
-import com.alibaba.dashscope.exception.NoApiKeyException;
-import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.legacy_2x.aigc.generation.Generation;
+import com.alibaba.dashscope.legacy_2x.aigc.generation.GenerationParam;
+import com.alibaba.dashscope.legacy_2x.aigc.generation.GenerationResult;
+import com.alibaba.dashscope.legacy_2x.common.Message;
+import com.alibaba.dashscope.legacy_2x.common.Role;
+import com.alibaba.dashscope.legacy_2x.exception.ApiException;
+import com.alibaba.dashscope.legacy_2x.exception.InputRequiredException;
+import com.alibaba.dashscope.legacy_2x.exception.NoApiKeyException;
+import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
 import java.util.Arrays;
 
 public class Main {
@@ -211,14 +214,14 @@ public class Main {
 决策模型（Decision Model）针对给定的业务状态，批量回答多选一（choice）、是否判断（noul）、有序量表（score）三类问题，详见[决策模型 API 文档](https://platform.qianwenai.com/docs/api-reference/decision-model-api)。
 
 ```java
-import com.alibaba.dashscope.decision.DecisionModel;
-import com.alibaba.dashscope.decision.DecisionModelParam;
-import com.alibaba.dashscope.decision.DecisionModelResult;
-import com.alibaba.dashscope.decision.DecisionQuestion;
-import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.exception.InputRequiredException;
-import com.alibaba.dashscope.exception.NoApiKeyException;
-import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.legacy_2x.decision.DecisionModel;
+import com.alibaba.dashscope.legacy_2x.decision.DecisionModelParam;
+import com.alibaba.dashscope.legacy_2x.decision.DecisionModelResult;
+import com.alibaba.dashscope.legacy_2x.decision.DecisionQuestion;
+import com.alibaba.dashscope.legacy_2x.exception.ApiException;
+import com.alibaba.dashscope.legacy_2x.exception.InputRequiredException;
+import com.alibaba.dashscope.legacy_2x.exception.NoApiKeyException;
+import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;

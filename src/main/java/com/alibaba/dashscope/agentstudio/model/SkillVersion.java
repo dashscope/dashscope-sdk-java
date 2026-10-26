@@ -1,7 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.agentstudio.model;
 
-import com.alibaba.dashscope.common.FlattenResultBase;
+import com.alibaba.dashscope.legacy_2x.common.FlattenResultBase;
 import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;

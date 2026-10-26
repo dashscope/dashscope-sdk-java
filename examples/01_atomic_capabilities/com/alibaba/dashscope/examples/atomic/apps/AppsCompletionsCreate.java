@@ -3,16 +3,16 @@ package com.alibaba.dashscope.examples.atomic.apps;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.types.apps.AppCompletion;
-import com.alibaba.dashscope.v3.types.apps.AppCompletionCreateParams;
-import com.alibaba.dashscope.v3.types.common.ResponseStream;
+import com.alibaba.dashscope.types.apps.AppCompletion;
+import com.alibaba.dashscope.types.apps.AppCompletionCreateParams;
+import com.alibaba.dashscope.types.common.ResponseStream;
 
 /**
  * Bailian application call: non-streaming and streaming. Translation of the Python blueprint
  * example 01_atomic_capabilities/applications/apps.py.
  *
- * <p>APP_ID: the application ID of a Model Studio app; provide it via the {@code
- * DASHSCOPE_APP_ID} environment variable.
+ * <p>APP_ID: the application ID of a Model Studio app; provide it via the {@code DASHSCOPE_APP_ID}
+ * environment variable.
  */
 public final class AppsCompletionsCreate {
 

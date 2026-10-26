@@ -3,14 +3,14 @@ package com.alibaba.dashscope.examples.scenarios.triage;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.RequestOptions;
+import com.alibaba.dashscope.errors.ApiConnectionException;
+import com.alibaba.dashscope.errors.DashScopeException;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.errors.ApiConnectionException;
-import com.alibaba.dashscope.v3.errors.DashScopeException;
-import com.alibaba.dashscope.v3.types.common.Usage;
-import com.alibaba.dashscope.v3.types.decision.DecisionAnswer;
-import com.alibaba.dashscope.v3.types.decision.DecisionCreateParams;
-import com.alibaba.dashscope.v3.types.decision.DecisionQuestion;
-import com.alibaba.dashscope.v3.types.decision.DecisionResult;
+import com.alibaba.dashscope.types.common.Usage;
+import com.alibaba.dashscope.types.decision.DecisionAnswer;
+import com.alibaba.dashscope.types.decision.DecisionCreateParams;
+import com.alibaba.dashscope.types.decision.DecisionQuestion;
+import com.alibaba.dashscope.types.decision.DecisionResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.Duration;
@@ -43,16 +43,16 @@ import java.util.Set;
  *       queue; a failed call — an exception, or an {@code isError} envelope, which can ride HTTP
  *       200 — degrades the ticket to the same queue with the error attached. No ticket is ever
  *       auto-routed on a guess.
- *   <li><b>Per-ticket isolation + a token ledger</b> — one ticket's backend failure never stops
- *       the batch, and {@code usage.input_tokens} (the only quantity the decision model bills) is
+ *   <li><b>Per-ticket isolation + a token ledger</b> — one ticket's backend failure never stops the
+ *       batch, and {@code usage.input_tokens} (the only quantity the decision model bills) is
  *       booked per ticket.
  * </ol>
  *
- * <p>It runs <b>fully offline and deterministically by default</b>: the mock seam is the
- * one-method {@link DecisionBackend}, so {@link MockDecisionBackend} serves scripted answers and
- * injects a fault on demand while the policy, degradation and ledger logic under test stays
- * identical. Set {@code TRIAGE_HARNESS_LIVE=1} to run the exact same harness against the real
- * gateway with {@code DASHSCOPE_API_KEY}.
+ * <p>It runs <b>fully offline and deterministically by default</b>: the mock seam is the one-method
+ * {@link DecisionBackend}, so {@link MockDecisionBackend} serves scripted answers and injects a
+ * fault on demand while the policy, degradation and ledger logic under test stays identical. Set
+ * {@code TRIAGE_HARNESS_LIVE=1} to run the exact same harness against the real gateway with {@code
+ * DASHSCOPE_API_KEY}.
  *
  * <p>Translation of the Python blueprint example 04_real_world_scenarios/ticket_triage_harness.py.
  */
@@ -70,6 +70,7 @@ public final class TicketTriageHarness {
   private static final double ESCALATE_THRESHOLD = 0.8;
   /** Probability-weighted severity index cut lines. */
   private static final double P1_SCORE = 2.5;
+
   private static final double P2_SCORE = 1.5;
   /** Per-call timeout (live mode). */
   private static final Duration DECISION_TIMEOUT = Duration.ofSeconds(10);
@@ -86,11 +87,7 @@ public final class TicketTriageHarness {
 
   /** Levels of the severity score question, ordered low to high. */
   private static final List<String> SEVERITY_LEVELS =
-      Arrays.asList(
-          "轻微问题，不影响功能使用",
-          "部分功能受影响，但存在替代方案",
-          "核心功能不可用，没有替代方案",
-          "造成严重业务资损或安全影响");
+      Arrays.asList("轻微问题，不影响功能使用", "部分功能受影响，但存在替代方案", "核心功能不可用，没有替代方案", "造成严重业务资损或安全影响");
 
   static {
     DEPARTMENT_OPTIONS.put("billing", "支付、退款和账单问题");
@@ -107,8 +104,7 @@ public final class TicketTriageHarness {
   private static final Map<String, DecisionQuestion> QUESTIONS = new LinkedHashMap<>();
 
   static {
-    QUESTIONS.put(
-        "department", DecisionQuestion.choice("应该由哪个团队处理这张工单？", DEPARTMENT_OPTIONS));
+    QUESTIONS.put("department", DecisionQuestion.choice("应该由哪个团队处理这张工单？", DEPARTMENT_OPTIONS));
     QUESTIONS.put("escalate", DecisionQuestion.noul("是否紧急到需要立即通知值班工程师？"));
     QUESTIONS.put("severity", DecisionQuestion.score("这张工单有多严重？", SEVERITY_LEVELS));
   }
@@ -309,7 +305,9 @@ public final class TicketTriageHarness {
     }
   }
 
-  /** One scripted outcome: department (name, confidence), escalate P(yes), severity (index, conf). */
+  /**
+   * One scripted outcome: department (name, confidence), escalate P(yes), severity (index, conf).
+   */
   private static final class MockSpec {
     final String department;
     final double departmentConfidence;
@@ -415,7 +413,8 @@ public final class TicketTriageHarness {
       answer.put("type", "choice");
       answer.put("choice", spec.department);
       answer.put("confidence", spec.departmentConfidence);
-      answer.set("probabilities", MAPPER.valueToTree(spread(spec.department, spec.departmentConfidence)));
+      answer.set(
+          "probabilities", MAPPER.valueToTree(spread(spec.department, spec.departmentConfidence)));
       return answer;
     }
 
@@ -559,16 +558,15 @@ public final class TicketTriageHarness {
     DecisionBackend backend;
     if (LIVE) {
       DashScopeClient client =
-          DashScopeClient.builder()
-              .apiKey(ExampleSupport.requireApiKey())
-              .maxRetries(2)
-              .build();
+          DashScopeClient.builder().apiKey(ExampleSupport.requireApiKey()).maxRetries(2).build();
       backend = new LiveDecisionBackend(client);
     } else {
       backend = new MockDecisionBackend(MOCK_SCRIPT, FAIL_TICKETS);
     }
     return new Harness(
-        backend, new TriagePolicy(CONFIDENCE_FLOOR, ESCALATE_THRESHOLD), DECISION_MODEL,
+        backend,
+        new TriagePolicy(CONFIDENCE_FLOOR, ESCALATE_THRESHOLD),
+        DECISION_MODEL,
         DECISION_TIMEOUT);
   }
 

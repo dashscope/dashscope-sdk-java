@@ -6,9 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.alibaba.dashscope.v3.errors.ApiConnectionException;
-import com.alibaba.dashscope.v3.errors.SdkException;
-import com.alibaba.dashscope.v3.resources.audio.AudioPacer;
+import com.alibaba.dashscope.errors.ApiConnectionException;
+import com.alibaba.dashscope.errors.SdkException;
+import com.alibaba.dashscope.resources.audio.AudioPacer;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -75,8 +75,7 @@ class AudioPacerTest {
   void missingFileRaisesSdkIoException() {
     SdkException e =
         assertThrows(
-            SdkException.class,
-            () -> collect(AudioPacer.pcmChunks(dir.resolve("nope.pcm"), 100)));
+            SdkException.class, () -> collect(AudioPacer.pcmChunks(dir.resolve("nope.pcm"), 100)));
     assertTrue(e.getMessage().contains("nope.pcm"));
   }
 

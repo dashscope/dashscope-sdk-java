@@ -4,8 +4,8 @@ package com.alibaba.dashscope;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.alibaba.dashscope.v3.resources.jobs.Job;
-import com.alibaba.dashscope.v3.types.audio.AsrTranscribeParams;
+import com.alibaba.dashscope.resources.jobs.Job;
+import com.alibaba.dashscope.types.audio.AsrTranscribeParams;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;

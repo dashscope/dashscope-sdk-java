@@ -3,12 +3,12 @@ package com.alibaba.dashscope.examples.engineering.cache;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.types.completions.ChatCompletionCreateParams;
-import com.alibaba.dashscope.v3.types.embeddings.EmbeddingCreateParams;
-import com.alibaba.dashscope.v3.types.messages.Message;
+import com.alibaba.dashscope.types.completions.ChatCompletionCreateParams;
+import com.alibaba.dashscope.types.embeddings.EmbeddingCreateParams;
+import com.alibaba.dashscope.types.messages.Message;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,9 +20,9 @@ import java.util.Map;
  * Client-side semantic cache: cut token spend by answering repeat / near-repeat questions from
  * local memory. The query is embedded with {@code client.embeddings()} and compared (cosine
  * similarity) against the questions already cached; at or above a similarity threshold the stored
- * answer is returned with no model call at all, below it the query is sent to {@code
- * client.chat()} and the result is cached. Embedding vectors themselves are memoized by content
- * hash (SHA-256 of the text), so an exact repeat never re-pays the embedding call either.
+ * answer is returned with no model call at all, below it the query is sent to {@code client.chat()}
+ * and the result is cached. Embedding vectors themselves are memoized by content hash (SHA-256 of
+ * the text), so an exact repeat never re-pays the embedding call either.
  *
  * <p>Translation of the Python blueprint example 02_advanced_engineering/client_side_cache.py.
  *
@@ -31,12 +31,13 @@ import java.util.Map;
  */
 public final class ClientSideCache {
 
-  private static final String EMBED_MODEL =
-      envOr("DASHSCOPE_EMBED_MODEL", "text-embedding-v4");
+  private static final String EMBED_MODEL = envOr("DASHSCOPE_EMBED_MODEL", "text-embedding-v4");
   private static final String CHAT_MODEL = envOr("DASHSCOPE_MODEL", "qwen3.7-plus");
-  /** Cosine similarity at or above which two questions are treated as the same and the cached
-   * answer is reused. Tune to your precision/recall trade-off: higher means fewer false hits,
-   * lower means more savings. */
+  /**
+   * Cosine similarity at or above which two questions are treated as the same and the cached answer
+   * is reused. Tune to your precision/recall trade-off: higher means fewer false hits, lower means
+   * more savings.
+   */
   private static final double THRESHOLD = 0.90;
 
   private ClientSideCache() {}
@@ -172,8 +173,13 @@ public final class ClientSideCache {
         System.out.println("           A: " + result.getKey());
       }
       System.out.println(
-          "----- hits=" + cache.hits + ", misses=" + cache.misses
-              + ", real chat calls=" + cache.misses + " -----");
+          "----- hits="
+              + cache.hits
+              + ", misses="
+              + cache.misses
+              + ", real chat calls="
+              + cache.misses
+              + " -----");
     }
   }
 }

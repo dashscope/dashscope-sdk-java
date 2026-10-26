@@ -2,11 +2,11 @@
 package com.alibaba.dashscope.examples.engineering.resilience;
 
 import com.alibaba.dashscope.DashScopeClient;
-import com.alibaba.dashscope.v3.errors.ApiConnectionException;
-import com.alibaba.dashscope.v3.errors.DashScopeException;
-import com.alibaba.dashscope.v3.types.completions.ChatCompletion;
-import com.alibaba.dashscope.v3.types.completions.ChatCompletionCreateParams;
-import com.alibaba.dashscope.v3.types.messages.Message;
+import com.alibaba.dashscope.errors.ApiConnectionException;
+import com.alibaba.dashscope.errors.DashScopeException;
+import com.alibaba.dashscope.types.completions.ChatCompletion;
+import com.alibaba.dashscope.types.completions.ChatCompletionCreateParams;
+import com.alibaba.dashscope.types.messages.Message;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
@@ -22,16 +22,16 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * High availability: cross-region failover guarded by a hand-rolled circuit breaker, layered on
- * top of the SDK's built-in retry ({@code ClientOptions.maxRetries} / {@code
- * RequestOptions.maxRetries} already absorb transient 429/5xx <em>within</em> a region — the
- * breaker exists to fail <em>across</em> regions when a whole region keeps erroring).
+ * High availability: cross-region failover guarded by a hand-rolled circuit breaker, layered on top
+ * of the SDK's built-in retry ({@code ClientOptions.maxRetries} / {@code RequestOptions.maxRetries}
+ * already absorb transient 429/5xx <em>within</em> a region — the breaker exists to fail
+ * <em>across</em> regions when a whole region keeps erroring).
  *
  * <p>Translation of the Python blueprint example 02_advanced_engineering/circuit_breaker_retry.py.
  *
- * <p>The demo runs fully offline and deterministically: per-region JDK {@link HttpServer}
- * instances play the gateways (the primary region 503s, the secondary 200s). Drop the {@code
- * baseUrl} override to hit the real gateways — note that API keys are region-specific.
+ * <p>The demo runs fully offline and deterministically: per-region JDK {@link HttpServer} instances
+ * play the gateways (the primary region 503s, the secondary 200s). Drop the {@code baseUrl}
+ * override to hit the real gateways — note that API keys are region-specific.
  */
 public final class CircuitBreakerRetry {
 
@@ -165,10 +165,16 @@ public final class CircuitBreakerRetry {
             breaker.recordFailure();
           }
           System.out.println(
-              "  [" + region + "] " + exc.getClass().getSimpleName()
-                  + " status=" + exc.getStatusCode()
-                  + " retryable=" + retryable
-                  + " -> circuit " + breaker.state());
+              "  ["
+                  + region
+                  + "] "
+                  + exc.getClass().getSimpleName()
+                  + " status="
+                  + exc.getStatusCode()
+                  + " retryable="
+                  + retryable
+                  + " -> circuit "
+                  + breaker.state());
           if (!retryable) {
             throw exc; // a 4xx is a real bug; do not mask it
           }
@@ -197,8 +203,8 @@ public final class CircuitBreakerRetry {
 
   /**
    * Offline gateway: the primary region 503s, every other 200s. The handler closes over {@code
-   * region} instead of sniffing the request host, so it stays correct when a workspace changes
-   * the gateway.
+   * region} instead of sniffing the request host, so it stays correct when a workspace changes the
+   * gateway.
    */
   private static HttpServer startGateway(String region, boolean primary) throws IOException {
     HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
@@ -216,9 +222,13 @@ public final class CircuitBreakerRetry {
               exchange,
               200,
               "{\"output\":{\"choices\":[{\"finish_reason\":\"stop\",\"message\":"
-                  + "{\"role\":\"assistant\",\"content\":\"来自 " + region + " 的应答\"}}]},"
+                  + "{\"role\":\"assistant\",\"content\":\"来自 "
+                  + region
+                  + " 的应答\"}}]},"
                   + "\"usage\":{\"total_tokens\":10},"
-                  + "\"request_id\":\"mock-" + region + "\"}");
+                  + "\"request_id\":\"mock-"
+                  + region
+                  + "\"}");
         });
     server.start();
     return server;

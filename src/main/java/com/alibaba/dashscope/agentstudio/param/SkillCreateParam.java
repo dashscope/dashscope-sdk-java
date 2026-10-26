@@ -1,7 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.agentstudio.param;
 
-import com.alibaba.dashscope.base.FlattenHalfDuplexParamBase;
+import com.alibaba.dashscope.legacy_2x.base.FlattenHalfDuplexParamBase;
 import com.google.gson.JsonObject;
 import lombok.Builder.Default;
 import lombok.Data;

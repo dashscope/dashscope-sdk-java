@@ -293,8 +293,8 @@
                                 <arg>-XDcompilePolicy=simple</arg>
                                 <arg>--should-stop=ifError=FLOW</arg>
                                 <!-- javac only honors -Xep flags inside the -Xplugin arg string. -->
-                                <!-- 2.x packages are excluded wholesale. -->
-                                <arg>-Xplugin:ErrorProne -Xep:EmptyCatch:ERROR -Xep:CatchAndPrintStackTrace:ERROR -Xep:DeadException:ERROR -XepExcludedPaths:.*/com/alibaba/dashscope/(aigc|audio|app|api|base|common|decision|embeddings|exception|multimodal|nlp|protocol|rerank|task|threads|tokenizers|tools|utils|agentstudio|assistants)/.*</arg>
+                                <!-- Frozen 2.x and shared AgentStudio packages are excluded wholesale. -->
+                                <arg>-Xplugin:ErrorProne -Xep:EmptyCatch:ERROR -Xep:CatchAndPrintStackTrace:ERROR -Xep:DeadException:ERROR -XepExcludedPaths:.*/com/alibaba/dashscope/(legacy_2x|agentstudio)/.*</arg>
                             </compilerArgs>
                             <annotationProcessorPaths>
                                 <path>
@@ -315,8 +315,8 @@
                 </plugins>
             </build>
         </profile>
-        <!-- japicmp API 面基线：对比 2.23.3，确认 2.x 包二进制面不缩水（新增 3.0 类属预期）。
-             运行：mvn -Pjapicmp verify -->
+        <!-- japicmp API 面基线：对比 2.23.3，记录 3.0 的有意包迁移和 API 差异。
+             旧 2.x FQCN 不再作为二进制兼容门禁。运行：mvn -Pjapicmp verify -->
         <profile>
             <id>japicmp</id>
             <build>
@@ -344,9 +344,8 @@
                             <parameter>
                                 <onlyModified>false</onlyModified>
                                 <breakBuildOnModifications>false</breakBuildOnModifications>
-                                <!-- Binary-incompatible changes to the 2.x API surface must fail
-                                     the build; compatible additions (3.0 classes) stay allowed. -->
-                                <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
+                                <!-- 3.0 intentionally moves legacy FQCNs; retain the comparison as a report. -->
+                                <breakBuildOnBinaryIncompatibleModifications>false</breakBuildOnBinaryIncompatibleModifications>
                             </parameter>
                         </configuration>
                     </plugin>

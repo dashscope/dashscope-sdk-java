@@ -3,10 +3,10 @@ package com.alibaba.dashscope.agentstudio.resource;
 
 import com.alibaba.dashscope.agentstudio.message.ContentBlock;
 import com.alibaba.dashscope.agentstudio.message.Message;
-import com.alibaba.dashscope.v3.errors.ApiTimeoutException;
-import com.alibaba.dashscope.v3.errors.DashScopeException;
-import com.alibaba.dashscope.v3.errors.Errors;
-import com.alibaba.dashscope.v3.errors.SdkErrorCode;
+import com.alibaba.dashscope.errors.ApiTimeoutException;
+import com.alibaba.dashscope.errors.DashScopeException;
+import com.alibaba.dashscope.errors.Errors;
+import com.alibaba.dashscope.errors.SdkErrorCode;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;

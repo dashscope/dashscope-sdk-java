@@ -2,7 +2,7 @@
 package com.alibaba.dashscope.agentstudio.message;
 
 import com.alibaba.dashscope.agentstudio.model.Session;
-import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;

@@ -1,0 +1,62 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
+
+package com.alibaba.dashscope.legacy_2x.audio.omni;
+
+/**
+ * @author lengjiayi
+ */
+public class OmniRealtimeConstants {
+  public static final String MODALITIES = "modalities";
+  public static final String VOICE = "voice";
+  public static final String INPUT_AUDIO_FORMAT = "input_audio_format";
+  public static final String OUTPUT_AUDIO_FORMAT = "output_audio_format";
+  // New-style nested upstream/downstream audio format constants, see session.update:
+  // { "audio": { "input": { "format": { "type": "pcm", "sample_rate": 16000 } },
+  //              "output": { "format": { "type": "pcm", "sample_rate": 24000 } } } }
+  public static final String AUDIO = "audio";
+  public static final String AUDIO_INPUT = "input";
+  public static final String AUDIO_OUTPUT = "output";
+  public static final String AUDIO_FORMAT = "format";
+  public static final String AUDIO_FORMAT_TYPE = "type";
+  // Video input configuration, see session.update:
+  // { "video": { "input": { "representation_compact": "none" } } }
+  public static final String VIDEO = "video";
+  public static final String VIDEO_INPUT = "input";
+  public static final String REPRESENTATION_COMPACT = "representation_compact";
+  public static final String INPUT_AUDIO_TRANSCRIPTION = "input_audio_transcription";
+  public static final String INPUT_AUDIO_TRANSCRIPTION_MODEL = "model";
+  public static final String INPUT_AUDIO_TRANSCRIPTION_CORPUS = "corpus";
+  public static final String TURN_DETECTION = "turn_detection";
+  public static final String TURN_DETECTION_TYPE = "type";
+  public static final String TURN_DETECTION_THRESHOLD = "threshold";
+  public static final String PREFIX_PADDING_MS = "prefix_padding_ms";
+  public static final String SILENCE_DURATION_MS = "silence_duration_ms";
+
+  // Translation constants
+  public static final String TRANSLATION = "translation";
+  public static final String TRANSLATION_CORPUS = "corpus";
+  public static final String LANGUAGE = "language";
+  public static final String SAMPLE_RATE = "sample_rate";
+
+  public static final String PROTOCOL_EVENT_ID = "event_id";
+  public static final String PROTOCOL_TYPE = "type";
+  public static final String PROTOCOL_SESSION = "session";
+  public static final String PROTOCOL_AUDIO = "audio";
+  public static final String PROTOCOL_VIDEO = "image";
+  public static final String PROTOCOL_EVENT_TYPE_UPDATE_SESSION = "session.update";
+  public static final String PROTOCOL_EVENT_TYPE_APPEND_AUDIO = "input_audio_buffer.append";
+  public static final String PROTOCOL_EVENT_TYPE_APPEND_VIDEO = "input_image_buffer.append";
+  public static final String PROTOCOL_EVENT_TYPE_COMMIT = "input_audio_buffer.commit";
+  public static final String PROTOCOL_EVENT_TYPE_CLEAR_AUDIO = "input_audio_buffer.clear";
+  public static final String PROTOCOL_EVENT_TYPE_CREATE_RESPONSE = "response.create";
+  public static final String PROTOCOL_EVENT_TYPE_CANCEL_RESPONSE = "response.cancel";
+  public static final String PROTOCOL_EVENT_TYPE_FINISH_SESSION = "session.finish";
+  public static final String PROTOCOL_EVENT_TYPE_ITEM_CREATE = "conversation.item.create";
+  public static final String PROTOCOL_RESPONSE_TYPE_SESSION_CREATED = "session.created";
+  public static final String PROTOCOL_RESPONSE_TYPE_RESPONSE_CREATED = "response.created";
+  public static final String PROTOCOL_RESPONSE_TYPE_AUDIO_TRANSCRIPT_DELTA =
+      "response.audio_transcript.delta";
+  public static final String PROTOCOL_RESPONSE_TYPE_SESSION_FINISHED = "session.finished";
+  public static final String PROTOCOL_RESPONSE_TYPE_AUDIO_DELTA = "response.audio.delta";
+  public static final String PROTOCOL_RESPONSE_TYPE_RESPONSE_DONE = "response.done";
+}

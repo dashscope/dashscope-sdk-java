@@ -3,15 +3,15 @@ package com.alibaba.dashscope.examples.recipes.rag;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.types.completions.ChatCompletion;
-import com.alibaba.dashscope.v3.types.completions.ChatCompletionCreateParams;
-import com.alibaba.dashscope.v3.types.embeddings.Embedding;
-import com.alibaba.dashscope.v3.types.embeddings.EmbeddingCreateParams;
-import com.alibaba.dashscope.v3.types.embeddings.EmbeddingResponse;
-import com.alibaba.dashscope.v3.types.messages.Message;
-import com.alibaba.dashscope.v3.types.rerank.RerankCreateParams;
-import com.alibaba.dashscope.v3.types.rerank.RerankResponse;
-import com.alibaba.dashscope.v3.types.rerank.RerankResult;
+import com.alibaba.dashscope.types.completions.ChatCompletion;
+import com.alibaba.dashscope.types.completions.ChatCompletionCreateParams;
+import com.alibaba.dashscope.types.embeddings.Embedding;
+import com.alibaba.dashscope.types.embeddings.EmbeddingCreateParams;
+import com.alibaba.dashscope.types.embeddings.EmbeddingResponse;
+import com.alibaba.dashscope.types.messages.Message;
+import com.alibaba.dashscope.types.rerank.RerankCreateParams;
+import com.alibaba.dashscope.types.rerank.RerankResponse;
+import com.alibaba.dashscope.types.rerank.RerankResult;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,8 +37,7 @@ import java.util.List;
  */
 public final class RagExpertSystem {
 
-  private static final String EMBED_MODEL =
-      envOr("DASHSCOPE_EMBED_MODEL", "text-embedding-v4");
+  private static final String EMBED_MODEL = envOr("DASHSCOPE_EMBED_MODEL", "text-embedding-v4");
   private static final String RERANK_MODEL = envOr("DASHSCOPE_RERANK_MODEL", "gte-rerank-v2");
   private static final String CHAT_MODEL = envOr("DASHSCOPE_MODEL", "qwen3.7-plus");
   private static final int TOP_K = 3;
@@ -106,7 +105,8 @@ public final class RagExpertSystem {
   }
 
   /** Re-score candidates; return passage text ordered by relevance. */
-  private static List<String> rerank(DashScopeClient client, String query, List<String> candidates) {
+  private static List<String> rerank(
+      DashScopeClient client, String query, List<String> candidates) {
     RerankResponse resp =
         client
             .rerank()
@@ -150,9 +150,7 @@ public final class RagExpertSystem {
     for (int n = 0; n < passages.size(); n++) {
       context.append('[').append(n).append("] ").append(passages.get(n)).append('\n');
     }
-    String prompt =
-        "仅根据下面的资料回答问题，并标注引用的编号；若资料不足，则回答：资料不足。\n"
-            + "资料：\n" + context + "\n问题：" + query;
+    String prompt = "仅根据下面的资料回答问题，并标注引用的编号；若资料不足，则回答：资料不足。\n" + "资料：\n" + context + "\n问题：" + query;
     ChatCompletion resp =
         client
             .chat()

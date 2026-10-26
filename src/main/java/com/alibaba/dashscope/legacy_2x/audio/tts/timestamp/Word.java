@@ -1,0 +1,30 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
+
+package com.alibaba.dashscope.legacy_2x.audio.tts.timestamp;
+
+import com.google.gson.annotations.SerializedName;
+import java.util.List;
+import lombok.*;
+
+@Data
+public class Word {
+  /** Word begin time in milliseconds. */
+  @SerializedName("begin_time")
+  int beginTime;
+
+  /** Word end time in milliseconds. */
+  @SerializedName("end_time")
+  int endTime;
+
+  @SerializedName("begin_index")
+  int beginIndex;
+
+  @SerializedName("end_index")
+  int endIndex;
+
+  /** Word. */
+  String text;
+
+  /** Word phonemes. */
+  List<Phoneme> phonemes;
+}

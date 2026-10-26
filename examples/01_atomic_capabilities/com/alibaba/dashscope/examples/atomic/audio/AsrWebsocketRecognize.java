@@ -3,10 +3,10 @@ package com.alibaba.dashscope.examples.atomic.audio;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.resources.audio.AudioPacer;
-import com.alibaba.dashscope.v3.resources.audio.RecognitionSession;
-import com.alibaba.dashscope.v3.types.audio.AsrRecognizeParams;
-import com.alibaba.dashscope.v3.types.audio.AsrResult;
+import com.alibaba.dashscope.resources.audio.AudioPacer;
+import com.alibaba.dashscope.resources.audio.RecognitionSession;
+import com.alibaba.dashscope.types.audio.AsrRecognizeParams;
+import com.alibaba.dashscope.types.audio.AsrResult;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;

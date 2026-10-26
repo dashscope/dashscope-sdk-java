@@ -8,10 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.alibaba.dashscope.v3.errors.ApiConnectionException;
-import com.alibaba.dashscope.v3.resources.audio.RealtimeSession;
-import com.alibaba.dashscope.v3.types.audio.RealtimeParams;
-import com.alibaba.dashscope.v3.types.audio.UpdateSessionParams;
+import com.alibaba.dashscope.errors.ApiConnectionException;
+import com.alibaba.dashscope.resources.audio.RealtimeSession;
+import com.alibaba.dashscope.types.audio.RealtimeParams;
+import com.alibaba.dashscope.types.audio.UpdateSessionParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;

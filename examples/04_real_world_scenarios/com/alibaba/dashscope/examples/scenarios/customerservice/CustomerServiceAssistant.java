@@ -3,11 +3,11 @@ package com.alibaba.dashscope.examples.scenarios.customerservice;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.types.completions.ChatCompletion;
-import com.alibaba.dashscope.v3.types.completions.ChatCompletionCreateParams;
-import com.alibaba.dashscope.v3.types.completions.ChatCompletionMessage;
-import com.alibaba.dashscope.v3.types.messages.Message;
-import com.alibaba.dashscope.v3.types.messages.ToolCall;
+import com.alibaba.dashscope.types.completions.ChatCompletion;
+import com.alibaba.dashscope.types.completions.ChatCompletionCreateParams;
+import com.alibaba.dashscope.types.completions.ChatCompletionMessage;
+import com.alibaba.dashscope.types.messages.Message;
+import com.alibaba.dashscope.types.messages.ToolCall;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,8 +27,8 @@ import java.util.function.Function;
  * together the patterns a real support bot needs:
  *
  * <ul>
- *   <li><b>Guardrailed persona</b> — the system prompt scopes the bot to order / logistics /
- *       refund topics, forbids inventing order data, and tells it when to escalate to a human.
+ *   <li><b>Guardrailed persona</b> — the system prompt scopes the bot to order / logistics / refund
+ *       topics, forbids inventing order data, and tells it when to escalate to a human.
  *   <li><b>Business tools</b> — the model reads real order state through {@code query_order} /
  *       {@code track_shipment} / {@code check_refund_eligible} and can open a support ticket via
  *       {@code create_ticket} (all backed here by a small in-memory "database"; swap in your own
@@ -45,7 +45,8 @@ import java.util.function.Function;
  * sense if the bot remembers the order id from turn 1, which is exactly what the memory layer buys
  * you.
  *
- * <p>Translation of the Python blueprint example 04_real_world_scenarios/customer_service_assistant.py.
+ * <p>Translation of the Python blueprint example
+ * 04_real_world_scenarios/customer_service_assistant.py.
  *
  * <p>Requires DASHSCOPE_API_KEY (it calls the real chat endpoint).
  */
@@ -113,13 +114,10 @@ public final class CustomerServiceAssistant {
     ORDERS.put(
         "SO2024001",
         new OrderInfo(
-            "无线蓝牙耳机", 299.0, "已发货", 2, "示例A速运", "EX1234567890",
-            "【杭州市】快件已到达杭州转运中心", false));
+            "无线蓝牙耳机", 299.0, "已发货", 2, "示例A速运", "EX1234567890", "【杭州市】快件已到达杭州转运中心", false));
     ORDERS.put(
         "SO2024002",
-        new OrderInfo(
-            "机械键盘", 459.0, "已签收", 12, "示例B物流", "EX9988776655",
-            "【北京市】已签收，签收人：本人", true));
+        new OrderInfo("机械键盘", 459.0, "已签收", 12, "示例B物流", "EX9988776655", "【北京市】已签收，签收人：本人", true));
   }
 
   private CustomerServiceAssistant() {}
@@ -195,7 +193,8 @@ public final class CustomerServiceAssistant {
 
   /** Open a human-support ticket; returns the ticket id. */
   private static Map<String, Object> createTicket(String orderId, String reason) {
-    String ticketId = String.format("TK%05d", ((orderId + reason).hashCode() & 0x7fffffff) % 100000);
+    String ticketId =
+        String.format("TK%05d", ((orderId + reason).hashCode() & 0x7fffffff) % 100000);
     Map<String, Object> result = new LinkedHashMap<>();
     result.put("created", true);
     result.put("ticket_id", ticketId);
@@ -235,21 +234,16 @@ public final class CustomerServiceAssistant {
     return tool;
   }
 
-  /** Tool schemas the model may call (OpenAI function shape, accepted by the native gateway too). */
+  /**
+   * Tool schemas the model may call (OpenAI function shape, accepted by the native gateway too).
+   */
   private static final List<Map<String, Object>> TOOLS =
       Arrays.asList(
           functionTool(
-              "query_order",
-              "查询订单的商品、金额与当前状态",
-              new String[] {"order_id", "订单号，例如 SO2024001"}),
+              "query_order", "查询订单的商品、金额与当前状态", new String[] {"order_id", "订单号，例如 SO2024001"}),
+          functionTool("track_shipment", "查询订单的承运商、运单号与最新物流轨迹", new String[] {"order_id", "订单号"}),
           functionTool(
-              "track_shipment",
-              "查询订单的承运商、运单号与最新物流轨迹",
-              new String[] {"order_id", "订单号"}),
-          functionTool(
-              "check_refund_eligible",
-              "按商城退款政策判断订单是否可退款并给出原因",
-              new String[] {"order_id", "订单号"}),
+              "check_refund_eligible", "按商城退款政策判断订单是否可退款并给出原因", new String[] {"order_id", "订单号"}),
           functionTool(
               "create_ticket",
               "创建人工客服工单，用于无法自助解决或用户要求转人工",
@@ -281,8 +275,8 @@ public final class CustomerServiceAssistant {
    *   <li><b>Context budget</b> — only the most recent {@code maxTurns} messages after the system
    *       prompt are kept, so a long conversation cannot exceed the model's window.
    *   <li><b>Wire integrity</b> — trimming from the front can leave an orphan {@code role="tool"}
-   *       message whose {@code assistant} tool-call turn was dropped, which the API rejects.
-   *       {@link #trim()} drops any leading tool messages so every request stays well-formed.
+   *       message whose {@code assistant} tool-call turn was dropped, which the API rejects. {@link
+   *       #trim()} drops any leading tool messages so every request stays well-formed.
    * </ul>
    */
   static final class ConversationMemory {
@@ -358,11 +352,11 @@ public final class CustomerServiceAssistant {
   /**
    * Process one user message through the tool-call loop.
    *
-   * <p>The whole context is re-sent each turn (the API is stateless); the model keeps calling
-   * tools until it returns a plain answer, which is recorded back into {@code memory} and
-   * returned.
+   * <p>The whole context is re-sent each turn (the API is stateless); the model keeps calling tools
+   * until it returns a plain answer, which is recorded back into {@code memory} and returned.
    */
-  static String handleUserTurn(DashScopeClient client, ConversationMemory memory, String userInput) {
+  static String handleUserTurn(
+      DashScopeClient client, ConversationMemory memory, String userInput) {
     memory.add(Message.user(userInput));
     for (int turn = 0; turn < MAX_TURNS; turn++) {
       // Non-streaming on purpose: a tool-call turn must be read as a complete message before we
@@ -413,8 +407,7 @@ public final class CustomerServiceAssistant {
 
       // Turn 2 refers to "this order" without repeating the id: it only works because
       // ConversationMemory carries turn 1 forward.
-      List<String> conversation =
-          Arrays.asList("我的订单 SO2024001 到哪了？", "那这个订单现在能退款吗？", "帮我转人工吧。");
+      List<String> conversation = Arrays.asList("我的订单 SO2024001 到哪了？", "那这个订单现在能退款吗？", "帮我转人工吧。");
       for (String userInput : conversation) {
         System.out.println("\n用户: " + userInput);
         String answer = handleUserTurn(client, memory, userInput);

@@ -3,7 +3,7 @@ package com.alibaba.dashscope.examples.atomic.audio;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.types.audio.TtsSynthesizeParams;
+import com.alibaba.dashscope.types.audio.TtsSynthesizeParams;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 

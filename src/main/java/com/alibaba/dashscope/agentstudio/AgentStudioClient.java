@@ -12,7 +12,7 @@ import com.alibaba.dashscope.agentstudio.resource.Sessions;
 import com.alibaba.dashscope.agentstudio.resource.Skills;
 import com.alibaba.dashscope.agentstudio.resource.Vaults;
 import com.alibaba.dashscope.agentstudio.resource.WebhookEndpoints;
-import com.alibaba.dashscope.protocol.ConnectionOptions;
+import com.alibaba.dashscope.legacy_2x.protocol.ConnectionOptions;
 import java.io.Closeable;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;

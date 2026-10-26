@@ -1,7 +1,5 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesis;
 import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesisListResult;
 import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesisParam;
@@ -12,15 +10,17 @@ import com.alibaba.dashscope.task.AsyncTaskListParam;
 
 public class ImageSynthesisUsage {
   public static void basicCall() throws ApiException, NoApiKeyException {
-    // create with image2image, 参考文档(image2image|text2image)
+    // create with image2image; see the documentation (image2image|text2image)
     ImageSynthesis is = new ImageSynthesis();
     ImageSynthesisParam param =
         ImageSynthesisParam.builder()
             .model(ImageSynthesis.Models.WANX_2_1_IMAGEEDIT)
             .size("1024*1024")
             .prompt("帮我编辑图片。把所选区域变成黑色")
-            .baseImageUrl("https://static.dingtalk.com/media/lQLPD2jl0mg85BvNBADNAkCwNJvjWJXBVMwHqrO0OvZlAA_576_1024.png_620x10000q90.png")
-            .maskImageUrl("https://static.dingtalk.com/media/lQLPD2ob9dfKPBvNBADNAkCwOcPjjaFVcEcHqrO8n1BLAA_576_1024.png_620x10000q90.png")
+            .baseImageUrl(
+                "https://static.dingtalk.com/media/lQLPD2jl0mg85BvNBADNAkCwNJvjWJXBVMwHqrO0OvZlAA_576_1024.png_620x10000q90.png")
+            .maskImageUrl(
+                "https://static.dingtalk.com/media/lQLPD2ob9dfKPBvNBADNAkCwOcPjjaFVcEcHqrO8n1BLAA_576_1024.png_620x10000q90.png")
             .function(ImageSynthesis.ImageEditFunction.DESCRIPTION_EDIT_WITH_MASK)
             .build();
 
@@ -31,13 +31,13 @@ public class ImageSynthesisUsage {
   public static void synCall() throws ApiException, NoApiKeyException {
     ImageSynthesis is = new ImageSynthesis();
     ImageSynthesisParam param =
-            ImageSynthesisParam.builder()
-                    .model("wan2.2-t2i-flash")
-                    .prompt("一直森林中的白色的猫")
-                    .n(1)
-                    .promptExtend(false)
-                    .watermark(true)
-                    .build();
+        ImageSynthesisParam.builder()
+            .model("wan2.2-t2i-flash")
+            .prompt("一直森林中的白色的猫")
+            .n(1)
+            .promptExtend(false)
+            .watermark(true)
+            .build();
 
     ImageSynthesisResult result = is.syncCall(param);
     System.out.println(result);
@@ -59,12 +59,12 @@ public class ImageSynthesisUsage {
     System.out.println(result.getUsage());
   }
 
-  public static void main(String[] args){
-    try{
+  public static void main(String[] args) {
+    try {
       // basicCall();
       synCall();
-      //listTask();
-    }catch(ApiException|NoApiKeyException e){
+      // listTask();
+    } catch (ApiException | NoApiKeyException e) {
       System.out.println(e.getMessage());
     }
     System.exit(0);

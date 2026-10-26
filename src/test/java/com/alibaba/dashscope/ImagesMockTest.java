@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.alibaba.dashscope.v3.resources.jobs.Job;
-import com.alibaba.dashscope.v3.types.images.ImageGenerateParams;
+import com.alibaba.dashscope.resources.jobs.Job;
+import com.alibaba.dashscope.types.images.ImageGenerateParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;

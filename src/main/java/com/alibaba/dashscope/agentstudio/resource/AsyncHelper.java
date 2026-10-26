@@ -1,11 +1,11 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.agentstudio.resource;
 
-import com.alibaba.dashscope.api.GeneralApi;
-import com.alibaba.dashscope.base.HalfDuplexParamBase;
-import com.alibaba.dashscope.common.DashScopeResult;
-import com.alibaba.dashscope.common.ResultCallback;
-import com.alibaba.dashscope.protocol.ServiceOption;
+import com.alibaba.dashscope.legacy_2x.api.GeneralApi;
+import com.alibaba.dashscope.legacy_2x.base.HalfDuplexParamBase;
+import com.alibaba.dashscope.legacy_2x.common.DashScopeResult;
+import com.alibaba.dashscope.legacy_2x.common.ResultCallback;
+import com.alibaba.dashscope.legacy_2x.protocol.ServiceOption;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 

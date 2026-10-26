@@ -2,14 +2,14 @@
 package com.alibaba.dashscope.examples.scenarios.meeting;
 
 import com.alibaba.dashscope.DashScopeClient;
+import com.alibaba.dashscope.errors.ApiConnectionException;
+import com.alibaba.dashscope.errors.Errors;
+import com.alibaba.dashscope.errors.SdkErrorCode;
 import com.alibaba.dashscope.examples.ExampleSupport;
 import com.alibaba.dashscope.examples.atomic.audio.AudioCommon;
-import com.alibaba.dashscope.v3.errors.ApiConnectionException;
-import com.alibaba.dashscope.v3.errors.Errors;
-import com.alibaba.dashscope.v3.errors.SdkErrorCode;
-import com.alibaba.dashscope.v3.resources.audio.AudioPacer;
-import com.alibaba.dashscope.v3.resources.tingwu.TingWuRealtimeSession;
-import com.alibaba.dashscope.v3.types.tingwu.TingWuRealtimeParams;
+import com.alibaba.dashscope.resources.audio.AudioPacer;
+import com.alibaba.dashscope.resources.tingwu.TingWuRealtimeSession;
+import com.alibaba.dashscope.types.tingwu.TingWuRealtimeParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;

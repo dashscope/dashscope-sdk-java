@@ -4,8 +4,8 @@ package com.alibaba.dashscope.examples.atomic.models;
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.RequestOptions;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.types.models.Model;
-import com.alibaba.dashscope.v3.types.models.ModelList;
+import com.alibaba.dashscope.types.models.Model;
+import com.alibaba.dashscope.types.models.ModelList;
 
 /**
  * Model catalog: paged list, provider-filtered list, and get-by-name. Translation of the Python

@@ -4,9 +4,9 @@ package com.alibaba.dashscope.examples.atomic.videos;
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.RequestOptions;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.resources.jobs.Job;
-import com.alibaba.dashscope.v3.types.common.Page;
-import com.alibaba.dashscope.v3.types.videos.VideoGenerateParams;
+import com.alibaba.dashscope.resources.jobs.Job;
+import com.alibaba.dashscope.types.common.Page;
+import com.alibaba.dashscope.types.videos.VideoGenerateParams;
 
 /**
  * Video generation (wan series): one-call generate (submit + wait), then the manual async-task

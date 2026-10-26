@@ -3,20 +3,20 @@ package com.alibaba.dashscope.examples.atomic.audio;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.types.audio.Voice;
-import com.alibaba.dashscope.v3.types.audio.VoiceCreateParams;
-import com.alibaba.dashscope.v3.types.audio.VoiceList;
-import com.alibaba.dashscope.v3.types.common.JobStatus;
+import com.alibaba.dashscope.types.audio.Voice;
+import com.alibaba.dashscope.types.audio.VoiceCreateParams;
+import com.alibaba.dashscope.types.audio.VoiceList;
+import com.alibaba.dashscope.types.common.JobStatus;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Voice cloning management (Qwen-Audio / CosyVoice): create a clone from reference audio at a
  * service-reachable HTTPS URL and wait until it is OK, or get/list/delete existing clones. Default
- * target model {@code qwen-audio-3.0-tts-flash} (voice-enrollment API); synthesis must use the
- * same target model. No synthesis, playback, or auto-deletion here: a created voice persists,
- * including after timeout or interruption, and is never deleted unless {@code delete --yes} is
- * run explicitly. Usage:
+ * target model {@code qwen-audio-3.0-tts-flash} (voice-enrollment API); synthesis must use the same
+ * target model. No synthesis, playback, or auto-deletion here: a created voice persists, including
+ * after timeout or interruption, and is never deleted unless {@code delete --yes} is run
+ * explicitly. Usage:
  *
  * <pre>
  * VoiceCloneManage create --url &lt;https audio&gt; [--prefix demo] [--model qwen-audio-3.0-tts-flash] [--wait-timeout SEC]
@@ -73,8 +73,7 @@ public final class VoiceCloneManage {
     }
   }
 
-  private static void create(DashScopeClient client, Map<String, String> opts)
-      throws Exception {
+  private static void create(DashScopeClient client, Map<String, String> opts) throws Exception {
     String url = opts.get("--url");
     if (url == null || !url.startsWith("https://")) {
       // Upload owned/authorized speaker audio yourself; this sample never uploads local files.
@@ -97,12 +96,7 @@ public final class VoiceCloneManage {
         client
             .audio()
             .voices()
-            .create(
-                VoiceCreateParams.builder()
-                    .targetModel(model)
-                    .prefix(prefix)
-                    .url(url)
-                    .build());
+            .create(VoiceCreateParams.builder().targetModel(model).prefix(prefix).url(url).build());
     if (voice.getVoiceId() == null) {
       throw new IllegalStateException(
           "No voice ID returned (request_id="
@@ -170,19 +164,27 @@ public final class VoiceCloneManage {
     }
     VoiceList voices = client.audio().voices().list(prefix, pageIndex, pageSize);
     System.out.println(
-        "Page " + pageIndex + ": " + voices.getVoices().size() + " voice(s)"
-            + " request_id=" + voices.getRequestId());
+        "Page "
+            + pageIndex
+            + ": "
+            + voices.getVoices().size()
+            + " voice(s)"
+            + " request_id="
+            + voices.getRequestId());
     for (Map<String, Object> voice : voices.getVoices()) {
-      System.out.println(
-          "voice_id: " + voice.get("voice_id") + "; status: " + voice.get("status"));
+      System.out.println("voice_id: " + voice.get("voice_id") + "; status: " + voice.get("status"));
     }
   }
 
   private static void delete(DashScopeClient client, String voiceId) {
     JobStatus result = client.audio().voices().delete(voiceId);
     System.out.println(
-        "Deleted " + voiceId + "; status: " + result.getStatus()
-            + "; request_id: " + result.getRequestId());
+        "Deleted "
+            + voiceId
+            + "; status: "
+            + result.getStatus()
+            + "; request_id: "
+            + result.getRequestId());
   }
 
   private static String voiceId(Map<String, String> opts) {

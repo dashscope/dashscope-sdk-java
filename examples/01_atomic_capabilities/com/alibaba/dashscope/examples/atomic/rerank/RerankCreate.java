@@ -3,9 +3,9 @@ package com.alibaba.dashscope.examples.atomic.rerank;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.types.rerank.RerankCreateParams;
-import com.alibaba.dashscope.v3.types.rerank.RerankResponse;
-import com.alibaba.dashscope.v3.types.rerank.RerankResult;
+import com.alibaba.dashscope.types.rerank.RerankCreateParams;
+import com.alibaba.dashscope.types.rerank.RerankResponse;
+import com.alibaba.dashscope.types.rerank.RerankResult;
 import java.util.Arrays;
 
 /**
@@ -26,9 +26,7 @@ public final class RerankCreate {
                   RerankCreateParams.builder()
                       .model(model)
                       .query("哈尔滨在哪？")
-                      .documents(
-                          Arrays.asList(
-                              "黑龙江离俄罗斯很近", "哈尔滨是中国黑龙江省的省会，位于中国东北"))
+                      .documents(Arrays.asList("黑龙江离俄罗斯很近", "哈尔滨是中国黑龙江省的省会，位于中国东北"))
                       .topN(5)
                       .returnDocuments(true)
                       .instruct("Retrieval document that can answer users query.")

@@ -3,10 +3,10 @@ package com.alibaba.dashscope.examples.engineering.testing;
 
 import com.alibaba.dashscope.ClientOptions;
 import com.alibaba.dashscope.DashScopeClient;
-import com.alibaba.dashscope.v3.errors.DashScopeException;
-import com.alibaba.dashscope.v3.types.completions.ChatCompletion;
-import com.alibaba.dashscope.v3.types.completions.ChatCompletionCreateParams;
-import com.alibaba.dashscope.v3.types.messages.Message;
+import com.alibaba.dashscope.errors.DashScopeException;
+import com.alibaba.dashscope.types.completions.ChatCompletion;
+import com.alibaba.dashscope.types.completions.ChatCompletionCreateParams;
+import com.alibaba.dashscope.types.messages.Message;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.io.OutputStream;

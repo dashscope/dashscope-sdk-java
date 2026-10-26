@@ -5,9 +5,9 @@ import com.alibaba.dashscope.DashScopeAsyncClient;
 import com.alibaba.dashscope.DashScopeClient;
 
 /**
- * Shared entry helpers for all examples: the API key comes only from the config chain
- * ({@code -Ddashscope.api.key=} / {@code DASHSCOPE_API_KEY} / config file); when missing, print
- * guidance and exit non-zero (design §8 规范).
+ * Shared entry helpers for all examples: the API key comes only from the config chain ({@code
+ * -Ddashscope.api.key=} / {@code DASHSCOPE_API_KEY} / config file); when missing, print guidance
+ * and exit non-zero (design §8 requirements).
  */
 public final class ExampleSupport {
 
@@ -27,7 +27,9 @@ public final class ExampleSupport {
     return key;
   }
 
-  /** Sync client from the config chain (env/sysprops/config file); close it with try-with-resources. */
+  /**
+   * Sync client from the config chain (env/sysprops/config file); close it with try-with-resources.
+   */
   public static DashScopeClient client() {
     requireApiKey();
     return DashScopeClient.builder().build();

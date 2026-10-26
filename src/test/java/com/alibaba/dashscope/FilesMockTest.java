@@ -5,11 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.alibaba.dashscope.v3.errors.BadRequestException;
-import com.alibaba.dashscope.v3.types.files.DeletionStatus;
-import com.alibaba.dashscope.v3.types.files.FileList;
-import com.alibaba.dashscope.v3.types.files.FileObject;
-import com.alibaba.dashscope.v3.types.files.FileUploadParams;
+import com.alibaba.dashscope.errors.BadRequestException;
+import com.alibaba.dashscope.types.files.DeletionStatus;
+import com.alibaba.dashscope.types.files.FileList;
+import com.alibaba.dashscope.types.files.FileObject;
+import com.alibaba.dashscope.types.files.FileUploadParams;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;

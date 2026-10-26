@@ -3,9 +3,9 @@ package com.alibaba.dashscope.examples.atomic.audio;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.resources.audio.RealtimeSession;
-import com.alibaba.dashscope.v3.types.audio.RealtimeParams;
-import com.alibaba.dashscope.v3.types.audio.UpdateSessionParams;
+import com.alibaba.dashscope.resources.audio.RealtimeSession;
+import com.alibaba.dashscope.types.audio.RealtimeParams;
+import com.alibaba.dashscope.types.audio.UpdateSessionParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
@@ -126,7 +126,7 @@ public final class RealtimeTranslation {
 
   /**
    * Consume events until {@code target} (normally {@code session.finished}); translation audio
-   * deltas go to {@code output}. Prints 原文 (source transcription) and 译文 (translated text).
+   * deltas go to {@code output}. Prints the source transcription and translated text.
    */
   private static int receiveUntil(
       RealtimeSession session, String target, ByteArrayOutputStream output) {

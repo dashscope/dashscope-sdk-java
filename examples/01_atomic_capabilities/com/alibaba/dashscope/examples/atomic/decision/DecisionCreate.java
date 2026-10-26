@@ -3,21 +3,21 @@ package com.alibaba.dashscope.examples.atomic.decision;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.types.decision.DecisionAnswer;
-import com.alibaba.dashscope.v3.types.decision.DecisionCreateParams;
-import com.alibaba.dashscope.v3.types.decision.DecisionQuestion;
-import com.alibaba.dashscope.v3.types.decision.DecisionResult;
+import com.alibaba.dashscope.types.decision.DecisionAnswer;
+import com.alibaba.dashscope.types.decision.DecisionCreateParams;
+import com.alibaba.dashscope.types.decision.DecisionQuestion;
+import com.alibaba.dashscope.types.decision.DecisionResult;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Decision model (System One): one {@code decision().create} call answers a set of typed
- * questions about a business {@code state} in a single forward pass — multi-choice ({@code
- * choice}), yes/no ({@code noul}) and ordinal scale ({@code score}) — each answer carrying its
- * probability distribution. The model generates no text, so latency and cost do not grow with
- * output length. Typical uses: ticket routing, content moderation, agent routing. Translation of
- * the Python blueprint example 01_atomic_capabilities/decision/decision.py.
+ * Decision model (System One): one {@code decision().create} call answers a set of typed questions
+ * about a business {@code state} in a single forward pass — multi-choice ({@code choice}), yes/no
+ * ({@code noul}) and ordinal scale ({@code score}) — each answer carrying its probability
+ * distribution. The model generates no text, so latency and cost do not grow with output length.
+ * Typical uses: ticket routing, content moderation, agent routing. Translation of the Python
+ * blueprint example 01_atomic_capabilities/decision/decision.py.
  */
 public final class DecisionCreate {
 
@@ -46,11 +46,7 @@ public final class DecisionCreate {
         "severity",
         DecisionQuestion.score(
             "这个问题有多严重？",
-            Arrays.asList(
-                "轻微问题，不影响功能",
-                "部分功能受影响，但存在替代方案",
-                "核心功能不可用，没有替代方案",
-                "造成严重业务或安全影响")));
+            Arrays.asList("轻微问题，不影响功能", "部分功能受影响，但存在替代方案", "核心功能不可用，没有替代方案", "造成严重业务或安全影响")));
 
     try (DashScopeClient client = ExampleSupport.client()) {
       System.out.println("----- decision request -----");

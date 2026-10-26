@@ -3,9 +3,9 @@ package com.alibaba.dashscope.examples.atomic.embeddings;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.types.embeddings.Embedding;
-import com.alibaba.dashscope.v3.types.embeddings.EmbeddingCreateParams;
-import com.alibaba.dashscope.v3.types.embeddings.EmbeddingResponse;
+import com.alibaba.dashscope.types.embeddings.Embedding;
+import com.alibaba.dashscope.types.embeddings.EmbeddingCreateParams;
+import com.alibaba.dashscope.types.embeddings.EmbeddingResponse;
 import java.util.Arrays;
 import java.util.List;
 
@@ -39,7 +39,7 @@ public final class EmbeddingsCreate {
       // Batch embedding over a file (one text per line) is available via the async-task facade:
       //   Job job =
       //       client.embeddings().jobs().create(
-      //           com.alibaba.dashscope.v3.types.embeddings.BatchEmbeddingCreateParams.builder()
+      //           com.alibaba.dashscope.types.embeddings.BatchEmbeddingCreateParams.builder()
       //               .model(model)
       //               .fileUrl("https://.../texts.txt")
       //               .build());

@@ -3,7 +3,7 @@ package com.alibaba.dashscope.agentstudio.model;
 
 import com.alibaba.dashscope.agentstudio.model.Configs.ModelConfig;
 import com.alibaba.dashscope.agentstudio.model.Configs.ToolConfig;
-import com.alibaba.dashscope.common.FlattenResultBase;
+import com.alibaba.dashscope.legacy_2x.common.FlattenResultBase;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import java.util.List;

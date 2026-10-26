@@ -3,8 +3,8 @@ package com.alibaba.dashscope.examples.atomic.finetunes;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.types.finetunes.FineTune;
-import com.alibaba.dashscope.v3.types.finetunes.FineTuneList;
+import com.alibaba.dashscope.types.finetunes.FineTune;
+import com.alibaba.dashscope.types.finetunes.FineTuneList;
 
 /**
  * Fine-tuning: list jobs and get one job; the full create -> wait -> delete lifecycle is shown
@@ -54,7 +54,7 @@ public final class FineTunesCreate {
       // System.out.println("----- create fine-tune -----");
       // FineTune created =
       //     client.fineTunes().create(
-      //         com.alibaba.dashscope.v3.types.finetunes.FineTuneCreateParams.builder()
+      //         com.alibaba.dashscope.types.finetunes.FineTuneCreateParams.builder()
       //             .model(model)
       //             .trainingFileIds(java.util.Collections.singletonList(trainingFileId))
       //             .mode("sft")

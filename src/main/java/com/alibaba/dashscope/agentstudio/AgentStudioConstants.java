@@ -1,11 +1,11 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.agentstudio;
 
-import com.alibaba.dashscope.base.HalfDuplexParamBase;
-import com.alibaba.dashscope.protocol.GeneralServiceOption;
-import com.alibaba.dashscope.protocol.HttpMethod;
-import com.alibaba.dashscope.protocol.Protocol;
-import com.alibaba.dashscope.protocol.StreamingMode;
+import com.alibaba.dashscope.legacy_2x.base.HalfDuplexParamBase;
+import com.alibaba.dashscope.legacy_2x.protocol.GeneralServiceOption;
+import com.alibaba.dashscope.legacy_2x.protocol.HttpMethod;
+import com.alibaba.dashscope.legacy_2x.protocol.Protocol;
+import com.alibaba.dashscope.legacy_2x.protocol.StreamingMode;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
@@ -140,8 +140,8 @@ public final class AgentStudioConstants {
 
   /**
    * Stamp the client's instance apiKey onto a param if the caller didn't set one. The global
-   * fallback chain in {@link com.alibaba.dashscope.utils.ApiKey#getApiKey} still applies when
-   * {@code apiKey} is null.
+   * fallback chain in {@link com.alibaba.dashscope.legacy_2x.utils.ApiKey#getApiKey} still applies
+   * when {@code apiKey} is null.
    */
   public static <P extends HalfDuplexParamBase> P withApiKey(String apiKey, P param) {
     if (apiKey != null && param.getApiKey() == null) {

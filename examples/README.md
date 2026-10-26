@@ -11,6 +11,10 @@
 legacy_2x/                 # 2.x 旧样例 64 个，整体封存（不编译），见 legacy_2x/README.md
 ```
 
+活动四层示例使用 `com.alibaba.dashscope` 根包 3.0 API。`legacy_2x/` 保留历史旧 FQCN；
+复用其中样例时，除 AgentStudio 外须将 2.x imports 调整为
+`com.alibaba.dashscope.legacy_2x.*`，详见归档目录说明。
+
 ## 准备
 
 ```bash
@@ -113,4 +117,4 @@ AgentStudio 为两代共用业务包：3.0 的 `baseUrl` 不作用于它，地�
 ## 生产化路径
 
 示例保持最小可运行；生产化请参考 02 层的熔断/缓存/mock 三件套与 04 层的三个 harness，
-错误码心智见 `md/dashscope-3.0-migration.md`，2.x 旧样例见 `legacy_2x/README.md`。
+错误码心智见 `../md/dashscope-3.0-migration.md`，2.x 旧样例见 `legacy_2x/README.md`。

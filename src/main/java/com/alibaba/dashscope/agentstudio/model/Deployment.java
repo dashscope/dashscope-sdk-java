@@ -2,7 +2,7 @@
 package com.alibaba.dashscope.agentstudio.model;
 
 import com.alibaba.dashscope.agentstudio.message.Message;
-import com.alibaba.dashscope.common.FlattenResultBase;
+import com.alibaba.dashscope.legacy_2x.common.FlattenResultBase;
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
 import java.util.Map;

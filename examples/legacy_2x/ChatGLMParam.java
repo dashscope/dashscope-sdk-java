@@ -22,7 +22,10 @@ public class ChatGLMParam extends HalfDuplexServiceParam {
   /** The input prompt. */
   private String prompt;
 
-  /** { "user":"今天天气好吗？", "bot":"今天天气不错，要出去玩玩嘛？" }, */
+  /**
+   * { "user":"How is the weather today?", "bot":"The weather is nice today. Would you like to go
+   * out?" },
+   */
   private List<List<String>> history;
 
   @Override

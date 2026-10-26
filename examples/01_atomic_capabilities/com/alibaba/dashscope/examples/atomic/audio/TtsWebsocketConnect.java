@@ -3,13 +3,13 @@ package com.alibaba.dashscope.examples.atomic.audio;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.resources.audio.SynthesisSession;
-import com.alibaba.dashscope.v3.types.audio.TtsConnectParams;
-import com.alibaba.dashscope.v3.types.common.ResponseStream;
-import com.alibaba.dashscope.v3.types.completions.ChatCompletionChunk;
-import com.alibaba.dashscope.v3.types.completions.ChatCompletionCreateParams;
-import com.alibaba.dashscope.v3.types.completions.Delta;
-import com.alibaba.dashscope.v3.types.messages.Message;
+import com.alibaba.dashscope.resources.audio.SynthesisSession;
+import com.alibaba.dashscope.types.audio.TtsConnectParams;
+import com.alibaba.dashscope.types.common.ResponseStream;
+import com.alibaba.dashscope.types.completions.ChatCompletionChunk;
+import com.alibaba.dashscope.types.completions.ChatCompletionCreateParams;
+import com.alibaba.dashscope.types.completions.Delta;
+import com.alibaba.dashscope.types.messages.Message;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -32,7 +32,7 @@ import java.util.concurrent.Future;
  * delta text is fed straight into the synthesizer.
  *
  * <pre>
- * mvn -q -f examples/pom.xml exec:java -Dexec.mainClass=com.alibaba.dashscope.examples.atomic.audio.TtsWebsocketConnect -Dexec.args="--text '你好，欢迎使用语音合成。' --output hello.wav"
+ * mvn -q -f examples/pom.xml exec:java -Dexec.mainClass=com.alibaba.dashscope.examples.atomic.audio.TtsWebsocketConnect -Dexec.args="--text 'Hello, welcome to speech synthesis.' --output hello.wav"
  * </pre>
  */
 public final class TtsWebsocketConnect {

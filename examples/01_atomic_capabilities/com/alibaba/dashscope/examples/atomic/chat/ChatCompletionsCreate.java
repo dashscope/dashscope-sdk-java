@@ -3,12 +3,12 @@ package com.alibaba.dashscope.examples.atomic.chat;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.types.common.ResponseStream;
-import com.alibaba.dashscope.v3.types.completions.ChatCompletion;
-import com.alibaba.dashscope.v3.types.completions.ChatCompletionChunk;
-import com.alibaba.dashscope.v3.types.completions.ChatCompletionCreateParams;
-import com.alibaba.dashscope.v3.types.completions.Delta;
-import com.alibaba.dashscope.v3.types.messages.Message;
+import com.alibaba.dashscope.types.common.ResponseStream;
+import com.alibaba.dashscope.types.completions.ChatCompletion;
+import com.alibaba.dashscope.types.completions.ChatCompletionChunk;
+import com.alibaba.dashscope.types.completions.ChatCompletionCreateParams;
+import com.alibaba.dashscope.types.completions.Delta;
+import com.alibaba.dashscope.types.messages.Message;
 import java.util.Arrays;
 import java.util.List;
 
@@ -16,17 +16,15 @@ import java.util.List;
  * Chat completions: non-streaming and streaming. Translation of the Python blueprint example
  * 01_atomic_capabilities/text_generation/chat.py.
  *
- * <p>The Python module-level one-call quickstart {@code dashscope.chat(model, prompt)} has no
- * Java 3.0 equivalent; the try-with-resources {@link DashScopeClient} below is the entry point.
+ * <p>The Python module-level one-call quickstart {@code dashscope.chat(model, prompt)} has no Java
+ * 3.0 equivalent; the try-with-resources {@link DashScopeClient} below is the entry point.
  */
 public final class ChatCompletionsCreate {
 
   public static void main(String[] args) throws Exception {
     String model = System.getenv().getOrDefault("DASHSCOPE_MODEL", "qwen3.7-plus");
     List<Message> messages =
-        Arrays.asList(
-            Message.system("You are a helpful assistant."),
-            Message.user("请用一句话介绍杭州"));
+        Arrays.asList(Message.system("You are a helpful assistant."), Message.user("请用一句话介绍杭州"));
 
     try (DashScopeClient client = ExampleSupport.client()) {
       // Non-streaming
@@ -35,11 +33,7 @@ public final class ChatCompletionsCreate {
           client
               .chat()
               .completions()
-              .create(
-                  ChatCompletionCreateParams.builder()
-                      .model(model)
-                      .messages(messages)
-                      .build());
+              .create(ChatCompletionCreateParams.builder().model(model).messages(messages).build());
       System.out.println(resp.outputText());
       System.out.println(
           "usage: "
@@ -55,10 +49,7 @@ public final class ChatCompletionsCreate {
               .chat()
               .completions()
               .createStreaming(
-                  ChatCompletionCreateParams.builder()
-                      .model(model)
-                      .messages(messages)
-                      .build())) {
+                  ChatCompletionCreateParams.builder().model(model).messages(messages).build())) {
         for (ChatCompletionChunk chunk : stream) {
           Delta delta = chunk.delta();
           if (delta != null && delta.getContent() != null) {

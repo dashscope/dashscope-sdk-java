@@ -3,11 +3,11 @@ package com.alibaba.dashscope.examples.recipes.chat;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.types.completions.ChatCompletion;
-import com.alibaba.dashscope.v3.types.completions.ChatCompletionCreateParams;
-import com.alibaba.dashscope.v3.types.completions.ChatCompletionMessage;
-import com.alibaba.dashscope.v3.types.messages.Message;
-import com.alibaba.dashscope.v3.types.messages.ToolCall;
+import com.alibaba.dashscope.types.completions.ChatCompletion;
+import com.alibaba.dashscope.types.completions.ChatCompletionCreateParams;
+import com.alibaba.dashscope.types.completions.ChatCompletionMessage;
+import com.alibaba.dashscope.types.messages.Message;
+import com.alibaba.dashscope.types.messages.ToolCall;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,9 +22,9 @@ import java.util.function.Function;
 /**
  * Agent recipe: a managed multi-turn tool-call loop — the classic agent state machine. Send the
  * conversation plus a tool schema; whenever the model asks to call a tool ({@code
- * message.tool_calls}), execute it locally, append the result as a {@code role="tool"} message,
- * and call the model again — until it returns a plain answer with no further tool calls. A
- * {@code MAX_TURNS} guard stops a misbehaving model from looping forever.
+ * message.tool_calls}), execute it locally, append the result as a {@code role="tool"} message, and
+ * call the model again — until it returns a plain answer with no further tool calls. A {@code
+ * MAX_TURNS} guard stops a misbehaving model from looping forever.
  *
  * <p>Translation of the Python blueprint example 03_agent_recipes/tool_call_loop.py.
  *
@@ -63,8 +63,10 @@ public final class ToolCallLoop {
     return tool;
   }
 
-  /** Tool schemas the model may choose to call (OpenAI function shape, which the native gateway
-   * also accepts). */
+  /**
+   * Tool schemas the model may choose to call (OpenAI function shape, which the native gateway also
+   * accepts).
+   */
   private static final List<Map<String, Object>> TOOLS =
       Arrays.asList(
           functionTool("get_weather", "查询某个城市当前的天气", "city", "城市名，例如 杭州"),

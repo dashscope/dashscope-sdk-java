@@ -74,7 +74,8 @@ public final class AgentStudioQuickStart {
       Environment env =
           studio
               .environments()
-              .create(EnvironmentCreateParam.builder().name("quickstart-env").config(config).build());
+              .create(
+                  EnvironmentCreateParam.builder().name("quickstart-env").config(config).build());
       System.out.println("   environment_id=" + env.getId());
 
       System.out.println("==> creating agent");

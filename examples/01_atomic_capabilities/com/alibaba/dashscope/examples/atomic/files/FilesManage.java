@@ -3,10 +3,10 @@ package com.alibaba.dashscope.examples.atomic.files;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.types.files.DeletionStatus;
-import com.alibaba.dashscope.v3.types.files.FileList;
-import com.alibaba.dashscope.v3.types.files.FileObject;
-import com.alibaba.dashscope.v3.types.files.FileUploadParams;
+import com.alibaba.dashscope.types.files.DeletionStatus;
+import com.alibaba.dashscope.types.files.FileList;
+import com.alibaba.dashscope.types.files.FileObject;
+import com.alibaba.dashscope.types.files.FileUploadParams;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;

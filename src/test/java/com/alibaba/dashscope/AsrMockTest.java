@@ -8,15 +8,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.alibaba.dashscope.v3.errors.ApiStatusException;
-import com.alibaba.dashscope.v3.errors.ApiTimeoutException;
-import com.alibaba.dashscope.v3.errors.SdkException;
-import com.alibaba.dashscope.v3.resources.audio.RecognitionSession;
-import com.alibaba.dashscope.v3.resources.jobs.Job;
-import com.alibaba.dashscope.v3.transport.ws.WsConnection;
-import com.alibaba.dashscope.v3.types.audio.AsrRecognizeParams;
-import com.alibaba.dashscope.v3.types.audio.AsrResult;
-import com.alibaba.dashscope.v3.types.audio.AsrTranscribeParams;
+import com.alibaba.dashscope.errors.ApiStatusException;
+import com.alibaba.dashscope.errors.ApiTimeoutException;
+import com.alibaba.dashscope.errors.SdkException;
+import com.alibaba.dashscope.resources.audio.RecognitionSession;
+import com.alibaba.dashscope.resources.jobs.Job;
+import com.alibaba.dashscope.transport.ws.WsConnection;
+import com.alibaba.dashscope.types.audio.AsrRecognizeParams;
+import com.alibaba.dashscope.types.audio.AsrResult;
+import com.alibaba.dashscope.types.audio.AsrTranscribeParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -309,7 +309,7 @@ class AsrMockTest {
       assertEquals("decode failed", e.getMessage());
       assertEquals(200, e.getStatusCode());
       assertEquals(java.util.Arrays.asList("你"), texts);
-      // §6 close 时序: the socket is closed before the failure reaches the caller.
+      // §6 close timing: the socket is closed before the failure reaches the caller.
       assertTrue(socket.closed.await(10, TimeUnit.SECONDS), "socket not closed after task-failed");
       // No task-finished was ever produced: the failure is the terminal truth.
       List<String> events = new ArrayList<>();
@@ -361,7 +361,7 @@ class AsrMockTest {
     socket.nextText();
     asr.close();
     // The shared socket stays usable after the session detaches.
-    com.alibaba.dashscope.v3.transport.ws.TaskChannel other = connection.attach("task-other");
+    com.alibaba.dashscope.transport.ws.TaskChannel other = connection.attach("task-other");
     assertNotNull(other);
     connection.close();
   }

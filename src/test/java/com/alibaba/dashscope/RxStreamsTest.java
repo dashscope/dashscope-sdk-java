@@ -3,7 +3,7 @@ package com.alibaba.dashscope;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.alibaba.dashscope.v3.resources.RxStreams;
+import com.alibaba.dashscope.resources.RxStreams;
 import io.reactivex.subscribers.TestSubscriber;
 import java.util.Iterator;
 import java.util.concurrent.ExecutorService;

@@ -3,17 +3,17 @@ package com.alibaba.dashscope.examples.atomic.chat;
 
 import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.examples.ExampleSupport;
-import com.alibaba.dashscope.v3.types.messages.Message;
-import com.alibaba.dashscope.v3.types.tokenization.TokenCount;
-import com.alibaba.dashscope.v3.types.tokenization.TokenizationCountParams;
+import com.alibaba.dashscope.types.messages.Message;
+import com.alibaba.dashscope.types.tokenization.TokenCount;
+import com.alibaba.dashscope.types.tokenization.TokenizationCountParams;
 import java.util.Arrays;
 
 /**
- * Server-side token counting over a plain prompt and over a chat message list. Translation of
- * the Python blueprint example 01_atomic_capabilities/text_generation/tokenization.py.
+ * Server-side token counting over a plain prompt and over a chat message list. Translation of the
+ * Python blueprint example 01_atomic_capabilities/text_generation/tokenization.py.
  *
  * <p>For the local BPE tokenizer (no network) see {@code
- * com.alibaba.dashscope.v3.tokenization.TokenizerFactory}.
+ * com.alibaba.dashscope.tokenization.TokenizerFactory}.
  */
 public final class TokenizationCount {
 
@@ -26,11 +26,7 @@ public final class TokenizationCount {
       TokenCount resp =
           client
               .tokenization()
-              .count(
-                  TokenizationCountParams.builder()
-                      .model(model)
-                      .prompt("请用一句话介绍杭州")
-                      .build());
+              .count(TokenizationCountParams.builder().model(model).prompt("请用一句话介绍杭州").build());
       System.out.println("input_tokens: " + resp.getInputTokens());
       System.out.println("token_ids: " + resp.getTokenIds());
 

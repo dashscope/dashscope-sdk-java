@@ -23,8 +23,8 @@ import org.junit.jupiter.api.TestFactory;
 
 /**
  * Dry-runs every example {@code main} against a canned {@link MockWebServer} backend (design §8:
- * "CI 用 MockWebServer 编译+干跑全部 examples"). Each example runs in a child JVM (so its {@code
- * System.exit} error paths stay isolated) with the config chain pointed at the mock:
+ * "compile and dry-run all examples with MockWebServer in CI"). Each example runs in a child JVM
+ * (so its {@code System.exit} error paths stay isolated) with the config chain pointed at the mock:
  *
  * <ul>
  *   <li>{@code -Ddashscope.api.key=dry-run}
