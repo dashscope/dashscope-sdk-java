@@ -3,5 +3,5 @@
 package com.alibaba.dashscope;
 
 public final class Version {
-  public static final String version = "2.23.3";
+  public static final String version = "2.23.4";
 }
