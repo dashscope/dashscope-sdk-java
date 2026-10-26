@@ -294,7 +294,7 @@
                                 <arg>--should-stop=ifError=FLOW</arg>
                                 <!-- javac only honors -Xep flags inside the -Xplugin arg string. -->
                                 <!-- Frozen 2.x and shared AgentStudio packages are excluded wholesale. -->
-                                <arg>-Xplugin:ErrorProne -Xep:EmptyCatch:ERROR -Xep:CatchAndPrintStackTrace:ERROR -Xep:DeadException:ERROR -XepExcludedPaths:.*/com/alibaba/dashscope/(legacy_2x|agentstudio)/.*</arg>
+                                <arg>-Xplugin:ErrorProne -Xep:EmptyCatch:ERROR -Xep:CatchAndPrintStackTrace:ERROR -Xep:DeadException:ERROR -XepExcludedPaths:.*/com/alibaba/dashscope/(legacy_2x|applications/agentstudio)/.*</arg>
                             </compilerArgs>
                             <annotationProcessorPaths>
                                 <path>

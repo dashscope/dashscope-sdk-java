@@ -9,46 +9,46 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.alibaba.dashscope.agentstudio.AgentStudioClient;
-import com.alibaba.dashscope.agentstudio.message.ClientEvents;
-import com.alibaba.dashscope.agentstudio.message.ContentBlock;
-import com.alibaba.dashscope.agentstudio.message.Message;
-import com.alibaba.dashscope.agentstudio.model.Agent;
-import com.alibaba.dashscope.agentstudio.model.AgentStudioDeletionStatus;
-import com.alibaba.dashscope.agentstudio.model.AgentStudioFile;
-import com.alibaba.dashscope.agentstudio.model.AgentVersion;
-import com.alibaba.dashscope.agentstudio.model.Configs;
-import com.alibaba.dashscope.agentstudio.model.Credential;
-import com.alibaba.dashscope.agentstudio.model.Environment;
-import com.alibaba.dashscope.agentstudio.model.Session;
-import com.alibaba.dashscope.agentstudio.model.Skill;
-import com.alibaba.dashscope.agentstudio.model.SkillVersion;
-import com.alibaba.dashscope.agentstudio.model.Vault;
-import com.alibaba.dashscope.agentstudio.pagination.CursorPage;
-import com.alibaba.dashscope.agentstudio.param.AgentCreateParam;
-import com.alibaba.dashscope.agentstudio.param.AgentListParam;
-import com.alibaba.dashscope.agentstudio.param.AgentUpdateParam;
-import com.alibaba.dashscope.agentstudio.param.CredentialCreateParam;
-import com.alibaba.dashscope.agentstudio.param.CredentialListParam;
-import com.alibaba.dashscope.agentstudio.param.CredentialUpdateParam;
-import com.alibaba.dashscope.agentstudio.param.EnvironmentCreateParam;
-import com.alibaba.dashscope.agentstudio.param.EnvironmentListParam;
-import com.alibaba.dashscope.agentstudio.param.FileListParam;
-import com.alibaba.dashscope.agentstudio.param.SessionAgent;
-import com.alibaba.dashscope.agentstudio.param.SessionCreateParam;
-import com.alibaba.dashscope.agentstudio.param.SessionEventListParam;
-import com.alibaba.dashscope.agentstudio.param.SessionListParam;
-import com.alibaba.dashscope.agentstudio.param.SessionUpdateParam;
-import com.alibaba.dashscope.agentstudio.param.SkillCreateParam;
-import com.alibaba.dashscope.agentstudio.param.SkillListParam;
-import com.alibaba.dashscope.agentstudio.param.VaultCreateParam;
-import com.alibaba.dashscope.agentstudio.param.VaultListParam;
-import com.alibaba.dashscope.agentstudio.param.VaultUpdateParam;
-import com.alibaba.dashscope.agentstudio.resource.Agents;
-import com.alibaba.dashscope.agentstudio.resource.Environments;
-import com.alibaba.dashscope.agentstudio.resource.Sessions;
-import com.alibaba.dashscope.agentstudio.resource.Skills;
-import com.alibaba.dashscope.agentstudio.resource.Vaults;
+import com.alibaba.dashscope.applications.agentstudio.AgentStudioClient;
+import com.alibaba.dashscope.applications.agentstudio.message.ClientEvents;
+import com.alibaba.dashscope.applications.agentstudio.message.ContentBlock;
+import com.alibaba.dashscope.applications.agentstudio.message.Message;
+import com.alibaba.dashscope.applications.agentstudio.model.Agent;
+import com.alibaba.dashscope.applications.agentstudio.model.AgentStudioDeletionStatus;
+import com.alibaba.dashscope.applications.agentstudio.model.AgentStudioFile;
+import com.alibaba.dashscope.applications.agentstudio.model.AgentVersion;
+import com.alibaba.dashscope.applications.agentstudio.model.Configs;
+import com.alibaba.dashscope.applications.agentstudio.model.Credential;
+import com.alibaba.dashscope.applications.agentstudio.model.Environment;
+import com.alibaba.dashscope.applications.agentstudio.model.Session;
+import com.alibaba.dashscope.applications.agentstudio.model.Skill;
+import com.alibaba.dashscope.applications.agentstudio.model.SkillVersion;
+import com.alibaba.dashscope.applications.agentstudio.model.Vault;
+import com.alibaba.dashscope.applications.agentstudio.pagination.CursorPage;
+import com.alibaba.dashscope.applications.agentstudio.param.AgentCreateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.AgentListParam;
+import com.alibaba.dashscope.applications.agentstudio.param.AgentUpdateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.CredentialCreateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.CredentialListParam;
+import com.alibaba.dashscope.applications.agentstudio.param.CredentialUpdateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.EnvironmentCreateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.EnvironmentListParam;
+import com.alibaba.dashscope.applications.agentstudio.param.FileListParam;
+import com.alibaba.dashscope.applications.agentstudio.param.SessionAgent;
+import com.alibaba.dashscope.applications.agentstudio.param.SessionCreateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.SessionEventListParam;
+import com.alibaba.dashscope.applications.agentstudio.param.SessionListParam;
+import com.alibaba.dashscope.applications.agentstudio.param.SessionUpdateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.SkillCreateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.SkillListParam;
+import com.alibaba.dashscope.applications.agentstudio.param.VaultCreateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.VaultListParam;
+import com.alibaba.dashscope.applications.agentstudio.param.VaultUpdateParam;
+import com.alibaba.dashscope.applications.agentstudio.resource.Agents;
+import com.alibaba.dashscope.applications.agentstudio.resource.Environments;
+import com.alibaba.dashscope.applications.agentstudio.resource.Sessions;
+import com.alibaba.dashscope.applications.agentstudio.resource.Skills;
+import com.alibaba.dashscope.applications.agentstudio.resource.Vaults;
 import com.alibaba.dashscope.legacy_2x.TestUtils;
 import com.alibaba.dashscope.legacy_2x.utils.Constants;
 import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
@@ -1160,8 +1160,8 @@ public class TestAgentStudio {
   @Test
   public void testFileUpload() throws Exception {
     String baseUrl = String.format("http://127.0.0.1:%s/api/v1/agentstudio", mockServer.getPort());
-    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.agentstudio.resource.Files(baseUrl, null, null);
+    com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(baseUrl, null, null);
     try {
       JsonObject rsp = fixtures.get("file_response").getAsJsonObject();
       mockServer.enqueue(TestUtils.createMockResponse(JsonUtils.toJson(rsp), 200));
@@ -1185,8 +1185,8 @@ public class TestAgentStudio {
   @Test
   public void testFileUploadInputStream() throws Exception {
     String baseUrl = String.format("http://127.0.0.1:%s/api/v1/agentstudio", mockServer.getPort());
-    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.agentstudio.resource.Files(baseUrl, null, null);
+    com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(baseUrl, null, null);
     try {
       JsonObject rsp = fixtures.get("file_response").getAsJsonObject();
       mockServer.enqueue(TestUtils.createMockResponse(JsonUtils.toJson(rsp), 200));
@@ -1211,8 +1211,8 @@ public class TestAgentStudio {
   @Test
   public void testFileRetrieve() throws Exception {
     enqueue("file_response");
-    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.agentstudio.resource.Files(null, null, null);
+    com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
     AgentStudioFile file = filesResource.retrieve("file_001");
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("GET", req.getMethod());
@@ -1224,8 +1224,8 @@ public class TestAgentStudio {
   @Test
   public void testFileList() throws Exception {
     enqueue("file_list_response");
-    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.agentstudio.resource.Files(null, null, null);
+    com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
     CursorPage<AgentStudioFile> page =
         filesResource.list(FileListParam.builder().limit(20).build());
     RecordedRequest req = mockServer.takeRequest();
@@ -1239,13 +1239,13 @@ public class TestAgentStudio {
   @Test
   public void testFileDownload() throws Exception {
     String baseUrl = String.format("http://127.0.0.1:%s/api/v1/agentstudio", mockServer.getPort());
-    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.agentstudio.resource.Files(baseUrl, null, null);
+    com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(baseUrl, null, null);
     try {
       byte[] expected = "file content".getBytes(StandardCharsets.UTF_8);
       mockServer.enqueue(
           new MockResponse().setResponseCode(200).setBody(new Buffer().write(expected)));
-      com.alibaba.dashscope.agentstudio.resource.FileContent content =
+      com.alibaba.dashscope.applications.agentstudio.resource.FileContent content =
           filesResource.download("file_001");
       RecordedRequest req = mockServer.takeRequest();
       assertEquals("GET", req.getMethod());
@@ -1266,8 +1266,8 @@ public class TestAgentStudio {
   @Test
   public void testFileDelete() throws Exception {
     enqueue("delete_response");
-    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.agentstudio.resource.Files(null, null, null);
+    com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
     AgentStudioDeletionStatus status = filesResource.delete("file_001");
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("DELETE", req.getMethod());
@@ -1277,15 +1277,15 @@ public class TestAgentStudio {
 
   @Test
   public void testFileUploadNullFilePath() {
-    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.agentstudio.resource.Files(null, null, null);
+    com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
     assertThrows(IllegalArgumentException.class, () -> filesResource.upload(null, null));
   }
 
   @Test
   public void testFileUploadNullInputStream() {
-    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.agentstudio.resource.Files(null, null, null);
+    com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
     assertThrows(
         IllegalArgumentException.class,
         () -> filesResource.upload("test.txt", (InputStream) null, null));
@@ -1293,15 +1293,15 @@ public class TestAgentStudio {
 
   @Test
   public void testFileRetrieveRequiresId() {
-    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.agentstudio.resource.Files(null, null, null);
+    com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
     assertThrows(IllegalArgumentException.class, () -> filesResource.retrieve(null));
   }
 
   @Test
   public void testFileDeleteRequiresId() {
-    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.agentstudio.resource.Files(null, null, null);
+    com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
     assertThrows(IllegalArgumentException.class, () -> filesResource.delete(null));
   }
 

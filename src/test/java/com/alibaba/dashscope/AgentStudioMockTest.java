@@ -6,12 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.alibaba.dashscope.agentstudio.AgentStudioClient;
-import com.alibaba.dashscope.agentstudio.model.Agent;
-import com.alibaba.dashscope.agentstudio.model.Memory;
-import com.alibaba.dashscope.agentstudio.pagination.CursorPage;
-import com.alibaba.dashscope.agentstudio.param.AgentCreateParam;
-import com.alibaba.dashscope.agentstudio.param.MemoryListParam;
+import com.alibaba.dashscope.applications.agentstudio.AgentStudioClient;
+import com.alibaba.dashscope.applications.agentstudio.model.Agent;
+import com.alibaba.dashscope.applications.agentstudio.model.Memory;
+import com.alibaba.dashscope.applications.agentstudio.pagination.CursorPage;
+import com.alibaba.dashscope.applications.agentstudio.param.AgentCreateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.MemoryListParam;
 import com.alibaba.dashscope.errors.NotFoundException;
 import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
 import com.google.gson.JsonObject;

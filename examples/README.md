@@ -12,8 +12,8 @@ legacy_2x/                 # 2.x 旧样例 64 个，整体封存（不编译）�
 ```
 
 活动四层示例使用 `com.alibaba.dashscope` 根包 3.0 API。`legacy_2x/` 保留历史旧 FQCN；
-复用其中样例时，除 AgentStudio 外须将 2.x imports 调整为
-`com.alibaba.dashscope.legacy_2x.*`，详见归档目录说明。
+复用其中样例时，2.x imports 须调整为 `com.alibaba.dashscope.legacy_2x.*`，AgentStudio
+imports 须调整为 `com.alibaba.dashscope.applications.agentstudio.*`，详见归档目录说明。
 
 ## 准备
 
@@ -102,8 +102,9 @@ mvn -o -f examples/pom.xml test
 | AgentStudio 快速开始 | `agentstudio.AgentStudioQuickStart` | `client.agentStudio()`：environments/agents/sessions/events.stream(SSE)/archive |
 | AgentStudio 定时部署 | `agentstudio.AgentStudioDeploymentsManage` | `deployments().create/run/listRuns`（`DASHSCOPE_AGENT_ID`） |
 
-AgentStudio 为两代共用业务包：3.0 的 `baseUrl` 不作用于它，地域/工作空间随 client 配置，
-也可用 `DASHSCOPE_AGENTSTUDIO_URL` 直连自定义地址。
+AgentStudio 为两代共用业务包，位于 `com.alibaba.dashscope.applications.agentstudio`；
+`applications` 仅作包分组，入口仍为 `client.agentStudio()`。3.0 的 `baseUrl` 不作用于它，
+地域/工作空间随 client 配置，也可用 `DASHSCOPE_AGENTSTUDIO_URL` 直连自定义地址。
 
 ## 04 场景 harness（`scenarios.` 前缀从略）
 

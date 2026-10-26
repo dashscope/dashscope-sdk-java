@@ -1,7 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope;
 
-import com.alibaba.dashscope.agentstudio.AgentStudioClient;
+import com.alibaba.dashscope.applications.agentstudio.AgentStudioClient;
 import com.alibaba.dashscope.config.ConfigResolver;
 import com.alibaba.dashscope.config.ResolvedConfig;
 import com.alibaba.dashscope.resources.apps.AppsAsyncService;
@@ -164,10 +164,9 @@ public final class DashScopeAsyncClient implements AutoCloseable {
   }
 
   /**
-   * AgentStudio management plane (design §7: single shared copy — returns the 2.x {@code
-   * agentstudio} client type used by both generations). The same client type as on {@link
-   * DashScopeClient#agentStudio()} — it carries native async variants. Created lazily; it keeps its
-   * own 2.x-style exception style and the 3.0 {@code baseUrl} does not apply to it.
+   * AgentStudio management plane under {@code applications.agentstudio}: the same client type as on
+   * {@link DashScopeClient#agentStudio()}, with native async variants and 3.0 unchecked errors.
+   * Created lazily; the 3.0 {@code baseUrl} does not apply here.
    */
   public AgentStudioClient agentStudio() {
     AgentStudioClient c = agentStudio;

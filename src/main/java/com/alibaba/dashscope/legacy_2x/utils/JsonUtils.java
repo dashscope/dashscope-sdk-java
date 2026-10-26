@@ -1,7 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.legacy_2x.utils;
 
-import com.alibaba.dashscope.agentstudio.message.ContentBlock;
+import com.alibaba.dashscope.applications.agentstudio.message.ContentBlock;
 import com.alibaba.dashscope.legacy_2x.aigc.multimodalconversation.MultiModalConversationMessage;
 import com.alibaba.dashscope.legacy_2x.aigc.multimodalconversation.MultiModalConversationMessageAdapter;
 import com.alibaba.dashscope.legacy_2x.common.Message;

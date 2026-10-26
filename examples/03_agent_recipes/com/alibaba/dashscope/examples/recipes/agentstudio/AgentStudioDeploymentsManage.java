@@ -2,14 +2,14 @@
 package com.alibaba.dashscope.examples.recipes.agentstudio;
 
 import com.alibaba.dashscope.DashScopeClient;
-import com.alibaba.dashscope.agentstudio.AgentStudioClient;
-import com.alibaba.dashscope.agentstudio.message.ClientEvents;
-import com.alibaba.dashscope.agentstudio.model.Deployment;
-import com.alibaba.dashscope.agentstudio.model.DeploymentRun;
-import com.alibaba.dashscope.agentstudio.param.DeploymentAgentParam;
-import com.alibaba.dashscope.agentstudio.param.DeploymentCreateParam;
-import com.alibaba.dashscope.agentstudio.param.DeploymentRunListParam;
-import com.alibaba.dashscope.agentstudio.param.DeploymentScheduleParam;
+import com.alibaba.dashscope.applications.agentstudio.AgentStudioClient;
+import com.alibaba.dashscope.applications.agentstudio.message.ClientEvents;
+import com.alibaba.dashscope.applications.agentstudio.model.Deployment;
+import com.alibaba.dashscope.applications.agentstudio.model.DeploymentRun;
+import com.alibaba.dashscope.applications.agentstudio.param.DeploymentAgentParam;
+import com.alibaba.dashscope.applications.agentstudio.param.DeploymentCreateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.DeploymentRunListParam;
+import com.alibaba.dashscope.applications.agentstudio.param.DeploymentScheduleParam;
 import com.alibaba.dashscope.examples.ExampleSupport;
 import java.util.Collections;
 

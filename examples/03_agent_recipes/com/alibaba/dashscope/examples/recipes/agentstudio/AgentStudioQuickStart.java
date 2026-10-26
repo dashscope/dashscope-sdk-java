@@ -2,16 +2,16 @@
 package com.alibaba.dashscope.examples.recipes.agentstudio;
 
 import com.alibaba.dashscope.DashScopeClient;
-import com.alibaba.dashscope.agentstudio.AgentStudioClient;
-import com.alibaba.dashscope.agentstudio.message.ClientEvents;
-import com.alibaba.dashscope.agentstudio.model.Agent;
-import com.alibaba.dashscope.agentstudio.model.Configs;
-import com.alibaba.dashscope.agentstudio.model.Environment;
-import com.alibaba.dashscope.agentstudio.model.Session;
-import com.alibaba.dashscope.agentstudio.param.AgentCreateParam;
-import com.alibaba.dashscope.agentstudio.param.EnvironmentCreateParam;
-import com.alibaba.dashscope.agentstudio.param.SessionCreateParam;
-import com.alibaba.dashscope.agentstudio.resource.AgentStudioEventStream;
+import com.alibaba.dashscope.applications.agentstudio.AgentStudioClient;
+import com.alibaba.dashscope.applications.agentstudio.message.ClientEvents;
+import com.alibaba.dashscope.applications.agentstudio.model.Agent;
+import com.alibaba.dashscope.applications.agentstudio.model.Configs;
+import com.alibaba.dashscope.applications.agentstudio.model.Environment;
+import com.alibaba.dashscope.applications.agentstudio.model.Session;
+import com.alibaba.dashscope.applications.agentstudio.param.AgentCreateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.EnvironmentCreateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.SessionCreateParam;
+import com.alibaba.dashscope.applications.agentstudio.resource.AgentStudioEventStream;
 import com.alibaba.dashscope.examples.ExampleSupport;
 import java.util.Collections;
 import java.util.HashMap;
