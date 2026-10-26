@@ -34,10 +34,12 @@ public final class ConfigFile {
   static final String KEY_MAX_RETRIES = "max_retries";
   static final String KEY_WS_PING_INTERVAL = "ws_ping_interval";
 
+  // Preserve existing empty-versus-populated collection mutability.
   /**
    * Parse the file at {@code path}; missing file yields an empty map. Malformed lines are skipped
    * (config discovery must never crash client construction).
    */
+  @SuppressWarnings("MixedMutabilityReturnType")
   public static Map<String, String> load(Path path) {
     if (path == null || !Files.isRegularFile(path)) {
       return Collections.emptyMap();

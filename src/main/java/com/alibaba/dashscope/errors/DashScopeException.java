@@ -5,10 +5,12 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+// This class-level matcher requires suppression here to preserve the diagnostic toString().
 /**
  * Base class for all DashScope 3.0 SDK errors. Unchecked by design (2.x checked exceptions leaked
  * into every signature).
  */
+@SuppressWarnings("OverrideThrowableToString")
 public class DashScopeException extends RuntimeException {
   private final String code;
   private final Integer statusCode;

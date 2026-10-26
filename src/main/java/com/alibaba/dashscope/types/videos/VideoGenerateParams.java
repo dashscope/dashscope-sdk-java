@@ -17,10 +17,12 @@ import java.util.Map;
  * call.
  */
 public final class VideoGenerateParams {
+  // Retain the public array constant and its binary signature.
   /**
    * Models that only answer on the media-based input protocol (prefix match, so dated variants
    * route the same way).
    */
+  @SuppressWarnings("MutablePublicArray")
   public static final String[] MEDIA_MODEL_PREFIXES = {"wan2.7-i2v"};
 
   private final String model;

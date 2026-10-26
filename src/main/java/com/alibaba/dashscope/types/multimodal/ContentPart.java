@@ -16,9 +16,9 @@ import java.util.Map;
  * Instances are immutable.
  */
 public final class ContentPart {
-  private final LinkedHashMap<String, Object> entries;
+  private final Map<String, Object> entries;
 
-  private ContentPart(LinkedHashMap<String, Object> entries) {
+  private ContentPart(Map<String, Object> entries) {
     this.entries = entries;
   }
 

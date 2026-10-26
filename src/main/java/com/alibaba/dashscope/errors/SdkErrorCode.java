@@ -316,14 +316,18 @@ public enum SdkErrorCode {
   private final String code;
   private final String message;
   private final boolean allowRetry;
+
+  // Defensive copies preserve the array API without exposing enum state.
+  @SuppressWarnings("ImmutableEnumChecker")
   private final String[] vars;
+
   private final String solution;
 
   SdkErrorCode(String code, String message, boolean allowRetry, String[] vars, String solution) {
     this.code = code;
     this.message = message;
     this.allowRetry = allowRetry;
-    this.vars = vars;
+    this.vars = vars.clone();
     this.solution = solution;
   }
 
@@ -340,7 +344,7 @@ public enum SdkErrorCode {
   }
 
   public String[] getVars() {
-    return vars;
+    return vars.clone();
   }
 
   public String getSolution() {

@@ -13,10 +13,12 @@ import java.util.Map;
  * form {@code 1024*1024}.
  */
 public final class ImageGenerateParams {
+  // Retain the public array constant and its binary signature.
   /**
    * Models that only answer on the multimodal-generation protocol (prefix match, so {@code
    * -preview}-style variants route the same way).
    */
+  @SuppressWarnings("MutablePublicArray")
   public static final String[] MULTIMODAL_MODEL_PREFIXES = {"wan2.6-t2i", "wan2.6-image"};
 
   private final String model;

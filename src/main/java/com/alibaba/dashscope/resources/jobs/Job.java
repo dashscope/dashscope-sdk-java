@@ -82,11 +82,13 @@ public final class Job extends ResponseBase {
     return JsonSupport.mapper().convertValue(output, type);
   }
 
+  // Preserve existing empty-versus-populated collection mutability.
   /**
    * The artifacts of a finished task (Python v2 {@code Job.results} parity): {@code output.results}
    * when present, else the image parts lifted from a choices-style output (multimodal-generation
    * answers image tasks with chat-style choices).
    */
+  @SuppressWarnings("MixedMutabilityReturnType")
   public List<JobResult> getResults() {
     if (output == null || !output.isObject()) {
       return Collections.emptyList();

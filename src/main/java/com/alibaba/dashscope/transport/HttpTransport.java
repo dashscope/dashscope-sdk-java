@@ -118,7 +118,7 @@ public final class HttpTransport implements AutoCloseable {
       String path, JsonNode body, String module, RequestOptions options) {
     Request request = buildRequest(path, body, module, options, false, "POST");
     Response response = send(request, options, false);
-    return handleResponse(response, options);
+    return handleResponse(response);
   }
 
   /** PUT {@code path} with a JSON body (deployments scale). */
@@ -126,7 +126,7 @@ public final class HttpTransport implements AutoCloseable {
       String path, JsonNode body, String module, RequestOptions options) {
     Request request = buildRequest(path, body, module, options, false, "PUT");
     Response response = send(request, options, false);
-    return handleResponse(response, options);
+    return handleResponse(response);
   }
 
   /** POST with extra request headers (e.g. {@code X-DashScope-Async: enable} for job submit). */
@@ -147,7 +147,7 @@ public final class HttpTransport implements AutoCloseable {
             .headers(extraHeaders);
     Request request = buildRequest(path, body, module, merged.build(), false, "POST");
     Response response = send(request, merged.build(), false);
-    return handleResponse(response, merged.build());
+    return handleResponse(response);
   }
 
   /** GET {@code path} with query parameters (jobs fetch/cancel/list). */
@@ -182,7 +182,7 @@ public final class HttpTransport implements AutoCloseable {
       builder.header(e.getKey(), e.getValue());
     }
     Response response = send(builder.build(), opts, false);
-    return handleResponse(response, opts);
+    return handleResponse(response);
   }
 
   /** DELETE {@code path} (files/fine-tunes/deployments CRUD). */
@@ -210,7 +210,7 @@ public final class HttpTransport implements AutoCloseable {
       builder.header(e.getKey(), e.getValue());
     }
     Response response = send(builder.build(), opts, false);
-    return handleResponse(response, opts);
+    return handleResponse(response);
   }
 
   /**
@@ -256,7 +256,7 @@ public final class HttpTransport implements AutoCloseable {
       builder.header(e.getKey(), e.getValue());
     }
     Response response = send(builder.build(), opts, false);
-    return handleResponse(response, opts);
+    return handleResponse(response);
   }
 
   /**
@@ -421,7 +421,7 @@ public final class HttpTransport implements AutoCloseable {
     return client;
   }
 
-  private ResponseEnvelope handleResponse(Response response, RequestOptions options) {
+  private ResponseEnvelope handleResponse(Response response) {
     String text = readBodyText(response);
     Map<String, String> headers = headersOf(response);
     boolean raiseOnError = config.isRaiseOnError();

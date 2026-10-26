@@ -68,7 +68,9 @@ public final class JsonSupport {
     }
   }
 
+  // Keep Java 8 String.split semantics for SSE parsing.
   /** Port of Python v2 _sse_error_body: prefer frames carrying a code, else a message-only one. */
+  @SuppressWarnings("StringSplitter")
   private static JsonNode sseErrorBody(String text) {
     List<String> dataLines = new ArrayList<>();
     JsonNode fallback = null;

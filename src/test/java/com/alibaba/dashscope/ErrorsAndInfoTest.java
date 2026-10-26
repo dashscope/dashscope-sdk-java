@@ -99,6 +99,13 @@ class ErrorsAndInfoTest {
   }
 
   @Test
+  void sdkErrorVarsAreDefensivelyCopied() {
+    String[] vars = SdkErrorCode.SDK_WS_ILLEGAL_STATE.getVars();
+    vars[0] = "changed";
+    assertEquals("detail", SdkErrorCode.SDK_WS_ILLEGAL_STATE.getVars()[0]);
+  }
+
+  @Test
   void fromThrowableFallsBackToFamilyError() {
     SdkException e = Errors.fromThrowable(new IllegalStateException("boom"), "sdk.agentic_rl");
     assertEquals("sdk.agentic_rl.Error", e.getCode());

@@ -33,7 +33,7 @@ public final class ConfigResolver {
   static final String SYSPROP_WS_PING_INTERVAL = "dashscope.ws.ping.interval";
 
   public static final String DEFAULT_REGION = "cn-beijing";
-  public static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(300);
+  public static final Duration DEFAULT_TIMEOUT = Duration.ofMinutes(5);
   public static final int DEFAULT_MAX_RETRIES = 2;
   public static final int DEFAULT_MAX_REQUESTS = 100;
   public static final int DEFAULT_MAX_REQUESTS_PER_HOST = 20;
@@ -41,8 +41,6 @@ public final class ConfigResolver {
 
   private static final String NATIVE_API_PATH = "/api/v1";
   private static final String WS_INFERENCE_PATH = "/api-ws/v1/inference";
-  private static final String WORKSPACE_GATEWAY_TEMPLATE = "https://%s.%s.maas.aliyuncs.com";
-  private static final String WORKSPACE_WS_GATEWAY_TEMPLATE = "wss://%s.%s.maas.aliyuncs.com";
 
   /** The MaaS gateway is deployed in six regions. */
   private static final String[] VALID_REGIONS = {
@@ -119,7 +117,8 @@ public final class ConfigResolver {
             file.get(ConfigFile.KEY_BASE_URL));
     if (baseUrl == null) {
       if (workspace != null) {
-        baseUrl = String.format(WORKSPACE_GATEWAY_TEMPLATE, workspace, region) + NATIVE_API_PATH;
+        baseUrl =
+            String.format("https://%s.%s.maas.aliyuncs.com", workspace, region) + NATIVE_API_PATH;
       } else {
         baseUrl = LEGACY_GATEWAY_HOSTS.get(region) + NATIVE_API_PATH;
         warnLegacyOnce(LEGACY_HTTP_WARNED, baseUrl);
@@ -134,7 +133,7 @@ public final class ConfigResolver {
     if (wsBaseUrl == null) {
       if (workspace != null) {
         wsBaseUrl =
-            String.format(WORKSPACE_WS_GATEWAY_TEMPLATE, workspace, region) + WS_INFERENCE_PATH;
+            String.format("wss://%s.%s.maas.aliyuncs.com", workspace, region) + WS_INFERENCE_PATH;
       } else {
         wsBaseUrl = LEGACY_WS_GATEWAY_HOSTS.get(region) + WS_INFERENCE_PATH;
         warnLegacyOnce(LEGACY_WS_WARNED, wsBaseUrl);
@@ -173,7 +172,7 @@ public final class ConfigResolver {
     int maxIdleConnections =
         envInt(EnvNames.DASHSCOPE_HTTP_MAX_KEEPALIVE_CONNECTIONS, DEFAULT_MAX_REQUESTS_PER_HOST);
     long keepAliveSeconds =
-        envLong(EnvNames.DASHSCOPE_HTTP_KEEPALIVE_EXPIRY, DEFAULT_KEEP_ALIVE.getSeconds());
+        envLong(EnvNames.DASHSCOPE_HTTP_KEEPALIVE_EXPIRY, DEFAULT_KEEP_ALIVE.toMillis() / 1000);
 
     String apiKey = ApiKeyResolver.resolve(options.getApiKey(), file);
 

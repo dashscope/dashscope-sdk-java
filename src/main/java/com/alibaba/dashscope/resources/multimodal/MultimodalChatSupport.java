@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -23,6 +24,7 @@ final class MultimodalChatSupport {
   private MultimodalChatSupport() {}
 
   static final String PATH = "/services/aigc/multimodal-generation/generation";
+
   /** Functional-area tag for x-dashscope-sdk-client (matches 2.x "aigc"). */
   static final String MODULE = "aigc";
 
@@ -35,7 +37,7 @@ final class MultimodalChatSupport {
     if (model == null) {
       return true;
     }
-    String lower = model.toLowerCase();
+    String lower = model.toLowerCase(Locale.ROOT);
     return !(lower.contains("tts")
         || lower.contains("omni")
         || lower.contains("qwen-deep-research"));

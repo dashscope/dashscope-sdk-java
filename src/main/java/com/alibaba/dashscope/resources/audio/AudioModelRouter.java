@@ -1,6 +1,8 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.resources.audio;
 
+import java.util.Locale;
+
 /**
  * TTS model routing (audio design §8). Pinned by unit tests:
  *
@@ -18,7 +20,7 @@ final class AudioModelRouter {
   private AudioModelRouter() {}
 
   static String httpPath(String model) {
-    String m = model == null ? "" : model.toLowerCase();
+    String m = model == null ? "" : model.toLowerCase(Locale.ROOT);
     if (m.startsWith("qwen-audio-")) {
       return SPEECH_SYNTHESIZER_PATH;
     }

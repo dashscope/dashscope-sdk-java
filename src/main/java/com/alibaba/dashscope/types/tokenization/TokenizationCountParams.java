@@ -7,9 +7,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Parameters for {@code tokenization.count}. Wire shape: {@code {model, input:{prompt}|{messages}},
- * plus an always-present {@code parameters} object. When both {@code prompt} and {@code messages}
- * are given, the prompt is appended as a trailing user message (Python v2 parity).
+ * Parameters for {@code tokenization.count}. Wire shape: <code>{model,
+ * input:{prompt}|{messages}}</code>, plus an always-present {@code parameters} object. When both
+ * {@code prompt} and {@code messages} are given, the prompt is appended as a trailing user message
+ * (Python v2 parity).
  */
 public final class TokenizationCountParams {
   private final String model;
