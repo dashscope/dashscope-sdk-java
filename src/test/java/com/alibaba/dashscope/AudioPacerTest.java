@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -69,6 +70,36 @@ class AudioPacerTest {
     Path file = dir.resolve("empty.pcm");
     Files.write(file, new byte[0]);
     assertEquals(0, collect(AudioPacer.pcmChunks(file, 100)).size());
+  }
+
+  @Test
+  void earlyExitWithCloseReleasesFileHandle() throws IOException {
+    Path file = dir.resolve("early.pcm");
+    Files.write(file, new byte[1000]);
+    AudioPacer.PcmFileChunks chunks = AudioPacer.pcmChunks(file, 100);
+    Iterator<byte[]> it = chunks.iterator();
+    assertTrue(it.hasNext());
+    it.next(); // abandon iteration like a failed websocket send would
+    chunks.close();
+    // Files.delete succeeds on POSIX even with the handle still open, so prove release by showing
+    // the abandoned iterator can no longer read from the closed stream.
+    assertThrows(SdkException.class, it::hasNext);
+    Files.delete(file);
+
+    // Single-use: a second iterator is rejected.
+    Path reuse = dir.resolve("reuse.pcm");
+    Files.write(reuse, new byte[100]);
+    AudioPacer.PcmFileChunks single = AudioPacer.pcmChunks(reuse, 100);
+    single.iterator();
+    assertThrows(IllegalStateException.class, single::iterator);
+    single.close();
+    // Use after close is rejected too (closed is terminal).
+    assertThrows(IllegalStateException.class, single::iterator);
+
+    // Close before iteration starts is a no-op, not a failure; the file is never opened.
+    try (AudioPacer.PcmFileChunks untouched = AudioPacer.pcmChunks(dir.resolve("gone.pcm"), 100)) {
+      // never iterated
+    }
   }
 
   @Test

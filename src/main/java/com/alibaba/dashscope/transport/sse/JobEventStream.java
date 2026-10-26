@@ -111,6 +111,10 @@ public final class JobEventStream implements AutoCloseable, Iterable<JobEventStr
             statusCode = Integer.valueOf(line.substring("status:".length()).trim());
           } else if (line.startsWith("data:")) {
             next = new Frame(error, statusCode, line.substring("data:".length()).trim());
+            // The per-event status must not leak into the next frame: an error frame without its
+            // own status: line is a business failure (Frame#getStatusCode / JobEventSupport).
+            // `error` needs no reset — an error frame sets finished below, so it is always last.
+            statusCode = null;
             if (error) {
               finished = true;
             }

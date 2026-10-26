@@ -259,6 +259,32 @@ class FineTunesMockTest {
   }
 
   @Test
+  void streamEventsErrorWithoutOwnStatusStaysBusinessFailure() throws Exception {
+    // A status: line on an earlier frame must not leak into a later error frame that omits its
+    // own: statusCode==null means business failure on an HTTP-200 stream (JobEventSupport), so
+    // the mapped exception reports 200, not the inherited 404.
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(200)
+            .setHeader("Content-Type", "text/event-stream")
+            .setBody(
+                "status: 404\ndata: {\"loss\": 0.1}\n\nevent:error\n"
+                    + "data: {\"code\":\"InvalidParameter\",\"message\":\"bad job\"}\n\n"));
+    try (FineTuneEventStream stream = client.fineTunes().streamEvents("ft-9")) {
+      ApiStatusException e =
+          assertThrows(
+              ApiStatusException.class,
+              () -> {
+                for (FineTuneEvent ignored : stream) {
+                  // drain
+                }
+              });
+      assertEquals("bad job", e.getMessage());
+      assertEquals(200, e.getStatusCode().intValue());
+    }
+  }
+
+  @Test
   void waitPollsToTerminal() throws Exception {
     server.enqueue(okJson("{\"output\":{\"job_id\":\"ft-7\",\"status\":\"RUNNING\"}}"));
     server.enqueue(

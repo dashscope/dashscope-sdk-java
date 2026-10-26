@@ -42,76 +42,118 @@ public final class AudioPacer {
 
   /**
    * Lazily split a PCM file into {@code bytesPerChunk} byte chunks (the final short chunk is
-   * included; an empty file yields no chunks). The file is opened when iteration starts and closed
-   * when it ends.
+   * included; an empty file yields no chunks). The returned iterable is single-use and owns one
+   * file handle, opened when {@link PcmFileChunks#iterator()} is first called and closed when
+   * iteration reaches EOF. Callers that abandon iteration early (a failed send, {@code break})
+   * must close it, preferably with try-with-resources, otherwise the handle leaks. A {@code
+   * PcmFileChunks} is owned by one thread: {@code close()} and iteration must not race.
    */
-  public static Iterable<byte[]> pcmChunks(Path path, int bytesPerChunk) {
+  public static PcmFileChunks pcmChunks(Path path, int bytesPerChunk) {
     if (bytesPerChunk <= 0) {
       throw new IllegalArgumentException("bytesPerChunk must be positive");
     }
-    return () ->
-        new Iterator<byte[]>() {
-          private final InputStream in = open(path);
-          private byte[] pending;
-          private boolean loaded;
-          private boolean finished;
+    return new PcmFileChunks(path, bytesPerChunk);
+  }
 
-          @Override
-          public boolean hasNext() {
-            if (!loaded && !finished) {
-              pending = readChunk();
-              loaded = true;
-            }
-            return !finished;
-          }
+  /**
+   * Single-use, file-backed chunk iterable that owns one handle; {@link #close()} releases it and
+   * is terminal. Modeled on the transport streams ({@code JobEventStream} and friends): a second
+   * {@link #iterator()} or any use after {@code close()} raises {@link IllegalStateException}.
+   */
+  public static final class PcmFileChunks implements Iterable<byte[]>, AutoCloseable {
+    private final Path path;
+    private final int bytesPerChunk;
+    private InputStream in;
+    private boolean iteratorTaken;
+    private boolean closed;
 
-          @Override
-          public byte[] next() {
-            if (!hasNext()) {
-              throw new NoSuchElementException();
-            }
-            byte[] out = pending;
-            pending = null;
-            loaded = false;
-            return out;
-          }
+    PcmFileChunks(Path path, int bytesPerChunk) {
+      this.path = path;
+      this.bytesPerChunk = bytesPerChunk;
+    }
 
-          private byte[] readChunk() {
-            byte[] buf = new byte[bytesPerChunk];
-            int off = 0;
-            try {
-              while (off < buf.length) {
-                int n = in.read(buf, off, buf.length - off);
-                if (n < 0) {
-                  break;
-                }
-                off += n;
-              }
-            } catch (IOException e) {
-              closeQuietly();
-              throw Errors.io(SdkErrorCode.SDK_IO_ERROR, "read audio file " + path, e);
-            }
-            if (off == 0) {
-              finished = true;
-              closeQuietly();
-              return null;
-            }
-            if (off == buf.length) {
-              return buf;
-            }
-            byte[] tail = new byte[off];
-            System.arraycopy(buf, 0, tail, 0, off);
-            return tail;
-          }
+    @Override
+    public Iterator<byte[]> iterator() {
+      if (closed) {
+        throw new IllegalStateException("PcmFileChunks is closed");
+      }
+      if (iteratorTaken) {
+        throw new IllegalStateException("PcmFileChunks is single-use");
+      }
+      iteratorTaken = true;
+      in = open(path);
+      return new ChunkIterator();
+    }
 
-          private void closeQuietly() {
-            try {
-              in.close();
-            } catch (IOException e) {
-              throw Errors.io(SdkErrorCode.SDK_IO_ERROR, "close audio file " + path, e);
+    @Override
+    public void close() {
+      if (closed) {
+        return;
+      }
+      closed = true;
+      InputStream stream = in;
+      if (stream != null) {
+        try {
+          stream.close();
+        } catch (IOException ignored) {
+          // Quietly: a close failure must not mask the real read error or abort cleanup.
+        }
+      }
+    }
+
+    private final class ChunkIterator implements Iterator<byte[]> {
+      private byte[] pending;
+      private boolean loaded;
+      private boolean finished;
+
+      @Override
+      public boolean hasNext() {
+        if (!loaded && !finished) {
+          pending = readChunk();
+          loaded = true;
+        }
+        return !finished;
+      }
+
+      @Override
+      public byte[] next() {
+        if (!hasNext()) {
+          throw new NoSuchElementException();
+        }
+        byte[] out = pending;
+        pending = null;
+        loaded = false;
+        return out;
+      }
+
+      private byte[] readChunk() {
+        byte[] buf = new byte[bytesPerChunk];
+        int off = 0;
+        try {
+          while (off < buf.length) {
+            int n = in.read(buf, off, buf.length - off);
+            if (n < 0) {
+              break;
             }
+            off += n;
           }
-        };
+        } catch (IOException e) {
+          close();
+          throw Errors.io(SdkErrorCode.SDK_IO_ERROR, "read audio file " + path, e);
+        }
+        if (off == 0) {
+          finished = true;
+          close();
+          return null;
+        }
+        if (off == buf.length) {
+          return buf;
+        }
+        byte[] tail = new byte[off];
+        System.arraycopy(buf, 0, tail, 0, off);
+        return tail;
+      }
+    }
   }
 
   /** Split an in-memory PCM buffer (final short chunk included). */
