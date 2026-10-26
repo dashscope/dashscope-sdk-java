@@ -19,6 +19,7 @@ public final class ListResult<T> extends FlattenResultBase {
   private Boolean hasMore;
 
   private List<T> data;
+
   /**
    * Object
    *

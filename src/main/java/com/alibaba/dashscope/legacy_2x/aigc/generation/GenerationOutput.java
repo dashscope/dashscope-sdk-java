@@ -21,6 +21,7 @@ public final class GenerationOutput {
 
     private GenerationLogprobs logprobs;
   }
+
   // output text
   private String text;
 

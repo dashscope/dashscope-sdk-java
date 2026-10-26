@@ -19,6 +19,7 @@ public final class SynchronizeFullDuplexApi<ParamT extends FullDuplexServicePara
   final FullDuplexClient client;
   ConnectionOptions connectionOptions;
   final ApiServiceOption serviceOptions;
+
   /**
    * Create default http client.
    *

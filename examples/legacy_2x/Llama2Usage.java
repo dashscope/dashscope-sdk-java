@@ -9,15 +9,11 @@ import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.utils.JsonUtils;
 
 public class Llama2Usage {
-  public static void usage()
-      throws NoApiKeyException, ApiException, InputRequiredException {
+  public static void usage() throws NoApiKeyException, ApiException, InputRequiredException {
     Generation gen = new Generation();
     String prompt = "Hey, are you conscious? Can you talk to me?";
-    GenerationParam param = GenerationParam
-        .builder()
-        .model("llama2-7b-chat-v2")
-        .prompt(prompt)
-        .build();
+    GenerationParam param =
+        GenerationParam.builder().model("llama2-7b-chat-v2").prompt(prompt).build();
     GenerationResult result = gen.call(param);
     System.out.println(JsonUtils.toJson(result));
   }

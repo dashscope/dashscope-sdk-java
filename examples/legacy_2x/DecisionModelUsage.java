@@ -22,11 +22,7 @@ public class DecisionModelUsage {
     options.put("technical", "产品故障和集成问题");
 
     List<String> levels =
-        Arrays.asList(
-            "轻微问题，不影响功能",
-            "部分功能受影响，但存在替代方案",
-            "核心功能不可用，没有替代方案",
-            "造成严重业务或安全影响");
+        Arrays.asList("轻微问题，不影响功能", "部分功能受影响，但存在替代方案", "核心功能不可用，没有替代方案", "造成严重业务或安全影响");
 
     Map<String, DecisionQuestion> questions = new LinkedHashMap<>();
     questions.put("department", DecisionQuestion.choice("应该由哪个团队处理？", options));

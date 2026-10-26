@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SpeechSynthesisResult {
   @SerializedName(ApiKeywords.REQUEST_ID)
   private String requestId;
+
   /** The model outputs. */
   private JsonObject output;
 

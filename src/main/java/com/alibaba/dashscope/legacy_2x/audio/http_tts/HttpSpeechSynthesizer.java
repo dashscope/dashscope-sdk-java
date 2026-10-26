@@ -38,6 +38,7 @@ public class HttpSpeechSynthesizer {
 
   /** Creates a new HttpSpeechSynthesizer instance with default settings. */
   public HttpSpeechSynthesizer() {}
+
   /** Creates a per-request ApiServiceOption with the specified SSE setting. */
   private SynchronizeHalfDuplexApi<HttpSpeechSynthesisParam> createApi(boolean isSSE) {
     ApiServiceOption serviceOption =

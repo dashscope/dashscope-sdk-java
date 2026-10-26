@@ -1,8 +1,5 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import com.alibaba.dashscope.aigc.conversation.ConversationParam.ResultFormat;
 import com.alibaba.dashscope.aigc.generation.Generation;
 import com.alibaba.dashscope.aigc.generation.GenerationOutput.Choice;
@@ -16,7 +13,6 @@ import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.tools.FunctionDefinition;
 import com.alibaba.dashscope.tools.ToolCallBase;
 import com.alibaba.dashscope.tools.ToolCallFunction;
-import com.alibaba.dashscope.tools.ToolChoice;
 import com.alibaba.dashscope.tools.ToolFunction;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -26,6 +22,9 @@ import com.github.victools.jsonschema.generator.SchemaGenerator;
 import com.github.victools.jsonschema.generator.SchemaGeneratorConfig;
 import com.github.victools.jsonschema.generator.SchemaGeneratorConfigBuilder;
 import com.github.victools.jsonschema.generator.SchemaVersion;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class GenerationToolChoice {
 
@@ -43,28 +42,36 @@ public class GenerationToolChoice {
     }
   }
 
-
-
   public static void disableToolCall()
       throws NoApiKeyException, ApiException, InputRequiredException {
     // create jsonschema generator
     SchemaGeneratorConfigBuilder configBuilder =
         new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON);
-    SchemaGeneratorConfig config = configBuilder.with(Option.EXTRA_OPEN_API_FORMAT_VALUES)
-        .without(Option.FLATTENED_ENUMS_FROM_TOSTRING).build();
+    SchemaGeneratorConfig config =
+        configBuilder
+            .with(Option.EXTRA_OPEN_API_FORMAT_VALUES)
+            .without(Option.FLATTENED_ENUMS_FROM_TOSTRING)
+            .build();
     SchemaGenerator generator = new SchemaGenerator(config);
 
     // generate jsonSchema of function.
     ObjectNode jsonSchema = generator.generateSchema(AddFunctionTool.class);
 
     // call with tools of function call, jsonSchema.toString() is jsonschema String.
-    FunctionDefinition fd = FunctionDefinition.builder().name("add").description("add two number")
-        .parameters(JsonUtils.parseString(jsonSchema.toString()).getAsJsonObject()).build();
+    FunctionDefinition fd =
+        FunctionDefinition.builder()
+            .name("add")
+            .description("add two number")
+            .parameters(JsonUtils.parseString(jsonSchema.toString()).getAsJsonObject())
+            .build();
 
     // build system message
-    Message systemMsg = Message.builder().role(Role.SYSTEM.getValue())
-        .content("You are a helpful assistant. When asked a question, use tools wherever possible.")
-        .build();
+    Message systemMsg =
+        Message.builder()
+            .role(Role.SYSTEM.getValue())
+            .content(
+                "You are a helpful assistant. When asked a question, use tools wherever possible.")
+            .build();
 
     // user message to call function.
     Message userMsg =
@@ -75,9 +82,14 @@ public class GenerationToolChoice {
     messages.addAll(Arrays.asList(systemMsg, userMsg));
 
     // create generation call parameter, disable tools
-    GenerationParam param = GenerationParam.builder().model(Generation.Models.QWEN_MAX)
-        .messages(messages).resultFormat(ResultFormat.MESSAGE).toolChoice("none")
-        .tools(Arrays.asList(ToolFunction.builder().function(fd).build())).build();
+    GenerationParam param =
+        GenerationParam.builder()
+            .model(Generation.Models.QWEN_MAX)
+            .messages(messages)
+            .resultFormat(ResultFormat.MESSAGE)
+            .toolChoice("none")
+            .tools(Arrays.asList(ToolFunction.builder().function(fd).build()))
+            .build();
 
     // call the Generation
     Generation gen = new Generation();
@@ -99,21 +111,31 @@ public class GenerationToolChoice {
     // create jsonschema generator
     SchemaGeneratorConfigBuilder configBuilder =
         new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON);
-    SchemaGeneratorConfig config = configBuilder.with(Option.EXTRA_OPEN_API_FORMAT_VALUES)
-        .without(Option.FLATTENED_ENUMS_FROM_TOSTRING).build();
+    SchemaGeneratorConfig config =
+        configBuilder
+            .with(Option.EXTRA_OPEN_API_FORMAT_VALUES)
+            .without(Option.FLATTENED_ENUMS_FROM_TOSTRING)
+            .build();
     SchemaGenerator generator = new SchemaGenerator(config);
 
     // generate jsonSchema of function.
     ObjectNode jsonSchema = generator.generateSchema(AddFunctionTool.class);
 
     // call with tools of function call, jsonSchema.toString() is jsonschema String.
-    FunctionDefinition fd = FunctionDefinition.builder().name("add").description("add two number")
-        .parameters(JsonUtils.parseString(jsonSchema.toString()).getAsJsonObject()).build();
+    FunctionDefinition fd =
+        FunctionDefinition.builder()
+            .name("add")
+            .description("add two number")
+            .parameters(JsonUtils.parseString(jsonSchema.toString()).getAsJsonObject())
+            .build();
 
     // build system message
-    Message systemMsg = Message.builder().role(Role.SYSTEM.getValue())
-        .content("You are a helpful assistant. When asked a question, use tools wherever possible.")
-        .build();
+    Message systemMsg =
+        Message.builder()
+            .role(Role.SYSTEM.getValue())
+            .content(
+                "You are a helpful assistant. When asked a question, use tools wherever possible.")
+            .build();
 
     // user message to call function.
     Message userMsg =
@@ -126,9 +148,14 @@ public class GenerationToolChoice {
     ToolFunction toolFunction =
         ToolFunction.builder().function(FunctionDefinition.builder().name("add").build()).build();
     // create generation call parameter
-    GenerationParam param = GenerationParam.builder().model(Generation.Models.QWEN_MAX)
-        .messages(messages).resultFormat(ResultFormat.MESSAGE).toolChoice(toolFunction)
-        .tools(Arrays.asList(ToolFunction.builder().function(fd).build())).build();
+    GenerationParam param =
+        GenerationParam.builder()
+            .model(Generation.Models.QWEN_MAX)
+            .messages(messages)
+            .resultFormat(ResultFormat.MESSAGE)
+            .toolChoice(toolFunction)
+            .tools(Arrays.asList(ToolFunction.builder().function(fd).build()))
+            .build();
 
     // call the Generation
     Generation gen = new Generation();
@@ -143,8 +170,8 @@ public class GenerationToolChoice {
       // check if we need call tool.
       if (result.getOutput().getChoices().get(0).getMessage().getToolCalls() != null) {
         // iterator the tool calls
-        for (ToolCallBase toolCall : result.getOutput().getChoices().get(0).getMessage()
-            .getToolCalls()) {
+        for (ToolCallBase toolCall :
+            result.getOutput().getChoices().get(0).getMessage().getToolCalls()) {
           // get function call.
           if (toolCall.getType().equals("function")) {
             // get function call name and argument, both String.
@@ -157,8 +184,12 @@ public class GenerationToolChoice {
               // call function.
               int sum = addFunction.call();
               // create the tool message
-              Message toolResultMessage = Message.builder().role("tool")
-                  .content(String.valueOf(sum)).toolCallId(toolCall.getId()).build();
+              Message toolResultMessage =
+                  Message.builder()
+                      .role("tool")
+                      .content(String.valueOf(sum))
+                      .toolCallId(toolCall.getId())
+                      .build();
               // add the tool message to messages list.
               messages.add(toolResultMessage);
               System.out.println(sum);
@@ -174,39 +205,56 @@ public class GenerationToolChoice {
   }
 
   public static void parallelToolCalls()
-          throws NoApiKeyException, ApiException, InputRequiredException {
+      throws NoApiKeyException, ApiException, InputRequiredException {
     // create jsonschema generator
     SchemaGeneratorConfigBuilder configBuilder =
-            new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON);
-    SchemaGeneratorConfig config = configBuilder.with(Option.EXTRA_OPEN_API_FORMAT_VALUES)
-            .without(Option.FLATTENED_ENUMS_FROM_TOSTRING).build();
+        new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON);
+    SchemaGeneratorConfig config =
+        configBuilder
+            .with(Option.EXTRA_OPEN_API_FORMAT_VALUES)
+            .without(Option.FLATTENED_ENUMS_FROM_TOSTRING)
+            .build();
     SchemaGenerator generator = new SchemaGenerator(config);
 
     // generate jsonSchema of function.
     ObjectNode jsonSchema = generator.generateSchema(AddFunctionTool.class);
 
     // call with tools of function call, jsonSchema.toString() is jsonschema String.
-    FunctionDefinition fd = FunctionDefinition.builder().name("add").description("add two number")
-            .parameters(JsonUtils.parseString(jsonSchema.toString()).getAsJsonObject()).build();
+    FunctionDefinition fd =
+        FunctionDefinition.builder()
+            .name("add")
+            .description("add two number")
+            .parameters(JsonUtils.parseString(jsonSchema.toString()).getAsJsonObject())
+            .build();
 
     // build system message
-    Message systemMsg = Message.builder().role(Role.SYSTEM.getValue())
-            .content("You are a helpful assistant. When asked a question, use tools wherever possible.")
+    Message systemMsg =
+        Message.builder()
+            .role(Role.SYSTEM.getValue())
+            .content(
+                "You are a helpful assistant. When asked a question, use tools wherever possible.")
             .build();
 
     // user message to call function.
     Message userMsg =
-            Message.builder().role(Role.USER.getValue()).content("Add 1234 and 4321, Add 2345 and 5432").build();
+        Message.builder()
+            .role(Role.USER.getValue())
+            .content("Add 1234 and 4321, Add 2345 and 5432")
+            .build();
 
     // messages to store message request and response.
     List<Message> messages = new ArrayList<>();
     messages.addAll(Arrays.asList(systemMsg, userMsg));
 
     ToolFunction toolFunction =
-            ToolFunction.builder().function(FunctionDefinition.builder().name("add").build()).build();
+        ToolFunction.builder().function(FunctionDefinition.builder().name("add").build()).build();
     // create generation call parameter
-    GenerationParam param = GenerationParam.builder().model(Generation.Models.QWEN_MAX)
-            .messages(messages).resultFormat(ResultFormat.MESSAGE).toolChoice(toolFunction)
+    GenerationParam param =
+        GenerationParam.builder()
+            .model(Generation.Models.QWEN_MAX)
+            .messages(messages)
+            .resultFormat(ResultFormat.MESSAGE)
+            .toolChoice(toolFunction)
             .tools(Arrays.asList(ToolFunction.builder().function(fd).build()))
             .parallelToolCalls(true)
             .build();
@@ -224,8 +272,8 @@ public class GenerationToolChoice {
       // check if we need call tool.
       if (result.getOutput().getChoices().get(0).getMessage().getToolCalls() != null) {
         // iterator the tool calls
-        for (ToolCallBase toolCall : result.getOutput().getChoices().get(0).getMessage()
-                .getToolCalls()) {
+        for (ToolCallBase toolCall :
+            result.getOutput().getChoices().get(0).getMessage().getToolCalls()) {
           // get function call.
           if (toolCall.getType().equals("function")) {
             // get function call name and argument, both String.
@@ -234,12 +282,16 @@ public class GenerationToolChoice {
             if (functionName.equals("add")) {
               // Create the function object.
               AddFunctionTool addFunction =
-                      JsonUtils.fromJson(functionArgument, AddFunctionTool.class);
+                  JsonUtils.fromJson(functionArgument, AddFunctionTool.class);
               // call function.
               int sum = addFunction.call();
               // create the tool message
-              Message toolResultMessage = Message.builder().role("tool")
-                      .content(String.valueOf(sum)).toolCallId(toolCall.getId()).build();
+              Message toolResultMessage =
+                  Message.builder()
+                      .role("tool")
+                      .content(String.valueOf(sum))
+                      .toolCallId(toolCall.getId())
+                      .build();
               // add the tool message to messages list.
               messages.add(toolResultMessage);
               System.out.println(sum);
@@ -256,8 +308,8 @@ public class GenerationToolChoice {
 
   public static void main(String[] args) {
     try {
-//      disableToolCall();
-//      forceCallFunctionAdd();
+      //      disableToolCall();
+      //      forceCallFunctionAdd();
       parallelToolCalls();
     } catch (ApiException | NoApiKeyException | InputRequiredException e) {
       System.out.println(String.format("Exception %s", e.getMessage()));

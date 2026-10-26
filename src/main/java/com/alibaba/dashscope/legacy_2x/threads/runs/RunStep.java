@@ -19,6 +19,7 @@ public class RunStep extends FlattenResultBase {
    */
   @SerializedName("id")
   private String id;
+
   /**
    * Object
    *
@@ -26,6 +27,7 @@ public class RunStep extends FlattenResultBase {
    */
   @SerializedName("object")
   private String object;
+
   /**
    * Created At
    *
@@ -33,6 +35,7 @@ public class RunStep extends FlattenResultBase {
    */
   @SerializedName("created_at")
   private Long createdAt;
+
   /**
    * Assistant Id
    *
@@ -40,6 +43,7 @@ public class RunStep extends FlattenResultBase {
    */
   @SerializedName("assistant_id")
   private String assistantId;
+
   /**
    * Thread Id
    *
@@ -47,6 +51,7 @@ public class RunStep extends FlattenResultBase {
    */
   @SerializedName("thread_id")
   private String threadId;
+
   /**
    * Run Id
    *
@@ -54,6 +59,7 @@ public class RunStep extends FlattenResultBase {
    */
   @SerializedName("run_id")
   private String runId;
+
   /**
    * Type
    *
@@ -61,6 +67,7 @@ public class RunStep extends FlattenResultBase {
    */
   @SerializedName("type")
   private RunStep.Type type;
+
   /**
    * Status
    *
@@ -68,6 +75,7 @@ public class RunStep extends FlattenResultBase {
    */
   @SerializedName("status")
   private RunStep.Status status;
+
   /**
    * Step Details
    *
@@ -78,6 +86,7 @@ public class RunStep extends FlattenResultBase {
 
   @SerializedName("last_error")
   private LastError lastError = null;
+
   /** Expired At */
   @SerializedName("expired_at")
   private Integer expiredAt = null;
@@ -85,12 +94,15 @@ public class RunStep extends FlattenResultBase {
   /** Cancelled At */
   @SerializedName("cancelled_at")
   private Integer cancelledAt = null;
+
   /** Failed At */
   @SerializedName("failed_at")
   private Integer failedAt = null;
+
   /** Completed At */
   @SerializedName("completed_at")
   private Integer completedAt = null;
+
   /** Metadata */
   @SerializedName("metadata")
   private Map<String, String> metadata = null;

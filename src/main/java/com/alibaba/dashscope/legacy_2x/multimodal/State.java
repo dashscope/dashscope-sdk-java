@@ -19,6 +19,7 @@ public class State {
       this.value = value;
     }
   }
+
   /**
    * State machine for managing robot state transitions. -- GETTER -- Gets the current state.
    *

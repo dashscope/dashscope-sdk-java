@@ -25,6 +25,7 @@ public class VoiceEnrollmentParam extends HalfDuplexServiceParam {
 
   private int pageIndex;
   private int pageSize;
+
   /** Maximum length of prompt audio in seconds. */
   private float maxPromptAudioLength = 10.0f;
 

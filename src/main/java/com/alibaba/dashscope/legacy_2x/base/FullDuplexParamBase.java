@@ -18,8 +18,10 @@ public abstract class FullDuplexParamBase {
 
   /** The apiKey. */
   private String apiKey;
+
   /** Open security check */
   @Builder.Default private boolean securityCheck = false;
+
   /** workspace */
   private String workspace;
 
@@ -36,6 +38,7 @@ public abstract class FullDuplexParamBase {
 
   /** The custom http header. */
   @Singular protected Map<String, Object> headers;
+
   /**
    * The custom http header.
    *
@@ -46,6 +49,7 @@ public abstract class FullDuplexParamBase {
   public String getModel() {
     return model;
   }
+
   /**
    * The service parameters.
    *

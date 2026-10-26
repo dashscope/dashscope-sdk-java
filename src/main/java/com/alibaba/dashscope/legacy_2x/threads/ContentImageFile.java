@@ -19,6 +19,7 @@ public final class ContentImageFile extends ContentBase {
     @SerializedName("file_id")
     private String fileId;
   }
+
   /**
    * Id
    *

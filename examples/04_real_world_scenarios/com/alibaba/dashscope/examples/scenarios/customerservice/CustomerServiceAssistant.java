@@ -55,8 +55,10 @@ public final class CustomerServiceAssistant {
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
   private static final String MODEL = envOr("DASHSCOPE_MODEL", "qwen3.7-plus");
+
   /** Hard stop so a misbehaving model cannot loop on tools forever. */
   private static final int MAX_TURNS = 6;
+
   /**
    * Number of post-system messages kept in context; older turns are dropped oldest-first. Tune
    * against your model's context window.

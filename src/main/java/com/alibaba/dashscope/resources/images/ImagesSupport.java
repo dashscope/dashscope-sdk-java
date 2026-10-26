@@ -15,10 +15,13 @@ final class ImagesSupport {
 
   /** Legacy text2image async-task endpoint (wan2.5 and below). */
   static final String SYNTHESIS_PATH = "/services/aigc/text2image/image-synthesis";
+
   /** Multimodal-protocol one-shot sync endpoint. */
   static final String MULTIMODAL_SYNC_PATH = "/services/aigc/multimodal-generation/generation";
+
   /** Multimodal-protocol async-task endpoint. */
   static final String MULTIMODAL_TASK_PATH = "/services/aigc/image-generation/generation";
+
   /** Functional-area tag for x-dashscope-sdk-client (matches 2.x "aigc"). */
   static final String MODULE = "aigc";
 

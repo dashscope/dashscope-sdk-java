@@ -11,6 +11,7 @@ public class AnnotationBase {
    */
   @SerializedName("end_index")
   private Integer endIndex;
+
   /**
    * Start Index
    *
@@ -18,6 +19,7 @@ public class AnnotationBase {
    */
   @SerializedName("start_index")
   private Integer startIndex;
+
   /**
    * Text
    *
@@ -25,6 +27,7 @@ public class AnnotationBase {
    */
   @SerializedName("text")
   private String text;
+
   /**
    * Type
    *
@@ -43,6 +46,7 @@ public class AnnotationBase {
   public static synchronized Class<? extends AnnotationBase> getAnnotationClass(String type) {
     return annotationRegistry.get(type);
   }
+
   // register official tools for list.
   static {
     registerAnnotation("file_citation", FileCitationAnnotation.class);

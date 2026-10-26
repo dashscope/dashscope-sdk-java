@@ -18,6 +18,7 @@ public interface HalfDuplexClient {
    * @throws ApiException The request failed, possibly due to a network or data error.
    */
   DashScopeResult send(HalfDuplexRequest req) throws NoApiKeyException, ApiException;
+
   /*
    * send with call back
    */

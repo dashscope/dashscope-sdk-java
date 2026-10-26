@@ -16,6 +16,7 @@ public interface Tokenizer {
    * @return The list of token ids.
    */
   public List<Integer> encodeOrdinary(String text);
+
   /**
    * Encode the input text, handles special tokens. There is no guarantee that the results will be
    * completely consistent with the model output. Compared with the python version, there are some

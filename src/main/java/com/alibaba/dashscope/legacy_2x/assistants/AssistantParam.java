@@ -28,12 +28,14 @@ public class AssistantParam extends FlattenHalfDuplexParamBase {
   @NonNull private String model;
   @Default private String name = null;
   @Default private String description = null;
+
   /** Instructions */
   @SerializedName("instructions")
   @Default
   private String instructions = null;
 
   @Singular private List<ToolBase> tools;
+
   /**
    * File Ids
    *

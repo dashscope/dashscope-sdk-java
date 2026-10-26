@@ -15,6 +15,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 public abstract class FullDuplexServiceParam extends FullDuplexParamBase {
   @Default private Object resources = null;
+
   /**
    * Get the resources
    *

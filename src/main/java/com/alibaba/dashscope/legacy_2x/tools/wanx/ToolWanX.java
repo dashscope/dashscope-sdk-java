@@ -16,6 +16,7 @@ public class ToolWanX extends ToolBase {
   static {
     registerTool("wanx", ToolWanX.class);
   }
+
   /**
    * Type
    *

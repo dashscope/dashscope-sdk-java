@@ -92,14 +92,17 @@ public final class ProductionRagHarness {
 
   /** Candidates pulled from the vector store before rerank. */
   private static final int TOP_K = 4;
+
   /**
    * Local token budget for the retrieved passages. In production derive it from the model's max
    * context minus the instruction and a reserved answer allowance; here it is a fixed watermark
    * that visibly trims.
    */
   private static final int CONTEXT_TOKEN_BUDGET = 140;
+
   /** Mock embedding dimensionality. */
   private static final int EMBED_DIM = 64;
+
   /** Harness-owned retries for the streaming generate step. */
   private static final int GEN_RETRIES = 2;
 

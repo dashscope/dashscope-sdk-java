@@ -18,6 +18,7 @@ public final class AssistantThread extends FlattenResultBase {
    */
   @SerializedName("id")
   private String id;
+
   /**
    * Created At
    *
@@ -25,6 +26,7 @@ public final class AssistantThread extends FlattenResultBase {
    */
   @SerializedName("created_at")
   private Long createdAt;
+
   /** Metadata */
   @SerializedName("metadata")
   private Map<String, String> metadata;

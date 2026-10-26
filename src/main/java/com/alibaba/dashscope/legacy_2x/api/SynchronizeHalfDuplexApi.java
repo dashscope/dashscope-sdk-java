@@ -19,6 +19,7 @@ public final class SynchronizeHalfDuplexApi<ParamT extends HalfDuplexParamBase> 
   final HalfDuplexClient client;
   ConnectionOptions connectionOptions;
   final ServiceOption serviceOptions;
+
   /**
    * Create default client, http or websocket.
    *

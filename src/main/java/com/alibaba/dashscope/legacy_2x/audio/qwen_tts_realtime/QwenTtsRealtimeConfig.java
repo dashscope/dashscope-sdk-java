@@ -23,8 +23,10 @@ public class QwenTtsRealtimeConfig {
   /** response format */
   @Builder.Default
   QwenTtsRealtimeAudioFormat responseFormat = QwenTtsRealtimeAudioFormat.PCM_24000HZ_MONO_16BIT;
+
   /** mode */
   @Builder.Default String mode = "server_commit";
+
   /** languageType for tts */
   @Builder.Default String languageType = null;
 

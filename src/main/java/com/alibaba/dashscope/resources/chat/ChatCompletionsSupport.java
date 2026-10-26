@@ -17,6 +17,7 @@ final class ChatCompletionsSupport {
   private ChatCompletionsSupport() {}
 
   static final String PATH = "/services/aigc/text-generation/generation";
+
   /** Functional-area tag for x-dashscope-sdk-client (matches 2.x "aigc"). */
   static final String MODULE = "aigc";
 

@@ -25,6 +25,7 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
   private CustomInput customInput;
   private List<Object> images;
   private String taskId;
+
   /**
    * Extra custom payload.parameters entries, mutable at runtime (unlike the immutable {@code
    * parameters} field inherited from {@link FullDuplexServiceParam}). Used by {@code
@@ -159,6 +160,7 @@ public class MultiModalRequestParam extends FullDuplexServiceParam {
     List<Object> images;
     BizParams bizParams;
     ClientInfo clientInfo;
+
     /** Custom key/value pairs merged directly into payload.parameters. */
     Map<String, Object> parameters;
   }

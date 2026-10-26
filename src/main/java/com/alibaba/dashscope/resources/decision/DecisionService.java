@@ -26,6 +26,7 @@ import java.util.Map;
  */
 public final class DecisionService {
   static final String PATH = "/systemone";
+
   /** Functional-area tag for x-dashscope-sdk-client (matches 2.x "decision"). */
   static final String MODULE = "decision";
 

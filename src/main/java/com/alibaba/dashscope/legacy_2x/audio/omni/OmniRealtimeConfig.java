@@ -30,12 +30,14 @@ public class OmniRealtimeConfig {
    */
   @Builder.Default
   OmniRealtimeAudioFormat inputAudioFormat = OmniRealtimeAudioFormat.PCM_16000HZ_MONO_16BIT;
+
   /**
    * output audio format (legacy). Only supports pcm16/pcm24. Ignored when {@link #outputAudio} is
    * set.
    */
   @Builder.Default
   OmniRealtimeAudioFormat outputAudioFormat = OmniRealtimeAudioFormat.PCM_24000HZ_MONO_16BIT;
+
   /**
    * New-style input(upstream) audio format, supports "pcm"/"wav" format and 8k/16k/24k/48k sample
    * rate, e.g. {@code new OmniRealtimeAudioFormatConfig("pcm", 16000)}. When set, this takes
@@ -45,6 +47,7 @@ public class OmniRealtimeConfig {
    * falls back to its legacy field value.
    */
   @Builder.Default OmniRealtimeAudioFormatConfig inputAudio = null;
+
   /**
    * New-style output(downstream) audio format, see {@link #inputAudio}. When set, this takes
    * precedence over the legacy {@link #outputAudioFormat} and will be serialized as the nested
@@ -52,6 +55,7 @@ public class OmniRealtimeConfig {
    * field.
    */
   @Builder.Default OmniRealtimeAudioFormatConfig outputAudio = null;
+
   /**
    * Video input representation aggregation mode, serialized as {@code
    * video.input.representation_compact}. {@code none} preserves fine-grained video input
@@ -59,30 +63,41 @@ public class OmniRealtimeConfig {
    * visual details are less important.
    */
   @Builder.Default String inputVideoRepresentationCompact = null;
+
   /** enable transcription for input audio */
   @Builder.Default boolean enableInputAudioTranscription = true;
+
   /** model used for input audio transcription */
   @Builder.Default String InputAudioTranscription = null;
+
   /** enable turn detection */
   @Builder.Default boolean enableTurnDetection = true;
+
   /** turn detection type */
   @Builder.Default String turnDetectionType = "server_vad";
+
   /**
    * turn detection threshold, range [-1, 1] In a noisy environment, it may be necessary to increase
    * the threshold to reduce false detections In a quiet environment, it may be necessary to
    * decrease the threshold to improve sensitivity
    */
   @Builder.Default float turnDetectionThreshold = 0.2f;
+
   /** prefix speech duration to detect speech start */
   @Builder.Default int prefixPaddingMs = 300;
+
   /** duration of silence in milliseconds to detect turn, range [200, 6000] */
   @Builder.Default int turnDetectionSilenceDurationMs = 800;
+
   /** extra parameters for turn detection */
   @Builder.Default Map<String, Object> turnDetectionParam = null;
+
   /** The extra parameters. */
   @Builder.Default Map<String, Object> parameters = null;
+
   /** translation configuration */
   @Builder.Default OmniRealtimeTranslationParam translationConfig = null;
+
   /** transcription configuration */
   @Builder.Default OmniRealtimeTranscriptionParam transcriptionConfig = null;
 

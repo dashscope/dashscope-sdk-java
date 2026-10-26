@@ -11,8 +11,10 @@ import lombok.Data;
 public class OmniRealtimeTranscriptionParam {
   /** input audio sample rate */
   private Integer inputSampleRate = null;
+
   /** input audio format */
   private String inputAudioFormat = null;
+
   /** input audio language */
   private String language = null;
 

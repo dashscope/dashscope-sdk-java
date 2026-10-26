@@ -9,15 +9,11 @@ import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.utils.JsonUtils;
 
 public class BiLLaUsage {
-  public static void usage()
-      throws NoApiKeyException, ApiException, InputRequiredException {
+  public static void usage() throws NoApiKeyException, ApiException, InputRequiredException {
     Generation gen = new Generation();
     String prompt = "翻译成英文：春天来了，花朵都开了。";
-    GenerationParam param = GenerationParam
-        .builder()
-        .model("billa-7b-sft-v1")
-        .prompt(prompt)
-        .build();
+    GenerationParam param =
+        GenerationParam.builder().model("billa-7b-sft-v1").prompt(prompt).build();
     GenerationResult result = gen.call(param);
     System.out.println(JsonUtils.toJson(result));
   }

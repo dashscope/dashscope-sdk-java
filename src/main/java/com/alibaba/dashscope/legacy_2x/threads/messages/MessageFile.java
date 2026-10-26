@@ -17,6 +17,7 @@ public class MessageFile extends FlattenResultBase {
    */
   @SerializedName("id")
   private String id;
+
   /**
    * Created At
    *
@@ -24,6 +25,7 @@ public class MessageFile extends FlattenResultBase {
    */
   @SerializedName("created_at")
   private Long createdAt;
+
   /**
    * Message Id
    *
@@ -31,6 +33,7 @@ public class MessageFile extends FlattenResultBase {
    */
   @SerializedName("message_id")
   private String messageId;
+
   /**
    * Object
    *

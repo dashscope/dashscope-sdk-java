@@ -23,6 +23,7 @@ import java.util.Map;
 public final class JobsService {
   static final String HEADER_ASYNC = "X-DashScope-Async";
   static final String TASKS_PATH = "/tasks";
+
   /** Upper bound on the total wait budget (design §3). */
   public static final Duration DEFAULT_WAIT_TIMEOUT = Duration.ofHours(24);
 

@@ -22,6 +22,7 @@ import java.util.concurrent.locks.LockSupport;
  */
 public final class AudioPacer {
   private static final long CHUNK_MILLIS = 100;
+
   /** Wall-clock interval between consecutive chunks in a paced upload loop. */
   public static final Duration CHUNK_INTERVAL = Duration.ofMillis(CHUNK_MILLIS);
 
@@ -44,8 +45,8 @@ public final class AudioPacer {
    * Lazily split a PCM file into {@code bytesPerChunk} byte chunks (the final short chunk is
    * included; an empty file yields no chunks). The returned iterable is single-use and owns one
    * file handle, opened when {@link PcmFileChunks#iterator()} is first called and closed when
-   * iteration reaches EOF. Callers that abandon iteration early (a failed send, {@code break})
-   * must close it, preferably with try-with-resources, otherwise the handle leaks. A {@code
+   * iteration reaches EOF. Callers that abandon iteration early (a failed send, {@code break}) must
+   * close it, preferably with try-with-resources, otherwise the handle leaks. A {@code
    * PcmFileChunks} is owned by one thread: {@code close()} and iteration must not race.
    */
   public static PcmFileChunks pcmChunks(Path path, int bytesPerChunk) {

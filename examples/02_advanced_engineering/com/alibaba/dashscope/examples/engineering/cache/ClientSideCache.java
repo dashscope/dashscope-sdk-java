@@ -33,6 +33,7 @@ public final class ClientSideCache {
 
   private static final String EMBED_MODEL = envOr("DASHSCOPE_EMBED_MODEL", "text-embedding-v4");
   private static final String CHAT_MODEL = envOr("DASHSCOPE_MODEL", "qwen3.7-plus");
+
   /**
    * Cosine similarity at or above which two questions are treated as the same and the cached answer
    * is reused. Tune to your precision/recall trade-off: higher means fewer false hits, lower means

@@ -12,6 +12,7 @@ import java.util.Map;
 public final class TingWuRealtimeParams {
   /** Default audio format: pcm. */
   public static final String DEFAULT_FORMAT = "pcm";
+
   /** Default sample rate: 16000. */
   public static final int DEFAULT_SAMPLE_RATE = 16000;
 

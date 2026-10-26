@@ -79,14 +79,17 @@ public final class RealtimeMeetingHarness {
 
   /** Bounded worker pool == bounded live sockets == admission control. */
   private static final int MAX_CONCURRENT = Integer.parseInt(envOr("MEETING_MAX_CONCURRENT", "4"));
+
   /** Per-meeting reconnects before degrading. */
   private static final int RECONNECT_ATTEMPTS = 2;
+
   /** 0 keeps the offline demo instant; use ~0.5 in prod. */
   private static final double BASE_DELAY = 0.0;
 
   private static final Duration SESSION_TIMEOUT = Duration.ofSeconds(30);
 
   private static final int SAMPLE_RATE = 16000;
+
   /** 100 ms of 16 kHz 16-bit mono PCM. */
   private static final int FRAME_BYTES = AudioPacer.bytesPer100ms(SAMPLE_RATE);
 
@@ -371,6 +374,7 @@ public final class RealtimeMeetingHarness {
     final String meetingId;
     final String room;
     final List<byte[]> frames;
+
     /** True only for the live path (realtime cadence). */
     final boolean pace;
 

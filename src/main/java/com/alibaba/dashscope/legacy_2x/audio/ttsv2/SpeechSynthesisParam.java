@@ -22,6 +22,7 @@ public class SpeechSynthesisParam extends FullDuplexServiceParam {
 
   /** Input text type. */
   @Builder.Default private SpeechSynthesisTextType textType = SpeechSynthesisTextType.PLAIN_TEXT;
+
   /** voice name */
   @Builder.Default private String voice = "";
 
@@ -51,12 +52,16 @@ public class SpeechSynthesisParam extends FullDuplexServiceParam {
    * synthesis.
    */
   @Builder.Default private String instruction = null;
+
   /** random seed. */
   @Builder.Default private int seed = 0;
+
   /** language hints. */
   @Builder.Default private List<String> languageHints = null;
+
   /** synthesis style */
   @Builder.Default private int style = 0;
+
   /** Hot fix configuration for pronunciation and replace rules. */
   @Builder.Default private ParamHotFix hotFix = null;
 

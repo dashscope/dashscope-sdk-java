@@ -14,6 +14,7 @@ public class ToolQuarkSearch extends ToolBase {
   static {
     registerTool("quark_search", ToolQuarkSearch.class);
   }
+
   /**
    * Type
    *

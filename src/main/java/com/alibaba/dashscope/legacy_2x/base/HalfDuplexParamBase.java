@@ -18,6 +18,7 @@ import lombok.experimental.SuperBuilder;
 public abstract class HalfDuplexParamBase {
   /** The apiKey. */
   private String apiKey;
+
   /** Open security check */
   @GsonExclude @Builder.Default private boolean securityCheck = false;
 
@@ -30,6 +31,7 @@ public abstract class HalfDuplexParamBase {
   @GsonExclude @Singular protected Map<String, Object> parameters;
 
   public abstract String getModel();
+
   /**
    * The service parameters.
    *

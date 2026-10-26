@@ -20,6 +20,7 @@ public class Run extends FlattenResultBase {
   /** (Required) */
   @SerializedName("id")
   private String id;
+
   /**
    * Object
    *
@@ -27,6 +28,7 @@ public class Run extends FlattenResultBase {
    */
   @SerializedName("object")
   private String object;
+
   /**
    * Created At
    *
@@ -34,6 +36,7 @@ public class Run extends FlattenResultBase {
    */
   @SerializedName("created_at")
   private Long createdAt;
+
   /**
    * Thread Id
    *
@@ -41,6 +44,7 @@ public class Run extends FlattenResultBase {
    */
   @SerializedName("thread_id")
   private String threadId;
+
   /**
    * Assistant Id
    *
@@ -48,6 +52,7 @@ public class Run extends FlattenResultBase {
    */
   @SerializedName("assistant_id")
   private String assistantId;
+
   /**
    * Status
    *
@@ -61,6 +66,7 @@ public class Run extends FlattenResultBase {
 
   @SerializedName("last_error")
   private LastError lastError = null;
+
   /** Expires At */
   @SerializedName("expires_at")
   private Integer expiresAt = null;
@@ -72,6 +78,7 @@ public class Run extends FlattenResultBase {
   /** Cancelled At */
   @SerializedName("cancelled_at")
   private Integer cancelledAt = null;
+
   /** Failed At */
   @SerializedName("failed_at")
   private Integer failedAt = null;
@@ -95,6 +102,7 @@ public class Run extends FlattenResultBase {
    */
   @SerializedName("model")
   private String model;
+
   /**
    * Instructions
    *
@@ -104,6 +112,7 @@ public class Run extends FlattenResultBase {
   private String instructions;
 
   @Singular private List<ToolBase> tools;
+
   /**
    * File Ids
    *
@@ -118,6 +127,7 @@ public class Run extends FlattenResultBase {
 
   @SerializedName("usage")
   private Usage usage = null;
+
   /** Temperature */
   @SerializedName("temperature")
   private Float temperature = null;

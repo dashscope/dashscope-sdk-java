@@ -89,6 +89,7 @@ public class ConversationParam extends GenerationParamBase {
    * </pre>
    */
   @Builder.Default private Boolean incrementalOutput = false;
+
   /*
    * Maximum tokens to generate.
    */

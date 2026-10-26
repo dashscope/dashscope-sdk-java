@@ -66,12 +66,15 @@ public final class TicketTriageHarness {
   // observed routing quality.
   /** Below this, routing goes to a human. */
   private static final double CONFIDENCE_FLOOR = 0.6;
+
   /** P(yes) required to page the on-call engineer. */
   private static final double ESCALATE_THRESHOLD = 0.8;
+
   /** Probability-weighted severity index cut lines. */
   private static final double P1_SCORE = 2.5;
 
   private static final double P2_SCORE = 1.5;
+
   /** Per-call timeout (live mode). */
   private static final Duration DECISION_TIMEOUT = Duration.ofSeconds(10);
 

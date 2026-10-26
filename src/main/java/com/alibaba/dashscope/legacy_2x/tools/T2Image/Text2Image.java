@@ -13,6 +13,7 @@ public class Text2Image extends ToolBase {
   static {
     registerTool("text_to_image", Text2Image.class);
   }
+
   /**
    * Type
    *

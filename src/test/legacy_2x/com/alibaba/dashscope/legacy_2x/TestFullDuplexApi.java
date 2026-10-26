@@ -152,6 +152,7 @@ public class TestFullDuplexApi {
             .build();
     return param;
   }
+
   /**
    * Get server output data
    *

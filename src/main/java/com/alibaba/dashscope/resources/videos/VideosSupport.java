@@ -14,6 +14,7 @@ final class VideosSupport {
   private VideosSupport() {}
 
   static final String PATH = "/services/aigc/video-generation/video-synthesis";
+
   /** Functional-area tag for x-dashscope-sdk-client (matches 2.x "aigc"). */
   static final String MODULE = "aigc";
 

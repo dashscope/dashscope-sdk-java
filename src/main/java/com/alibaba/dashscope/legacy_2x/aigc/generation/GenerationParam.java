@@ -100,6 +100,7 @@ public class GenerationParam extends GenerationParamBase {
 
   /** Maximum tokens to generate. */
   private Integer maxTokens;
+
   /** repetition penalty */
   private Float repetitionPenalty;
 

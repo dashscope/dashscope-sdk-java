@@ -1,8 +1,5 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import com.alibaba.dashscope.aigc.conversation.ConversationParam.ResultFormat;
 import com.alibaba.dashscope.aigc.generation.Generation;
 import com.alibaba.dashscope.aigc.generation.GenerationOutput.Choice;
@@ -25,6 +22,9 @@ import com.github.victools.jsonschema.generator.SchemaGenerator;
 import com.github.victools.jsonschema.generator.SchemaGeneratorConfig;
 import com.github.victools.jsonschema.generator.SchemaGeneratorConfigBuilder;
 import com.github.victools.jsonschema.generator.SchemaVersion;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class GenerationFunctionCallSample {
 
@@ -42,27 +42,36 @@ public class GenerationFunctionCallSample {
     }
   }
 
-
   public static void callFunctionAdd()
       throws NoApiKeyException, ApiException, InputRequiredException {
     // create jsonschema generator
     SchemaGeneratorConfigBuilder configBuilder =
         new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON);
-    SchemaGeneratorConfig config = configBuilder.with(Option.EXTRA_OPEN_API_FORMAT_VALUES)
-        .without(Option.FLATTENED_ENUMS_FROM_TOSTRING).build();
+    SchemaGeneratorConfig config =
+        configBuilder
+            .with(Option.EXTRA_OPEN_API_FORMAT_VALUES)
+            .without(Option.FLATTENED_ENUMS_FROM_TOSTRING)
+            .build();
     SchemaGenerator generator = new SchemaGenerator(config);
 
     // generate jsonSchema of function.
     ObjectNode jsonSchema = generator.generateSchema(AddFunctionTool.class);
 
     // call with tools of function call, jsonSchema.toString() is jsonschema String.
-    FunctionDefinition fd = FunctionDefinition.builder().name("mycalc").description("calc")
-        .parameters(JsonUtils.parseString(jsonSchema.toString()).getAsJsonObject()).build();
+    FunctionDefinition fd =
+        FunctionDefinition.builder()
+            .name("mycalc")
+            .description("calc")
+            .parameters(JsonUtils.parseString(jsonSchema.toString()).getAsJsonObject())
+            .build();
 
     // build system message
-    Message systemMsg = Message.builder().role(Role.SYSTEM.getValue())
-        .content("You are a helpful assistant. When asked a question, use tools wherever possible.")
-        .build();
+    Message systemMsg =
+        Message.builder()
+            .role(Role.SYSTEM.getValue())
+            .content(
+                "You are a helpful assistant. When asked a question, use tools wherever possible.")
+            .build();
 
     // user message to call function.
     Message userMsg =
@@ -73,9 +82,13 @@ public class GenerationFunctionCallSample {
     messages.addAll(Arrays.asList(systemMsg, userMsg));
 
     // create generation call parameter
-    GenerationParam param = GenerationParam.builder().model("qwen-max")
-        .messages(messages).resultFormat(ResultFormat.MESSAGE)
-        .tools(Arrays.asList(ToolFunction.builder().function(fd).build())).build();
+    GenerationParam param =
+        GenerationParam.builder()
+            .model("qwen-max")
+            .messages(messages)
+            .resultFormat(ResultFormat.MESSAGE)
+            .tools(Arrays.asList(ToolFunction.builder().function(fd).build()))
+            .build();
 
     // call the Generation
     Generation gen = new Generation();
@@ -90,8 +103,8 @@ public class GenerationFunctionCallSample {
       // check if we need call tool.
       if (result.getOutput().getChoices().get(0).getMessage().getToolCalls() != null) {
         // iterator the tool calls
-        for (ToolCallBase toolCall : result.getOutput().getChoices().get(0).getMessage()
-            .getToolCalls()) {
+        for (ToolCallBase toolCall :
+            result.getOutput().getChoices().get(0).getMessage().getToolCalls()) {
           // get function call.
           if (toolCall.getType().equals("function")) {
             // get function call name and argument, both String.
@@ -104,8 +117,12 @@ public class GenerationFunctionCallSample {
               // call function.
               int sum = addFunction.call();
               // create the tool message
-              Message toolResultMessage = Message.builder().role("tool")
-                  .content(String.valueOf(sum)).toolCallId(toolCall.getId()).build();
+              Message toolResultMessage =
+                  Message.builder()
+                      .role("tool")
+                      .content(String.valueOf(sum))
+                      .toolCallId(toolCall.getId())
+                      .build();
               // add the tool message to messages list.
               messages.add(toolResultMessage);
               System.out.println(sum);
@@ -119,7 +136,6 @@ public class GenerationFunctionCallSample {
     result = gen.call(param);
     System.out.println(JsonUtils.toJson(result));
   }
-
 
   public static void main(String[] args) {
     try {

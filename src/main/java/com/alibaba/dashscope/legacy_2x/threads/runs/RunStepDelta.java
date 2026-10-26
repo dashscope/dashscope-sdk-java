@@ -17,6 +17,7 @@ public class RunStepDelta extends FlattenResultBase {
    */
   @SerializedName("id")
   private String id;
+
   /**
    * RunStepDelta
    *
@@ -24,6 +25,7 @@ public class RunStepDelta extends FlattenResultBase {
    */
   @SerializedName("delta")
   private Delta delta;
+
   /**
    * Object
    *

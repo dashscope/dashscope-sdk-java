@@ -35,6 +35,7 @@ public class RunParam extends FlattenHalfDuplexParamBase {
   protected List<MessageParamBase> additionalMessages;
 
   @Singular protected List<ToolBase> tools;
+
   /** Metadata */
   @SerializedName("metadata")
   @Default

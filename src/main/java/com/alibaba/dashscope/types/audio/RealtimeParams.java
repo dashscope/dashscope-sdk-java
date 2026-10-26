@@ -8,6 +8,7 @@ package com.alibaba.dashscope.types.audio;
  */
 public final class RealtimeParams {
   private final String model;
+
   /**
    * Explicit realtime endpoint override (2.x {@code OmniRealtimeParam.url} parity). When unset, the
    * URL is derived from the resolved HTTP base url; the generic ws base-url override does NOT apply

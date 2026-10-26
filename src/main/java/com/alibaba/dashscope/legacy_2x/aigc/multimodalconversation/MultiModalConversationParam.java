@@ -31,6 +31,7 @@ public class MultiModalConversationParam extends HalfDuplexServiceParam {
    * exceed the model's context length. Most models have a context length of 2000 tokens
    */
   @Deprecated private Integer maxLength;
+
   /**
    * A sampling strategy, called nucleus sampling, where the model considers the results of the
    * tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10%

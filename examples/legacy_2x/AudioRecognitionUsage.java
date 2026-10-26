@@ -1,14 +1,5 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 
-import java.io.File;
-import java.nio.ByteBuffer;
-
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.TargetDataLine;
-
 import com.alibaba.dashscope.audio.asr.recognition.Recognition;
 import com.alibaba.dashscope.audio.asr.recognition.RecognitionParam;
 import com.alibaba.dashscope.audio.asr.recognition.RecognitionResult;
@@ -17,6 +8,13 @@ import com.alibaba.dashscope.exception.NoApiKeyException;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.schedulers.Schedulers;
+import java.io.File;
+import java.nio.ByteBuffer;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.TargetDataLine;
 
 public final class AudioRecognitionUsage {
   private final AudioFormat format = buildAudioFormatInstance();
@@ -120,7 +118,8 @@ public final class AudioRecognitionUsage {
             .sampleRate(16000)
             .build();
     Recognition rg = new Recognition();
-    Flowable<RecognitionResult> resultFlowable = rg.streamCall(param, getStreamingDataFromFile(filePath));
+    Flowable<RecognitionResult> resultFlowable =
+        rg.streamCall(param, getStreamingDataFromFile(filePath));
     resultFlowable.blockingForEach(
         message -> {
           System.out.println(message);
@@ -148,7 +147,7 @@ public final class AudioRecognitionUsage {
             });
   }
 
-  public static void main(String[] args){
+  public static void main(String[] args) {
     String filePath = "./src/test/resources/asr_example_cn_en.wav";
     AudioRecognitionUsage audioRecognition = new AudioRecognitionUsage();
     try {

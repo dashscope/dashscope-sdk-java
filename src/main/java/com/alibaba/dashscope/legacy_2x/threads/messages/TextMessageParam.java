@@ -24,6 +24,7 @@ public class TextMessageParam extends MessageParamBase {
 
   @SerializedName("file_ids")
   List<String> fileIds;
+
   /** Metadata */
   @SerializedName("metadata")
   @Default

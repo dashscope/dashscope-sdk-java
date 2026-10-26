@@ -20,6 +20,7 @@ public class ThreadMessageDelta extends FlattenResultBase {
    */
   @SerializedName("id")
   private String id;
+
   /**
    * MessageDelta
    *
@@ -27,6 +28,7 @@ public class ThreadMessageDelta extends FlattenResultBase {
    */
   @SerializedName("delta")
   private Delta delta;
+
   /**
    * Object
    *
@@ -41,9 +43,11 @@ public class ThreadMessageDelta extends FlattenResultBase {
     /** Content */
     @SerializedName("content")
     private List<ContentBase> content = null;
+
     /** File Ids */
     @SerializedName("file_ids")
     private List<String> fileIds = null;
+
     /** Role */
     @SerializedName("role")
     private Role role = null;

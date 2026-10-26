@@ -69,6 +69,7 @@ public final class RealtimeSession implements AutoCloseable {
   private volatile WebSocket socket;
   private volatile CountDownLatch openLatch;
   private volatile RuntimeException openFailure;
+
   /** Set when close() was invoked locally; a locally-closed socket is not a disconnect error. */
   private volatile int localCloseGeneration = -1;
 

@@ -17,6 +17,7 @@ import lombok.EqualsAndHashCode;
 public class QwenTranscriptionResult {
   @SerializedName(ApiKeywords.REQUEST_ID)
   private String requestId;
+
   /** The model outputs. */
   private JsonObject output;
 

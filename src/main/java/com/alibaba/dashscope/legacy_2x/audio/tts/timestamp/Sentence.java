@@ -20,6 +20,7 @@ public class Sentence {
 
   @SerializedName("index")
   int index;
+
   /** Sentence words. */
   @SerializedName("words")
   List<Word> words;

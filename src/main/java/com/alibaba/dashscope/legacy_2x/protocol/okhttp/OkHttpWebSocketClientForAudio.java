@@ -23,6 +23,7 @@ public class OkHttpWebSocketClientForAudio extends OkHttpWebSocketClient {
   private static final int MAX_THREADS =
       intSetting(
           "dashscope.audio.streaming.max.threads", "DASHSCOPE_AUDIO_STREAMING_MAX_THREADS", 100);
+
   /** Buffer absorbing bursts once every thread is busy, 0 or less disables queueing. */
   private static final int QUEUE_CAPACITY =
       intSetting(

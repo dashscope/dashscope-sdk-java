@@ -16,6 +16,7 @@ public final class DeletionStatus extends FlattenResultBase {
    */
   @SerializedName("id")
   private String id;
+
   /**
    * Deleted
    *
@@ -23,6 +24,7 @@ public final class DeletionStatus extends FlattenResultBase {
    */
   @SerializedName("deleted")
   private Boolean deleted;
+
   /**
    * Object
    *

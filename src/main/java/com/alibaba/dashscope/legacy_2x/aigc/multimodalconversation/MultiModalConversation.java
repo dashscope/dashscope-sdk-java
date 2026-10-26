@@ -91,6 +91,7 @@ public final class MultiModalConversation {
     }
     syncApi = new SynchronizeHalfDuplexApi<>(connectionOptions, serviceOption);
   }
+
   /**
    * Call the server to get the whole result.
    *

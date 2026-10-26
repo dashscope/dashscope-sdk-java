@@ -22,6 +22,7 @@ public class AssistantFile extends FlattenResultBase {
    */
   @SerializedName("id")
   private String id;
+
   /**
    * Assistant Id
    *
@@ -29,6 +30,7 @@ public class AssistantFile extends FlattenResultBase {
    */
   @SerializedName("assistant_id")
   private String assistantId;
+
   /**
    * Created At
    *
@@ -36,6 +38,7 @@ public class AssistantFile extends FlattenResultBase {
    */
   @SerializedName("created_at")
   private Long createdAt;
+
   /**
    * Object
    *

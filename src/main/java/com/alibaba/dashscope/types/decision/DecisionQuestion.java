@@ -20,8 +20,10 @@ import java.util.Map;
 public final class DecisionQuestion {
   /** Multiple choice; the answer carries the selected option name. */
   public static final String TYPE_CHOICE = "choice";
+
   /** Yes/no judgement; the answer is P(yes), 0 = no and 1 = yes. */
   public static final String TYPE_NOUL = "noul";
+
   /** Ordinal scale; the answer is the probability-weighted level index. */
   public static final String TYPE_SCORE = "score";
 

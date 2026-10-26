@@ -1,8 +1,5 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import com.alibaba.dashscope.aigc.generation.Generation;
 import com.alibaba.dashscope.aigc.generation.GenerationParam;
 import com.alibaba.dashscope.aigc.generation.GenerationResult;
@@ -13,7 +10,9 @@ import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.utils.JsonUtils;
 import io.reactivex.Flowable;
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class GenerationCallWithMessages {
   public static void callWithMessage()
@@ -21,12 +20,17 @@ public class GenerationCallWithMessages {
     Generation gen = new Generation();
     List<Message> msgManager = new ArrayList<>();
     Message systemMsg =
-        Message.builder().role(Role.SYSTEM.getValue()).content("You are a helpful assistant.").build();
+        Message.builder()
+            .role(Role.SYSTEM.getValue())
+            .content("You are a helpful assistant.")
+            .build();
     Message userMsg = Message.builder().role(Role.USER.getValue()).content("你好，周末去哪里玩？").build();
     msgManager.add(systemMsg);
     msgManager.add(userMsg);
     GenerationParam param =
-        GenerationParam.builder().model(Generation.Models.QWEN_PLUS).messages(msgManager)
+        GenerationParam.builder()
+            .model(Generation.Models.QWEN_PLUS)
+            .messages(msgManager)
             .resultFormat(GenerationParam.ResultFormat.MESSAGE)
             .incrementalOutput(true)
             .topP(0.8)
@@ -44,29 +48,35 @@ public class GenerationCallWithMessages {
   }
 
   public static void streamCallWithMessage()
-          throws NoApiKeyException, ApiException, InputRequiredException {
+      throws NoApiKeyException, ApiException, InputRequiredException {
     Generation gen = new Generation();
     Message systemMsg =
-            Message.builder().role(Role.SYSTEM.getValue()).content("You are a helpful assistant.").build();
+        Message.builder()
+            .role(Role.SYSTEM.getValue())
+            .content("You are a helpful assistant.")
+            .build();
     Message userMsg = Message.builder().role(Role.USER.getValue()).content("9.9和9.11谁大").build();
-    GenerationParam param = GenerationParam.builder().model("deepseek-r1")
-                    .messages(Arrays.asList(systemMsg, userMsg))
-                    .resultFormat(GenerationParam.ResultFormat.MESSAGE)
-                    .incrementalOutput(true)
-                    .build();
+    GenerationParam param =
+        GenerationParam.builder()
+            .model("deepseek-r1")
+            .messages(Arrays.asList(systemMsg, userMsg))
+            .resultFormat(GenerationParam.ResultFormat.MESSAGE)
+            .incrementalOutput(true)
+            .build();
     Flowable<GenerationResult> result = gen.streamCall(param);
-      result.blockingSubscribe( data -> {
+    result.blockingSubscribe(
+        data -> {
           System.out.println(JsonUtils.toJson(data));
-      });
+        });
   }
 
-  public static void main(String[] args){
-        try {
-//          callWithMessage();
-            streamCallWithMessage();
-        } catch (ApiException | NoApiKeyException | InputRequiredException e) {
-          System.out.println(e.getMessage());
-        }
-        System.exit(0);
+  public static void main(String[] args) {
+    try {
+      //          callWithMessage();
+      streamCallWithMessage();
+    } catch (ApiException | NoApiKeyException | InputRequiredException e) {
+      System.out.println(e.getMessage());
+    }
+    System.exit(0);
   }
 }

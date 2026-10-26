@@ -25,7 +25,6 @@ import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.exception.UploadFileException;
 import com.alibaba.dashscope.utils.JsonUtils;
 import io.reactivex.Flowable;
-
 import java.util.concurrent.Semaphore;
 
 /**
@@ -35,78 +34,82 @@ import java.util.concurrent.Semaphore;
  * @author yuanci.ytb
  * @since 2.19.0
  */
-
 public class MultiModelConversationQwenTts {
-    private static final String MODEL = "qwen-tts-latest";
+  private static final String MODEL = "qwen-tts-latest";
 
-    public static void call() throws ApiException, NoApiKeyException, UploadFileException {
-        MultiModalConversation conv = new MultiModalConversation();
-        MultiModalConversationParam param = MultiModalConversationParam.builder()
-                .model(MODEL)
-                .text("Today is a wonderful day to build something people love!")
-                .voice(AudioParameters.Voice.DYLAN)
-                .build();
-        MultiModalConversationResult result = conv.call(param);
-        System.out.println(result);
-        if (result.getUsage()!=null) {
-            System.out.println("usage:"+ JsonUtils.toJson(result.getUsage()));
-        }
+  public static void call() throws ApiException, NoApiKeyException, UploadFileException {
+    MultiModalConversation conv = new MultiModalConversation();
+    MultiModalConversationParam param =
+        MultiModalConversationParam.builder()
+            .model(MODEL)
+            .text("Today is a wonderful day to build something people love!")
+            .voice(AudioParameters.Voice.DYLAN)
+            .build();
+    MultiModalConversationResult result = conv.call(param);
+    System.out.println(result);
+    if (result.getUsage() != null) {
+      System.out.println("usage:" + JsonUtils.toJson(result.getUsage()));
     }
+  }
 
-    public static void streamCall() throws ApiException, NoApiKeyException, UploadFileException {
-        MultiModalConversation conv = new MultiModalConversation();
-        MultiModalConversationParam param = MultiModalConversationParam.builder()
-                .model(MODEL)
-                .text("Today is a wonderful day to build something people love!")
-                .voice(AudioParameters.Voice.DYLAN)
-                .build();
-        Flowable<MultiModalConversationResult> result = conv.streamCall(param);
-        result.blockingForEach(System.out::println);
-    }
+  public static void streamCall() throws ApiException, NoApiKeyException, UploadFileException {
+    MultiModalConversation conv = new MultiModalConversation();
+    MultiModalConversationParam param =
+        MultiModalConversationParam.builder()
+            .model(MODEL)
+            .text("Today is a wonderful day to build something people love!")
+            .voice(AudioParameters.Voice.DYLAN)
+            .build();
+    Flowable<MultiModalConversationResult> result = conv.streamCall(param);
+    result.blockingForEach(System.out::println);
+  }
 
-    public static void callWithCallback() throws ApiException, NoApiKeyException, UploadFileException, InputRequiredException {
-        MultiModalConversation conv = new MultiModalConversation();
-        MultiModalConversationParam param = MultiModalConversationParam.builder()
-                .model(MODEL)
-                .text("Today is a wonderful day to build something people love!")
-                .voice(AudioParameters.Voice.CHERRY)
-                .build();
+  public static void callWithCallback()
+      throws ApiException, NoApiKeyException, UploadFileException, InputRequiredException {
+    MultiModalConversation conv = new MultiModalConversation();
+    MultiModalConversationParam param =
+        MultiModalConversationParam.builder()
+            .model(MODEL)
+            .text("Today is a wonderful day to build something people love!")
+            .voice(AudioParameters.Voice.CHERRY)
+            .build();
 
-        Semaphore semaphore = new Semaphore(0);
-        conv.streamCall(param, new ResultCallback<MultiModalConversationResult>() {
-            @Override
-            public void onEvent(MultiModalConversationResult message) {
-                System.out.printf("%s", JsonUtils.toJson(message));
-            }
+    Semaphore semaphore = new Semaphore(0);
+    conv.streamCall(
+        param,
+        new ResultCallback<MultiModalConversationResult>() {
+          @Override
+          public void onEvent(MultiModalConversationResult message) {
+            System.out.printf("%s", JsonUtils.toJson(message));
+          }
 
-            @Override
-            public void onComplete() {
-                semaphore.release();
-            }
+          @Override
+          public void onComplete() {
+            semaphore.release();
+          }
 
-            @Override
-            public void onError(Exception e) {
-                System.out.printf("error: %s", e.getMessage());
-                semaphore.release();
-            }
+          @Override
+          public void onError(Exception e) {
+            System.out.printf("error: %s", e.getMessage());
+            semaphore.release();
+          }
         });
 
-        try {
-            semaphore.acquire();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+    try {
+      semaphore.acquire();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
     }
+  }
 
-
-    public static void main(String[] args) {
-        try {
-            call();
-            streamCall();
-//            callWithCallback();
-        } catch (ApiException | NoApiKeyException | UploadFileException e) {
-            System.out.println(e.getMessage());
-        }
-        System.exit(0);
+  public static void main(String[] args) {
+    try {
+      call();
+      streamCall();
+      //            callWithCallback();
+    } catch (ApiException | NoApiKeyException | UploadFileException e) {
+      System.out.println(e.getMessage());
     }
+    System.exit(0);
+  }
 }

@@ -12,6 +12,7 @@ public class ToolChoice {
    * auto means to automatically decide whether to use it.
    */
   @Default public String strategy = null;
+
   /** Specify the tool to use, Set strategy or tool, with tool taking priority */
   @Default public ToolBase tool = null;
 }

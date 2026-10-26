@@ -30,9 +30,11 @@ public final class ThreadMessage extends FlattenResultBase {
    */
   @SerializedName("object")
   private String object = "thread.message";
+
   /** Completed At */
   @SerializedName("created_at")
   private Long createdAt = null;
+
   /**
    * Thread Id
    *
@@ -40,6 +42,7 @@ public final class ThreadMessage extends FlattenResultBase {
    */
   @SerializedName("thread_id")
   private String threadId;
+
   /**
    * Status
    *
@@ -74,6 +77,7 @@ public final class ThreadMessage extends FlattenResultBase {
   /** Run Id */
   @SerializedName("run_id")
   private String runId = null;
+
   /**
    * File Ids
    *

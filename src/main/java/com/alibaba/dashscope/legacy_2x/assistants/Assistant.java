@@ -26,6 +26,7 @@ public final class Assistant extends FlattenResultBase {
    */
   @SerializedName("id")
   private String id;
+
   /**
    * Created At
    *
@@ -33,9 +34,11 @@ public final class Assistant extends FlattenResultBase {
    */
   @SerializedName("created_at")
   private Long createdAt;
+
   /** Description */
   @SerializedName("description")
   private String description = null;
+
   /**
    * File Ids
    *
@@ -43,12 +46,15 @@ public final class Assistant extends FlattenResultBase {
    */
   @SerializedName("file_ids")
   private List<String> fileIds = new ArrayList<String>();
+
   /** Instructions */
   @SerializedName("instructions")
   private String instructions = null;
+
   /** Metadata */
   @SerializedName("metadata")
   private Map<String, String> metadata = null;
+
   /**
    * Model
    *
@@ -56,9 +62,11 @@ public final class Assistant extends FlattenResultBase {
    */
   @SerializedName("model")
   private String model;
+
   /** Name */
   @SerializedName("name")
   private String name = null;
+
   /**
    * Object
    *
@@ -66,6 +74,7 @@ public final class Assistant extends FlattenResultBase {
    */
   @SerializedName("object")
   private String object;
+
   /**
    * Tools
    *

@@ -14,6 +14,7 @@ public class ToolCodeInterpreter extends ToolBase {
   static {
     registerTool("code_interpreter", ToolCodeInterpreter.class);
   }
+
   /**
    * Type
    *
