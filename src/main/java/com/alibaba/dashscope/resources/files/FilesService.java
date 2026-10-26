@@ -52,6 +52,9 @@ public final class FilesService {
       throw Errors.io(SdkErrorCode.SDK_IO_ERROR, "read upload file " + file, e);
     }
     Map<String, String> fields = new LinkedHashMap<>();
+    if (params.getPurpose() != null) {
+      fields.put("purpose", params.getPurpose());
+    }
     if (params.getDescription() != null) {
       fields.put("descriptions", params.getDescription());
     }

@@ -61,7 +61,7 @@ class FilesMockTest {
 
   @Test
   void uploadSubmitsMultipartForm() throws Exception {
-    Path file = Files.createTempFile("fine-tune", ".jsonl");
+    Path file = Files.createTempFile("train", ".jsonl");
     try {
       Files.write(file, "{\"a\":1}\n{\"b\":2}\n".getBytes(StandardCharsets.UTF_8));
       server.enqueue(
@@ -87,6 +87,10 @@ class FilesMockTest {
       assertEquals("/files", request.getPath());
       assertTrue(request.getHeader("Content-Type").startsWith("multipart/form-data"));
       String body = request.getBody().readUtf8();
+      assertTrue(body.contains("name=\"purpose\""));
+      // Default purpose must reach the wire, not just drive local validation; the temp-file prefix
+      // is a neutral "train" so "fine-tune" can only come from the purpose form field.
+      assertTrue(body.contains("fine-tune"));
       assertTrue(body.contains("name=\"descriptions\""));
       assertTrue(body.contains("train set"));
       assertTrue(body.contains("name=\"files\"; filename=\"" + file.getFileName() + "\""));
