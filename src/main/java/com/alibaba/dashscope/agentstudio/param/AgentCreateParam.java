@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.agentstudio.param;
 
 import com.alibaba.dashscope.agentstudio.model.Configs.McpServerConfig;
+import com.alibaba.dashscope.agentstudio.model.Configs.ModelConfig;
 import com.alibaba.dashscope.agentstudio.model.Configs.MultiAgentConfig;
 import com.alibaba.dashscope.agentstudio.model.Configs.SkillConfig;
 import com.alibaba.dashscope.agentstudio.model.Configs.ToolConfig;
@@ -21,7 +22,10 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 public class AgentCreateParam extends FlattenHalfDuplexParamBase {
   @NonNull private String name;
-  @NonNull private String model;
+
+  /** Required: the model and its inference parameters. */
+  @NonNull private ModelConfig modelConfig;
+
   @Default private String description = null;
   @Default private String systemPrompt = null;
   @Default private List<ToolConfig> tools = null;
@@ -30,13 +34,29 @@ public class AgentCreateParam extends FlattenHalfDuplexParamBase {
   @Default private MultiAgentConfig multiagent = null;
   @Default private Map<String, String> metadata = null;
 
+  /** The model id; the full config is {@code getModelConfig()}. */
+  @Override
+  public String getModel() {
+    return modelConfig.getId();
+  }
+
+  /** Alias for calling {@code setModelConfig(ModelConfig)} with {@code ModelConfig.of(modelId)}. */
+  public void setModel(String modelId) {
+    setModelConfig(ModelConfig.of(modelId));
+  }
+
+  @Override
+  public void validate() {
+    if (modelConfig == null || modelConfig.getId() == null || modelConfig.getId().isEmpty()) {
+      throw new IllegalArgumentException("model.id is required, e.g. .model(\"qwen3-max\")");
+    }
+  }
+
   @Override
   public JsonObject getHttpBody() {
     JsonObject body = new JsonObject();
     body.addProperty("name", name);
-    JsonObject modelObj = new JsonObject();
-    modelObj.addProperty("id", model);
-    body.add("model", modelObj);
+    body.add("model", JsonUtils.toJsonElement(modelConfig));
     if (description != null) {
       body.addProperty("description", description);
     }
@@ -60,5 +80,19 @@ public class AgentCreateParam extends FlattenHalfDuplexParamBase {
     }
     addExtraBody(body);
     return body;
+  }
+
+  /** Adds the {@code model(...)} aliases for {@code modelConfig(...)}. */
+  public abstract static class AgentCreateParamBuilder<
+          C extends AgentCreateParam, B extends AgentCreateParamBuilder<C, B>>
+      extends FlattenHalfDuplexParamBase.FlattenHalfDuplexParamBaseBuilder<C, B> {
+    /** Alias for calling {@code modelConfig(ModelConfig)} with {@code ModelConfig.of(modelId)}. */
+    public B model(String modelId) {
+      return modelConfig(ModelConfig.of(modelId));
+    }
+
+    public B model(ModelConfig modelConfig) {
+      return modelConfig(modelConfig);
+    }
   }
 }

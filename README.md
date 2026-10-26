@@ -256,8 +256,8 @@ public class Main {
         .build();
 
     try {
-      // A workspace id is required: set the DASHSCOPE_WORKSPACE environment variable,
-      // or pass it explicitly with new DecisionModel(workspace).
+      // A workspace id is required: pass it here (new DecisionModel("your-workspace-id"))
+      // or set the DASHSCOPE_WORKSPACE environment variable before running.
       DecisionModel decisionModel = new DecisionModel();
       DecisionModelResult result = decisionModel.call(param);
       System.out.println(JsonUtils.toJson(result));
@@ -268,4 +268,8 @@ public class Main {
 }
 ```
 
-The `call` method accepts a `DecisionModelParam`, and returns a `DecisionModelResult` whose `answers` are keyed by question id. Streaming is not supported. The API key is read from the `DASHSCOPE_API_KEY` environment variable by default, or set explicitly with `apiKey(...)`. The endpoint is workspace-scoped: `https://{workspace}.{region}.maas.aliyuncs.com/compatible-mode/v1/systemone`, so a workspace id is required — pass it via `new DecisionModel(workspace)` (optionally `new DecisionModel(workspace, region)`; the region defaults to `cn-beijing` and can also be set with the `DASHSCOPE_API_REGION` environment variable) or set the `DASHSCOPE_WORKSPACE` environment variable before using `new DecisionModel()`, otherwise the constructor throws `IllegalArgumentException`. To target a custom endpoint (e.g. a self-hosted gateway), use `DecisionModel.withBaseUrl(baseUrl)` or the `DASHSCOPE_DECISION_BASE_URL` environment variable.
+The `call` method accepts a `DecisionModelParam`, and returns a `DecisionModelResult` whose `answers` are keyed by question id. Streaming is not supported. The API key is read from the `DASHSCOPE_API_KEY` environment variable by default, or set explicitly with `apiKey(...)`.
+
+The endpoint is workspace-scoped: the base URL is composed as `https://{workspace}.{region}.maas.aliyuncs.com/compatible-mode/v1` (the `systemone` path is appended automatically). A workspace id is **required** — pass it to the constructor (`new DecisionModel(workspace)` or `new DecisionModel(workspace, region)`) or set the `DASHSCOPE_WORKSPACE` environment variable; otherwise constructing the client throws `IllegalArgumentException`. The region defaults to `cn-beijing` and can be set via `DASHSCOPE_API_REGION`.
+
+To target a fully custom endpoint (for example the Token Plan gateway), use the static factory `DecisionModel.withBaseUrl(baseUrl)`. Note that `new DecisionModel(String)` treats its argument as a **workspace id**, not a base URL. You can also override the entire base URL with the `DASHSCOPE_DECISION_BASE_URL` environment variable; the SDK-wide `DASHSCOPE_HTTP_BASE_URL` is intentionally not read here.

@@ -3,18 +3,50 @@ package com.alibaba.dashscope.agentstudio.model;
 
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 public final class Configs {
   private Configs() {}
 
+  /**
+   * The {@code model} object of an agent: the model id plus its inference parameters. Unset
+   * parameters keep their server default; on update this object replaces the whole config.
+   */
   @Data
+  @Builder(toBuilder = true)
+  @NoArgsConstructor
+  @AllArgsConstructor(access = AccessLevel.PRIVATE)
   public static class ModelConfig {
+    /**
+     * The id-only config. A null id yields null rather than an id-less config, so an unset model
+     * stays unset in the request body.
+     */
+    public static ModelConfig of(String id) {
+      return id == null ? null : builder().id(id).build();
+    }
+
     @SerializedName("id")
     private String id;
 
+    /** Console-only: the public API neither accepts nor returns it. */
     @SerializedName("name")
     private String name;
+
+    @SerializedName("temperature")
+    private Double temperature;
+
+    @SerializedName("max_tokens")
+    private Integer maxTokens;
+
+    @SerializedName("enable_thinking")
+    private Boolean enableThinking;
+
+    @SerializedName("thinking_budget")
+    private Integer thinkingBudget;
   }
 
   @Data

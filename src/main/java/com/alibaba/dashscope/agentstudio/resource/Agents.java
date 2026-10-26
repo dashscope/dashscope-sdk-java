@@ -74,6 +74,11 @@ public final class Agents {
     if (param == null) {
       return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
+    try {
+      param.validate();
+    } catch (IllegalArgumentException e) {
+      return AsyncHelper.failedFuture(e);
+    }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(HttpMethod.POST, "agents", baseUrl);
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
