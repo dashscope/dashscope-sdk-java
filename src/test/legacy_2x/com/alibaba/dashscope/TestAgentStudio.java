@@ -48,7 +48,6 @@ import com.alibaba.dashscope.agentstudio.resource.Environments;
 import com.alibaba.dashscope.agentstudio.resource.Sessions;
 import com.alibaba.dashscope.agentstudio.resource.Skills;
 import com.alibaba.dashscope.agentstudio.resource.Vaults;
-import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.utils.Constants;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonElement;
@@ -206,7 +205,7 @@ public class TestAgentStudio {
   @Test
   public void testAgentUpdateRequiresVersion() {
     assertThrows(
-        ApiException.class,
+        IllegalArgumentException.class,
         () ->
             new Agents(null, null, null)
                 .update("agent_xyz", AgentUpdateParam.builder().name("no-version").build()));
@@ -215,7 +214,7 @@ public class TestAgentStudio {
   @Test
   public void testAgentUpdateRequiresAgentId() {
     assertThrows(
-        ApiException.class,
+        IllegalArgumentException.class,
         () ->
             new Agents(null, null, null)
                 .update("", AgentUpdateParam.builder().version(1).name("x").build()));
@@ -518,7 +517,8 @@ public class TestAgentStudio {
 
   @Test
   public void testSessionRetrieveRequiresId() {
-    assertThrows(ApiException.class, () -> new Sessions(null, null, null).retrieve(null));
+    assertThrows(
+        IllegalArgumentException.class, () -> new Sessions(null, null, null).retrieve(null));
   }
 
   @Test
@@ -837,7 +837,7 @@ public class TestAgentStudio {
 
   @Test
   public void testVaultRetrieveRequiresId() {
-    assertThrows(ApiException.class, () -> new Vaults(null, null, null).retrieve(null));
+    assertThrows(IllegalArgumentException.class, () -> new Vaults(null, null, null).retrieve(null));
   }
 
   // ======================== Credentials ========================
@@ -932,7 +932,7 @@ public class TestAgentStudio {
     auth.addProperty("secret_name", "TEST_KEY");
     auth.addProperty("secret_value", "test-val");
     assertThrows(
-        ApiException.class,
+        IllegalArgumentException.class,
         () ->
             new Vaults(null, null, null)
                 .credentials()
@@ -942,7 +942,7 @@ public class TestAgentStudio {
   @Test
   public void testCredentialRetrieveRequiresIds() {
     assertThrows(
-        ApiException.class,
+        IllegalArgumentException.class,
         () -> new Vaults(null, null, null).credentials().retrieve("vault_001", null));
   }
 
@@ -1077,7 +1077,7 @@ public class TestAgentStudio {
   public void testFileUploadNullFilePath() {
     com.alibaba.dashscope.agentstudio.resource.Files filesResource =
         new com.alibaba.dashscope.agentstudio.resource.Files(null, null, null);
-    assertThrows(ApiException.class, () -> filesResource.upload(null, null));
+    assertThrows(IllegalArgumentException.class, () -> filesResource.upload(null, null));
   }
 
   @Test
@@ -1085,21 +1085,22 @@ public class TestAgentStudio {
     com.alibaba.dashscope.agentstudio.resource.Files filesResource =
         new com.alibaba.dashscope.agentstudio.resource.Files(null, null, null);
     assertThrows(
-        ApiException.class, () -> filesResource.upload("test.txt", (InputStream) null, null));
+        IllegalArgumentException.class,
+        () -> filesResource.upload("test.txt", (InputStream) null, null));
   }
 
   @Test
   public void testFileRetrieveRequiresId() {
     com.alibaba.dashscope.agentstudio.resource.Files filesResource =
         new com.alibaba.dashscope.agentstudio.resource.Files(null, null, null);
-    assertThrows(ApiException.class, () -> filesResource.retrieve(null));
+    assertThrows(IllegalArgumentException.class, () -> filesResource.retrieve(null));
   }
 
   @Test
   public void testFileDeleteRequiresId() {
     com.alibaba.dashscope.agentstudio.resource.Files filesResource =
         new com.alibaba.dashscope.agentstudio.resource.Files(null, null, null);
-    assertThrows(ApiException.class, () -> filesResource.delete(null));
+    assertThrows(IllegalArgumentException.class, () -> filesResource.delete(null));
   }
 
   // ======================== AgentStudioClient ========================
@@ -1149,7 +1150,7 @@ public class TestAgentStudio {
   @Test
   public void testSessionEventSendRequiresSessionId() {
     assertThrows(
-        ApiException.class,
+        IllegalArgumentException.class,
         () ->
             new Sessions(null, null, null)
                 .events()

@@ -18,7 +18,6 @@ import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.FlattenResultBase;
 import com.alibaba.dashscope.common.GeneralGetParam;
-import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
@@ -120,7 +119,7 @@ public final class MemoryStores {
 
   public CompletableFuture<MemoryStore> createAsync(MemoryStoreCreateParam param) {
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(HttpMethod.POST, "memory_stores", baseUrl);
@@ -135,7 +134,7 @@ public final class MemoryStores {
   public CompletableFuture<MemoryStore> retrieveAsync(
       String storeId, String apiKey, Map<String, String> headers) {
     if (storeId == null || storeId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("storeId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("storeId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -153,10 +152,10 @@ public final class MemoryStores {
 
   public CompletableFuture<MemoryStore> updateAsync(String storeId, MemoryStoreUpdateParam param) {
     if (storeId == null || storeId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("storeId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("storeId is required!"));
     }
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -167,7 +166,7 @@ public final class MemoryStores {
 
   public CompletableFuture<CursorPage<MemoryStore>> listAsync(MemoryStoreListParam param) {
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     String query = param.toQueryString();
     String path = query.isEmpty() ? "memory_stores" : "memory_stores?" + query;
@@ -192,7 +191,7 @@ public final class MemoryStores {
 
   public CompletableFuture<MemoryStore> archiveAsync(String storeId) {
     if (storeId == null || storeId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("storeId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("storeId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -211,7 +210,7 @@ public final class MemoryStores {
   public CompletableFuture<AgentStudioDeletionStatus> deleteAsync(
       String storeId, String apiKey, Map<String, String> headers) {
     if (storeId == null || storeId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("storeId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("storeId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -296,10 +295,10 @@ public final class MemoryStores {
 
     public CompletableFuture<Memory> createAsync(String storeId, MemoryCreateParam param) {
       if (storeId == null || storeId.isEmpty()) {
-        return AsyncHelper.failedFuture(new InputRequiredException("storeId is required!"));
+        return AsyncHelper.failedFuture(new IllegalArgumentException("storeId is required!"));
       }
       if (param == null) {
-        return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+        return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
       }
       GeneralServiceOption opt =
           AgentStudioConstants.newServiceOption(
@@ -316,7 +315,7 @@ public final class MemoryStores {
         String storeId, String memoryId, String apiKey, Map<String, String> headers) {
       if (storeId == null || storeId.isEmpty() || memoryId == null || memoryId.isEmpty()) {
         return AsyncHelper.failedFuture(
-            new InputRequiredException("storeId and memoryId are required!"));
+            new IllegalArgumentException("storeId and memoryId are required!"));
       }
       GeneralServiceOption opt =
           AgentStudioConstants.newServiceOption(
@@ -338,10 +337,10 @@ public final class MemoryStores {
         String storeId, String memoryId, MemoryUpdateParam param) {
       if (storeId == null || storeId.isEmpty() || memoryId == null || memoryId.isEmpty()) {
         return AsyncHelper.failedFuture(
-            new InputRequiredException("storeId and memoryId are required!"));
+            new IllegalArgumentException("storeId and memoryId are required!"));
       }
       if (param == null) {
-        return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+        return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
       }
       GeneralServiceOption opt =
           AgentStudioConstants.newServiceOption(
@@ -354,10 +353,10 @@ public final class MemoryStores {
 
     public CompletableFuture<CursorPage<Memory>> listAsync(String storeId, MemoryListParam param) {
       if (storeId == null || storeId.isEmpty()) {
-        return AsyncHelper.failedFuture(new InputRequiredException("storeId is required!"));
+        return AsyncHelper.failedFuture(new IllegalArgumentException("storeId is required!"));
       }
       if (param == null) {
-        return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+        return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
       }
       boolean depthEmulated = param.getDepth() != null && param.getDepth() > MAX_WIRE_DEPTH;
       // depth >= 2 must not reach the wire; everything else passes through.
@@ -411,7 +410,7 @@ public final class MemoryStores {
         String storeId, String memoryId, String apiKey, Map<String, String> headers) {
       if (storeId == null || storeId.isEmpty() || memoryId == null || memoryId.isEmpty()) {
         return AsyncHelper.failedFuture(
-            new InputRequiredException("storeId and memoryId are required!"));
+            new IllegalArgumentException("storeId and memoryId are required!"));
       }
       GeneralServiceOption opt =
           AgentStudioConstants.newServiceOption(
@@ -454,10 +453,10 @@ public final class MemoryStores {
     public CompletableFuture<CursorPage<MemoryVersion>> listAsync(
         String storeId, MemoryVersionListParam param) {
       if (storeId == null || storeId.isEmpty()) {
-        return AsyncHelper.failedFuture(new InputRequiredException("storeId is required!"));
+        return AsyncHelper.failedFuture(new IllegalArgumentException("storeId is required!"));
       }
       if (param == null) {
-        return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+        return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
       }
       String query = param.toQueryString();
       String path = StringUtils.format("memory_stores/%s/memory_versions", storeId);
@@ -497,7 +496,7 @@ public final class MemoryStores {
         String storeId, String versionId, String apiKey, Map<String, String> headers) {
       if (storeId == null || storeId.isEmpty() || versionId == null || versionId.isEmpty()) {
         return AsyncHelper.failedFuture(
-            new InputRequiredException("storeId and versionId are required!"));
+            new IllegalArgumentException("storeId and versionId are required!"));
       }
       GeneralServiceOption opt =
           AgentStudioConstants.newServiceOption(
@@ -519,7 +518,7 @@ public final class MemoryStores {
     public CompletableFuture<MemoryVersion> redactAsync(String storeId, String versionId) {
       if (storeId == null || storeId.isEmpty() || versionId == null || versionId.isEmpty()) {
         return AsyncHelper.failedFuture(
-            new InputRequiredException("storeId and versionId are required!"));
+            new IllegalArgumentException("storeId and versionId are required!"));
       }
       GeneralServiceOption opt =
           AgentStudioConstants.newServiceOption(

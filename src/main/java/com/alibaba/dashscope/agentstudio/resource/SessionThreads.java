@@ -11,7 +11,6 @@ import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.FlattenResultBase;
 import com.alibaba.dashscope.common.GeneralGetParam;
-import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
@@ -57,7 +56,7 @@ public final class SessionThreads {
   public CompletableFuture<CursorPage<Session.SessionThread>> listAsync(
       String sessionId, SessionThreadListParam param) {
     if (sessionId == null || sessionId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("sessionId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("sessionId is required!"));
     }
     if (param == null) {
       param = SessionThreadListParam.builder().build();
@@ -90,10 +89,10 @@ public final class SessionThreads {
 
   public CompletableFuture<Session.SessionThread> retrieveAsync(String sessionId, String threadId) {
     if (sessionId == null || sessionId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("sessionId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("sessionId is required!"));
     }
     if (threadId == null || threadId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("threadId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("threadId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -107,10 +106,10 @@ public final class SessionThreads {
 
   public CompletableFuture<Session.SessionThread> archiveAsync(String sessionId, String threadId) {
     if (sessionId == null || sessionId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("sessionId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("sessionId is required!"));
     }
     if (threadId == null || threadId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("threadId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("threadId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -144,10 +143,10 @@ public final class SessionThreads {
     public CompletableFuture<CursorPage<Message>> listAsync(
         String sessionId, String threadId, SessionEventListParam param) {
       if (sessionId == null || sessionId.isEmpty()) {
-        return AsyncHelper.failedFuture(new InputRequiredException("sessionId is required!"));
+        return AsyncHelper.failedFuture(new IllegalArgumentException("sessionId is required!"));
       }
       if (threadId == null || threadId.isEmpty()) {
-        return AsyncHelper.failedFuture(new InputRequiredException("threadId is required!"));
+        return AsyncHelper.failedFuture(new IllegalArgumentException("threadId is required!"));
       }
       if (param == null) {
         param = SessionEventListParam.builder().build();

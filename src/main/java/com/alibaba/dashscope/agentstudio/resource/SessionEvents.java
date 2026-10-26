@@ -10,8 +10,6 @@ import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.FlattenResultBase;
 import com.alibaba.dashscope.common.GeneralGetParam;
-import com.alibaba.dashscope.exception.InputRequiredException;
-import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
@@ -72,7 +70,7 @@ public final class SessionEvents implements Closeable {
 
   public CompletableFuture<JsonObject> sendAsync(String sessionId, List<JsonObject> events) {
     if (sessionId == null || sessionId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("sessionId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("sessionId is required!"));
     }
     if (events == null || events.isEmpty()) {
       return AsyncHelper.failedFuture(
@@ -96,10 +94,10 @@ public final class SessionEvents implements Closeable {
   public CompletableFuture<CursorPage<Message>> listAsync(
       String sessionId, SessionEventListParam param) {
     if (sessionId == null || sessionId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("sessionId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("sessionId is required!"));
     }
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     String query = param.toQueryString();
     String path = StringUtils.format("sessions/%s/events", sessionId);
@@ -189,8 +187,8 @@ public final class SessionEvents implements Closeable {
   private String resolveApiKey() {
     try {
       return ApiKey.getApiKey(this.apiKey);
-    } catch (NoApiKeyException e) {
-      throw new IllegalStateException("No API key found. Set DASHSCOPE_API_KEY or pass apiKey.", e);
+    } catch (Exception e) {
+      throw AgentStudioErrors.translate(e);
     }
   }
 }

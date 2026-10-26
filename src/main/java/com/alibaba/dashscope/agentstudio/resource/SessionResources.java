@@ -11,7 +11,6 @@ import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.FlattenResultBase;
 import com.alibaba.dashscope.common.GeneralGetParam;
-import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
@@ -54,10 +53,10 @@ public final class SessionResources {
   public CompletableFuture<Session.SessionResource> addAsync(
       String sessionId, SessionResourceAddParam param) {
     if (sessionId == null || sessionId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("sessionId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("sessionId is required!"));
     }
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -69,10 +68,10 @@ public final class SessionResources {
   public CompletableFuture<Session.SessionResource> retrieveAsync(
       String sessionId, String resourceId) {
     if (sessionId == null || sessionId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("sessionId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("sessionId is required!"));
     }
     if (resourceId == null || resourceId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("resourceId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("resourceId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -87,7 +86,7 @@ public final class SessionResources {
   public CompletableFuture<CursorPage<Session.SessionResource>> listAsync(
       String sessionId, SessionResourceListParam param) {
     if (sessionId == null || sessionId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("sessionId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("sessionId is required!"));
     }
     if (param == null) {
       param = SessionResourceListParam.builder().build();
@@ -121,10 +120,10 @@ public final class SessionResources {
   public CompletableFuture<AgentStudioDeletionStatus> deleteAsync(
       String sessionId, String resourceId) {
     if (sessionId == null || sessionId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("sessionId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("sessionId is required!"));
     }
     if (resourceId == null || resourceId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("resourceId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("resourceId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(

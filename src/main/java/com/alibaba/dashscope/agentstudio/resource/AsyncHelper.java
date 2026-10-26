@@ -5,7 +5,6 @@ import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.common.ResultCallback;
-import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.protocol.ServiceOption;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -32,18 +31,18 @@ final class AsyncHelper {
 
             @Override
             public void onError(Exception e) {
-              future.completeExceptionally(e);
+              future.completeExceptionally(AgentStudioErrors.translate(e));
             }
           });
     } catch (Exception e) {
-      future.completeExceptionally(e);
+      future.completeExceptionally(AgentStudioErrors.translate(e));
     }
     return future;
   }
 
   static <T> CompletableFuture<T> failedFuture(Throwable ex) {
     CompletableFuture<T> f = new CompletableFuture<>();
-    f.completeExceptionally(ex);
+    f.completeExceptionally(AgentStudioErrors.translate(ex));
     return f;
   }
 
@@ -51,14 +50,7 @@ final class AsyncHelper {
     try {
       return future.join();
     } catch (CompletionException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof ApiException) {
-        throw (ApiException) cause;
-      }
-      if (cause instanceof RuntimeException) {
-        throw (RuntimeException) cause;
-      }
-      throw new ApiException(cause);
+      throw AgentStudioErrors.translate(e.getCause());
     }
   }
 }

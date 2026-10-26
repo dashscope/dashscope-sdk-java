@@ -12,7 +12,6 @@ import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.FlattenResultBase;
 import com.alibaba.dashscope.common.GeneralGetParam;
-import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
@@ -73,7 +72,7 @@ public final class Agents {
 
   public CompletableFuture<Agent> createAsync(AgentCreateParam param) {
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(HttpMethod.POST, "agents", baseUrl);
@@ -97,7 +96,7 @@ public final class Agents {
   public CompletableFuture<Agent> retrieveAsync(
       String agentId, Integer version, String apiKey, Map<String, String> headers) {
     if (agentId == null || agentId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("agentId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("agentId is required!"));
     }
     String path = StringUtils.format("agents/%s", agentId);
     if (version != null) {
@@ -117,14 +116,14 @@ public final class Agents {
 
   public CompletableFuture<Agent> updateAsync(String agentId, AgentUpdateParam param) {
     if (agentId == null || agentId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("agentId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("agentId is required!"));
     }
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     try {
       param.validate();
-    } catch (InputRequiredException e) {
+    } catch (IllegalArgumentException e) {
       return AsyncHelper.failedFuture(e);
     }
     GeneralServiceOption opt =
@@ -136,7 +135,7 @@ public final class Agents {
 
   public CompletableFuture<CursorPage<Agent>> listAsync(AgentListParam param) {
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     String query = param.toQueryString();
     String path = query.isEmpty() ? "agents" : "agents?" + query;
@@ -161,7 +160,7 @@ public final class Agents {
 
   public CompletableFuture<Agent> archiveAsync(String agentId) {
     if (agentId == null || agentId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("agentId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("agentId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -174,7 +173,7 @@ public final class Agents {
   public CompletableFuture<CursorPage<AgentVersion>> listVersionsAsync(
       String agentId, AgentListParam param) {
     if (agentId == null || agentId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("agentId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("agentId is required!"));
     }
     String query = param != null ? param.toQueryString() : "";
     String path = StringUtils.format("agents/%s/versions", agentId);

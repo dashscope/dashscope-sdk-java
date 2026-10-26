@@ -20,8 +20,8 @@ import com.alibaba.dashscope.agentstudio.param.MemoryStoreListParam;
 import com.alibaba.dashscope.agentstudio.param.MemoryStoreUpdateParam;
 import com.alibaba.dashscope.agentstudio.param.MemoryUpdateParam;
 import com.alibaba.dashscope.agentstudio.param.MemoryVersionListParam;
-import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.v3.errors.ApiStatusException;
 import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -282,9 +282,9 @@ public class TestAgentStudioMemoryStores {
         "{\"type\":\"error\",\"error\":{\"code\":\"memory_path_conflict_error\","
             + "\"message\":\"Memory path already exists.\"},\"request_id\":\"req-e1\"}";
     mockServer.enqueue(TestUtils.createMockResponse(body, 409));
-    ApiException ex =
+    ApiStatusException ex =
         assertThrows(
-            ApiException.class,
+            ApiStatusException.class,
             () ->
                 client
                     .memoryStores()
@@ -295,8 +295,8 @@ public class TestAgentStudioMemoryStores {
                             .path("/e2e/notes.md")
                             .content("duplicate")
                             .build()));
-    assertEquals(409, ex.getStatus().getStatusCode());
-    assertEquals("memory_path_conflict_error", ex.getStatus().getCode());
+    assertEquals(409, ex.getStatusCode());
+    assertEquals("memory_path_conflict_error", ex.getCode());
     // Drain the recorded request: a test that never takeRequest()s leaves
     // the shared server's request queue off by one and misaligns every
     // later test's assertions.

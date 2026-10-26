@@ -3,8 +3,10 @@ package com.alibaba.dashscope.agentstudio.resource;
 
 import com.alibaba.dashscope.agentstudio.message.ContentBlock;
 import com.alibaba.dashscope.agentstudio.message.Message;
-import com.alibaba.dashscope.common.Status;
-import com.alibaba.dashscope.exception.ApiException;
+import com.alibaba.dashscope.v3.errors.ApiTimeoutException;
+import com.alibaba.dashscope.v3.errors.DashScopeException;
+import com.alibaba.dashscope.v3.errors.Errors;
+import com.alibaba.dashscope.v3.errors.SdkErrorCode;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -57,7 +59,11 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
                     queue.put(msg);
                   }
                 } catch (Exception e) {
-                  queue.offer(e);
+                  queue.offer(
+                      Errors.fromSdkErrorCode(
+                          SdkErrorCode.SDK_AGENTSTUDIO_STREAM_ERROR.getCode(),
+                          "Failed to parse stream event: " + e.getMessage(),
+                          e));
                 }
               }
 
@@ -69,7 +75,7 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
               @Override
               public void onFailure(EventSource es, Throwable t, Response response) {
                 if (closed.get()) return;
-                ApiException wrapped = wrapFailure(t, response);
+                DashScopeException wrapped = wrapFailure(t, response);
                 if (wrapped != null) {
                   queue.offer(wrapped);
                 } else {
@@ -79,11 +85,11 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
             });
   }
 
-  /** Convert OkHttp's onFailure into an ApiException that preserves HTTP status and body. */
-  private static ApiException wrapFailure(Throwable t, Response response) {
+  /** Convert OkHttp's onFailure into a 3.0 exception preserving HTTP status and body. */
+  private static DashScopeException wrapFailure(Throwable t, Response response) {
     if (response == null) {
       if (t != null) {
-        return new ApiException(t instanceof Exception ? (Exception) t : new RuntimeException(t));
+        return (DashScopeException) AgentStudioErrors.translate(t);
       }
       return null;
     }
@@ -112,16 +118,13 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
         log.debug("Failed to parse SSE error body as JSON", e);
       }
     }
-    Status status =
-        Status.builder()
-            .statusCode(code)
-            .code(
-                errorCode != null
-                    ? errorCode
-                    : code >= 500 ? "server_error" : code == 401 ? "auth_error" : "http_error")
-            .message(errorMsg != null ? errorMsg : (body.isEmpty() ? "HTTP " + code : body))
-            .build();
-    return new ApiException(status, t);
+    return Errors.fromStatus(
+        code,
+        errorCode,
+        errorMsg != null ? errorMsg : (body.isEmpty() ? null : body),
+        response.header("x-request-id"),
+        body,
+        null);
   }
 
   @Override
@@ -137,18 +140,16 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
           Object item = queue.poll(timeoutMs, TimeUnit.MILLISECONDS);
           if (item == null) {
             // Differentiate timeout from real end-of-stream: POISON is real EOF, null is timeout.
-            throw new ApiException(
-                Status.builder()
-                    .statusCode(-1)
-                    .code("stream_timeout")
-                    .message("No event received within " + timeoutMs + "ms")
-                    .build());
+            throw new ApiTimeoutException(
+                "No event received within " + timeoutMs + "ms",
+                SdkErrorCode.SDK_AGENTSTUDIO_API_TIMEOUT_ERROR.getCode(),
+                null);
           }
           if (item == POISON) {
             return false;
           }
           if (item instanceof Throwable) {
-            throw new ApiException((Throwable) item);
+            throw AgentStudioErrors.translate((Throwable) item);
           }
           next = (Message) item;
           return true;

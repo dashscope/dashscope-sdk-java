@@ -10,15 +10,13 @@ import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.FlattenResultBase;
 import com.alibaba.dashscope.common.GeneralGetParam;
-import com.alibaba.dashscope.common.Status;
-import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
 import com.alibaba.dashscope.utils.ApiKey;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.alibaba.dashscope.utils.StringUtils;
+import com.alibaba.dashscope.v3.errors.Errors;
 import com.google.gson.reflect.TypeToken;
 import java.io.Closeable;
 import java.io.File;
@@ -97,7 +95,7 @@ public final class Files implements Closeable {
 
   public CompletableFuture<FileContent> downloadAsync(String fileId) {
     if (fileId == null || fileId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("fileId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("fileId is required!"));
     }
     String key;
     try {
@@ -117,7 +115,7 @@ public final class Files implements Closeable {
             new Callback() {
               @Override
               public void onFailure(Call call, IOException e) {
-                future.completeExceptionally(new ApiException(e));
+                future.completeExceptionally(AgentStudioErrors.network(e));
               }
 
               @Override
@@ -126,14 +124,14 @@ public final class Files implements Closeable {
                   if (!r.isSuccessful()) {
                     String body = r.body() != null ? r.body().string() : "";
                     future.completeExceptionally(
-                        new ApiException(
-                            Status.builder().statusCode(r.code()).message(body).build()));
+                        Errors.fromStatus(
+                            r.code(), null, body, r.header("x-request-id"), body, null));
                     return;
                   }
                   byte[] bytes = r.body() != null ? r.body().bytes() : new byte[0];
                   future.complete(new FileContent(bytes));
                 } catch (Exception e) {
-                  future.completeExceptionally(new ApiException(e));
+                  future.completeExceptionally(AgentStudioErrors.translate(e));
                 }
               }
             });
@@ -142,11 +140,11 @@ public final class Files implements Closeable {
 
   public CompletableFuture<AgentStudioFile> uploadAsync(String filePath, String mimeType) {
     if (filePath == null || filePath.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("filePath is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("filePath is required!"));
     }
     File file = new File(filePath);
     if (!file.exists() || !file.isFile()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("file not found: " + filePath));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("file not found: " + filePath));
     }
     String mt = mimeType != null ? mimeType : guessContentType(filePath);
     RequestBody body = RequestBody.create(MediaType.parse(mt), file);
@@ -156,10 +154,10 @@ public final class Files implements Closeable {
   public CompletableFuture<AgentStudioFile> uploadAsync(
       String filename, InputStream inputStream, String mimeType) {
     if (filename == null || filename.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("filename is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("filename is required!"));
     }
     if (inputStream == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("inputStream is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("inputStream is required!"));
     }
     String mt = mimeType != null ? mimeType : "application/octet-stream";
     RequestBody body = streamingBody(MediaType.parse(mt), inputStream);
@@ -184,7 +182,7 @@ public final class Files implements Closeable {
   public CompletableFuture<AgentStudioFile> retrieveAsync(
       String fileId, String apiKey, Map<String, String> headers) {
     if (fileId == null || fileId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("fileId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("fileId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -202,7 +200,7 @@ public final class Files implements Closeable {
 
   public CompletableFuture<CursorPage<AgentStudioFile>> listAsync(FileListParam param) {
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     String query = param.toQueryString();
     String path = query.isEmpty() ? "files" : "files?" + query;
@@ -232,7 +230,7 @@ public final class Files implements Closeable {
   public CompletableFuture<AgentStudioDeletionStatus> deleteAsync(
       String fileId, String apiKey, Map<String, String> headers) {
     if (fileId == null || fileId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("fileId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("fileId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -277,7 +275,7 @@ public final class Files implements Closeable {
             new Callback() {
               @Override
               public void onFailure(Call call, IOException e) {
-                future.completeExceptionally(new ApiException(e));
+                future.completeExceptionally(AgentStudioErrors.network(e));
               }
 
               @Override
@@ -286,14 +284,14 @@ public final class Files implements Closeable {
                   String body = r.body() != null ? r.body().string() : "";
                   if (!r.isSuccessful()) {
                     future.completeExceptionally(
-                        new ApiException(
-                            Status.builder().statusCode(r.code()).message(body).build()));
+                        Errors.fromStatus(
+                            r.code(), null, body, r.header("x-request-id"), body, null));
                     return;
                   }
                   future.complete(
                       JsonUtils.fromJson(body.isEmpty() ? "{}" : body, AgentStudioFile.class));
                 } catch (Exception e) {
-                  future.completeExceptionally(new ApiException(e));
+                  future.completeExceptionally(AgentStudioErrors.translate(e));
                 }
               }
             });

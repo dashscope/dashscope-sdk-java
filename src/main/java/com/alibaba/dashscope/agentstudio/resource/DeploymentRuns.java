@@ -9,7 +9,6 @@ import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.FlattenResultBase;
 import com.alibaba.dashscope.common.GeneralGetParam;
-import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
@@ -40,7 +39,7 @@ public final class DeploymentRuns {
 
   public CompletableFuture<DeploymentRun> retrieveAsync(String deploymentRunId) {
     if (deploymentRunId == null || deploymentRunId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("deploymentRunId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("deploymentRunId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -51,7 +50,7 @@ public final class DeploymentRuns {
 
   public CompletableFuture<CursorPage<DeploymentRun>> listAsync(DeploymentRunListParam param) {
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     String query = param.toQueryString();
     String path = query.isEmpty() ? "deployment_runs" : "deployment_runs?" + query;

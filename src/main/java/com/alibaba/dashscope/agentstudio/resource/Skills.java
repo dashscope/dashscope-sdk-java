@@ -12,7 +12,6 @@ import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.FlattenResultBase;
 import com.alibaba.dashscope.common.GeneralGetParam;
-import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
@@ -41,7 +40,7 @@ public final class Skills implements Closeable {
 
   private CompletableFuture<String> resolveFileId(SkillCreateParam param) {
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     if (param.getFileId() != null) {
       return CompletableFuture.completedFuture(param.getFileId());
@@ -49,13 +48,13 @@ public final class Skills implements Closeable {
     if (param.getFile() != null) {
       if (files == null) {
         return AsyncHelper.failedFuture(
-            new InputRequiredException(
+            new IllegalArgumentException(
                 "File upload requires a configured Skills instance (use AgentStudioClient)"));
       }
       return files.uploadAsync(param.getFile(), param.getMimeType()).thenApply(f -> f.getId());
     }
     return AsyncHelper.failedFuture(
-        new InputRequiredException("Either fileId or file must be provided"));
+        new IllegalArgumentException("Either fileId or file must be provided"));
   }
 
   public Skill create(SkillCreateParam param) {
@@ -119,7 +118,7 @@ public final class Skills implements Closeable {
   public CompletableFuture<Skill> retrieveAsync(
       String skillId, String apiKey, Map<String, String> headers) {
     if (skillId == null || skillId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("skillId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("skillId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -137,7 +136,7 @@ public final class Skills implements Closeable {
 
   public CompletableFuture<CursorPage<Skill>> listAsync(SkillListParam param) {
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     String query = param.toQueryString();
     String path = query.isEmpty() ? "skills" : "skills?" + query;
@@ -167,7 +166,7 @@ public final class Skills implements Closeable {
   public CompletableFuture<AgentStudioDeletionStatus> deleteAsync(
       String skillId, String apiKey, Map<String, String> headers) {
     if (skillId == null || skillId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("skillId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("skillId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -186,7 +185,7 @@ public final class Skills implements Closeable {
   public CompletableFuture<SkillVersion> createVersionAsync(
       String skillId, SkillCreateParam param) {
     if (skillId == null || skillId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("skillId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("skillId is required!"));
     }
     return resolveFileId(param)
         .thenCompose(
@@ -204,7 +203,7 @@ public final class Skills implements Closeable {
   public CompletableFuture<CursorPage<SkillVersion>> listVersionsAsync(
       String skillId, SkillListParam param) {
     if (skillId == null || skillId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("skillId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("skillId is required!"));
     }
     String query = param != null ? param.toQueryString() : "";
     String path = StringUtils.format("skills/%s/versions", skillId);
@@ -233,7 +232,7 @@ public final class Skills implements Closeable {
   public CompletableFuture<SkillVersion> retrieveVersionAsync(String skillId, String version) {
     if (skillId == null || skillId.isEmpty() || version == null || version.isEmpty()) {
       return AsyncHelper.failedFuture(
-          new InputRequiredException("skillId and version are required!"));
+          new IllegalArgumentException("skillId and version are required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -246,7 +245,7 @@ public final class Skills implements Closeable {
   public CompletableFuture<JsonObject> downloadVersionAsync(String skillId, String version) {
     if (skillId == null || skillId.isEmpty() || version == null || version.isEmpty()) {
       return AsyncHelper.failedFuture(
-          new InputRequiredException("skillId and version are required!"));
+          new IllegalArgumentException("skillId and version are required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(

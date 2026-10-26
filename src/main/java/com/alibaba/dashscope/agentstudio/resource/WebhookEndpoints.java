@@ -14,7 +14,6 @@ import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.FlattenResultBase;
 import com.alibaba.dashscope.common.GeneralGetParam;
-import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
@@ -90,7 +89,7 @@ public final class WebhookEndpoints {
 
   public CompletableFuture<WebhookEndpoint> createAsync(WebhookEndpointCreateParam param) {
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     GeneralServiceOption option =
         AgentStudioConstants.newServiceOption(HttpMethod.POST, RESOURCE_PATH, baseUrl);
@@ -100,7 +99,7 @@ public final class WebhookEndpoints {
 
   public CompletableFuture<WebhookEndpoint> retrieveAsync(String webhookId) {
     if (isEmpty(webhookId)) {
-      return AsyncHelper.failedFuture(new InputRequiredException("webhookId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("webhookId is required!"));
     }
     GeneralServiceOption option =
         AgentStudioConstants.newServiceOption(
@@ -124,10 +123,10 @@ public final class WebhookEndpoints {
   public CompletableFuture<WebhookEndpoint> updateAsync(
       String webhookId, WebhookEndpointUpdateParam param) {
     if (isEmpty(webhookId)) {
-      return AsyncHelper.failedFuture(new InputRequiredException("webhookId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("webhookId is required!"));
     }
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     GeneralServiceOption option =
         AgentStudioConstants.newServiceOption(
@@ -138,7 +137,7 @@ public final class WebhookEndpoints {
 
   public CompletableFuture<JsonObject> deleteAsync(String webhookId) {
     if (isEmpty(webhookId)) {
-      return AsyncHelper.failedFuture(new InputRequiredException("webhookId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("webhookId is required!"));
     }
     GeneralServiceOption option =
         AgentStudioConstants.newServiceOption(
@@ -157,7 +156,7 @@ public final class WebhookEndpoints {
 
   public CompletableFuture<WebhookEvent> testAsync(String webhookId) {
     if (isEmpty(webhookId)) {
-      return AsyncHelper.failedFuture(new InputRequiredException("webhookId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("webhookId is required!"));
     }
     GeneralServiceOption option = actionOption(webhookId, "test");
     return AsyncHelper.callAsync(api, emptyParam(), option)
@@ -166,7 +165,7 @@ public final class WebhookEndpoints {
 
   public CompletableFuture<WebhookSecretReset> resetSecretAsync(String webhookId) {
     if (isEmpty(webhookId)) {
-      return AsyncHelper.failedFuture(new InputRequiredException("webhookId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("webhookId is required!"));
     }
     GeneralServiceOption option = actionOption(webhookId, "reset_secret");
     return AsyncHelper.callAsync(api, emptyParam(), option)
@@ -181,10 +180,10 @@ public final class WebhookEndpoints {
   public CompletableFuture<CursorPage<WebhookEvent>> listEventsAsync(
       String webhookId, WebhookEventListParam param) {
     if (isEmpty(webhookId)) {
-      return AsyncHelper.failedFuture(new InputRequiredException("webhookId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("webhookId is required!"));
     }
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     String query = param.toQueryString();
     String path = StringUtils.format("%s/%s/events", RESOURCE_PATH, webhookId);
@@ -210,7 +209,7 @@ public final class WebhookEndpoints {
 
   private CompletableFuture<WebhookEndpoint> endpointActionAsync(String webhookId, String action) {
     if (isEmpty(webhookId)) {
-      return AsyncHelper.failedFuture(new InputRequiredException("webhookId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("webhookId is required!"));
     }
     return AsyncHelper.callAsync(api, emptyParam(), actionOption(webhookId, action))
         .thenApply(result -> FlattenResultBase.fromDashScopeResult(result, WebhookEndpoint.class));

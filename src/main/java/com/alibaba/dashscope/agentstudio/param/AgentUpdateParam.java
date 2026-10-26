@@ -6,7 +6,6 @@ import com.alibaba.dashscope.agentstudio.model.Configs.MultiAgentConfig;
 import com.alibaba.dashscope.agentstudio.model.Configs.SkillConfig;
 import com.alibaba.dashscope.agentstudio.model.Configs.ToolConfig;
 import com.alibaba.dashscope.base.FlattenHalfDuplexParamBase;
-import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import java.util.List;
@@ -73,9 +72,9 @@ public class AgentUpdateParam extends FlattenHalfDuplexParamBase {
   }
 
   @Override
-  public void validate() throws InputRequiredException {
+  public void validate() {
     if (version == null) {
-      throw new InputRequiredException(
+      throw new IllegalArgumentException(
           "version is required for update. Call agents().retrieve(agentId) first to obtain the"
               + " current version (server rejects updates that don't match the latest version).");
     }

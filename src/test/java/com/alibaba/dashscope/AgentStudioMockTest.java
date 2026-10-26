@@ -12,8 +12,8 @@ import com.alibaba.dashscope.agentstudio.model.Memory;
 import com.alibaba.dashscope.agentstudio.pagination.CursorPage;
 import com.alibaba.dashscope.agentstudio.param.AgentCreateParam;
 import com.alibaba.dashscope.agentstudio.param.MemoryListParam;
-import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.v3.errors.NotFoundException;
 import com.google.gson.JsonObject;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -121,7 +121,7 @@ public class AgentStudioMockTest {
   }
 
   @Test
-  public void notFoundRaisesApiException() throws Exception {
+  public void notFoundRaisesNotFoundException() throws Exception {
     server.enqueue(
         new MockResponse()
             .setResponseCode(404)
@@ -130,11 +130,12 @@ public class AgentStudioMockTest {
                 "{\"code\":\"AgentNotFound\",\"message\":\"agent not found\","
                     + "\"request_id\":\"req-404\"}"));
     AgentStudioClient client = newClient();
-    ApiException ex = assertThrows(ApiException.class, () -> client.agents().retrieve("nope"));
-    assertEquals(404, ex.getStatus().getStatusCode());
-    assertEquals("AgentNotFound", ex.getStatus().getCode());
-    assertEquals("agent not found", ex.getStatus().getMessage());
-    assertEquals("req-404", ex.getStatus().getRequestId());
+    NotFoundException ex =
+        assertThrows(NotFoundException.class, () -> client.agents().retrieve("nope"));
+    assertEquals(404, ex.getStatusCode());
+    assertEquals("AgentNotFound", ex.getCode());
+    assertEquals("agent not found", ex.getMessage());
+    assertEquals("req-404", ex.getRequestId());
     server.takeRequest(); // drain so later tests see only their own requests
     client.close();
   }

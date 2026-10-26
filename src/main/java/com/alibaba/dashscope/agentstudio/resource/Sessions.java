@@ -12,7 +12,6 @@ import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.FlattenResultBase;
 import com.alibaba.dashscope.common.GeneralGetParam;
-import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
@@ -87,7 +86,7 @@ public final class Sessions {
 
   public CompletableFuture<Session> createAsync(SessionCreateParam param) {
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(HttpMethod.POST, "sessions", baseUrl);
@@ -102,7 +101,7 @@ public final class Sessions {
   public CompletableFuture<Session> retrieveAsync(
       String sessionId, String apiKey, Map<String, String> headers) {
     if (sessionId == null || sessionId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("sessionId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("sessionId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -120,10 +119,10 @@ public final class Sessions {
 
   public CompletableFuture<Session> updateAsync(String sessionId, SessionUpdateParam param) {
     if (sessionId == null || sessionId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("sessionId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("sessionId is required!"));
     }
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -134,7 +133,7 @@ public final class Sessions {
 
   public CompletableFuture<CursorPage<Session>> listAsync(SessionListParam param) {
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     String query = param.toQueryString();
     String path = query.isEmpty() ? "sessions" : "sessions?" + query;
@@ -164,7 +163,7 @@ public final class Sessions {
 
   public CompletableFuture<Session> archiveAsync(String sessionId) {
     if (sessionId == null || sessionId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("sessionId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("sessionId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -181,7 +180,7 @@ public final class Sessions {
   public CompletableFuture<AgentStudioDeletionStatus> deleteAsync(
       String sessionId, String apiKey, Map<String, String> headers) {
     if (sessionId == null || sessionId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("sessionId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("sessionId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(

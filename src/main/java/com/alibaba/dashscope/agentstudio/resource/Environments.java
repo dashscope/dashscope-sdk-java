@@ -12,7 +12,6 @@ import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.FlattenResultBase;
 import com.alibaba.dashscope.common.GeneralGetParam;
-import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
@@ -69,7 +68,7 @@ public final class Environments {
 
   public CompletableFuture<Environment> createAsync(EnvironmentCreateParam param) {
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(HttpMethod.POST, "environments", baseUrl);
@@ -84,7 +83,7 @@ public final class Environments {
   public CompletableFuture<Environment> retrieveAsync(
       String environmentId, String apiKey, Map<String, String> headers) {
     if (environmentId == null || environmentId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("environmentId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("environmentId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -103,10 +102,10 @@ public final class Environments {
   public CompletableFuture<Environment> updateAsync(
       String environmentId, EnvironmentUpdateParam param) {
     if (environmentId == null || environmentId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("environmentId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("environmentId is required!"));
     }
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -117,7 +116,7 @@ public final class Environments {
 
   public CompletableFuture<CursorPage<Environment>> listAsync(EnvironmentListParam param) {
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     String query = param.toQueryString();
     String path = query.isEmpty() ? "environments" : "environments?" + query;
@@ -142,7 +141,7 @@ public final class Environments {
 
   public CompletableFuture<Environment> archiveAsync(String environmentId) {
     if (environmentId == null || environmentId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("environmentId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("environmentId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -161,7 +160,7 @@ public final class Environments {
   public CompletableFuture<AgentStudioDeletionStatus> deleteAsync(
       String environmentId, String apiKey, Map<String, String> headers) {
     if (environmentId == null || environmentId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("environmentId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("environmentId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(

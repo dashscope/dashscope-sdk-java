@@ -16,7 +16,6 @@ import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.FlattenResultBase;
 import com.alibaba.dashscope.common.GeneralGetParam;
-import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
@@ -79,7 +78,7 @@ public final class Vaults {
 
   public CompletableFuture<Vault> createAsync(VaultCreateParam param) {
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(HttpMethod.POST, "vaults", baseUrl);
@@ -94,7 +93,7 @@ public final class Vaults {
   public CompletableFuture<Vault> retrieveAsync(
       String vaultId, String apiKey, Map<String, String> headers) {
     if (vaultId == null || vaultId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("vaultId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("vaultId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -112,10 +111,10 @@ public final class Vaults {
 
   public CompletableFuture<Vault> updateAsync(String vaultId, VaultUpdateParam param) {
     if (vaultId == null || vaultId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("vaultId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("vaultId is required!"));
     }
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -126,7 +125,7 @@ public final class Vaults {
 
   public CompletableFuture<CursorPage<Vault>> listAsync(VaultListParam param) {
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     String query = param.toQueryString();
     String path = query.isEmpty() ? "vaults" : "vaults?" + query;
@@ -151,7 +150,7 @@ public final class Vaults {
 
   public CompletableFuture<Vault> archiveAsync(String vaultId) {
     if (vaultId == null || vaultId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("vaultId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("vaultId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -168,7 +167,7 @@ public final class Vaults {
   public CompletableFuture<AgentStudioDeletionStatus> deleteAsync(
       String vaultId, String apiKey, Map<String, String> headers) {
     if (vaultId == null || vaultId.isEmpty()) {
-      return AsyncHelper.failedFuture(new InputRequiredException("vaultId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("vaultId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -222,10 +221,10 @@ public final class Vaults {
 
     public CompletableFuture<Credential> createAsync(String vaultId, CredentialCreateParam param) {
       if (vaultId == null || vaultId.isEmpty()) {
-        return AsyncHelper.failedFuture(new InputRequiredException("vaultId is required!"));
+        return AsyncHelper.failedFuture(new IllegalArgumentException("vaultId is required!"));
       }
       if (param == null) {
-        return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+        return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
       }
       GeneralServiceOption opt =
           AgentStudioConstants.newServiceOption(
@@ -242,7 +241,7 @@ public final class Vaults {
         String vaultId, String credentialId, String apiKey, Map<String, String> headers) {
       if (vaultId == null || vaultId.isEmpty() || credentialId == null || credentialId.isEmpty()) {
         return AsyncHelper.failedFuture(
-            new InputRequiredException("vaultId and credentialId are required!"));
+            new IllegalArgumentException("vaultId and credentialId are required!"));
       }
       GeneralServiceOption opt =
           AgentStudioConstants.newServiceOption(
@@ -264,10 +263,10 @@ public final class Vaults {
         String vaultId, String credentialId, CredentialUpdateParam param) {
       if (vaultId == null || vaultId.isEmpty() || credentialId == null || credentialId.isEmpty()) {
         return AsyncHelper.failedFuture(
-            new InputRequiredException("vaultId and credentialId are required!"));
+            new IllegalArgumentException("vaultId and credentialId are required!"));
       }
       if (param == null) {
-        return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+        return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
       }
       GeneralServiceOption opt =
           AgentStudioConstants.newServiceOption(
@@ -281,10 +280,10 @@ public final class Vaults {
     public CompletableFuture<CursorPage<Credential>> listAsync(
         String vaultId, CredentialListParam param) {
       if (vaultId == null || vaultId.isEmpty()) {
-        return AsyncHelper.failedFuture(new InputRequiredException("vaultId is required!"));
+        return AsyncHelper.failedFuture(new IllegalArgumentException("vaultId is required!"));
       }
       if (param == null) {
-        return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+        return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
       }
       String query = param.toQueryString();
       String path = StringUtils.format("vaults/%s/credentials", vaultId);
@@ -315,7 +314,7 @@ public final class Vaults {
     public CompletableFuture<Credential> archiveAsync(String vaultId, String credentialId) {
       if (vaultId == null || vaultId.isEmpty() || credentialId == null || credentialId.isEmpty()) {
         return AsyncHelper.failedFuture(
-            new InputRequiredException("vaultId and credentialId are required!"));
+            new IllegalArgumentException("vaultId and credentialId are required!"));
       }
       GeneralServiceOption opt =
           AgentStudioConstants.newServiceOption(
@@ -338,7 +337,7 @@ public final class Vaults {
         String vaultId, String credentialId, String apiKey, Map<String, String> headers) {
       if (vaultId == null || vaultId.isEmpty() || credentialId == null || credentialId.isEmpty()) {
         return AsyncHelper.failedFuture(
-            new InputRequiredException("vaultId and credentialId are required!"));
+            new IllegalArgumentException("vaultId and credentialId are required!"));
       }
       GeneralServiceOption opt =
           AgentStudioConstants.newServiceOption(

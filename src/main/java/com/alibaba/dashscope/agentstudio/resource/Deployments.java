@@ -13,7 +13,6 @@ import com.alibaba.dashscope.api.GeneralApi;
 import com.alibaba.dashscope.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.common.FlattenResultBase;
 import com.alibaba.dashscope.common.GeneralGetParam;
-import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
 import com.alibaba.dashscope.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.protocol.HttpMethod;
@@ -72,7 +71,7 @@ public final class Deployments {
 
   public CompletableFuture<Deployment> createAsync(DeploymentCreateParam param) {
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(HttpMethod.POST, "deployments", baseUrl);
@@ -82,7 +81,7 @@ public final class Deployments {
 
   public CompletableFuture<Deployment> retrieveAsync(String deploymentId) {
     if (isBlank(deploymentId)) {
-      return AsyncHelper.failedFuture(new InputRequiredException("deploymentId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("deploymentId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -94,10 +93,10 @@ public final class Deployments {
   public CompletableFuture<Deployment> updateAsync(
       String deploymentId, DeploymentUpdateParam param) {
     if (isBlank(deploymentId)) {
-      return AsyncHelper.failedFuture(new InputRequiredException("deploymentId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("deploymentId is required!"));
     }
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -108,7 +107,7 @@ public final class Deployments {
 
   public CompletableFuture<CursorPage<Deployment>> listAsync(DeploymentListParam param) {
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     String query = param.toQueryString();
     String path = query.isEmpty() ? "deployments" : "deployments?" + query;
@@ -149,7 +148,7 @@ public final class Deployments {
 
   public CompletableFuture<DeploymentRun> runAsync(String deploymentId) {
     if (isBlank(deploymentId)) {
-      return AsyncHelper.failedFuture(new InputRequiredException("deploymentId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("deploymentId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
@@ -162,10 +161,10 @@ public final class Deployments {
   public CompletableFuture<CursorPage<DeploymentRun>> listRunsAsync(
       String deploymentId, DeploymentRunListParam param) {
     if (isBlank(deploymentId)) {
-      return AsyncHelper.failedFuture(new InputRequiredException("deploymentId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("deploymentId is required!"));
     }
     if (param == null) {
-      return AsyncHelper.failedFuture(new InputRequiredException("param is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("param is required!"));
     }
     String query = param.toQueryString();
     String basePath = StringUtils.format("deployments/%s/runs", deploymentId);
@@ -190,7 +189,7 @@ public final class Deployments {
 
   private CompletableFuture<Deployment> lifecycleAsync(String deploymentId, String action) {
     if (isBlank(deploymentId)) {
-      return AsyncHelper.failedFuture(new InputRequiredException("deploymentId is required!"));
+      return AsyncHelper.failedFuture(new IllegalArgumentException("deploymentId is required!"));
     }
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(
