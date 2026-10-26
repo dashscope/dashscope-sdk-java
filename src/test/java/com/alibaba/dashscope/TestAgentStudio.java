@@ -3,6 +3,7 @@ package com.alibaba.dashscope;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -165,6 +166,206 @@ public class TestAgentStudio {
     JsonObject plain =
         AgentCreateParam.builder().name("plain").model("qwen-max").build().getHttpBody();
     assertFalse(plain.has("multiagent"));
+  }
+
+  private static JsonObject modelBody(Configs.ModelConfig model) {
+    return AgentCreateParam.builder()
+        .name("a")
+        .model(model)
+        .build()
+        .getHttpBody()
+        .getAsJsonObject("model");
+  }
+
+  @Test
+  public void testAgentCreateModelCarriesInferenceParameters() {
+    JsonObject model =
+        modelBody(
+            Configs.ModelConfig.builder()
+                .id("qwen3-max")
+                .temperature(0.7)
+                .maxTokens(1024)
+                .enableThinking(true)
+                .thinkingBudget(2048)
+                .build());
+    assertEquals("qwen3-max", model.get("id").getAsString());
+    assertEquals(0.7, model.get("temperature").getAsDouble(), 1e-9);
+    assertEquals(1024, model.get("max_tokens").getAsInt());
+    assertTrue(model.get("enable_thinking").getAsBoolean());
+    assertEquals(2048, model.get("thinking_budget").getAsInt());
+    // Field order follows the API reference; unset parameters are omitted, not sent as null.
+    assertEquals(
+        "{\"id\":\"qwen3-max\",\"temperature\":0.7,\"max_tokens\":1024,"
+            + "\"enable_thinking\":true,\"thinking_budget\":2048}",
+        JsonUtils.toJson(model));
+  }
+
+  @Test
+  public void testAgentCreateModelShorthandOmitsParameters() {
+    JsonObject model =
+        AgentCreateParam.builder()
+            .name("a")
+            .model("qwen-max")
+            .build()
+            .getHttpBody()
+            .getAsJsonObject("model");
+    assertEquals("qwen-max", model.get("id").getAsString());
+    assertFalse(model.has("temperature"));
+    assertFalse(model.has("max_tokens"));
+    assertFalse(model.has("enable_thinking"));
+    assertFalse(model.has("thinking_budget"));
+  }
+
+  @Test
+  public void testAgentCreateModelKeepsFalsyParameters() {
+    JsonObject model =
+        modelBody(
+            Configs.ModelConfig.builder()
+                .id("qwen3-max")
+                .temperature(0.0)
+                .enableThinking(false)
+                .build());
+    assertEquals(0.0, model.get("temperature").getAsDouble(), 1e-9);
+    assertFalse(model.get("enable_thinking").getAsBoolean());
+  }
+
+  @Test
+  public void testAgentUpdateModelOverwritesAndOmits() {
+    JsonObject withModel =
+        AgentUpdateParam.builder()
+            .version(4)
+            .model(Configs.ModelConfig.builder().id("qwen-plus").temperature(0.2).build())
+            .build()
+            .getHttpBody();
+    assertEquals(0.2, withModel.getAsJsonObject("model").get("temperature").getAsDouble(), 1e-9);
+    // Only what the object holds is sent; the server replaces the whole config with it.
+    assertFalse(withModel.getAsJsonObject("model").has("max_tokens"));
+    assertFalse(
+        AgentUpdateParam.builder().version(4).name("renamed").build().getHttpBody().has("model"));
+  }
+
+  @Test
+  public void testAgentModelConfigRoundTripsAndCarriesSiblings() {
+    // The public API returns the id plus the four parameters; name is console-only.
+    Agent agent =
+        JsonUtils.fromJson(
+            "{\"id\":\"agent_1\",\"model\":{\"id\":\"qwen3-max\","
+                + "\"temperature\":0.3,\"max_tokens\":2048,\"enable_thinking\":true,"
+                + "\"thinking_budget\":1024}}",
+            Agent.class);
+    Configs.ModelConfig read = agent.getModel();
+    assertEquals("qwen3-max", read.getId());
+    assertNull(read.getName());
+    assertEquals(0.3, read.getTemperature(), 1e-9);
+    assertEquals(Integer.valueOf(2048), read.getMaxTokens());
+    assertTrue(read.getEnableThinking());
+    assertEquals(Integer.valueOf(1024), read.getThinkingBudget());
+
+    Configs.ModelConfig tuned = read.toBuilder().temperature(0.9).build();
+    assertEquals("qwen3-max", tuned.getId());
+    assertEquals(Integer.valueOf(1024), tuned.getThinkingBudget());
+    assertEquals(0.9, tuned.getTemperature(), 1e-9);
+  }
+
+  @Test
+  public void testAgentParamGetModelReturnsTheId() {
+    assertEquals(
+        "qwen-max", AgentCreateParam.builder().name("a").model("qwen-max").build().getModel());
+    assertEquals(
+        "qwen-max",
+        AgentUpdateParam.builder()
+            .version(1)
+            .model(Configs.ModelConfig.of("qwen-max"))
+            .build()
+            .getModel());
+    assertNull(AgentUpdateParam.builder().version(1).build().getModel());
+  }
+
+  @Test
+  public void testAgentParamEqualsAndHashCodeCoverTheWholeModelConfig() {
+    AgentUpdateParam temperature =
+        AgentUpdateParam.builder()
+            .version(1)
+            .model(Configs.ModelConfig.builder().id("qwen-max").temperature(0.7).build())
+            .build();
+    AgentUpdateParam same =
+        AgentUpdateParam.builder()
+            .version(1)
+            .model(Configs.ModelConfig.builder().id("qwen-max").temperature(0.7).build())
+            .build();
+    AgentUpdateParam other =
+        AgentUpdateParam.builder()
+            .version(1)
+            .model(Configs.ModelConfig.builder().id("qwen-max").temperature(0.1).build())
+            .build();
+    assertEquals(temperature, same);
+    assertEquals(temperature.hashCode(), same.hashCode());
+    assertNotEquals(temperature, other);
+    assertTrue(temperature.toString().contains("temperature=0.7"), temperature.toString());
+    assertFalse(other.toString().contains("temperature=0.7"), other.toString());
+  }
+
+  @Test
+  public void testAgentModelStringNullStaysUnset() {
+    // null keeps the "don't touch the model" meaning instead of an empty config object.
+    AgentUpdateParam update = AgentUpdateParam.builder().version(1).model((String) null).build();
+    assertFalse(update.getHttpBody().has("model"));
+    assertNull(update.getModel());
+    assertThrows(
+        NullPointerException.class,
+        () -> AgentCreateParam.builder().name("a").model((String) null).build());
+  }
+
+  @Test
+  public void testAgentParamSetModelAcceptsIdAndConfig() {
+    AgentUpdateParam update = AgentUpdateParam.builder().version(1).build();
+    update.setModel("qwen-max");
+    assertEquals("qwen-max", update.getModel());
+    assertFalse(update.getHttpBody().getAsJsonObject("model").has("temperature"));
+    update.setModelConfig(Configs.ModelConfig.builder().id("qwen3-max").temperature(0.7).build());
+    assertEquals("qwen3-max", update.getModel());
+    assertEquals("qwen3-max", update.getModelConfig().getId());
+    assertEquals(
+        0.7, update.getHttpBody().getAsJsonObject("model").get("temperature").getAsDouble(), 1e-9);
+    update.setModel(null);
+    assertFalse(update.getHttpBody().has("model"));
+
+    AgentCreateParam create = AgentCreateParam.builder().name("a").model("qwen-max").build();
+    create.setModelConfig(Configs.ModelConfig.of("qwen3-max"));
+    assertEquals("qwen3-max", create.getModel());
+    assertThrows(NullPointerException.class, () -> create.setModel(null));
+    assertThrows(NullPointerException.class, () -> create.setModelConfig(null));
+  }
+
+  @Test
+  public void testAgentCreateRejectsModelWithoutId() {
+    ApiException e =
+        assertThrows(
+            ApiException.class,
+            () ->
+                new Agents(null, null, null)
+                    .create(
+                        AgentCreateParam.builder()
+                            .name("a")
+                            .model(Configs.ModelConfig.builder().temperature(0.5).build())
+                            .build()));
+    assertTrue(e.getMessage().contains("model.id"), e.getMessage());
+  }
+
+  @Test
+  public void testAgentUpdateRejectsModelWithoutId() {
+    ApiException e =
+        assertThrows(
+            ApiException.class,
+            () ->
+                new Agents(null, null, null)
+                    .update(
+                        "agent_xyz",
+                        AgentUpdateParam.builder()
+                            .version(1)
+                            .model(Configs.ModelConfig.builder().id("").build())
+                            .build()));
+    assertTrue(e.getMessage().contains("model.id"), e.getMessage());
   }
 
   @Test

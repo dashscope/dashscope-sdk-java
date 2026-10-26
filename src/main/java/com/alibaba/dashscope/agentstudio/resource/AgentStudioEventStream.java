@@ -34,6 +34,10 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
           .create();
 
   private final BlockingQueue<Object> queue = new LinkedBlockingQueue<>();
+
+  /** The queue drains into one reader: a second pass would block and then time out. */
+  private final AtomicBoolean passStarted = new AtomicBoolean(false);
+
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final EventSource eventSource;
   private final long timeoutMs;
@@ -126,6 +130,11 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
 
   @Override
   public Iterator<Message> iterator() {
+    if (!passStarted.compareAndSet(false, true)) {
+      throw new IllegalStateException(
+          "this stream is single-pass and was already consumed; open another stream to read the"
+              + " events again");
+    }
     return new Iterator<Message>() {
       private Message next;
 
@@ -271,7 +280,7 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
   /**
    * Incremental text chunks from {@code event_delta} frames. Requires the stream to be opened with
    * {@code event_deltas}; otherwise yields nothing (use {@link TextStream} for terminal full text).
-   * Stops on terminal {@code session_status}.
+   * Stops on terminal {@code session_status}. Consumes the stream's single pass.
    */
   public static class TextDeltaStream implements Iterable<String>, Closeable {
     private final AgentStudioEventStream source;

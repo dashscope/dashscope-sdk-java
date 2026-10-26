@@ -3,6 +3,7 @@ package com.alibaba.dashscope.agentstudio.message;
 
 import com.alibaba.dashscope.agentstudio.model.Session;
 import com.alibaba.dashscope.utils.JsonUtils;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import java.util.HashMap;
@@ -65,8 +66,10 @@ public class Message {
   @SerializedName("event_id")
   private String deltaEventId;
 
+  // Held as a JsonElement because a frame whose `delta` is not an object would otherwise fail
+  // deserialization, and one failed frame ends the whole stream.
   @SerializedName("delta")
-  private JsonObject deltaPayload;
+  private JsonElement deltaPayload;
 
   /**
    * Extract stop_reason from a session_status event's data block.
@@ -179,17 +182,27 @@ public class Message {
     return eventPayload;
   }
 
+  /** The {@code delta} payload object, or null when the frame carries anything else. */
+  public JsonObject getDeltaPayload() {
+    return deltaPayload != null && deltaPayload.isJsonObject()
+        ? deltaPayload.getAsJsonObject()
+        : null;
+  }
+
+  public void setDeltaPayload(JsonObject payload) {
+    this.deltaPayload = payload;
+  }
+
   /** Delta payload from {@code event_delta} frames. */
   public JsonObject getEventDelta() {
-    if (!"event_delta".equals(type)) return null;
-    return deltaPayload;
+    return "event_delta".equals(type) ? getDeltaPayload() : null;
   }
 
   /** Incremental text from an {@code event_delta}'s {@code content_delta}. */
   public String getDeltaText() {
-    if (!"event_delta".equals(type) || deltaPayload == null) return null;
-    if (deltaPayload.has("content") && deltaPayload.get("content").isJsonObject()) {
-      JsonObject c = deltaPayload.getAsJsonObject("content");
+    JsonObject delta = getEventDelta();
+    if (delta != null && delta.has("content") && delta.get("content").isJsonObject()) {
+      JsonObject c = delta.getAsJsonObject("content");
       if (c.has("text")) return c.get("text").getAsString();
     }
     return null;
