@@ -241,11 +241,16 @@ public final class WsConnection implements AutoCloseable {
           "ws event for unknown task {} (event={}), dropped", event.getTaskId(), event.getEvent());
       return;
     }
-    handle.enqueue(event);
-    if (TaskProtocol.TASK_FINISHED.equals(event.getEvent())
-        || TaskProtocol.TASK_FAILED.equals(event.getEvent())) {
+    boolean terminal =
+        TaskProtocol.TASK_FINISHED.equals(event.getEvent())
+            || TaskProtocol.TASK_FAILED.equals(event.getEvent());
+    if (terminal) {
+      // Release headerless binary ownership before publishing the terminal event. Publishing first
+      // lets a fast consumer start the next sequential task while the demux thread still retains
+      // the old owner, producing a spurious BinaryOwnerConflict.
       unregisterTerminal(event.getTaskId());
     }
+    handle.enqueue(event);
   }
 
   private void routeBinary(ByteBuffer bytes) {
@@ -274,8 +279,22 @@ public final class WsConnection implements AutoCloseable {
     if (handle != null) {
       handle.detached.set(true);
     }
-    uplinkOwner.compareAndSet(taskId, null);
-    downlinkOwner.compareAndSet(taskId, null);
+    releaseOwner(uplinkOwner, taskId);
+    releaseOwner(downlinkOwner, taskId);
+  }
+
+  private static void releaseOwner(AtomicReference<String> owner, String taskId) {
+    while (true) {
+      String current = owner.get();
+      if (!taskId.equals(current)) {
+        return;
+      }
+      // compareAndSet compares object identity. Use the exact value read from the AtomicReference,
+      // not the equal-but-distinct task_id String parsed from the terminal JSON frame.
+      if (owner.compareAndSet(current, null)) {
+        return;
+      }
+    }
   }
 
   private boolean ownsBinaryLane(String taskId) {

@@ -271,13 +271,19 @@ public final class WsSession implements TaskChannel {
   /** Maps a websocket failure to the exception family; reused by the realtime session. */
   public static RuntimeException mapFailure(Throwable t, Response response) {
     if (response != null) {
-      return Errors.fromStatus(
-          response.code(),
-          null,
-          "websocket handshake failed: HTTP " + response.code(),
-          null,
-          null,
-          null);
+      try {
+        return Errors.fromStatus(
+            response.code(),
+            null,
+            "websocket handshake failed: HTTP " + response.code(),
+            null,
+            null,
+            null);
+      } finally {
+        // OkHttp transfers ownership of a failed WebSocket handshake response to the listener.
+        // Closing it here prevents connection/response-body leaks on 4xx/5xx upgrades.
+        response.close();
+      }
     }
     return Errors.connection(
         SdkErrorCode.SDK_CONNECTION_ERROR, "websocket failure: " + t.getMessage(), t);
