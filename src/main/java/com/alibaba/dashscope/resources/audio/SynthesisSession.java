@@ -18,11 +18,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.Duration;
-import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -53,9 +53,10 @@ public final class SynthesisSession implements AutoCloseable {
   private final Duration receiveTimeout;
 
   private final Object pumpLock = new Object();
-  private final List<TaskEvent> delivered = new ArrayList<>();
+  private final Deque<TaskEvent> delivered = new ArrayDeque<>();
   private final AtomicBoolean cancelSent = new AtomicBoolean(false);
   private final AtomicReference<String> activeReader = new AtomicReference<>();
+  private final AtomicBoolean readerCreated = new AtomicBoolean(false);
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
   private volatile TaskChannel channel;
@@ -292,14 +293,18 @@ public final class SynthesisSession implements AutoCloseable {
    * Mutually exclusive with {@link #audioChunks()}; task-failed raises.
    */
   public Iterable<Object> events() {
-    claimReader("events");
-    return () -> readerIterator("events", false);
+    return () -> {
+      claimReader("events");
+      return readerIterator("events", false);
+    };
   }
 
   /** Audio frames only. Mutually exclusive with {@link #events()}. */
   public Iterable<byte[]> audioChunks() {
-    claimReader("audioChunks");
-    return () -> readerIterator("audioChunks", true);
+    return () -> {
+      claimReader("audioChunks");
+      return readerIterator("audioChunks", true);
+    };
   }
 
   public String getTaskId() {
@@ -349,6 +354,9 @@ public final class SynthesisSession implements AutoCloseable {
   }
 
   private void claimReader(String kind) {
+    if (!readerCreated.compareAndSet(false, true)) {
+      throw illegalState("the synthesis stream is single-use");
+    }
     while (true) {
       String current = activeReader.get();
       if (current == null) {
@@ -370,7 +378,6 @@ public final class SynthesisSession implements AutoCloseable {
   @SuppressWarnings("unchecked")
   private <T> Iterator<T> readerIterator(String kind, boolean audioOnly) {
     return new Iterator<T>() {
-      private int index;
       private Object next;
       private boolean done;
 
@@ -379,8 +386,8 @@ public final class SynthesisSession implements AutoCloseable {
         while (next == null && !done) {
           TaskEvent event;
           synchronized (pumpLock) {
-            if (index < delivered.size()) {
-              event = delivered.get(index++);
+            if (!delivered.isEmpty()) {
+              event = delivered.removeFirst();
             } else {
               if (terminalFailure != null) {
                 done = true;

@@ -19,6 +19,7 @@ public final class RequestOptions {
   private final String workspace;
   private final Map<String, String> headers;
   private final Boolean enableEncryption;
+  private final Integer wsQueueCapacity;
 
   private RequestOptions(Builder b) {
     this.timeout = b.timeout;
@@ -30,6 +31,7 @@ public final class RequestOptions {
             ? Collections.emptyMap()
             : Collections.unmodifiableMap(new LinkedHashMap<>(b.headers));
     this.enableEncryption = b.enableEncryption;
+    this.wsQueueCapacity = b.wsQueueCapacity;
   }
 
   public static Builder builder() {
@@ -43,7 +45,8 @@ public final class RequestOptions {
         .apiKey(apiKey)
         .workspace(workspace)
         .headers(headers)
-        .enableEncryption(enableEncryption);
+        .enableEncryption(enableEncryption)
+        .wsQueueCapacity(wsQueueCapacity);
   }
 
   /** Single-request timeout; overrides the client default for this call only. */
@@ -73,6 +76,11 @@ public final class RequestOptions {
     return enableEncryption;
   }
 
+  /** Maximum buffered WebSocket events per task; null/0 keeps the default unbounded behavior. */
+  public Integer getWsQueueCapacity() {
+    return wsQueueCapacity;
+  }
+
   public static final class Builder {
     private Duration timeout;
     private Integer maxRetries;
@@ -80,6 +88,7 @@ public final class RequestOptions {
     private String workspace;
     private Map<String, String> headers;
     private Boolean enableEncryption;
+    private Integer wsQueueCapacity;
 
     private Builder() {}
 
@@ -120,6 +129,14 @@ public final class RequestOptions {
 
     public Builder enableEncryption(Boolean enableEncryption) {
       this.enableEncryption = enableEncryption;
+      return this;
+    }
+
+    public Builder wsQueueCapacity(Integer wsQueueCapacity) {
+      if (wsQueueCapacity != null && wsQueueCapacity < 0) {
+        throw new IllegalArgumentException("wsQueueCapacity must be >= 0");
+      }
+      this.wsQueueCapacity = wsQueueCapacity;
       return this;
     }
 

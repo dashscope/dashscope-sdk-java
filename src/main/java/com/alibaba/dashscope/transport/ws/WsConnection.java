@@ -40,7 +40,7 @@ public final class WsConnection implements AutoCloseable {
   private static final RawItem POISON = RawItem.poison();
 
   private final WebSocket socket;
-  private final LinkedBlockingQueue<RawItem> rawQueue = new LinkedBlockingQueue<>();
+  private final LinkedBlockingQueue<RawItem> rawQueue;
   private final ConcurrentHashMap<String, TaskHandle> tasks = new ConcurrentHashMap<>();
   private final AtomicReference<String> uplinkOwner = new AtomicReference<>();
   private final AtomicReference<String> downlinkOwner = new AtomicReference<>();
@@ -52,7 +52,13 @@ public final class WsConnection implements AutoCloseable {
   private volatile RuntimeException openFailure;
 
   public WsConnection(HttpTransport transport, String url, String module, RequestOptions options) {
-    this(transport, url, module, options, 0, connectTimeout(options));
+    this(transport, url, module, options, queueCapacity(options), connectTimeout(options));
+  }
+
+  private static int queueCapacity(RequestOptions options) {
+    return options != null && options.getWsQueueCapacity() != null
+        ? options.getWsQueueCapacity()
+        : 0;
   }
 
   private static Duration connectTimeout(RequestOptions options) {
@@ -69,6 +75,15 @@ public final class WsConnection implements AutoCloseable {
       int maxQueueCapacity,
       Duration connectTimeout) {
     this.maxQueueCapacity = maxQueueCapacity;
+    int rawCapacity =
+        maxQueueCapacity <= 0
+            ? Integer.MAX_VALUE
+            : Math.max(
+                16,
+                maxQueueCapacity > Integer.MAX_VALUE / 2
+                    ? Integer.MAX_VALUE
+                    : maxQueueCapacity * 2);
+    this.rawQueue = new LinkedBlockingQueue<>(rawCapacity);
     RequestOptions opts = options == null ? RequestOptions.NONE : options;
     String apiKey = opts.getApiKey() != null ? opts.getApiKey() : transport.config().getApiKey();
     if (apiKey == null || apiKey.isEmpty()) {
@@ -300,6 +315,12 @@ public final class WsConnection implements AutoCloseable {
     }
   }
 
+  private void enqueueRaw(RawItem item) {
+    if (!rawQueue.offer(item)) {
+      failConnection(Errors.fromSdkErrorCode(SdkErrorCode.SDK_WS_QUEUE_CAPACITY_EXCEEDED));
+    }
+  }
+
   private SdkException binaryConflict(String detail) {
     return Errors.fromSdkErrorCode(
         SdkErrorCode.SDK_WS_BINARY_OWNER_CONFLICT, Collections.singletonMap("detail", detail));
@@ -423,11 +444,10 @@ public final class WsConnection implements AutoCloseable {
           inbox.clear();
           inbox.offer(TaskEvent.failure(failure));
           detached.set(true);
-          if (ownsBinaryLane(taskId)) {
-            failConnection(failure);
-          } else {
-            tasks.remove(taskId, this);
-          }
+          // Once a bounded task queue overflows, frame ordering for that task is irrecoverable.
+          // Tear down the physical connection so the server cannot keep flooding late frames for
+          // an unregistered task and so every co-tenant observes the same explicit failure.
+          failConnection(failure);
         }
         return;
       }
@@ -490,28 +510,28 @@ public final class WsConnection implements AutoCloseable {
     @Override
     public void onMessage(WebSocket webSocket, String text) {
       if (!closed.get()) {
-        rawQueue.offer(RawItem.text(text));
+        enqueueRaw(RawItem.text(text));
       }
     }
 
     @Override
     public void onMessage(WebSocket webSocket, ByteString bytes) {
       if (!closed.get()) {
-        rawQueue.offer(RawItem.binary(bytes));
+        enqueueRaw(RawItem.binary(bytes));
       }
     }
 
     @Override
     public void onClosing(WebSocket webSocket, int code, String reason) {
       if (!closed.get()) {
-        rawQueue.offer(RawItem.closed(code, reason));
+        enqueueRaw(RawItem.closed(code, reason));
       }
     }
 
     @Override
     public void onClosed(WebSocket webSocket, int code, String reason) {
       if (!closed.get()) {
-        rawQueue.offer(RawItem.closed(code, reason));
+        enqueueRaw(RawItem.closed(code, reason));
       }
     }
 
@@ -522,7 +542,7 @@ public final class WsConnection implements AutoCloseable {
         openFailure = mapped;
         openLatch.countDown();
       } else if (!closed.get()) {
-        rawQueue.offer(RawItem.failure(mapped));
+        enqueueRaw(RawItem.failure(mapped));
       }
     }
   }

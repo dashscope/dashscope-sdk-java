@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -320,23 +321,20 @@ class TtsMockTest {
       tts.sendText("x");
       tts.stop();
 
-      // An active events() claim blocks both audioChunks() and a second events() reader.
+      // The claim happens when iteration starts, not when the Iterable view is created.
       Iterable<Object> events = tts.events();
-      assertThrows(SdkException.class, tts::audioChunks);
-      assertThrows(SdkException.class, tts::events);
+      Iterator<Object> eventIterator = events.iterator();
+      assertThrows(SdkException.class, () -> tts.audioChunks().iterator());
+      assertThrows(SdkException.class, () -> tts.events().iterator());
 
-      // Exhausting the reader releases the claim; both views can then replay the buffer.
+      // The stream is consuming and single-use so binary frames can be released after delivery.
       int count = 0;
-      for (Object ignored : events) {
+      while (eventIterator.hasNext()) {
+        eventIterator.next();
         count++;
       }
       assertEquals(2, count); // one audio frame + task-finished
-
-      int audio = 0;
-      for (byte[] ignored : tts.audioChunks()) {
-        audio++;
-      }
-      assertEquals(1, audio);
+      assertThrows(SdkException.class, () -> tts.audioChunks().iterator());
     }
   }
 

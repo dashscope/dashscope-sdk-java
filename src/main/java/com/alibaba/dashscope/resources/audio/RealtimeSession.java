@@ -15,9 +15,10 @@ import com.alibaba.dashscope.types.audio.UpdateSessionParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.Duration;
-import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,7 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -61,10 +63,11 @@ public final class RealtimeSession implements AutoCloseable {
   private final RealtimeDialect dialect;
 
   private final Object pumpLock = new Object();
-  private final List<JsonNode> delivered = new ArrayList<>();
-  private final LinkedBlockingQueue<Inbound> inbox = new LinkedBlockingQueue<>();
+  private final Deque<JsonNode> delivered = new ArrayDeque<>();
+  private final LinkedBlockingQueue<Inbound> inbox;
   private final Object sendLock = new Object();
   private final AtomicInteger generation = new AtomicInteger(0);
+  private final AtomicBoolean eventsClaimed = new AtomicBoolean(false);
 
   private volatile WebSocket socket;
   private volatile CountDownLatch openLatch;
@@ -76,6 +79,7 @@ public final class RealtimeSession implements AutoCloseable {
   private volatile boolean terminal;
   private volatile RuntimeException terminalFailure;
   private volatile boolean sawCompletion;
+  private volatile boolean sessionFinished;
   private volatile String sessionId;
   private volatile String lastResponseId;
   private volatile long responseCreateNanos = -1;
@@ -88,6 +92,11 @@ public final class RealtimeSession implements AutoCloseable {
     this.url = url;
     this.params = params;
     this.options = options == null ? RequestOptions.NONE : options;
+    Integer queueCapacity = this.options.getWsQueueCapacity();
+    this.inbox =
+        queueCapacity != null && queueCapacity > 0
+            ? new LinkedBlockingQueue<>(queueCapacity)
+            : new LinkedBlockingQueue<>();
     this.receiveTimeout =
         this.options.getTimeout() != null
             ? this.options.getTimeout()
@@ -112,6 +121,8 @@ public final class RealtimeSession implements AutoCloseable {
       terminal = false;
       terminalFailure = null;
       sawCompletion = false;
+      sessionFinished = false;
+      eventsClaimed.set(false);
     }
     sessionId = null;
     lastResponseId = null;
@@ -303,38 +314,41 @@ public final class RealtimeSession implements AutoCloseable {
    * {@code error}-type frames are delivered as ordinary events.
    */
   public Iterable<JsonNode> events() {
-    return () ->
-        new Iterator<JsonNode>() {
-          private int index;
+    return () -> {
+      if (!eventsClaimed.compareAndSet(false, true)) {
+        throw illegalState("the realtime event stream is single-use");
+      }
+      return new Iterator<JsonNode>() {
 
-          @Override
-          public boolean hasNext() {
-            while (true) {
-              synchronized (pumpLock) {
-                if (index < delivered.size()) {
-                  return true;
-                }
-                if (terminalFailure != null) {
-                  throw terminalFailure;
-                }
-                if (terminal) {
-                  return false;
-                }
-              }
-              pumpOnce(receiveTimeout);
-            }
-          }
-
-          @Override
-          public JsonNode next() {
-            if (!hasNext()) {
-              throw new NoSuchElementException();
-            }
+        @Override
+        public boolean hasNext() {
+          while (true) {
             synchronized (pumpLock) {
-              return delivered.get(index++);
+              if (!delivered.isEmpty()) {
+                return true;
+              }
+              if (terminalFailure != null) {
+                throw terminalFailure;
+              }
+              if (terminal) {
+                return false;
+              }
             }
+            pumpOnce(receiveTimeout);
           }
-        };
+        }
+
+        @Override
+        public JsonNode next() {
+          if (!hasNext()) {
+            throw new NoSuchElementException();
+          }
+          synchronized (pumpLock) {
+            return delivered.removeFirst();
+          }
+        }
+      };
+    };
   }
 
   /** Low-level escape hatch: sends the frame verbatim, auto-adding {@code event_id} if absent. */
@@ -386,6 +400,7 @@ public final class RealtimeSession implements AutoCloseable {
       if (ws != null) {
         localCloseGeneration = generation.get();
         // Wake a receiver immediately; do not depend on a later OkHttp onClosed callback.
+        inbox.clear();
         inbox.offer(Inbound.closed(localCloseGeneration));
         if (!ws.close(1000, "bye")) {
           ws.cancel();
@@ -425,13 +440,21 @@ public final class RealtimeSession implements AutoCloseable {
     return options.getTimeout() != null ? options.getTimeout() : WsSession.DEFAULT_CONNECT_TIMEOUT;
   }
 
-  private boolean sawSessionFinished() {
-    for (JsonNode event : delivered) {
-      if ("session.finished".equals(event.path("type").asText())) {
-        return true;
-      }
+  private void offerInbound(Inbound inbound) {
+    if (inbox.offer(inbound)) {
+      return;
     }
-    return false;
+    RuntimeException failure = Errors.fromSdkErrorCode(SdkErrorCode.SDK_WS_QUEUE_CAPACITY_EXCEEDED);
+    inbox.clear();
+    inbox.offer(Inbound.failure(inbound.generation, failure));
+    WebSocket ws = socket;
+    if (ws != null) {
+      ws.cancel();
+    }
+  }
+
+  private boolean sawSessionFinished() {
+    return sessionFinished;
   }
 
   /** Pumps one inbound item into the session buffer; terminal states flip and throw. */
@@ -504,8 +527,11 @@ public final class RealtimeSession implements AutoCloseable {
         }
         break;
       case "response.done":
+        sawCompletion = true;
+        break;
       case "session.finished":
         sawCompletion = true;
+        sessionFinished = true;
         break;
       default:
         break;
@@ -573,17 +599,17 @@ public final class RealtimeSession implements AutoCloseable {
       try {
         event = JsonSupport.readTree(text);
       } catch (RuntimeException e) {
-        inbox.offer(Inbound.failure(gen, e));
+        offerInbound(Inbound.failure(gen, e));
         return;
       }
-      inbox.offer(Inbound.text(gen, event));
+      offerInbound(Inbound.text(gen, event));
     }
 
     @Override
     public void onClosing(WebSocket webSocket, int code, String reason) {
       if (!stale()) {
         clearCurrentSocket(webSocket);
-        inbox.offer(Inbound.closed(gen));
+        offerInbound(Inbound.closed(gen));
       }
     }
 
@@ -591,7 +617,7 @@ public final class RealtimeSession implements AutoCloseable {
     public void onClosed(WebSocket webSocket, int code, String reason) {
       if (!stale()) {
         clearCurrentSocket(webSocket);
-        inbox.offer(Inbound.closed(gen));
+        offerInbound(Inbound.closed(gen));
       }
     }
 
@@ -611,7 +637,7 @@ public final class RealtimeSession implements AutoCloseable {
         clearCurrentSocket(webSocket);
       } else {
         clearCurrentSocket(webSocket);
-        inbox.offer(Inbound.failure(gen, mapped));
+        offerInbound(Inbound.failure(gen, mapped));
       }
     }
 

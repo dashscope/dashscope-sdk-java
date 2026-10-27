@@ -471,4 +471,25 @@ class WsTransportMockTest {
       session.close();
     }
   }
+
+  @Test
+  void requestOptionsExposeBoundedSharedQueue() throws Exception {
+    ServerSocket serverSocket = enqueueUpgrade();
+    try (WsConnection conn =
+        new WsConnection(
+            transport,
+            transport.config().getWsBaseUrl(),
+            "audio",
+            RequestOptions.builder().wsQueueCapacity(1).build())) {
+      serverSocket.awaitOpen();
+      TaskChannel handle = conn.attach("task-bounded");
+      for (int i = 0; i < 100; i++) {
+        serverSocket.sendEvent("task-bounded", "result-generated");
+      }
+      Thread.sleep(100);
+
+      SdkException failure = assertThrows(SdkException.class, () -> drainUntilFailure(handle));
+      assertEquals("sdk.ws.QueueCapacityExceeded", failure.getCode());
+    }
+  }
 }
