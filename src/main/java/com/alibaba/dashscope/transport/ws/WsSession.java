@@ -31,10 +31,11 @@ public final class WsSession implements TaskChannel {
 
   private final String taskId;
   private final WebSocket socket;
-  private final LinkedBlockingQueue<TaskEvent> inbox = new LinkedBlockingQueue<>();
+  private final LinkedBlockingQueue<TaskEvent> inbox;
   private final int maxQueueCapacity;
   private final Object sendLock = new Object();
   private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final AtomicBoolean overflowed = new AtomicBoolean(false);
   private final CountDownLatch openLatch = new CountDownLatch(1);
   private volatile RuntimeException openFailure;
 
@@ -56,6 +57,10 @@ public final class WsSession implements TaskChannel {
       Duration connectTimeout) {
     this.taskId = taskId;
     this.maxQueueCapacity = maxQueueCapacity;
+    this.inbox =
+        maxQueueCapacity > 0
+            ? new LinkedBlockingQueue<>(maxQueueCapacity)
+            : new LinkedBlockingQueue<>();
     RequestOptions opts = options == null ? RequestOptions.NONE : options;
     String apiKey = opts.getApiKey() != null ? opts.getApiKey() : transport.config().getApiKey();
     if (apiKey == null || apiKey.isEmpty()) {
@@ -106,15 +111,24 @@ public final class WsSession implements TaskChannel {
   }
 
   private void enqueue(TaskEvent event) {
-    if (maxQueueCapacity > 0 && inbox.size() >= maxQueueCapacity) {
-      // Never drop frames silently: surface the overflow to the consumer, then the connection
-      // is torn down because protocol sync is lost (audio design §4).
-      inbox.offer(
-          TaskEvent.failure(Errors.fromSdkErrorCode(SdkErrorCode.SDK_WS_QUEUE_CAPACITY_EXCEEDED)));
-      socket.cancel();
+    if (closed.get()) {
       return;
     }
-    inbox.offer(event);
+    if (maxQueueCapacity > 0 && !inbox.offer(event)) {
+      // Never drop frames silently: surface the overflow to the consumer, then the connection
+      // is torn down because protocol sync is lost (audio design §4).
+      if (overflowed.compareAndSet(false, true)) {
+        inbox.clear();
+        inbox.offer(
+            TaskEvent.failure(
+                Errors.fromSdkErrorCode(SdkErrorCode.SDK_WS_QUEUE_CAPACITY_EXCEEDED)));
+        socket.cancel();
+      }
+      return;
+    }
+    if (maxQueueCapacity == 0) {
+      inbox.offer(event);
+    }
   }
 
   @Override
@@ -169,7 +183,11 @@ public final class WsSession implements TaskChannel {
   @Override
   public void close() {
     if (closed.compareAndSet(false, true)) {
-      socket.close(1000, "bye");
+      inbox.clear();
+      inbox.offer(TaskEvent.localClosed());
+      if (!socket.close(1000, "bye")) {
+        socket.cancel();
+      }
     }
   }
 
@@ -181,6 +199,9 @@ public final class WsSession implements TaskChannel {
 
     @Override
     public void onMessage(WebSocket webSocket, String text) {
+      if (closed.get()) {
+        return;
+      }
       TaskEvent event;
       try {
         event = TaskProtocol.parse(text);
@@ -200,17 +221,23 @@ public final class WsSession implements TaskChannel {
 
     @Override
     public void onMessage(WebSocket webSocket, ByteString bytes) {
-      enqueue(TaskEvent.binary(bytes.asByteBuffer()));
+      if (!closed.get()) {
+        enqueue(TaskEvent.binary(bytes.asByteBuffer()));
+      }
     }
 
     @Override
     public void onClosing(WebSocket webSocket, int code, String reason) {
-      enqueue(TaskEvent.closed(code, reason));
+      if (!closed.get()) {
+        enqueue(TaskEvent.closed(code, reason));
+      }
     }
 
     @Override
     public void onClosed(WebSocket webSocket, int code, String reason) {
-      enqueue(TaskEvent.closed(code, reason));
+      if (!closed.get()) {
+        enqueue(TaskEvent.closed(code, reason));
+      }
     }
 
     @Override
@@ -219,7 +246,7 @@ public final class WsSession implements TaskChannel {
       if (!openLatchCountReached()) {
         openFailure = mapped;
         openLatch.countDown();
-      } else {
+      } else if (!closed.get()) {
         enqueue(TaskEvent.failure(mapped));
       }
     }

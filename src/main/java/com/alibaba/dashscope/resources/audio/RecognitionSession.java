@@ -134,6 +134,11 @@ public final class RecognitionSession implements AutoCloseable {
             ? shared.attach(taskId)
             : new WsSession(transport, url, taskId, TASK_GROUP, options);
     try {
+      if (shared != null) {
+        // Claim before run-task, not on the first audio frame: an early local close must not let a
+        // second ASR reuse the headerless binary lane while the old server task is still active.
+        shared.claimBinaryUplink(taskId);
+      }
       channel.sendText(
           TaskProtocol.frame(TaskProtocol.RUN_TASK, taskId, TaskProtocol.STREAMING_DUPLEX, payload)
               .toString());
@@ -156,6 +161,8 @@ public final class RecognitionSession implements AutoCloseable {
         } else if (event.getKind() == TaskEvent.Kind.CLOSED) {
           throw Errors.connection(
               SdkErrorCode.SDK_CONNECTION_ERROR, "websocket closed before task-started", null);
+        } else if (event.getKind() == TaskEvent.Kind.LOCAL_CLOSED) {
+          throw illegalState("session closed while waiting for task-started");
         }
       }
     } catch (RuntimeException e) {
@@ -431,6 +438,9 @@ public final class RecognitionSession implements AutoCloseable {
                   SdkErrorCode.SDK_CONNECTION_ERROR, "websocket closed before task-finished", null);
           close();
           throw terminalFailure;
+        case LOCAL_CLOSED:
+          terminal = true;
+          break;
         case FAILURE:
           terminal = true;
           terminalFailure = event.getFailure();

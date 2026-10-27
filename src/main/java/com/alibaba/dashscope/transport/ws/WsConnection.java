@@ -119,9 +119,25 @@ public final class WsConnection implements AutoCloseable {
 
   /** Explicitly claim the binary downlink for a task (TTS start does this automatically). */
   public void claimBinaryDownlink(String taskId) {
+    requireAttached(taskId);
     if (!downlinkOwner.compareAndSet(null, taskId) && !taskId.equals(downlinkOwner.get())) {
       throw binaryConflict(
           "downlink already claimed by " + downlinkOwner.get() + ", " + taskId + " cannot claim");
+    }
+  }
+
+  /** Explicitly claim the binary uplink before the first frame (ASR start does this). */
+  public void claimBinaryUplink(String taskId) {
+    requireAttached(taskId);
+    if (!uplinkOwner.compareAndSet(null, taskId) && !taskId.equals(uplinkOwner.get())) {
+      throw binaryConflict(
+          "uplink already claimed by " + uplinkOwner.get() + ", " + taskId + " cannot claim");
+    }
+  }
+
+  private void requireAttached(String taskId) {
+    if (!tasks.containsKey(taskId)) {
+      throw illegalState("task_id " + taskId + " is not attached");
     }
   }
 
@@ -170,10 +186,14 @@ public final class WsConnection implements AutoCloseable {
       }
       if (item.failure != null) {
         broadcast(TaskEvent.failure(item.failure));
+        markAllDetached();
+        tasks.clear();
         return;
       }
       if (item.closeCode != null) {
         broadcast(TaskEvent.closed(item.closeCode, item.closeReason));
+        markAllDetached();
+        tasks.clear();
         return;
       }
       if (item.binary != null) {
@@ -189,7 +209,7 @@ public final class WsConnection implements AutoCloseable {
     try {
       event = TaskProtocol.parse(text);
     } catch (RuntimeException e) {
-      broadcast(TaskEvent.failure(e));
+      failConnection(e);
       return;
     }
     TaskHandle handle = tasks.get(event.getTaskId());
@@ -203,7 +223,7 @@ public final class WsConnection implements AutoCloseable {
     handle.enqueue(event);
     if (TaskProtocol.TASK_FINISHED.equals(event.getEvent())
         || TaskProtocol.TASK_FAILED.equals(event.getEvent())) {
-      unregister(event.getTaskId());
+      unregisterTerminal(event.getTaskId());
     }
   }
 
@@ -214,9 +234,8 @@ public final class WsConnection implements AutoCloseable {
       if (tasks.size() == 1) {
         target = tasks.values().iterator().next();
       } else {
-        broadcast(
-            TaskEvent.failure(
-                binaryConflict("unclaimed binary frame with " + tasks.size() + " active tasks")));
+        failConnection(
+            binaryConflict("unclaimed binary frame with " + tasks.size() + " active tasks"));
         return;
       }
     }
@@ -229,10 +248,50 @@ public final class WsConnection implements AutoCloseable {
     }
   }
 
-  private void unregister(String taskId) {
-    tasks.remove(taskId);
+  private void unregisterTerminal(String taskId) {
+    TaskHandle handle = tasks.remove(taskId);
+    if (handle != null) {
+      handle.detached.set(true);
+    }
     uplinkOwner.compareAndSet(taskId, null);
     downlinkOwner.compareAndSet(taskId, null);
+  }
+
+  private boolean ownsBinaryLane(String taskId) {
+    return taskId.equals(uplinkOwner.get()) || taskId.equals(downlinkOwner.get());
+  }
+
+  private void detach(TaskHandle handle) {
+    String taskId = handle.taskId;
+    if (ownsBinaryLane(taskId)) {
+      failConnection(
+          illegalState(
+              "binary task "
+                  + taskId
+                  + " detached before task-finished; closing shared connection to prevent"
+                  + " cross-task audio"));
+      return;
+    }
+    tasks.remove(taskId, handle);
+    handle.signalLocalClose();
+  }
+
+  private void failConnection(RuntimeException failure) {
+    if (!closed.compareAndSet(false, true)) {
+      return;
+    }
+    socket.cancel();
+    rawQueue.offer(POISON);
+    broadcast(TaskEvent.failure(failure));
+    markAllDetached();
+    tasks.clear();
+    reader.interrupt();
+  }
+
+  private void markAllDetached() {
+    for (TaskHandle handle : tasks.values()) {
+      handle.detached.set(true);
+    }
   }
 
   private SdkException binaryConflict(String detail) {
@@ -277,7 +336,9 @@ public final class WsConnection implements AutoCloseable {
     if (!closed.compareAndSet(false, true)) {
       return;
     }
-    socket.close(1000, "bye");
+    if (!socket.close(1000, "bye")) {
+      socket.cancel();
+    }
     rawQueue.offer(POISON);
     try {
       reader.join(2000);
@@ -287,6 +348,7 @@ public final class WsConnection implements AutoCloseable {
     broadcast(
         TaskEvent.failure(
             Errors.connection(SdkErrorCode.SDK_CONNECTION_ERROR, "websocket closed", null)));
+    markAllDetached();
     tasks.clear();
   }
 
@@ -295,6 +357,7 @@ public final class WsConnection implements AutoCloseable {
     private final String taskId;
     private final LinkedBlockingQueue<TaskEvent> inbox = new LinkedBlockingQueue<>();
     private final AtomicBoolean detached = new AtomicBoolean(false);
+    private final AtomicBoolean overflowed = new AtomicBoolean(false);
 
     private TaskHandle(String taskId) {
       this.taskId = taskId;
@@ -340,7 +403,7 @@ public final class WsConnection implements AutoCloseable {
     @Override
     public void close() {
       if (detached.compareAndSet(false, true)) {
-        unregister(taskId);
+        detach(this);
       }
     }
 
@@ -348,13 +411,26 @@ public final class WsConnection implements AutoCloseable {
       if (maxQueueCapacity > 0 && inbox.size() >= maxQueueCapacity) {
         // Never drop frames silently (audio design §4): surface overflow, then the task is
         // torn down because protocol sync is lost.
-        inbox.offer(
-            TaskEvent.failure(
-                Errors.fromSdkErrorCode(SdkErrorCode.SDK_WS_QUEUE_CAPACITY_EXCEEDED)));
-        unregister(taskId);
+        if (overflowed.compareAndSet(false, true)) {
+          RuntimeException failure =
+              Errors.fromSdkErrorCode(SdkErrorCode.SDK_WS_QUEUE_CAPACITY_EXCEEDED);
+          inbox.clear();
+          inbox.offer(TaskEvent.failure(failure));
+          detached.set(true);
+          if (ownsBinaryLane(taskId)) {
+            failConnection(failure);
+          } else {
+            tasks.remove(taskId, this);
+          }
+        }
         return;
       }
       inbox.offer(event);
+    }
+
+    private void signalLocalClose() {
+      inbox.clear();
+      inbox.offer(TaskEvent.localClosed());
     }
   }
 
@@ -407,22 +483,30 @@ public final class WsConnection implements AutoCloseable {
 
     @Override
     public void onMessage(WebSocket webSocket, String text) {
-      rawQueue.offer(RawItem.text(text));
+      if (!closed.get()) {
+        rawQueue.offer(RawItem.text(text));
+      }
     }
 
     @Override
     public void onMessage(WebSocket webSocket, ByteString bytes) {
-      rawQueue.offer(RawItem.binary(bytes));
+      if (!closed.get()) {
+        rawQueue.offer(RawItem.binary(bytes));
+      }
     }
 
     @Override
     public void onClosing(WebSocket webSocket, int code, String reason) {
-      rawQueue.offer(RawItem.closed(code, reason));
+      if (!closed.get()) {
+        rawQueue.offer(RawItem.closed(code, reason));
+      }
     }
 
     @Override
     public void onClosed(WebSocket webSocket, int code, String reason) {
-      rawQueue.offer(RawItem.closed(code, reason));
+      if (!closed.get()) {
+        rawQueue.offer(RawItem.closed(code, reason));
+      }
     }
 
     @Override
@@ -431,7 +515,7 @@ public final class WsConnection implements AutoCloseable {
       if (openLatch.getCount() > 0) {
         openFailure = mapped;
         openLatch.countDown();
-      } else {
+      } else if (!closed.get()) {
         rawQueue.offer(RawItem.failure(mapped));
       }
     }

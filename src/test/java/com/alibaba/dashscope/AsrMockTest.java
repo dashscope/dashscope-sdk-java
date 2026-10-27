@@ -352,7 +352,7 @@ class AsrMockTest {
   }
 
   @Test
-  void sharedConnectionSurvivesSessionClose() throws Exception {
+  void earlySharedBinarySessionCloseInvalidatesConnection() throws Exception {
     AsrServerSocket socket = enqueueUpgrade();
     WsConnection connection = client.wsConnection();
     socket.awaitOpen();
@@ -360,9 +360,9 @@ class AsrMockTest {
     asr.start();
     socket.nextText();
     asr.close();
-    // The shared socket stays usable after the session detaches.
-    com.alibaba.dashscope.transport.ws.TaskChannel other = connection.attach("task-other");
-    assertNotNull(other);
+    // Binary frames carry no task id. Until the old server task reaches a terminal event, the
+    // physical connection cannot be safely reused by another binary task.
+    assertThrows(SdkException.class, () -> connection.attach("task-other"));
     connection.close();
   }
 

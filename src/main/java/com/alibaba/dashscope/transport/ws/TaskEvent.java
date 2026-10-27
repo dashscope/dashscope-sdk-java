@@ -13,6 +13,7 @@ public final class TaskEvent {
   public enum Kind {
     TEXT,
     BINARY,
+    LOCAL_CLOSED,
     CLOSED,
     FAILURE
   }
@@ -71,6 +72,11 @@ public final class TaskEvent {
 
   static TaskEvent closed(int code, String reason) {
     return new TaskEvent(Kind.CLOSED, null, null, null, null, null, null, null, code, reason, null);
+  }
+
+  static TaskEvent localClosed() {
+    return new TaskEvent(
+        Kind.LOCAL_CLOSED, null, null, null, null, null, null, null, 1000, "local close", null);
   }
 
   static TaskEvent failure(RuntimeException failure) {

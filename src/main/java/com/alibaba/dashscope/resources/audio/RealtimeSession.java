@@ -384,7 +384,11 @@ public final class RealtimeSession implements AutoCloseable {
       socket = null;
       if (ws != null) {
         localCloseGeneration = generation.get();
-        ws.close(1000, "bye");
+        // Wake a receiver immediately; do not depend on a later OkHttp onClosed callback.
+        inbox.offer(Inbound.closed(localCloseGeneration));
+        if (!ws.close(1000, "bye")) {
+          ws.cancel();
+        }
       }
     }
   }
@@ -569,6 +573,7 @@ public final class RealtimeSession implements AutoCloseable {
     @Override
     public void onClosing(WebSocket webSocket, int code, String reason) {
       if (!stale()) {
+        clearCurrentSocket(webSocket);
         inbox.offer(Inbound.closed(gen));
       }
     }
@@ -576,6 +581,7 @@ public final class RealtimeSession implements AutoCloseable {
     @Override
     public void onClosed(WebSocket webSocket, int code, String reason) {
       if (!stale()) {
+        clearCurrentSocket(webSocket);
         inbox.offer(Inbound.closed(gen));
       }
     }
@@ -589,9 +595,22 @@ public final class RealtimeSession implements AutoCloseable {
       CountDownLatch latch = openLatch;
       if (latch != null && latch.getCount() > 0) {
         openFailure = mapped;
+        // connect() holds the session monitor while awaiting this latch. Count down before trying
+        // to take that monitor, otherwise close-during-connect deadlocks until the handshake
+        // timeout.
         latch.countDown();
+        clearCurrentSocket(webSocket);
       } else {
+        clearCurrentSocket(webSocket);
         inbox.offer(Inbound.failure(gen, mapped));
+      }
+    }
+
+    private void clearCurrentSocket(WebSocket webSocket) {
+      synchronized (RealtimeSession.this) {
+        if (socket == webSocket) {
+          socket = null;
+        }
       }
     }
   }

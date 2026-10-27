@@ -389,4 +389,86 @@ class WsTransportMockTest {
           }
         });
   }
+
+  @Test
+  void taskHandleCloseWakesBlockedReceiverImmediately() throws Exception {
+    ServerSocket serverSocket = enqueueUpgrade();
+    try (WsConnection conn =
+        new WsConnection(transport, transport.config().getWsBaseUrl(), "audio", null)) {
+      serverSocket.awaitOpen();
+      TaskChannel handle = conn.attach("task-close");
+      AtomicReference<TaskEvent> received = new AtomicReference<>();
+      Thread receiver =
+          new Thread(() -> received.set(handle.recv(Duration.ofSeconds(30))), "ws-close-receiver");
+      receiver.start();
+      Thread.sleep(50);
+
+      handle.close();
+
+      receiver.join(1000);
+      assertTrue(!receiver.isAlive(), "close did not wake recv");
+      assertNotNull(received.get());
+      assertEquals(TaskEvent.Kind.LOCAL_CLOSED, received.get().getKind());
+    }
+  }
+
+  @Test
+  void earlyBinaryOwnerDetachFailsSharedConnection() throws Exception {
+    ServerSocket serverSocket = enqueueUpgrade();
+    WsConnection conn =
+        new WsConnection(transport, transport.config().getWsBaseUrl(), "audio", null);
+    try {
+      serverSocket.awaitOpen();
+      TaskChannel binary = conn.attach("task-binary");
+      TaskChannel other = conn.attach("task-other");
+      conn.claimBinaryUplink("task-binary");
+
+      binary.close();
+
+      SdkException failure =
+          assertThrows(SdkException.class, () -> other.recv(Duration.ofSeconds(1)));
+      assertEquals("sdk.ws.IllegalState", failure.getCode());
+      assertThrows(SdkException.class, () -> conn.attach("task-new"));
+    } finally {
+      conn.close();
+    }
+  }
+
+  @Test
+  void terminalTaskCannotSendAgain() throws Exception {
+    ServerSocket serverSocket = enqueueUpgrade();
+    try (WsConnection conn =
+        new WsConnection(transport, transport.config().getWsBaseUrl(), "audio", null)) {
+      serverSocket.awaitOpen();
+      TaskChannel handle = conn.attach("task-terminal");
+      serverSocket.sendEvent("task-terminal", "task-finished");
+      assertEquals("task-finished", handle.recv(RECV_TIMEOUT).getEvent());
+
+      SdkException failure = assertThrows(SdkException.class, () -> handle.sendText("{}"));
+      assertEquals("sdk.ws.IllegalState", failure.getCode());
+    }
+  }
+
+  @Test
+  void dedicatedSessionCloseWakesBlockedReceiverImmediately() throws Exception {
+    ServerSocket serverSocket = enqueueUpgrade();
+    WsSession session =
+        new WsSession(transport, transport.config().getWsBaseUrl(), "task-close", "audio", null);
+    try {
+      serverSocket.awaitOpen();
+      AtomicReference<TaskEvent> received = new AtomicReference<>();
+      Thread receiver =
+          new Thread(() -> received.set(session.recv(Duration.ofSeconds(30))), "ws-session-close");
+      receiver.start();
+      Thread.sleep(50);
+
+      session.close();
+
+      receiver.join(1000);
+      assertTrue(!receiver.isAlive(), "close did not wake dedicated recv");
+      assertEquals(TaskEvent.Kind.LOCAL_CLOSED, received.get().getKind());
+    } finally {
+      session.close();
+    }
+  }
 }

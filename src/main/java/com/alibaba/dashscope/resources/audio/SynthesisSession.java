@@ -132,10 +132,10 @@ public final class SynthesisSession implements AutoCloseable {
         shared != null
             ? shared.attach(taskId)
             : new WsSession(transport, url, taskId, TASK_GROUP, options);
-    if (shared != null) {
-      shared.claimBinaryDownlink(taskId);
-    }
     try {
+      if (shared != null) {
+        shared.claimBinaryDownlink(taskId);
+      }
       channel.sendText(
           TaskProtocol.frame(TaskProtocol.RUN_TASK, taskId, TaskProtocol.STREAMING_DUPLEX, payload)
               .toString());
@@ -158,6 +158,8 @@ public final class SynthesisSession implements AutoCloseable {
         } else if (event.getKind() == TaskEvent.Kind.CLOSED) {
           throw Errors.connection(
               SdkErrorCode.SDK_CONNECTION_ERROR, "websocket closed before task-started", null);
+        } else if (event.getKind() == TaskEvent.Kind.LOCAL_CLOSED) {
+          throw illegalState("session closed while waiting for task-started");
         }
       }
     } catch (RuntimeException e) {
@@ -432,6 +434,9 @@ public final class SynthesisSession implements AutoCloseable {
                   SdkErrorCode.SDK_CONNECTION_ERROR, "websocket closed before task-finished", null);
           close();
           throw terminalFailure;
+        case LOCAL_CLOSED:
+          terminal = true;
+          break;
         case FAILURE:
           terminal = true;
           terminalFailure = event.getFailure();
