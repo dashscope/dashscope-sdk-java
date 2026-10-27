@@ -54,7 +54,7 @@ public final class OssUploader {
     JsonNode data = envelope.getBody() == null ? null : envelope.getBody().get("data");
     if (data == null || !data.isObject()) {
       throw Errors.fromCatalogEntry(
-          PublicErrorCode.RESPONSE_ERROR,
+          PublicErrorCode.INTERNAL_ERROR,
           "uploads policy response carries no data object",
           JsonSupport.requestId(envelope.getBody(), envelope.getHeaders()),
           JsonSupport.toPlainValue(envelope.getBody()),
@@ -157,7 +157,7 @@ public final class OssUploader {
     String value = textOrNull(data.get(name));
     if (value == null || value.isEmpty()) {
       throw Errors.fromCatalogEntry(
-          PublicErrorCode.RESPONSE_ERROR,
+          PublicErrorCode.INTERNAL_ERROR,
           "uploads policy response missing field '" + name + "'",
           JsonSupport.requestId(data, null),
           JsonSupport.toPlainValue(data),

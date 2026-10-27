@@ -27,7 +27,7 @@ public final class EncryptionKeys {
     JsonNode data = envelope.getBody() == null ? null : envelope.getBody().get("data");
     if (data == null || !data.isObject()) {
       throw Errors.fromCatalogEntry(
-          PublicErrorCode.RESPONSE_ERROR,
+          PublicErrorCode.INTERNAL_ERROR,
           "public-keys response carries no data object",
           JsonSupport.requestId(envelope.getBody(), envelope.getHeaders()),
           JsonSupport.toPlainValue(envelope.getBody()),

@@ -92,7 +92,7 @@ public final class SseStream implements AutoCloseable, Iterable<JsonNode> {
           headers.put(name, response.header(name));
         }
         throw Errors.fromCatalogEntry(
-            PublicErrorCode.RESPONSE_ERROR,
+            PublicErrorCode.INTERNAL_ERROR,
             "failed to decrypt SSE output: " + e.getMessage(),
             JsonSupport.requestId(frame, headers),
             JsonSupport.toPlainValue(frame),

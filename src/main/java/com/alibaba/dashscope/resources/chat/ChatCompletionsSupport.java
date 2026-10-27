@@ -108,7 +108,7 @@ final class ChatCompletionsSupport {
           if (!choice.isObject()) {
             // Malformed server data: report a parse failure, never a raw ClassCastException.
             throw Errors.fromCatalogEntry(
-                PublicErrorCode.RESPONSE_ERROR,
+                PublicErrorCode.INTERNAL_ERROR,
                 "malformed choice element in response: " + choice.getNodeType(),
                 null,
                 null,

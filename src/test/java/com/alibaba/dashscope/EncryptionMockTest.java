@@ -146,7 +146,7 @@ class EncryptionMockTest {
         assertThrows(
             ApiStatusException.class,
             () -> new EncryptionKeys(transport).createConfig(RequestOptions.NONE));
-    assertEquals(PublicErrorCode.RESPONSE_ERROR.getErrorCode(), e.getCode());
+    assertEquals(PublicErrorCode.INTERNAL_ERROR.getErrorCode(), e.getCode());
   }
 
   @Test

@@ -379,7 +379,7 @@ public final class HttpTransport implements AutoCloseable {
       throw e;
     } catch (RuntimeException e) {
       throw Errors.fromCatalogEntry(
-          PublicErrorCode.RESPONSE_ERROR,
+          PublicErrorCode.INTERNAL_ERROR,
           "failed to prepare encrypted request: " + e.getMessage(),
           null,
           JsonSupport.toPlainValue(body),
@@ -525,7 +525,7 @@ public final class HttpTransport implements AutoCloseable {
       return EncryptionUtils.decryptOutput(body, encryption.config);
     } catch (RuntimeException e) {
       throw Errors.fromCatalogEntry(
-          PublicErrorCode.RESPONSE_ERROR,
+          PublicErrorCode.INTERNAL_ERROR,
           "failed to decrypt response output: " + e.getMessage(),
           JsonSupport.requestId(body, headers),
           JsonSupport.toPlainValue(body),

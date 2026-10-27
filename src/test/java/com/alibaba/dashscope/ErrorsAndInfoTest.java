@@ -120,7 +120,7 @@ class ErrorsAndInfoTest {
     Exception parseFailure = new java.io.IOException("unexpected character at line 1");
     ApiStatusException e =
         Errors.fromCatalogEntry(
-            PublicErrorCode.RESPONSE_ERROR,
+            PublicErrorCode.INTERNAL_ERROR,
             "failed to parse response JSON: " + parseFailure.getMessage(),
             "req-9",
             null,
@@ -135,8 +135,8 @@ class ErrorsAndInfoTest {
     // A blank message resolves to the catalog text.
     ApiStatusException blank =
         Errors.fromCatalogEntry(
-            PublicErrorCode.RESPONSE_ERROR, null, null, null, Collections.emptyMap(), null);
-    assertEquals(PublicErrorCode.RESPONSE_ERROR.getErrorMsg(), blank.getMessage());
+            PublicErrorCode.INTERNAL_ERROR, null, null, null, Collections.emptyMap(), null);
+    assertEquals(PublicErrorCode.INTERNAL_ERROR.getErrorMsg(), blank.getMessage());
   }
 
   @Test

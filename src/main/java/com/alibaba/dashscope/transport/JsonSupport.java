@@ -37,13 +37,12 @@ public final class JsonSupport {
     try {
       return MAPPER.readTree(text);
     } catch (IOException e) {
-      // Catalog-sourced, never an ad-hoc code: PublicErrorCode.RESPONSE_ERROR is exactly
-      // "the server returned a response that could not be parsed". The HTTP exchange itself
-      // succeeded, so raise the catalog entry verbatim — never routed through fromStatus,
-      // whose status→class crosswalk would fabricate an InternalServerException (and a
-      // statusCode of 500) for a 200 exchange. The Jackson failure stays as the cause.
+      // Catalog-sourced, never an ad-hoc code. The HTTP exchange itself succeeded, so raise
+      // INTERNAL_ERROR verbatim — never routed through fromStatus, whose status→class crosswalk
+      // would fabricate an InternalServerException (and a statusCode of 500) for a 200 exchange.
+      // The Jackson failure stays as the cause.
       throw Errors.fromCatalogEntry(
-          PublicErrorCode.RESPONSE_ERROR,
+          PublicErrorCode.INTERNAL_ERROR,
           "failed to parse response JSON: " + e.getMessage(),
           null,
           null,
