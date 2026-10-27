@@ -3,6 +3,7 @@ package com.alibaba.dashscope;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.alibaba.dashscope.config.ConfigResolver;
@@ -12,11 +13,21 @@ import com.alibaba.dashscope.transport.EncryptionConfig;
 import com.alibaba.dashscope.transport.EncryptionKeys;
 import com.alibaba.dashscope.transport.EncryptionUtils;
 import com.alibaba.dashscope.transport.HttpTransport;
+import com.alibaba.dashscope.types.completions.ChatCompletion;
+import com.alibaba.dashscope.types.completions.ChatCompletionCreateParams;
+import com.alibaba.dashscope.types.messages.Message;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -33,6 +44,8 @@ import org.junitpioneer.jupiter.SetEnvironmentVariable;
 @ClearEnvironmentVariable(key = "DASHSCOPE_REGION")
 @SetEnvironmentVariable(key = "DASHSCOPE_CONFIG", value = "/nonexistent/dashscope-config.toml")
 class EncryptionMockTest {
+  private static final ObjectMapper MAPPER = new ObjectMapper();
+
   private MockWebServer server;
   private HttpTransport transport;
 
@@ -115,9 +128,10 @@ class EncryptionMockTest {
     assertEquals("key-42", config.getPublicKeyId());
     assertEquals(base64Public, config.getBase64PublicKey());
     assertEquals(12, config.getIv().length);
-    String[] parts = config.keyHeader().split(",");
-    assertEquals(3, parts.length);
-    assertEquals("key-42", parts[0]);
+    JsonNode header = MAPPER.readTree(config.keyHeader());
+    assertEquals("key-42", header.get("public_key_id").asText());
+    assertNotNull(header.get("encrypt_key").asText());
+    assertNotNull(header.get("iv").asText());
 
     RecordedRequest request = server.takeRequest();
     assertEquals("/public-keys/latest", request.getPath());
@@ -133,5 +147,80 @@ class EncryptionMockTest {
             ApiStatusException.class,
             () -> new EncryptionKeys(transport).createConfig(RequestOptions.NONE));
     assertEquals(PublicErrorCode.RESPONSE_ERROR.getErrorCode(), e.getCode());
+  }
+
+  @Test
+  void encryptedChatRoundTripUsesClientRequestPipeline() throws Exception {
+    KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+    generator.initialize(2048);
+    KeyPair keyPair = generator.generateKeyPair();
+    String publicKey = Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());
+    AtomicReference<String> decryptedInput = new AtomicReference<>();
+    server.setDispatcher(
+        new Dispatcher() {
+          @Override
+          public MockResponse dispatch(RecordedRequest request) {
+            try {
+              if ("/public-keys/latest".equals(request.getPath())) {
+                return new MockResponse()
+                    .setHeader("Content-Type", "application/json")
+                    .setBody(
+                        "{\"request_id\":\"key-request\",\"data\":{\"public_key\":\""
+                            + publicKey
+                            + "\",\"public_key_id\":\"key-99\"}}");
+              }
+              JsonNode keyHeader = MAPPER.readTree(request.getHeader("X-DashScope-EncryptionKey"));
+              Cipher rsa = Cipher.getInstance("RSA");
+              rsa.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
+              byte[] aesBytes =
+                  Base64.getDecoder()
+                      .decode(
+                          new String(
+                              rsa.doFinal(
+                                  Base64.getDecoder()
+                                      .decode(keyHeader.get("encrypt_key").asText())),
+                              StandardCharsets.UTF_8));
+              SecretKey aesKey = new SecretKeySpec(aesBytes, "AES");
+              byte[] iv = Base64.getDecoder().decode(keyHeader.get("iv").asText());
+              JsonNode requestBody = MAPPER.readTree(request.getBody().readUtf8());
+              decryptedInput.set(
+                  EncryptionUtils.aesDecrypt(requestBody.get("input").asText(), aesKey, iv));
+
+              String output =
+                  "{\"choices\":[{\"message\":{\"role\":\"assistant\","
+                      + "\"content\":\"encrypted-ok\"}}]}";
+              String encryptedOutput = EncryptionUtils.aesEncrypt(output, aesKey, iv);
+              return new MockResponse()
+                  .setHeader("Content-Type", "application/json")
+                  .setHeader("X-DashScope-OutputEncrypted", "true")
+                  .setBody(
+                      "{\"request_id\":\"encrypted-1\",\"output\":\"" + encryptedOutput + "\"}");
+            } catch (Exception e) {
+              return new MockResponse().setResponseCode(500).setBody(e.toString());
+            }
+          }
+        });
+
+    try (DashScopeClient client =
+        DashScopeClient.builder()
+            .apiKey("test-key")
+            .baseUrl(server.url("/").toString())
+            .maxRetries(0)
+            .build()) {
+      ChatCompletion result =
+          client
+              .chat()
+              .completions()
+              .create(
+                  ChatCompletionCreateParams.builder()
+                      .model("qwen-plus")
+                      .messages(Arrays.asList(Message.user("secret")))
+                      .build(),
+                  RequestOptions.builder().enableEncryption(true).build());
+
+      assertEquals("encrypted-ok", result.outputText());
+      JsonNode plainInput = MAPPER.readTree(decryptedInput.get());
+      assertEquals("secret", plainInput.get("messages").get(0).get("content").asText());
+    }
   }
 }

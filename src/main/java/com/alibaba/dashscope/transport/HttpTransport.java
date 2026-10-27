@@ -4,7 +4,9 @@ package com.alibaba.dashscope.transport;
 import com.alibaba.dashscope.RequestOptions;
 import com.alibaba.dashscope.config.ResolvedConfig;
 import com.alibaba.dashscope.errors.ApiStatusException;
+import com.alibaba.dashscope.errors.DashScopeException;
 import com.alibaba.dashscope.errors.Errors;
+import com.alibaba.dashscope.errors.PublicErrorCode;
 import com.alibaba.dashscope.errors.SdkErrorCode;
 import com.alibaba.dashscope.transport.sse.JobEventStream;
 import com.alibaba.dashscope.transport.sse.SseStream;
@@ -52,6 +54,8 @@ public final class HttpTransport implements AutoCloseable {
           config
               .getHttpClient()
               .newBuilder()
+              .readTimeout(config.getTimeout())
+              .callTimeout(config.getTimeout())
               .addInterceptor(new AuthInterceptor())
               .addInterceptor(new UserAgentInterceptor())
               .addInterceptor(new RetryInterceptor())
@@ -85,7 +89,12 @@ public final class HttpTransport implements AutoCloseable {
   /** Sharing constructor for withOptions()-derived clients: same underlying pool. */
   private HttpTransport(ResolvedConfig config, OkHttpClient shared) {
     this.config = config;
-    this.client = shared;
+    this.client =
+        shared
+            .newBuilder()
+            .readTimeout(config.getTimeout())
+            .callTimeout(config.getTimeout())
+            .build();
     this.ownsClient = false;
   }
 
@@ -143,10 +152,12 @@ public final class HttpTransport implements AutoCloseable {
             .maxRetries(opts.getMaxRetries())
             .apiKey(opts.getApiKey())
             .workspace(opts.getWorkspace())
+            .enableEncryption(opts.getEnableEncryption())
             .headers(opts.getHeaders())
             .headers(extraHeaders);
-    Request request = buildRequest(path, body, module, merged.build(), false, "POST");
-    Response response = send(request, merged.build(), false);
+    RequestOptions mergedOptions = merged.build();
+    Request request = buildRequest(path, body, module, mergedOptions, false, "POST");
+    Response response = send(request, mergedOptions, false);
     return handleResponse(response);
   }
 
@@ -294,7 +305,8 @@ public final class HttpTransport implements AutoCloseable {
           JsonSupport.toPlainValue(errorBody),
           headersOf(response));
     }
-    return new SseStream(response);
+    RequestTags.Encryption encryption = request.tag(RequestTags.Encryption.class);
+    return new SseStream(response, encryption == null ? null : encryption.config);
   }
 
   /**
@@ -357,6 +369,23 @@ public final class HttpTransport implements AutoCloseable {
       throw Errors.fromSdkErrorCode(SdkErrorCode.SDK_INVALID_API_KEY);
     }
     String workspace = opts.getWorkspace() != null ? opts.getWorkspace() : config.getWorkspace();
+    EncryptionConfig encryptionConfig;
+    JsonNode wireBody;
+    try {
+      encryptionConfig = encryptionConfig(body, opts);
+      wireBody =
+          encryptionConfig == null ? body : EncryptionUtils.encryptInput(body, encryptionConfig);
+    } catch (DashScopeException e) {
+      throw e;
+    } catch (RuntimeException e) {
+      throw Errors.fromCatalogEntry(
+          PublicErrorCode.RESPONSE_ERROR,
+          "failed to prepare encrypted request: " + e.getMessage(),
+          null,
+          JsonSupport.toPlainValue(body),
+          null,
+          e);
+    }
 
     Request.Builder builder =
         new Request.Builder()
@@ -368,6 +397,11 @@ public final class HttpTransport implements AutoCloseable {
                 new RequestTags.MaxRetries(
                     opts.getMaxRetries() != null ? opts.getMaxRetries() : config.getMaxRetries()))
             .header("Content-Type", "application/json");
+    if (encryptionConfig != null) {
+      builder
+          .tag(RequestTags.Encryption.class, new RequestTags.Encryption(encryptionConfig))
+          .header("X-DashScope-EncryptionKey", encryptionConfig.keyHeader());
+    }
     if (module != null && !module.isEmpty()) {
       builder.tag(RequestTags.Module.class, new RequestTags.Module(module));
     }
@@ -381,8 +415,8 @@ public final class HttpTransport implements AutoCloseable {
     } else {
       builder.header("Accept", "application/json; charset=utf-8");
     }
-    if (body != null) {
-      builder.method(httpMethod, RequestBody.create(body.toString(), JSON));
+    if (wireBody != null) {
+      builder.method(httpMethod, RequestBody.create(wireBody.toString(), JSON));
     } else {
       builder.method(httpMethod, RequestBody.create(new byte[0], null));
     }
@@ -394,6 +428,18 @@ public final class HttpTransport implements AutoCloseable {
 
   private static boolean isAbsolute(String path) {
     return path.startsWith("http://") || path.startsWith("https://");
+  }
+
+  private EncryptionConfig encryptionConfig(JsonNode body, RequestOptions options) {
+    if (!Boolean.TRUE.equals(options.getEnableEncryption())
+        || body == null
+        || !body.isObject()
+        || !body.has("input")
+        || !body.get("input").isObject()) {
+      return null;
+    }
+    RequestOptions keyOptions = options.toBuilder().enableEncryption(false).build();
+    return new EncryptionKeys(this).createConfig(keyOptions);
   }
 
   private Response send(Request request, RequestOptions options, boolean stream) {
@@ -427,7 +473,7 @@ public final class HttpTransport implements AutoCloseable {
     boolean raiseOnError = config.isRaiseOnError();
 
     if (!response.isSuccessful()) {
-      JsonNode errorBody = JsonSupport.parseErrorBody(text);
+      JsonNode errorBody = decryptBody(JsonSupport.parseErrorBody(text), response, headers);
       ApiStatusException error =
           Errors.fromStatus(
               response.code(),
@@ -453,6 +499,7 @@ public final class HttpTransport implements AutoCloseable {
     }
 
     JsonNode body = text.isEmpty() ? null : JsonSupport.readTree(text);
+    body = decryptBody(body, response, headers);
     if (JsonSupport.isErrorFrame(body)) {
       ApiStatusException error =
           Errors.fromBusinessCode(
@@ -466,6 +513,25 @@ public final class HttpTransport implements AutoCloseable {
       }
     }
     return new ResponseEnvelope(response.code(), headers, body);
+  }
+
+  private static JsonNode decryptBody(
+      JsonNode body, Response response, Map<String, String> headers) {
+    RequestTags.Encryption encryption = response.request().tag(RequestTags.Encryption.class);
+    if (encryption == null || body == null) {
+      return body;
+    }
+    try {
+      return EncryptionUtils.decryptOutput(body, encryption.config);
+    } catch (RuntimeException e) {
+      throw Errors.fromCatalogEntry(
+          PublicErrorCode.RESPONSE_ERROR,
+          "failed to decrypt response output: " + e.getMessage(),
+          JsonSupport.requestId(body, headers),
+          JsonSupport.toPlainValue(body),
+          headers,
+          e);
+    }
   }
 
   private static String readBodyText(Response response) {

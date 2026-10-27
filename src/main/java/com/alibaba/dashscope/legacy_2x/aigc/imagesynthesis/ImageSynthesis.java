@@ -33,31 +33,6 @@ public final class ImageSynthesis {
     public static final String WANX_2_1_IMAGEEDIT = "wanx2.1-imageedit";
   }
 
-  /**
-   * Model prefixes that are only served on the multimodal-generation endpoint. The legacy
-   * text2image endpoint used by this class rejects them with a 400 "url error", so they must be
-   * called through {@link com.alibaba.dashscope.legacy_2x.aigc.imagegeneration.ImageGeneration}
-   * instead.
-   */
-  private static final String[] MULTIMODAL_MODEL_PREFIXES = {"wan2.6-t2i", "wan2.6-image"};
-
-  private static void checkMultimodalModel(String model) {
-    if (model == null) {
-      return;
-    }
-    for (String prefix : MULTIMODAL_MODEL_PREFIXES) {
-      if (model.startsWith(prefix)) {
-        throw new IllegalArgumentException(
-            String.format(
-                "Model '%s' is only served on the multimodal-generation endpoint and is not "
-                    + "supported by ImageSynthesis. Use "
-                    + "com.alibaba.dashscope.legacy_2x.aigc.imagegeneration.ImageGeneration "
-                    + "(ImageGeneration.call/asyncCall/streamCall) for this model.",
-                model));
-      }
-    }
-  }
-
   /** Image edit function */
   public static class ImageEditFunction {
     public static final String STYLIZATION_ALL = "stylization_all";
@@ -137,7 +112,6 @@ public final class ImageSynthesis {
 
   public ImageSynthesisResult asyncCall(ImageSynthesisParam param)
       throws ApiException, NoApiKeyException {
-    checkMultimodalModel(param.getModel());
     // add local file support
     try {
       param.checkAndUpload();
@@ -152,15 +126,11 @@ public final class ImageSynthesis {
   }
 
   /**
-   * Synchronously generate images on the legacy text2image endpoint.
-   *
-   * <p>Multimodal-generation models (wan2.6-t2i / wan2.6-image) are not served here; use {@link
-   * com.alibaba.dashscope.legacy_2x.aigc.imagegeneration.ImageGeneration#call} for those. Calling
-   * this method with such a model throws {@link IllegalArgumentException}.
+   * Note: This method currently now only supports wan2.2-t2i-flash and wan2.2-t2i-plus. Using other
+   * models will result in an error，More raw image models may be added for use later
    */
   public ImageSynthesisResult syncCall(ImageSynthesisParam param)
       throws ApiException, NoApiKeyException {
-    checkMultimodalModel(param.getModel());
     // add local file support
     try {
       param.checkAndUpload();
@@ -182,7 +152,6 @@ public final class ImageSynthesis {
    */
   public ImageSynthesisResult call(ImageSynthesisParam param)
       throws ApiException, NoApiKeyException {
-    checkMultimodalModel(param.getModel());
     // add local file support
     try {
       param.checkAndUpload();

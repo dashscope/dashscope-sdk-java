@@ -36,9 +36,12 @@ import com.alibaba.dashscope.resources.videos.VideosAsyncService;
 import com.alibaba.dashscope.resources.videos.VideosService;
 import com.alibaba.dashscope.transport.HttpTransport;
 import java.time.Duration;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import okhttp3.OkHttpClient;
 
@@ -52,7 +55,7 @@ public final class DashScopeAsyncClient implements AutoCloseable {
 
   private final ClientOptions options;
   private final HttpTransport transport;
-  private final ExecutorService executor;
+  private final Executor executor;
   private final boolean ownsExecutor;
   private final ChatAsyncService chat;
   private final EmbeddingAsyncService embeddings;
@@ -72,10 +75,7 @@ public final class DashScopeAsyncClient implements AutoCloseable {
   private volatile AgentStudioClient agentStudio;
 
   private DashScopeAsyncClient(
-      ClientOptions options,
-      HttpTransport transport,
-      ExecutorService executor,
-      boolean ownsExecutor) {
+      ClientOptions options, HttpTransport transport, Executor executor, boolean ownsExecutor) {
     this.options = options;
     this.transport = transport;
     this.executor = executor;
@@ -197,8 +197,9 @@ public final class DashScopeAsyncClient implements AutoCloseable {
    */
   public DashScopeAsyncClient withOptions(ClientOptions overrides) {
     ClientOptions merged = DashScopeClient.merge(options, overrides);
+    Executor derivedExecutor = overrides.getExecutor() != null ? overrides.getExecutor() : executor;
     return new DashScopeAsyncClient(
-        merged, transport.derive(ConfigResolver.resolve(merged)), executor, false);
+        merged, transport.derive(ConfigResolver.resolve(merged)), derivedExecutor, false);
   }
 
   @Override
@@ -208,12 +209,12 @@ public final class DashScopeAsyncClient implements AutoCloseable {
       c.close();
     }
     transport.close();
-    if (ownsExecutor) {
-      executor.shutdown();
+    if (ownsExecutor && executor instanceof ExecutorService) {
+      ((ExecutorService) executor).shutdown();
     }
   }
 
-  private static ExecutorService newExecutor() {
+  static ExecutorService newExecutor(int maxConcurrency) {
     ThreadFactory factory =
         new ThreadFactory() {
           private final AtomicInteger seq = new AtomicInteger();
@@ -225,7 +226,16 @@ public final class DashScopeAsyncClient implements AutoCloseable {
             return t;
           }
         };
-    return Executors.newCachedThreadPool(factory);
+    int threads = Math.max(1, maxConcurrency);
+    int queueCapacity = threads > Integer.MAX_VALUE / 4 ? Integer.MAX_VALUE : threads * 4;
+    return new ThreadPoolExecutor(
+        threads,
+        threads,
+        0L,
+        TimeUnit.MILLISECONDS,
+        new ArrayBlockingQueue<>(Math.max(1, queueCapacity)),
+        factory,
+        new ThreadPoolExecutor.AbortPolicy());
   }
 
   public static final class Builder {
@@ -284,10 +294,21 @@ public final class DashScopeAsyncClient implements AutoCloseable {
       return this;
     }
 
+    /** Inject an executor; the caller retains lifecycle ownership. */
+    public Builder executor(Executor executor) {
+      options.executor(executor);
+      return this;
+    }
+
     public DashScopeAsyncClient build() {
       ClientOptions built = options.build();
-      return new DashScopeAsyncClient(
-          built, new HttpTransport(ConfigResolver.resolve(built)), newExecutor(), true);
+      ResolvedConfig resolved = ConfigResolver.resolve(built);
+      Executor executor = built.getExecutor();
+      boolean ownsExecutor = executor == null;
+      if (executor == null) {
+        executor = newExecutor(resolved.getMaxRequests());
+      }
+      return new DashScopeAsyncClient(built, new HttpTransport(resolved), executor, ownsExecutor);
     }
   }
 }

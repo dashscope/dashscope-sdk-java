@@ -41,6 +41,15 @@ public final class RequestTags {
     }
   }
 
+  /** Per-request encryption material used for both request encryption and response decryption. */
+  public static final class Encryption {
+    public final EncryptionConfig config;
+
+    public Encryption(EncryptionConfig config) {
+      this.config = config;
+    }
+  }
+
   /**
    * Suffix appended to the User-Agent (e.g. {@code incremental_to_full/1} for client-side stream
    * accumulation, 2.x parity).

@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
@@ -120,6 +121,50 @@ class ChatCompletionsMockTest {
     assertEquals("你好", messages.get(0).get("content").asText());
     assertEquals("message", body.get("parameters").get("result_format").asText());
     assertFalse(body.get("parameters").has("incremental_output"));
+  }
+
+  @Test
+  void toolResultSerializesToolCallId() throws Exception {
+    server.enqueue(
+        okJson(
+            "{\"output\":{\"choices\":[{\"message\":{\"role\":\"assistant\","
+                + "\"content\":\"done\"}}]},\"request_id\":\"tool-1\"}"));
+    ChatCompletionCreateParams toolParams =
+        ChatCompletionCreateParams.builder()
+            .model("qwen-plus")
+            .messages(Arrays.asList(Message.tool("sunny", "get_weather", "call-42")))
+            .build();
+
+    client.chat().completions().create(toolParams);
+
+    JsonNode message = bodyOf(server.takeRequest()).get("input").get("messages").get(0);
+    assertEquals("tool", message.get("role").asText());
+    assertEquals("get_weather", message.get("name").asText());
+    assertEquals("call-42", message.get("tool_call_id").asText());
+  }
+
+  @Test
+  void asyncClientUsesInjectedExecutor() throws Exception {
+    server.enqueue(
+        okJson(
+            "{\"output\":{\"choices\":[{\"message\":{\"role\":\"assistant\","
+                + "\"content\":\"async\"}}]},\"request_id\":\"async-1\"}"));
+    AtomicInteger executions = new AtomicInteger();
+    try (DashScopeAsyncClient async =
+        DashScopeAsyncClient.builder()
+            .apiKey("test-key")
+            .baseUrl(server.url("/").toString())
+            .maxRetries(0)
+            .executor(
+                command -> {
+                  executions.incrementAndGet();
+                  command.run();
+                })
+            .build()) {
+      ChatCompletion result = async.chat().completions().create(params()).get(5, TimeUnit.SECONDS);
+      assertEquals("async", result.outputText());
+      assertEquals(1, executions.get());
+    }
   }
 
   @Test

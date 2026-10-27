@@ -263,7 +263,10 @@ class ConfigChainTest {
         ResolvedConfig withoutInjected =
             ConfigResolver.resolve(ClientOptions.builder().timeout(Duration.ofSeconds(9)).build());
         try (HttpTransport derived = transport.derive(withoutInjected)) {
-          assertSame(transport.okhttp(), derived.okhttp());
+          assertNotSame(transport.okhttp(), derived.okhttp());
+          assertSame(transport.okhttp().connectionPool(), derived.okhttp().connectionPool());
+          assertEquals(9000, derived.okhttp().callTimeoutMillis());
+          assertEquals(9000, derived.okhttp().readTimeoutMillis());
         }
       } finally {
         injected.connectionPool().evictAll();

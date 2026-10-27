@@ -22,6 +22,7 @@ import com.alibaba.dashscope.resources.videos.VideosService;
 import com.alibaba.dashscope.transport.HttpTransport;
 import com.alibaba.dashscope.transport.ws.WsConnection;
 import java.time.Duration;
+import java.util.concurrent.Executor;
 import okhttp3.OkHttpClient;
 
 /**
@@ -248,6 +249,9 @@ public final class DashScopeClient implements AutoCloseable {
     if (overrides.getHttpClient() != null) {
       b.httpClient(overrides.getHttpClient());
     }
+    if (overrides.getExecutor() != null) {
+      b.executor(overrides.getExecutor());
+    }
     return b.build();
   }
 
@@ -304,6 +308,12 @@ public final class DashScopeClient implements AutoCloseable {
 
     public Builder httpClient(OkHttpClient httpClient) {
       options.httpClient(httpClient);
+      return this;
+    }
+
+    /** Stored for a later async-client derivation; unused by this synchronous client. */
+    public Builder executor(Executor executor) {
+      options.executor(executor);
       return this;
     }
 

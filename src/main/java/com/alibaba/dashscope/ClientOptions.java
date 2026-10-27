@@ -2,6 +2,7 @@
 package com.alibaba.dashscope;
 
 import java.time.Duration;
+import java.util.concurrent.Executor;
 import okhttp3.OkHttpClient;
 
 /**
@@ -20,6 +21,7 @@ public final class ClientOptions {
   private final Boolean raiseOnError;
   private final Duration wsPingInterval;
   private final OkHttpClient httpClient;
+  private final Executor executor;
 
   private ClientOptions(Builder b) {
     this.apiKey = b.apiKey;
@@ -32,6 +34,7 @@ public final class ClientOptions {
     this.raiseOnError = b.raiseOnError;
     this.wsPingInterval = b.wsPingInterval;
     this.httpClient = b.httpClient;
+    this.executor = b.executor;
   }
 
   public static Builder builder() {
@@ -50,6 +53,7 @@ public final class ClientOptions {
     b.raiseOnError = raiseOnError;
     b.wsPingInterval = wsPingInterval;
     b.httpClient = httpClient;
+    b.executor = executor;
     return b;
   }
 
@@ -101,6 +105,11 @@ public final class ClientOptions {
     return httpClient;
   }
 
+  /** Externally injected async executor; the caller owns its lifecycle. */
+  public Executor getExecutor() {
+    return executor;
+  }
+
   public static final class Builder {
     private String apiKey;
     private String baseUrl;
@@ -112,6 +121,7 @@ public final class ClientOptions {
     private Boolean raiseOnError;
     private Duration wsPingInterval;
     private OkHttpClient httpClient;
+    private Executor executor;
 
     private Builder() {}
 
@@ -164,6 +174,11 @@ public final class ClientOptions {
 
     public Builder httpClient(OkHttpClient httpClient) {
       this.httpClient = httpClient;
+      return this;
+    }
+
+    public Builder executor(Executor executor) {
+      this.executor = executor;
       return this;
     }
 

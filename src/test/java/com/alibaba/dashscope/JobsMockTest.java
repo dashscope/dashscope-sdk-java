@@ -120,6 +120,20 @@ class JobsMockTest {
   }
 
   @Test
+  void waitTimeoutBoundsAnInFlightPoll() {
+    server.enqueue(
+        jobJson("task-slow", "RUNNING").setBodyDelay(5, java.util.concurrent.TimeUnit.SECONDS));
+    long started = System.nanoTime();
+
+    assertThrows(
+        ApiTimeoutException.class,
+        () -> jobs.wait("task-slow", Duration.ofMillis(150), RequestOptions.NONE));
+
+    long elapsedMillis = Duration.ofNanos(System.nanoTime() - started).toMillis();
+    assertTrue(elapsedMillis < 2000, "wait exceeded its total budget: " + elapsedMillis + "ms");
+  }
+
+  @Test
   void cancelPostsToCancelEndpoint() throws Exception {
     server.enqueue(jobJson("task-2", "CANCELED"));
     Job job = jobs.cancel("task-2", null);

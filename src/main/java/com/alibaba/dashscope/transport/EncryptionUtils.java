@@ -1,6 +1,8 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.transport;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -20,8 +22,8 @@ import javax.crypto.spec.GCMParameterSpec;
 
 /**
  * Crypto primitives for the encrypted channel (J7, ported from 2.x utils/EncryptionUtils):
- * RSA-wrapped AES-256-GCM. Wire shape: the request carries an {@code X-DashScope-EncryptionKey:
- * <publicKeyId>,<RSA(base64(aesKey))>,<base64(iv)>} header and the sensitive body part is AES-GCM
+ * RSA-wrapped AES-256-GCM. Wire shape: the request carries an {@code X-DashScope-EncryptionKey}
+ * JSON header ({@code public_key_id/encrypt_key/iv}) and the sensitive body part is AES-GCM
  * encrypted.
  *
  * <p>Failure model: a JDK that lacks RSA/AES-GCM is a broken environment → {@link
@@ -109,5 +111,34 @@ public final class EncryptionUtils {
         | BadPaddingException e) {
       throw new IllegalArgumentException("AES decryption failed: " + e.getMessage(), e);
     }
+  }
+
+  /** Encrypt only the top-level {@code input} object, preserving the remaining request envelope. */
+  static JsonNode encryptInput(JsonNode body, EncryptionConfig config) {
+    if (body == null || !body.isObject()) {
+      return body;
+    }
+    JsonNode input = body.get("input");
+    if (input == null || !input.isObject()) {
+      return body;
+    }
+    ObjectNode encrypted = ((ObjectNode) body).deepCopy();
+    encrypted.put("input", aesEncrypt(input.toString(), config.getAesKey(), config.getIv()));
+    return encrypted;
+  }
+
+  /** Decrypt a top-level string {@code output}, preserving request/error envelope fields. */
+  public static JsonNode decryptOutput(JsonNode body, EncryptionConfig config) {
+    if (body == null || !body.isObject() || config == null) {
+      return body;
+    }
+    JsonNode output = body.get("output");
+    if (output == null || !output.isTextual()) {
+      return body;
+    }
+    String plain = aesDecrypt(output.asText(), config.getAesKey(), config.getIv());
+    ObjectNode decrypted = ((ObjectNode) body).deepCopy();
+    decrypted.set("output", JsonSupport.readTree(plain));
+    return decrypted;
   }
 }

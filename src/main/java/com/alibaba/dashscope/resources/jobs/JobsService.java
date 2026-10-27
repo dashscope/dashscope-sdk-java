@@ -67,23 +67,26 @@ public final class JobsService {
   }
 
   public Job wait(String taskId, Duration waitTimeout, RequestOptions options) {
-    long timeoutMillis =
-        waitTimeout == null ? DEFAULT_WAIT_TIMEOUT.toMillis() : waitTimeout.toMillis();
-    long start = System.currentTimeMillis();
+    Duration budget = waitTimeout == null ? DEFAULT_WAIT_TIMEOUT : waitTimeout;
+    long timeoutNanos = budget.toNanos();
+    long start = System.nanoTime();
     long pollMs = INITIAL_POLL_MS;
     while (true) {
-      Job job = fetch(taskId, options);
+      long elapsedNanos = System.nanoTime() - start;
+      long remainingNanos = timeoutNanos - elapsedNanos;
+      if (remainingNanos <= 0) {
+        throw waitTimeout(taskId, elapsedNanos);
+      }
+      Job job = fetch(taskId, boundedOptions(options, remainingNanos));
       if (job.isFinished()) {
         return job;
       }
-      long elapsed = System.currentTimeMillis() - start;
-      if (elapsed >= timeoutMillis) {
-        throw Errors.timeout(
-            SdkErrorCode.SDK_TIMEOUT,
-            "waiting for task [" + taskId + "] after " + elapsed + " ms",
-            null);
+      elapsedNanos = System.nanoTime() - start;
+      remainingNanos = timeoutNanos - elapsedNanos;
+      if (remainingNanos <= 0) {
+        throw waitTimeout(taskId, elapsedNanos);
       }
-      long sleepMs = Math.min(pollMs, timeoutMillis - elapsed);
+      long sleepMs = Math.min(pollMs, Duration.ofNanos(remainingNanos).toMillis());
       pollMs = Math.min(pollMs * 2, MAX_POLL_MS);
       try {
         Thread.sleep(sleepMs);
@@ -93,6 +96,26 @@ public final class JobsService {
             SdkErrorCode.SDK_CONNECTION_INTERRUPTED, "waiting for task [" + taskId + "]", e);
       }
     }
+  }
+
+  private RequestOptions boundedOptions(RequestOptions options, long remainingNanos) {
+    RequestOptions opts = options == null ? RequestOptions.NONE : options;
+    Duration remaining = Duration.ofNanos(Math.max(1_000_000L, remainingNanos));
+    Duration configured =
+        opts.getTimeout() != null ? opts.getTimeout() : transport.config().getTimeout();
+    Duration bounded = configured.compareTo(remaining) <= 0 ? configured : remaining;
+    return opts.toBuilder().timeout(bounded).build();
+  }
+
+  private static RuntimeException waitTimeout(String taskId, long elapsedNanos) {
+    return Errors.timeout(
+        SdkErrorCode.SDK_TIMEOUT,
+        "waiting for task ["
+            + taskId
+            + "] after "
+            + Duration.ofNanos(Math.max(0L, elapsedNanos)).toMillis()
+            + " ms",
+        null);
   }
 
   public Job cancel(String taskId, RequestOptions options) {

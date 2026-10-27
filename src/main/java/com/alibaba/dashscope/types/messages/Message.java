@@ -20,35 +20,51 @@ public final class Message {
   @JsonProperty("tool_calls")
   private final List<ToolCall> toolCalls;
 
+  @JsonProperty("tool_call_id")
+  private final String toolCallId;
+
+  /** Retained for source compatibility with the original 3.0 message constructor. */
   public Message(String role, String content, String name, List<ToolCall> toolCalls) {
+    this(role, content, name, toolCalls, null);
+  }
+
+  public Message(
+      String role, String content, String name, List<ToolCall> toolCalls, String toolCallId) {
     this.role = role;
     this.content = content;
     this.name = name;
     this.toolCalls = toolCalls;
+    this.toolCallId = toolCallId;
   }
 
   public static Message of(String role, String content) {
-    return new Message(role, content, null, null);
+    return new Message(role, content, null, null, null);
   }
 
   public static Message user(String content) {
-    return new Message("user", content, null, null);
+    return new Message("user", content, null, null, null);
   }
 
   public static Message system(String content) {
-    return new Message("system", content, null, null);
+    return new Message("system", content, null, null, null);
   }
 
   public static Message assistant(String content) {
-    return new Message("assistant", content, null, null);
+    return new Message("assistant", content, null, null, null);
   }
 
   public static Message assistant(String content, List<ToolCall> toolCalls) {
-    return new Message("assistant", content, null, toolCalls);
+    return new Message("assistant", content, null, toolCalls, null);
   }
 
+  /** Legacy name-only tool result form. Prefer {@link #tool(String, String, String)}. */
   public static Message tool(String content, String name) {
-    return new Message("tool", content, name, null);
+    return new Message("tool", content, name, null, null);
+  }
+
+  /** Tool result associated with the model-issued {@code tool_call_id}. */
+  public static Message tool(String content, String name, String toolCallId) {
+    return new Message("tool", content, name, null, toolCallId);
   }
 
   public String getRole() {
@@ -65,5 +81,9 @@ public final class Message {
 
   public List<ToolCall> getToolCalls() {
     return toolCalls;
+  }
+
+  public String getToolCallId() {
+    return toolCallId;
   }
 }

@@ -2,12 +2,17 @@
 package com.alibaba.dashscope.transport.sse;
 
 import com.alibaba.dashscope.errors.Errors;
+import com.alibaba.dashscope.errors.PublicErrorCode;
 import com.alibaba.dashscope.errors.SdkErrorCode;
+import com.alibaba.dashscope.transport.EncryptionConfig;
+import com.alibaba.dashscope.transport.EncryptionUtils;
 import com.alibaba.dashscope.transport.JsonSupport;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import okhttp3.Response;
 
@@ -21,11 +26,17 @@ public final class SseStream implements AutoCloseable, Iterable<JsonNode> {
   private static final String DONE = "[DONE]";
 
   private final Response response;
+  private final EncryptionConfig encryptionConfig;
   private boolean closed = false;
   private boolean iteratorTaken = false;
 
   public SseStream(Response response) {
+    this(response, null);
+  }
+
+  public SseStream(Response response, EncryptionConfig encryptionConfig) {
     this.response = response;
+    this.encryptionConfig = encryptionConfig;
   }
 
   /** Response headers of the opening HTTP exchange (request id lookup etc.). */
@@ -72,7 +83,22 @@ public final class SseStream implements AutoCloseable, Iterable<JsonNode> {
       String payload = nextData;
       nextData = null;
       pendingLoaded = false;
-      return JsonSupport.readTree(payload);
+      JsonNode frame = JsonSupport.readTree(payload);
+      try {
+        return EncryptionUtils.decryptOutput(frame, encryptionConfig);
+      } catch (RuntimeException e) {
+        Map<String, String> headers = new LinkedHashMap<>();
+        for (String name : response.headers().names()) {
+          headers.put(name, response.header(name));
+        }
+        throw Errors.fromCatalogEntry(
+            PublicErrorCode.RESPONSE_ERROR,
+            "failed to decrypt SSE output: " + e.getMessage(),
+            JsonSupport.requestId(frame, headers),
+            JsonSupport.toPlainValue(frame),
+            headers,
+            e);
+      }
     }
 
     private void loadNext() {

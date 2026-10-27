@@ -6,6 +6,7 @@ import com.alibaba.dashscope.types.common.ResponseStream;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 /**
@@ -35,36 +36,66 @@ public final class RxStreams {
   private static <T, S extends Iterable<T> & AutoCloseable> Flowable<T> bridge(
       Supplier<S> streamSupplier, Executor executor) {
     return Flowable.<T>create(
-            emitter ->
-                executor.execute(
-                    () -> {
-                      S stream;
-                      try {
-                        stream = streamSupplier.get();
-                      } catch (Throwable e) {
+            emitter -> {
+              AtomicReference<AutoCloseable> activeStream = new AtomicReference<>();
+              emitter.setCancellable(() -> closeQuietly(activeStream.getAndSet(null)));
+              executor.execute(
+                  () -> {
+                    S stream;
+                    try {
+                      stream = streamSupplier.get();
+                    } catch (Throwable e) {
+                      if (!emitter.isCancelled()) {
                         emitter.onError(e);
-                        return;
                       }
-                      // The resource variable must be explicitly typed AutoCloseable:
-                      // try-with-resources over the intersection type
-                      // S extends Iterable<T> & AutoCloseable emits a call to Iterable.close(),
-                      // which does not exist and fails at runtime with NoSuchMethodError.
-                      try (AutoCloseable closeGuard = stream) {
-                        for (T item : stream) {
-                          if (emitter.isCancelled()) {
-                            return;
-                          }
-                          emitter.onNext(item);
+                      return;
+                    }
+                    if (emitter.isCancelled()) {
+                      closeQuietly(stream);
+                      return;
+                    }
+                    activeStream.set(stream);
+                    // Cancellation may race between the preceding check and set(). Re-check after
+                    // publication so the cancellable always closes an idle blocking read.
+                    if (emitter.isCancelled()) {
+                      closeQuietly(activeStream.getAndSet(null));
+                      return;
+                    }
+                    // The resource variable must be explicitly typed AutoCloseable:
+                    // try-with-resources over the intersection type
+                    // S extends Iterable<T> & AutoCloseable emits a call to Iterable.close(),
+                    // which does not exist and fails at runtime with NoSuchMethodError.
+                    try (AutoCloseable closeGuard = stream) {
+                      for (T item : stream) {
+                        if (emitter.isCancelled()) {
+                          return;
                         }
-                        emitter.onComplete();
-                      } catch (Throwable e) {
-                        if (!emitter.isCancelled()) {
-                          emitter.onError(e);
-                        }
+                        emitter.onNext(item);
                       }
-                    }),
+                      emitter.onComplete();
+                    } catch (Throwable e) {
+                      if (!emitter.isCancelled()) {
+                        emitter.onError(e);
+                      }
+                    } finally {
+                      activeStream.compareAndSet(stream, null);
+                    }
+                  });
+            },
             BackpressureStrategy.BUFFER)
         .publish()
         .refCount();
+  }
+
+  private static void closeQuietly(AutoCloseable closeable) {
+    if (closeable == null) {
+      return;
+    }
+    try {
+      closeable.close();
+    } catch (Exception ignored) {
+      // Cancellation is best-effort and must not route close failures to an already-disposed
+      // subscriber. Normal producer completion still reports close failures through onError.
+    }
   }
 }

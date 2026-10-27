@@ -171,12 +171,19 @@ public final class FineTunesService {
 
   private FineTune waitLoop(
       String jobId, FineTune current, Duration waitTimeout, RequestOptions options) {
-    long timeoutMillis =
-        waitTimeout == null ? DEFAULT_WAIT_TIMEOUT.toMillis() : waitTimeout.toMillis();
-    long start = System.currentTimeMillis();
+    Duration budget = waitTimeout == null ? DEFAULT_WAIT_TIMEOUT : waitTimeout;
+    long timeoutNanos = budget.toNanos();
+    long start = System.nanoTime();
     long pollMs = INITIAL_POLL_MS;
     if (current == null) {
-      current = get(jobId, options);
+      long remainingNanos = timeoutNanos - (System.nanoTime() - start);
+      if (remainingNanos <= 0) {
+        throw Errors.timeout(
+            SdkErrorCode.SDK_TIMEOUT,
+            "waiting for fine-tune job " + jobId + " after " + budget.toMillis() + "ms",
+            null);
+      }
+      current = get(jobId, boundedOptions(options, remainingNanos));
     }
     while (!current.isFinished()) {
       // Compat mode (raiseOnError=false): a transport-level failure comes back as an error
@@ -184,15 +191,15 @@ public final class FineTunesService {
       if (current.isError()) {
         return current;
       }
-      long elapsed = System.currentTimeMillis() - start;
-      long remaining = timeoutMillis - elapsed;
-      if (remaining <= 0) {
+      long elapsedNanos = System.nanoTime() - start;
+      long remainingNanos = timeoutNanos - elapsedNanos;
+      if (remainingNanos <= 0) {
         throw Errors.timeout(
             SdkErrorCode.SDK_TIMEOUT,
-            "waiting for fine-tune job " + jobId + " after " + timeoutMillis / 1000 + "s",
+            "waiting for fine-tune job " + jobId + " after " + budget.toMillis() + "ms",
             null);
       }
-      long sleepMs = Math.min(pollMs, remaining);
+      long sleepMs = Math.min(pollMs, Duration.ofNanos(remainingNanos).toMillis());
       pollMs = Math.min(pollMs * 2, MAX_POLL_MS);
       try {
         Thread.sleep(sleepMs);
@@ -201,9 +208,25 @@ public final class FineTunesService {
         throw Errors.connection(
             SdkErrorCode.SDK_CONNECTION_INTERRUPTED, "waiting for fine-tune job " + jobId, e);
       }
-      current = get(jobId, options);
+      remainingNanos = timeoutNanos - (System.nanoTime() - start);
+      if (remainingNanos <= 0) {
+        throw Errors.timeout(
+            SdkErrorCode.SDK_TIMEOUT,
+            "waiting for fine-tune job " + jobId + " after " + budget.toMillis() + "ms",
+            null);
+      }
+      current = get(jobId, boundedOptions(options, remainingNanos));
     }
     return checkTerminal(current, jobId);
+  }
+
+  private RequestOptions boundedOptions(RequestOptions options, long remainingNanos) {
+    RequestOptions opts = options == null ? RequestOptions.NONE : options;
+    Duration remaining = Duration.ofNanos(Math.max(1_000_000L, remainingNanos));
+    Duration configured =
+        opts.getTimeout() != null ? opts.getTimeout() : transport.config().getTimeout();
+    Duration bounded = configured.compareTo(remaining) <= 0 ? configured : remaining;
+    return opts.toBuilder().timeout(bounded).build();
   }
 
   private FineTune checkTerminal(FineTune job, String jobId) {

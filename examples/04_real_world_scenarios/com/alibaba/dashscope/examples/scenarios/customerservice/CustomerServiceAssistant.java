@@ -394,7 +394,7 @@ public final class CustomerServiceAssistant {
                 + call.getFunction().getArguments()
                 + ") -> "
                 + result);
-        memory.add(Message.tool(result, call.getFunction().getName()));
+        memory.add(Message.tool(result, call.getFunction().getName(), call.getId()));
       }
     }
     String fallback = "抱歉，我暂时无法处理该请求，正在为您转接人工客服。";

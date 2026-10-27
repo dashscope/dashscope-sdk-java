@@ -38,13 +38,13 @@ public final class EncryptionConfig {
     return iv;
   }
 
-  /** {@code <publicKeyId>,<RSA(base64(aesKey))>,<base64(iv)>} — 2.x header parity. */
+  /** JSON value for {@code X-DashScope-EncryptionKey}, matching the 2.x wire contract. */
   public String keyHeader() {
     String base64Key = Base64.getEncoder().encodeToString(aesKey.getEncoded());
-    return publicKeyId
-        + ","
-        + EncryptionUtils.rsaEncrypt(base64Key, base64PublicKey)
-        + ","
-        + Base64.getEncoder().encodeToString(iv);
+    com.fasterxml.jackson.databind.node.ObjectNode header = JsonSupport.mapper().createObjectNode();
+    header.put("public_key_id", publicKeyId);
+    header.put("encrypt_key", EncryptionUtils.rsaEncrypt(base64Key, base64PublicKey));
+    header.put("iv", Base64.getEncoder().encodeToString(iv));
+    return header.toString();
   }
 }

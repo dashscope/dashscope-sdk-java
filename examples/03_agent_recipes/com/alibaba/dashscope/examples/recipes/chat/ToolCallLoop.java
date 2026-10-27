@@ -156,7 +156,7 @@ public final class ToolCallLoop {
         String arguments = call.getFunction().getArguments();
         String result = runTool(name, arguments);
         System.out.println("[turn " + turn + "] " + name + "(" + arguments + ") -> " + result);
-        messages.add(Message.tool(result, name));
+        messages.add(Message.tool(result, name, call.getId()));
       }
     }
     System.out.println("reached MAX_TURNS=" + MAX_TURNS + " without a final answer");

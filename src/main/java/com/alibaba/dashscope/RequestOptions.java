@@ -18,6 +18,7 @@ public final class RequestOptions {
   private final String apiKey;
   private final String workspace;
   private final Map<String, String> headers;
+  private final Boolean enableEncryption;
 
   private RequestOptions(Builder b) {
     this.timeout = b.timeout;
@@ -28,10 +29,21 @@ public final class RequestOptions {
         b.headers == null
             ? Collections.emptyMap()
             : Collections.unmodifiableMap(new LinkedHashMap<>(b.headers));
+    this.enableEncryption = b.enableEncryption;
   }
 
   public static Builder builder() {
     return new Builder();
+  }
+
+  public Builder toBuilder() {
+    return new Builder()
+        .timeout(timeout)
+        .maxRetries(maxRetries)
+        .apiKey(apiKey)
+        .workspace(workspace)
+        .headers(headers)
+        .enableEncryption(enableEncryption);
   }
 
   /** Single-request timeout; overrides the client default for this call only. */
@@ -56,12 +68,18 @@ public final class RequestOptions {
     return headers;
   }
 
+  /** Enables the DashScope encrypted HTTP channel for this call. */
+  public Boolean getEnableEncryption() {
+    return enableEncryption;
+  }
+
   public static final class Builder {
     private Duration timeout;
     private Integer maxRetries;
     private String apiKey;
     private String workspace;
     private Map<String, String> headers;
+    private Boolean enableEncryption;
 
     private Builder() {}
 
@@ -97,6 +115,11 @@ public final class RequestOptions {
       if (headers != null) {
         headers.forEach(this::header);
       }
+      return this;
+    }
+
+    public Builder enableEncryption(Boolean enableEncryption) {
+      this.enableEncryption = enableEncryption;
       return this;
     }
 
