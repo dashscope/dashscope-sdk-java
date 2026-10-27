@@ -1,7 +1,6 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.legacy_2x.utils;
 
-import com.alibaba.dashscope.applications.agentstudio.message.ContentBlock;
 import com.alibaba.dashscope.legacy_2x.aigc.multimodalconversation.MultiModalConversationMessage;
 import com.alibaba.dashscope.legacy_2x.aigc.multimodalconversation.MultiModalConversationMessageAdapter;
 import com.alibaba.dashscope.legacy_2x.common.Message;
@@ -50,7 +49,6 @@ public class JsonUtils {
           .registerTypeAdapter(AnnotationBase.class, new AnnotationDeserializer())
           .registerTypeAdapter(StepDetailBase.class, new StepDetailDeserializer())
           .registerTypeAdapter(ToolCallBase.class, new ToolCallGsonDeserializer())
-          .registerTypeAdapter(ContentBlock.class, new ContentBlock.Deserializer())
           .addSerializationExclusionStrategy(new AnnotationExclusionStrategy())
           .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
           .disableHtmlEscaping()

@@ -1,6 +1,5 @@
 package com.alibaba.dashscope.legacy_2x.multimodal;
 
-import com.alibaba.dashscope.Version;
 import com.alibaba.dashscope.legacy_2x.api.SynchronizeFullDuplexApi;
 import com.alibaba.dashscope.legacy_2x.common.*;
 import com.alibaba.dashscope.legacy_2x.exception.ApiException;
@@ -11,6 +10,7 @@ import com.alibaba.dashscope.legacy_2x.protocol.ConnectionOptions;
 import com.alibaba.dashscope.legacy_2x.protocol.Protocol;
 import com.alibaba.dashscope.legacy_2x.protocol.StreamingMode;
 import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
+import com.alibaba.dashscope.shared.SdkInfo;
 import com.google.gson.JsonObject;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Emitter;
@@ -99,7 +99,7 @@ public class MultiModalDialog {
     public static MultiModalRequestParamWithStream FromMultiModalParam(
         MultiModalRequestParam param, Flowable<Object> dataStream, String preRequestId) {
       ClientInfo clientInfo = param.getClientInfo();
-      clientInfo.setSdk("dashscope-sdk-java " + Version.version);
+      clientInfo.setSdk("dashscope-sdk-java " + SdkInfo.VERSION);
       return MultiModalRequestParamWithStream.builder()
           .parameter("pre_task_id", preRequestId)
           .headers(param.getHeaders())

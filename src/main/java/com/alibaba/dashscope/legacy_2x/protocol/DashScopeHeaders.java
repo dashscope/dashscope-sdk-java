@@ -2,10 +2,10 @@
 
 package com.alibaba.dashscope.legacy_2x.protocol;
 
-import com.alibaba.dashscope.Version;
 import com.alibaba.dashscope.legacy_2x.exception.NoApiKeyException;
 import com.alibaba.dashscope.legacy_2x.utils.ApiKey;
 import com.alibaba.dashscope.legacy_2x.utils.StringUtils;
+import com.alibaba.dashscope.shared.SdkInfo;
 import com.alibaba.dashscope.shared.SdkSession;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +24,7 @@ public final class DashScopeHeaders {
     String userAgent =
         StringUtils.format(
             "dashscope/%s; java/%s; platform/%s; processor/%s",
-            Version.version,
+            SdkInfo.VERSION,
             System.getProperty("java.version"),
             System.getProperty("os.name"),
             System.getProperty("os.arch"));
@@ -45,7 +45,7 @@ public final class DashScopeHeaders {
    * when module is null or empty.
    */
   private static String buildSdkClientValue(String module) {
-    String value = SDK_CLIENT + "/" + Version.version;
+    String value = SDK_CLIENT + "/" + SdkInfo.VERSION;
     if (module != null && !module.isEmpty()) {
       value += "/" + module;
     }
