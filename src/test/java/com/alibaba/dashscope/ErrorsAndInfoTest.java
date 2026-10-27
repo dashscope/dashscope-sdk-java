@@ -127,7 +127,7 @@ class ErrorsAndInfoTest {
             Collections.emptyMap(),
             parseFailure);
     assertSame(ApiStatusException.class, e.getClass());
-    assertEquals("ResponseError", e.getCode());
+    assertEquals("InternalServerError", e.getCode());
     assertNull(e.getStatusCode());
     assertEquals("req-9", e.getRequestId());
     assertSame(parseFailure, e.getCause());

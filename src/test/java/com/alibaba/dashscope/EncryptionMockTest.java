@@ -140,7 +140,7 @@ class EncryptionMockTest {
   }
 
   @Test
-  void malformedKeyResponseRaisesResponseError() {
+  void malformedKeyResponseRaisesInternalServerError() {
     server.enqueue(new MockResponse().setBody("{\"request_id\":\"req-2\"}"));
     ApiStatusException e =
         assertThrows(

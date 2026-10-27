@@ -66,7 +66,7 @@ public enum PublicErrorCode {
       "api_error"),
   RESPONSE_ERROR(
       500,
-      "ResponseError",
+      "InternalServerError",
       "The server returned a response that could not be parsed.",
       "api_error"),
   SERVICE_UNAVAILABLE(
