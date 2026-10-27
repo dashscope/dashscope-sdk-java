@@ -41,7 +41,13 @@ public final class WsSession implements TaskChannel {
 
   public WsSession(
       HttpTransport transport, String url, String taskId, String module, RequestOptions options) {
-    this(transport, url, taskId, module, options, 0, DEFAULT_CONNECT_TIMEOUT);
+    this(transport, url, taskId, module, options, 0, connectTimeout(options));
+  }
+
+  private static Duration connectTimeout(RequestOptions options) {
+    return options != null && options.getTimeout() != null
+        ? options.getTimeout()
+        : DEFAULT_CONNECT_TIMEOUT;
   }
 
   /**

@@ -73,14 +73,14 @@ public final class RealtimeSession implements AutoCloseable {
   /** Set when close() was invoked locally; a locally-closed socket is not a disconnect error. */
   private volatile int localCloseGeneration = -1;
 
-  private boolean terminal;
-  private RuntimeException terminalFailure;
-  private boolean sawCompletion;
-  private String sessionId;
-  private String lastResponseId;
-  private long responseCreateNanos = -1;
-  private Duration firstAudioDelay;
-  private Duration firstTextDelay;
+  private volatile boolean terminal;
+  private volatile RuntimeException terminalFailure;
+  private volatile boolean sawCompletion;
+  private volatile String sessionId;
+  private volatile String lastResponseId;
+  private volatile long responseCreateNanos = -1;
+  private volatile Duration firstAudioDelay;
+  private volatile Duration firstTextDelay;
 
   RealtimeSession(
       HttpTransport transport, String url, RealtimeParams params, RequestOptions options) {
@@ -88,7 +88,10 @@ public final class RealtimeSession implements AutoCloseable {
     this.url = url;
     this.params = params;
     this.options = options == null ? RequestOptions.NONE : options;
-    this.receiveTimeout = transport.config().getTimeout();
+    this.receiveTimeout =
+        this.options.getTimeout() != null
+            ? this.options.getTimeout()
+            : transport.config().getTimeout();
     this.dialect = RealtimeDialect.fromModel(params.getModel());
     connect();
   }
@@ -142,7 +145,7 @@ public final class RealtimeSession implements AutoCloseable {
         transport
             .okhttp()
             .newBuilder()
-            .connectTimeout(WsSession.DEFAULT_CONNECT_TIMEOUT)
+            .connectTimeout(connectTimeout())
             .readTimeout(0, TimeUnit.MILLISECONDS)
             .callTimeout(0, TimeUnit.MILLISECONDS);
     Duration pingInterval = transport.config().getWsPingInterval();
@@ -155,7 +158,7 @@ public final class RealtimeSession implements AutoCloseable {
 
     boolean opened;
     try {
-      opened = latch.await(WsSession.DEFAULT_CONNECT_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
+      opened = latch.await(connectTimeout().toMillis(), TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       ws.cancel();
@@ -166,9 +169,7 @@ public final class RealtimeSession implements AutoCloseable {
       ws.cancel();
       socket = null;
       throw Errors.timeout(
-          SdkErrorCode.SDK_TIMEOUT,
-          "websocket handshake after " + WsSession.DEFAULT_CONNECT_TIMEOUT,
-          null);
+          SdkErrorCode.SDK_TIMEOUT, "websocket handshake after " + connectTimeout(), null);
     }
     if (openFailure != null) {
       ws.cancel();
@@ -411,9 +412,17 @@ public final class RealtimeSession implements AutoCloseable {
     }
     synchronized (sendLock) {
       if (!ws.send(frame.toString())) {
+        if (socket != ws) {
+          throw Errors.connection(
+              SdkErrorCode.SDK_CONNECTION_ERROR, "websocket is no longer connected", null);
+        }
         throw Errors.fromSdkErrorCode(SdkErrorCode.SDK_WS_UPSTREAM_QUEUE_FULL);
       }
     }
+  }
+
+  private Duration connectTimeout() {
+    return options.getTimeout() != null ? options.getTimeout() : WsSession.DEFAULT_CONNECT_TIMEOUT;
   }
 
   private boolean sawSessionFinished() {

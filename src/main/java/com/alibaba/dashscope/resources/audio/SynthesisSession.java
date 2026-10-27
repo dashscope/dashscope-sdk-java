@@ -58,18 +58,19 @@ public final class SynthesisSession implements AutoCloseable {
   private final AtomicReference<String> activeReader = new AtomicReference<>();
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
-  private TaskChannel channel;
-  private String taskId;
-  private boolean started;
-  private boolean terminal;
-  private RuntimeException terminalFailure;
-  private JsonNode lastResponse;
-  private Usage usage;
-  private String requestId;
-  private long firstTextNanos = -1;
-  private long stopNanos = -1;
-  private Duration firstPackageDelay;
-  private Duration lastPackageDelay;
+  private volatile TaskChannel channel;
+  private volatile String taskId;
+  private volatile boolean starting;
+  private volatile boolean started;
+  private volatile boolean terminal;
+  private volatile RuntimeException terminalFailure;
+  private volatile JsonNode lastResponse;
+  private volatile Usage usage;
+  private volatile String requestId;
+  private volatile long firstTextNanos = -1;
+  private volatile long stopNanos = -1;
+  private volatile Duration firstPackageDelay;
+  private volatile Duration lastPackageDelay;
 
   SynthesisSession(
       HttpTransport transport,
@@ -82,17 +83,24 @@ public final class SynthesisSession implements AutoCloseable {
     this.params = params;
     this.shared = shared;
     this.options = options == null ? RequestOptions.NONE : options;
-    this.receiveTimeout = transport.config().getTimeout();
+    this.receiveTimeout =
+        this.options.getTimeout() != null
+            ? this.options.getTimeout()
+            : transport.config().getTimeout();
   }
 
   /** Connect (unless shared), send run-task, block until task-started; claims binary downlink. */
-  public synchronized void start() {
-    if (closed.get()) {
-      throw illegalState("SynthesisSession is closed and cannot be restarted");
+  public void start() {
+    synchronized (this) {
+      if (closed.get()) {
+        throw illegalState("SynthesisSession is closed and cannot be restarted");
+      }
+      if (channel != null || starting) {
+        throw illegalState("session already started");
+      }
+      starting = true;
     }
-    if (channel != null) {
-      throw illegalState("session already started");
-    }
+
     Map<String, Object> parameters = new LinkedHashMap<>();
     if (params.getVoice() != null) {
       parameters.put("voice", params.getVoice());
@@ -121,28 +129,45 @@ public final class SynthesisSession implements AutoCloseable {
     if (params.getParameters() != null) {
       parameters.putAll(params.getParameters());
     }
-    taskId = TaskProtocol.resolveTaskId(parameters);
+    String newTaskId = TaskProtocol.resolveTaskId(parameters);
+    taskId = newTaskId;
 
     ObjectMapper mapper = JsonSupport.mapper();
     ObjectNode payload = TaskProtocol.newPayload(params.getModel(), TASK_GROUP, TASK, FUNCTION);
     payload.set("input", mapper.createObjectNode());
     payload.set("parameters", mapper.valueToTree(parameters));
 
-    channel =
-        shared != null
-            ? shared.attach(taskId)
-            : new WsSession(transport, url, taskId, TASK_GROUP, options);
+    TaskChannel newChannel = null;
     try {
-      if (shared != null) {
-        shared.claimBinaryDownlink(taskId);
+      newChannel =
+          shared != null
+              ? shared.attach(newTaskId)
+              : new WsSession(transport, url, newTaskId, TASK_GROUP, options);
+      synchronized (this) {
+        if (!starting || closed.get()) {
+          newChannel.close();
+          throw illegalState("session closed while connecting");
+        }
+        channel = newChannel;
       }
-      channel.sendText(
-          TaskProtocol.frame(TaskProtocol.RUN_TASK, taskId, TaskProtocol.STREAMING_DUPLEX, payload)
+      if (shared != null) {
+        shared.claimBinaryDownlink(newTaskId);
+      }
+      newChannel.sendText(
+          TaskProtocol.frame(
+                  TaskProtocol.RUN_TASK, newTaskId, TaskProtocol.STREAMING_DUPLEX, payload)
               .toString());
+      long deadline = System.nanoTime() + receiveTimeout.toNanos();
       while (!started) {
-        TaskEvent event = channel.recv(receiveTimeout);
+        long remaining = deadline - System.nanoTime();
+        if (remaining <= 0) {
+          throw Errors.timeout(
+              SdkErrorCode.SDK_TIMEOUT, "waiting for task-started after run-task", null);
+        }
+        TaskEvent event = newChannel.recv(Duration.ofNanos(remaining));
         if (event == null) {
-          continue;
+          throw Errors.timeout(
+              SdkErrorCode.SDK_TIMEOUT, "waiting for task-started after run-task", null);
         }
         if (event.getKind() == TaskEvent.Kind.TEXT) {
           recordText(event);
@@ -151,7 +176,9 @@ public final class SynthesisSession implements AutoCloseable {
           } else if (TaskProtocol.TASK_FAILED.equals(event.getEvent())) {
             throw failTask(event);
           } else {
-            delivered.add(event);
+            synchronized (pumpLock) {
+              delivered.add(event);
+            }
           }
         } else if (event.getKind() == TaskEvent.Kind.FAILURE) {
           throw event.getFailure();
@@ -162,9 +189,14 @@ public final class SynthesisSession implements AutoCloseable {
           throw illegalState("session closed while waiting for task-started");
         }
       }
+      if (channel != newChannel) {
+        throw illegalState("session closed while completing start");
+      }
     } catch (RuntimeException e) {
       close();
       throw e;
+    } finally {
+      starting = false;
     }
   }
 
@@ -234,13 +266,19 @@ public final class SynthesisSession implements AutoCloseable {
       while (!terminal) {
         long remaining = deadline - System.nanoTime();
         if (remaining <= 0) {
-          throw Errors.timeout(
-              SdkErrorCode.SDK_TIMEOUT, "waiting for task-finished after finish-task", null);
+          RuntimeException failure =
+              Errors.timeout(
+                  SdkErrorCode.SDK_TIMEOUT, "waiting for task-finished after finish-task", null);
+          close();
+          throw failure;
         }
         pumpOnce(Duration.ofNanos(Math.min(remaining, receiveTimeout.toNanos())));
         if (!terminal && terminalFailure == null && System.nanoTime() >= deadline) {
-          throw Errors.timeout(
-              SdkErrorCode.SDK_TIMEOUT, "waiting for task-finished after finish-task", null);
+          RuntimeException failure =
+              Errors.timeout(
+                  SdkErrorCode.SDK_TIMEOUT, "waiting for task-finished after finish-task", null);
+          close();
+          throw failure;
         }
       }
     }
@@ -293,13 +331,18 @@ public final class SynthesisSession implements AutoCloseable {
 
   /** Idempotent; detaches from a shared connection (socket stays open). NOT restartable. */
   @Override
-  public synchronized void close() {
+  public void close() {
     if (!closed.compareAndSet(false, true)) {
       return;
     }
-    TaskChannel ch = channel;
-    channel = null;
-    started = false;
+    TaskChannel ch;
+    synchronized (this) {
+      starting = false;
+      ch = channel;
+      channel = null;
+      started = false;
+    }
+    activeReader.set(null);
     if (ch != null) {
       ch.close();
     }
@@ -463,8 +506,8 @@ public final class SynthesisSession implements AutoCloseable {
 
   private void recordText(TaskEvent event) {
     lastResponse = event.getRaw();
-    if (event.getRaw() != null && event.getRaw().hasNonNull("request_id")) {
-      requestId = event.getRaw().get("request_id").asText();
+    if (event.getRequestId() != null) {
+      requestId = event.getRequestId();
     }
     JsonNode payload = event.getPayload();
     JsonNode usageNode = payload == null ? null : payload.get("usage");

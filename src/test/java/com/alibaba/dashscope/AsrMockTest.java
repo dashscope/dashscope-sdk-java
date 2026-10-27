@@ -80,6 +80,7 @@ class AsrMockTest {
     final AtomicReference<WebSocket> socket = new AtomicReference<>();
     final BlockingQueue<JsonNode> texts = new LinkedBlockingQueue<>();
     final BlockingQueue<ByteString> binaries = new LinkedBlockingQueue<>();
+    volatile boolean respondToRun = true;
     volatile boolean respondToFinish = true;
 
     @Override
@@ -95,7 +96,7 @@ class AsrMockTest {
         texts.add(frame);
         String action = frame.get("header").get("action").asText();
         String taskId = frame.get("header").get("task_id").asText();
-        if ("run-task".equals(action)) {
+        if ("run-task".equals(action) && respondToRun) {
           send(taskId, "task-started", null);
         } else if ("finish-task".equals(action) && respondToFinish) {
           send(
@@ -179,6 +180,7 @@ class AsrMockTest {
       assertEquals(16000, payload.get("parameters").get("sample_rate").asInt());
       String taskId = runTask.get("header").get("task_id").asText();
       assertEquals(taskId, asr.getTaskId());
+      assertEquals(taskId, asr.getRequestId());
 
       asr.sendAudioFrame(new byte[] {1, 2, 3, 4});
       ByteString frame = socket.binaries.poll(10, TimeUnit.SECONDS);
@@ -332,7 +334,53 @@ class AsrMockTest {
       asr.start();
       socket.nextText();
       assertThrows(ApiTimeoutException.class, () -> asr.stop(Duration.ofMillis(300)));
+      assertTrue(socket.closed.await(2, TimeUnit.SECONDS), "timeout did not close the session");
     }
+  }
+
+  @Test
+  void taskStartedWaitHonorsRequestOptionsTimeout() {
+    AsrServerSocket socket = enqueueUpgrade();
+    socket.respondToRun = false;
+    try (RecognitionSession asr =
+        client
+            .audio()
+            .asr()
+            .recognize(
+                params(), RequestOptions.builder().timeout(Duration.ofMillis(200)).build())) {
+      assertTimeoutPreemptively(
+          Duration.ofSeconds(2), () -> assertThrows(ApiTimeoutException.class, asr::start));
+    }
+  }
+
+  @Test
+  void closeInterruptsTaskStartedWait() throws Exception {
+    AsrServerSocket socket = enqueueUpgrade();
+    socket.respondToRun = false;
+    RecognitionSession asr =
+        client
+            .audio()
+            .asr()
+            .recognize(params(), RequestOptions.builder().timeout(Duration.ofSeconds(30)).build());
+    AtomicReference<Throwable> failure = new AtomicReference<>();
+    Thread starter =
+        new Thread(
+            () -> {
+              try {
+                asr.start();
+              } catch (Throwable e) {
+                failure.set(e);
+              }
+            },
+            "asr-start");
+    starter.start();
+    socket.nextText();
+
+    asr.close();
+
+    starter.join(1000);
+    assertFalse(starter.isAlive(), "close did not interrupt task-started wait");
+    assertTrue(failure.get() instanceof SdkException);
   }
 
   @Test

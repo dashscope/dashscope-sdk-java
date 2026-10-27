@@ -52,7 +52,13 @@ public final class WsConnection implements AutoCloseable {
   private volatile RuntimeException openFailure;
 
   public WsConnection(HttpTransport transport, String url, String module, RequestOptions options) {
-    this(transport, url, module, options, 0, WsSession.DEFAULT_CONNECT_TIMEOUT);
+    this(transport, url, module, options, 0, connectTimeout(options));
+  }
+
+  private static Duration connectTimeout(RequestOptions options) {
+    return options != null && options.getTimeout() != null
+        ? options.getTimeout()
+        : WsSession.DEFAULT_CONNECT_TIMEOUT;
   }
 
   public WsConnection(

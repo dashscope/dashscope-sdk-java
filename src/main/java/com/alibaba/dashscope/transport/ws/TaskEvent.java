@@ -20,6 +20,7 @@ public final class TaskEvent {
 
   private final Kind kind;
   private final String taskId;
+  private final String requestId;
   private final String event;
   private final String errorCode;
   private final String errorMessage;
@@ -33,6 +34,7 @@ public final class TaskEvent {
   private TaskEvent(
       Kind kind,
       String taskId,
+      String requestId,
       String event,
       String errorCode,
       String errorMessage,
@@ -44,6 +46,7 @@ public final class TaskEvent {
       RuntimeException failure) {
     this.kind = kind;
     this.taskId = taskId;
+    this.requestId = requestId;
     this.event = event;
     this.errorCode = errorCode;
     this.errorMessage = errorMessage;
@@ -57,30 +60,56 @@ public final class TaskEvent {
 
   static TaskEvent text(
       String taskId,
+      String requestId,
       String event,
       String errorCode,
       String errorMessage,
       JsonNode payload,
       JsonNode raw) {
     return new TaskEvent(
-        Kind.TEXT, taskId, event, errorCode, errorMessage, payload, raw, null, 0, null, null);
+        Kind.TEXT,
+        taskId,
+        requestId,
+        event,
+        errorCode,
+        errorMessage,
+        payload,
+        raw,
+        null,
+        0,
+        null,
+        null);
   }
 
   static TaskEvent binary(ByteBuffer bytes) {
-    return new TaskEvent(Kind.BINARY, null, null, null, null, null, null, bytes, 0, null, null);
+    return new TaskEvent(
+        Kind.BINARY, null, null, null, null, null, null, null, bytes, 0, null, null);
   }
 
   static TaskEvent closed(int code, String reason) {
-    return new TaskEvent(Kind.CLOSED, null, null, null, null, null, null, null, code, reason, null);
+    return new TaskEvent(
+        Kind.CLOSED, null, null, null, null, null, null, null, null, code, reason, null);
   }
 
   static TaskEvent localClosed() {
     return new TaskEvent(
-        Kind.LOCAL_CLOSED, null, null, null, null, null, null, null, 1000, "local close", null);
+        Kind.LOCAL_CLOSED,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        1000,
+        "local close",
+        null);
   }
 
   static TaskEvent failure(RuntimeException failure) {
-    return new TaskEvent(Kind.FAILURE, null, null, null, null, null, null, null, 0, null, failure);
+    return new TaskEvent(
+        Kind.FAILURE, null, null, null, null, null, null, null, null, 0, null, failure);
   }
 
   public Kind getKind() {
@@ -90,6 +119,11 @@ public final class TaskEvent {
   /** TEXT only: {@code header.task_id}. */
   public String getTaskId() {
     return taskId;
+  }
+
+  /** TEXT only: {@code header.request_id}, falling back to {@code header.task_id}. */
+  public String getRequestId() {
+    return requestId;
   }
 
   /** TEXT only: {@code header.event} (task-started / result-generated / task-finished / ...). */

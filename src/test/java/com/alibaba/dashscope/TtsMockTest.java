@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.alibaba.dashscope.errors.ApiTimeoutException;
 import com.alibaba.dashscope.errors.SdkException;
 import com.alibaba.dashscope.resources.audio.SynthesisSession;
 import com.alibaba.dashscope.types.audio.TtsConnectParams;
@@ -76,6 +77,7 @@ class TtsMockTest {
     final AtomicReference<WebSocket> socket = new AtomicReference<>();
     final BlockingQueue<JsonNode> texts = new LinkedBlockingQueue<>();
     final List<byte[]> audioToSend = new ArrayList<>();
+    volatile boolean respondToRun = true;
 
     @Override
     public void onOpen(WebSocket webSocket, okhttp3.Response response) {
@@ -90,7 +92,7 @@ class TtsMockTest {
         texts.add(frame);
         String action = frame.get("header").get("action").asText();
         String taskId = frame.get("header").get("task_id").asText();
-        if ("run-task".equals(action)) {
+        if ("run-task".equals(action) && respondToRun) {
           send(taskId, "task-started", null);
         } else if ("finish-task".equals(action)) {
           for (byte[] audio : audioToSend) {
@@ -289,6 +291,21 @@ class TtsMockTest {
       assertNotNull(tts.getFirstPackageDelay());
       assertNotNull(tts.getLastPackageDelay());
       assertEquals(3, tts.getUsage().getTotalTokens());
+    }
+  }
+
+  @Test
+  void duplexTaskStartedWaitHonorsRequestOptionsTimeout() {
+    TtsServerSocket socket = enqueueUpgrade();
+    socket.respondToRun = false;
+    try (SynthesisSession tts =
+        client
+            .audio()
+            .tts()
+            .connect(
+                TtsConnectParams.builder().model("cosyvoice-v2").build(),
+                RequestOptions.builder().timeout(Duration.ofMillis(200)).build())) {
+      assertThrows(ApiTimeoutException.class, tts::start);
     }
   }
 

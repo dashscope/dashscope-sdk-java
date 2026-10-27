@@ -104,6 +104,7 @@ public final class TaskProtocol {
     }
     return TaskEvent.text(
         taskId,
+        valueOr(textOrNull(header.get("request_id")), taskId),
         textOrNull(header.get("event")),
         textOrNull(header.get("error_code")),
         textOrNull(header.get("error_message")),
@@ -118,5 +119,9 @@ public final class TaskProtocol {
 
   private static String textOrNull(JsonNode node) {
     return node != null && node.isTextual() ? node.asText() : null;
+  }
+
+  private static String valueOr(String value, String fallback) {
+    return value == null || value.isEmpty() ? fallback : value;
   }
 }
