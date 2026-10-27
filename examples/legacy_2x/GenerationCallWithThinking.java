@@ -89,7 +89,7 @@ public class GenerationCallWithThinking {
             .enableThinking(true)
             .toolChoice(
                 "auto") // NOTE: tool_choice parameter must be "auto" or "none" when enable_thinking
-                        // is true
+            // is true
             //                .toolChoice(toolFunction)
             .tools(Arrays.asList(ToolFunction.builder().function(fd).build()))
             .messages(Arrays.asList(systemMsg, userMsg))
