@@ -43,6 +43,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junitpioneer.jupiter.ClearEnvironmentVariable;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
 
@@ -58,6 +59,9 @@ import org.junitpioneer.jupiter.SetEnvironmentVariable;
 @ClearEnvironmentVariable(key = "DASHSCOPE_REGION")
 @ClearEnvironmentVariable(key = "DASHSCOPE_WEBSOCKET_BASE_URL")
 @SetEnvironmentVariable(key = "DASHSCOPE_CONFIG", value = "/nonexistent/dashscope-config.toml")
+// A regression in any failure path these tests assert (e.g. wsPingInterval no longer
+// propagating) would otherwise hang a receiver loop forever instead of failing the test.
+@Timeout(30)
 class ChaosMockTest {
 
   @Test

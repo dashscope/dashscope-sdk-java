@@ -107,85 +107,117 @@ public final class RealtimeSession implements AutoCloseable {
 
   /**
    * (Re)connects the session. Idempotent while a socket is open (2.x omni parity); after {@link
-   * #close()} it opens a fresh generation and drops everything buffered from the old one.
+   * #close()} it opens a fresh generation and drops everything buffered from the old one. The
+   * handshake wait runs outside the session monitor so {@link #close()} can always take the
+   * monitor promptly and cancel a still-connecting socket. A concurrent {@link #connect()}
+   * returns as soon as a connect attempt owns the socket, i.e. while its handshake may still be
+   * in flight.
    */
-  public synchronized void connect() {
-    if (socket != null) {
-      return;
-    }
-    int gen = generation.incrementAndGet();
-    // Drop anything the previous generation left behind; the listener also drops late frames.
-    inbox.clear();
-    synchronized (pumpLock) {
-      delivered.clear();
-      terminal = false;
-      terminalFailure = null;
-      sawCompletion = false;
-      sessionFinished = false;
-      eventsClaimed.set(false);
-    }
-    sessionId = null;
-    lastResponseId = null;
-    responseCreateNanos = -1;
-    firstAudioDelay = null;
-    firstTextDelay = null;
+  public void connect() {
+    CountDownLatch latch;
+    WebSocket ws;
+    synchronized (this) {
+      if (socket != null) {
+        return;
+      }
+      int gen = generation.incrementAndGet();
+      // Drop anything the previous generation left behind; the listener also drops late frames.
+      inbox.clear();
+      synchronized (pumpLock) {
+        delivered.clear();
+        terminal = false;
+        terminalFailure = null;
+        sawCompletion = false;
+        sessionFinished = false;
+        eventsClaimed.set(false);
+      }
+      sessionId = null;
+      lastResponseId = null;
+      responseCreateNanos = -1;
+      firstAudioDelay = null;
+      firstTextDelay = null;
 
-    String apiKey =
-        options.getApiKey() != null ? options.getApiKey() : transport.config().getApiKey();
-    if (apiKey == null || apiKey.isEmpty()) {
-      throw Errors.fromSdkErrorCode(SdkErrorCode.SDK_INVALID_API_KEY);
+      String apiKey =
+          options.getApiKey() != null ? options.getApiKey() : transport.config().getApiKey();
+      if (apiKey == null || apiKey.isEmpty()) {
+        throw Errors.fromSdkErrorCode(SdkErrorCode.SDK_INVALID_API_KEY);
+      }
+      String workspace =
+          options.getWorkspace() != null
+              ? options.getWorkspace()
+              : transport.config().getWorkspace();
+      Request.Builder builder =
+          new Request.Builder()
+              .url(url)
+              .tag(RequestTags.NoRetry.class, RequestTags.NoRetry.INSTANCE)
+              .tag(RequestTags.Auth.class, new RequestTags.Auth(apiKey, workspace))
+              .tag(RequestTags.Module.class, new RequestTags.Module(MODULE));
+      for (Map.Entry<String, String> e : options.getHeaders().entrySet()) {
+        builder.header(e.getKey(), e.getValue());
+      }
+      latch = new CountDownLatch(1);
+      openLatch = latch;
+      openFailure = null;
+      // Read timeout must stay off the socket: server-VAD silence can exceed the inherited HTTP
+      // readTimeout; receiving is already task-level (inbox poll in pumpOnce). The inherited
+      // callTimeout is cleared for the same reason (okhttp exits its watchdog on upgrade today).
+      OkHttpClient.Builder wsClientBuilder =
+          transport
+              .okhttp()
+              .newBuilder()
+              .connectTimeout(connectTimeout())
+              .readTimeout(0, TimeUnit.MILLISECONDS)
+              .callTimeout(0, TimeUnit.MILLISECONDS);
+      Duration pingInterval = transport.config().getWsPingInterval();
+      if (pingInterval != null && !pingInterval.isZero() && !pingInterval.isNegative()) {
+        wsClientBuilder.pingInterval(pingInterval);
+      }
+      OkHttpClient wsClient = wsClientBuilder.build();
+      ws = wsClient.newWebSocket(builder.build(), new Listener(gen));
+      socket = ws;
     }
-    String workspace =
-        options.getWorkspace() != null ? options.getWorkspace() : transport.config().getWorkspace();
-    Request.Builder builder =
-        new Request.Builder()
-            .url(url)
-            .tag(RequestTags.NoRetry.class, RequestTags.NoRetry.INSTANCE)
-            .tag(RequestTags.Auth.class, new RequestTags.Auth(apiKey, workspace))
-            .tag(RequestTags.Module.class, new RequestTags.Module(MODULE));
-    for (Map.Entry<String, String> e : options.getHeaders().entrySet()) {
-      builder.header(e.getKey(), e.getValue());
-    }
-    CountDownLatch latch = new CountDownLatch(1);
-    openLatch = latch;
-    openFailure = null;
-    // Read timeout must stay off the socket: server-VAD silence can exceed the inherited HTTP
-    // readTimeout; receiving is already task-level (inbox poll in pumpOnce). The inherited
-    // callTimeout is cleared for the same reason (okhttp exits its watchdog on upgrade today).
-    OkHttpClient.Builder wsClientBuilder =
-        transport
-            .okhttp()
-            .newBuilder()
-            .connectTimeout(connectTimeout())
-            .readTimeout(0, TimeUnit.MILLISECONDS)
-            .callTimeout(0, TimeUnit.MILLISECONDS);
-    Duration pingInterval = transport.config().getWsPingInterval();
-    if (pingInterval != null && !pingInterval.isZero() && !pingInterval.isNegative()) {
-      wsClientBuilder.pingInterval(pingInterval);
-    }
-    OkHttpClient wsClient = wsClientBuilder.build();
-    WebSocket ws = wsClient.newWebSocket(builder.build(), new Listener(gen));
-    socket = ws;
 
+    // Await outside the monitor: close() takes the monitor and cancels an un-latched socket,
+    // failing an in-flight handshake promptly instead of blocking close() for the whole connect
+    // timeout (2.x c891540 parity: okhttp's close alone does not abort a handshake).
     boolean opened;
     try {
       opened = latch.await(connectTimeout().toMillis(), TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       ws.cancel();
-      socket = null;
+      synchronized (this) {
+        if (socket == ws) {
+          socket = null;
+        }
+      }
       throw Errors.connection(SdkErrorCode.SDK_CONNECTION_INTERRUPTED, "websocket connect", e);
     }
-    if (!opened) {
-      ws.cancel();
-      socket = null;
-      throw Errors.timeout(
-          SdkErrorCode.SDK_TIMEOUT, "websocket handshake after " + connectTimeout(), null);
-    }
-    if (openFailure != null) {
-      ws.cancel();
-      socket = null;
-      throw openFailure;
+    synchronized (this) {
+      if (openFailure != null) {
+        // socket may already be null (close() or the listener detached this socket); only undo
+        // state that still belongs to this connect attempt.
+        if (socket == ws) {
+          socket = null;
+          ws.cancel();
+        }
+        throw openFailure;
+      }
+      if (!opened) {
+        if (socket == ws) {
+          socket = null;
+          ws.cancel();
+        }
+        throw Errors.timeout(
+            SdkErrorCode.SDK_TIMEOUT, "websocket handshake after " + connectTimeout(), null);
+      }
+      if (socket != ws) {
+        // The socket was detached while its handshake completed (a local close, or the peer
+        // closing right after the upgrade); the session state already reflects it, so surface
+        // the failure here instead of deferring it to the first events() iteration.
+        throw Errors.connection(
+            SdkErrorCode.SDK_CONNECTION_ERROR, "websocket closed during connect", null);
+      }
     }
   }
 
@@ -382,18 +414,14 @@ public final class RealtimeSession implements AutoCloseable {
   }
 
   /**
-   * Idempotent; the session may be re-{@link #connect()}ed afterwards. If a {@link #connect()} is
-   * in flight on another thread, its socket is cancelled before taking the monitor so the handshake
-   * wait fails fast instead of blocking this call for the whole connect timeout (2.x c891540
-   * parity: okhttp's close alone does not abort an in-flight handshake).
+   * Idempotent; the session may be re-{@link #connect()}ed afterwards. The handshake wait in
+   * {@link #connect()} runs outside this monitor, so this call always takes it promptly; a socket
+   * whose handshake is still in flight is cancelled, failing that connect fast instead of
+   * blocking here for the whole connect timeout (2.x c891540 parity: okhttp's close alone does
+   * not abort an in-flight handshake).
    */
   @Override
   public void close() {
-    CountDownLatch latch = openLatch;
-    WebSocket inFlight = socket;
-    if (latch != null && latch.getCount() > 0 && inFlight != null) {
-      inFlight.cancel();
-    }
     synchronized (this) {
       WebSocket ws = socket;
       socket = null;
@@ -402,7 +430,11 @@ public final class RealtimeSession implements AutoCloseable {
         // Wake a receiver immediately; do not depend on a later OkHttp onClosed callback.
         inbox.clear();
         inbox.offer(Inbound.closed(localCloseGeneration));
-        if (!ws.close(1000, "bye")) {
+        CountDownLatch latch = openLatch;
+        if (latch != null && latch.getCount() > 0) {
+          // Handshake still in flight: only cancel aborts it promptly.
+          ws.cancel();
+        } else if (!ws.close(1000, "bye")) {
           ws.cancel();
         }
       }
