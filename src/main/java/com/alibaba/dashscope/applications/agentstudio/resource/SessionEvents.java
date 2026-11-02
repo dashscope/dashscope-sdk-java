@@ -9,6 +9,7 @@ import com.alibaba.dashscope.applications.agentstudio.param.SessionEventSendPara
 import com.alibaba.dashscope.legacy_2x.api.GeneralApi;
 import com.alibaba.dashscope.legacy_2x.base.HalfDuplexParamBase;
 import com.alibaba.dashscope.legacy_2x.common.GeneralGetParam;
+import com.alibaba.dashscope.legacy_2x.exception.NoApiKeyException;
 import com.alibaba.dashscope.legacy_2x.protocol.ConnectionOptions;
 import com.alibaba.dashscope.legacy_2x.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.legacy_2x.protocol.HttpMethod;
@@ -186,7 +187,7 @@ public final class SessionEvents implements Closeable {
   private String resolveApiKey() {
     try {
       return ApiKey.getApiKey(this.apiKey);
-    } catch (Exception e) {
+    } catch (NoApiKeyException e) {
       throw AgentStudioErrors.translate(e);
     }
   }

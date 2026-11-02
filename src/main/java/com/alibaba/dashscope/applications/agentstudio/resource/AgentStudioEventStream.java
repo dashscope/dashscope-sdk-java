@@ -75,7 +75,7 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
               @Override
               public void onFailure(EventSource es, Throwable t, Response response) {
                 if (closed.get()) return;
-                DashScopeException wrapped = wrapFailure(t, response);
+                RuntimeException wrapped = wrapFailure(t, response);
                 if (wrapped != null) {
                   queue.offer(wrapped);
                 } else {
@@ -85,11 +85,16 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
             });
   }
 
-  /** Convert OkHttp's onFailure into a 3.0 exception preserving HTTP status and body. */
-  private static DashScopeException wrapFailure(Throwable t, Response response) {
+  /**
+   * Convert OkHttp's onFailure into a 3.0-family exception preserving HTTP status and body. May
+   * return a non-{@link DashScopeException} (e.g. an {@code IllegalArgumentException} from a user
+   * interceptor) — the reader side passes those through {@link AgentStudioErrors#translate}
+   * unchanged.
+   */
+  private static RuntimeException wrapFailure(Throwable t, Response response) {
     if (response == null) {
       if (t != null) {
-        return (DashScopeException) AgentStudioErrors.translate(t);
+        return AgentStudioErrors.translate(t);
       }
       return null;
     }
