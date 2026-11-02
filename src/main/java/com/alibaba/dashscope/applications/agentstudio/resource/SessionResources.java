@@ -9,7 +9,6 @@ import com.alibaba.dashscope.applications.agentstudio.param.SessionResourceAddPa
 import com.alibaba.dashscope.applications.agentstudio.param.SessionResourceListParam;
 import com.alibaba.dashscope.legacy_2x.api.GeneralApi;
 import com.alibaba.dashscope.legacy_2x.base.HalfDuplexParamBase;
-import com.alibaba.dashscope.legacy_2x.common.FlattenResultBase;
 import com.alibaba.dashscope.legacy_2x.common.GeneralGetParam;
 import com.alibaba.dashscope.legacy_2x.protocol.ConnectionOptions;
 import com.alibaba.dashscope.legacy_2x.protocol.GeneralServiceOption;
@@ -62,7 +61,7 @@ public final class SessionResources {
         AgentStudioConstants.newServiceOption(
             HttpMethod.POST, StringUtils.format("sessions/%s/resources", sessionId), baseUrl);
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Session.SessionResource.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Session.SessionResource.class));
   }
 
   public CompletableFuture<Session.SessionResource> retrieveAsync(
@@ -80,7 +79,7 @@ public final class SessionResources {
             baseUrl);
     return AsyncHelper.callAsync(
             api, GeneralGetParam.builder().apiKey(apiKey).headers(new HashMap<>()).build(), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Session.SessionResource.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Session.SessionResource.class));
   }
 
   public CompletableFuture<CursorPage<Session.SessionResource>> listAsync(
@@ -104,7 +103,7 @@ public final class SessionResources {
             r -> {
               Type type = new TypeToken<CursorPage<Session.SessionResource>>() {}.getType();
               CursorPage<Session.SessionResource> page =
-                  FlattenResultBase.fromDashScopeResult(r, type);
+                  AgentStudioJson.fromDashScopeResult(r, type);
               page.setFetchNext(
                   cursor ->
                       listAsync(
@@ -132,6 +131,6 @@ public final class SessionResources {
             baseUrl);
     return AsyncHelper.callAsync(
             api, GeneralGetParam.builder().apiKey(apiKey).headers(new HashMap<>()).build(), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, AgentStudioDeletionStatus.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, AgentStudioDeletionStatus.class));
   }
 }

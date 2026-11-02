@@ -10,7 +10,6 @@ import com.alibaba.dashscope.applications.agentstudio.param.EnvironmentListParam
 import com.alibaba.dashscope.applications.agentstudio.param.EnvironmentUpdateParam;
 import com.alibaba.dashscope.legacy_2x.api.GeneralApi;
 import com.alibaba.dashscope.legacy_2x.base.HalfDuplexParamBase;
-import com.alibaba.dashscope.legacy_2x.common.FlattenResultBase;
 import com.alibaba.dashscope.legacy_2x.common.GeneralGetParam;
 import com.alibaba.dashscope.legacy_2x.protocol.ConnectionOptions;
 import com.alibaba.dashscope.legacy_2x.protocol.GeneralServiceOption;
@@ -73,7 +72,7 @@ public final class Environments {
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(HttpMethod.POST, "environments", baseUrl);
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Environment.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Environment.class));
   }
 
   public CompletableFuture<Environment> retrieveAsync(String environmentId) {
@@ -96,7 +95,7 @@ public final class Environments {
                 .headers(headers != null ? headers : new HashMap<>())
                 .build(),
             opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Environment.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Environment.class));
   }
 
   public CompletableFuture<Environment> updateAsync(
@@ -111,7 +110,7 @@ public final class Environments {
         AgentStudioConstants.newServiceOption(
             HttpMethod.POST, StringUtils.format("environments/%s", environmentId), baseUrl);
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Environment.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Environment.class));
   }
 
   public CompletableFuture<CursorPage<Environment>> listAsync(EnvironmentListParam param) {
@@ -126,7 +125,7 @@ public final class Environments {
         .thenApply(
             r -> {
               Type type = new TypeToken<CursorPage<Environment>>() {}.getType();
-              CursorPage<Environment> page = FlattenResultBase.fromDashScopeResult(r, type);
+              CursorPage<Environment> page = AgentStudioJson.fromDashScopeResult(r, type);
               page.setFetchNext(
                   cursor ->
                       listAsync(
@@ -150,7 +149,7 @@ public final class Environments {
             api,
             AgentStudioConstants.withApiKey(apiKey, EnvironmentUpdateParam.builder().build()),
             opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Environment.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Environment.class));
   }
 
   public CompletableFuture<AgentStudioDeletionStatus> deleteAsync(String environmentId) {
@@ -173,6 +172,6 @@ public final class Environments {
                 .headers(headers != null ? headers : new HashMap<>())
                 .build(),
             opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, AgentStudioDeletionStatus.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, AgentStudioDeletionStatus.class));
   }
 }

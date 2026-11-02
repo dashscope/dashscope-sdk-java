@@ -8,7 +8,6 @@ import com.alibaba.dashscope.errors.DashScopeException;
 import com.alibaba.dashscope.errors.Errors;
 import com.alibaba.dashscope.errors.SdkErrorCode;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import java.io.Closeable;
 import java.io.IOException;
@@ -30,10 +29,7 @@ import okhttp3.sse.EventSources;
 @Slf4j
 public class AgentStudioEventStream implements Iterable<Message>, Closeable {
   private static final Message POISON = new Message();
-  private static final Gson GSON =
-      new GsonBuilder()
-          .registerTypeAdapter(ContentBlock.class, new ContentBlock.Deserializer())
-          .create();
+  private static final Gson GSON = AgentStudioJson.GSON;
 
   private final BlockingQueue<Object> queue = new LinkedBlockingQueue<>();
 

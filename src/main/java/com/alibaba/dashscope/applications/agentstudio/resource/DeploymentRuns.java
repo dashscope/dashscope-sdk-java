@@ -7,7 +7,6 @@ import com.alibaba.dashscope.applications.agentstudio.pagination.CursorPage;
 import com.alibaba.dashscope.applications.agentstudio.param.DeploymentRunListParam;
 import com.alibaba.dashscope.legacy_2x.api.GeneralApi;
 import com.alibaba.dashscope.legacy_2x.base.HalfDuplexParamBase;
-import com.alibaba.dashscope.legacy_2x.common.FlattenResultBase;
 import com.alibaba.dashscope.legacy_2x.common.GeneralGetParam;
 import com.alibaba.dashscope.legacy_2x.protocol.ConnectionOptions;
 import com.alibaba.dashscope.legacy_2x.protocol.GeneralServiceOption;
@@ -45,7 +44,7 @@ public final class DeploymentRuns {
         AgentStudioConstants.newServiceOption(
             HttpMethod.GET, StringUtils.format("deployment_runs/%s", deploymentRunId), baseUrl);
     return AsyncHelper.callAsync(api, getParam(), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, DeploymentRun.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, DeploymentRun.class));
   }
 
   public CompletableFuture<CursorPage<DeploymentRun>> listAsync(DeploymentRunListParam param) {
@@ -59,7 +58,7 @@ public final class DeploymentRuns {
         .thenApply(
             r -> {
               Type type = new TypeToken<CursorPage<DeploymentRun>>() {}.getType();
-              CursorPage<DeploymentRun> page = FlattenResultBase.fromDashScopeResult(r, type);
+              CursorPage<DeploymentRun> page = AgentStudioJson.fromDashScopeResult(r, type);
               page.setFetchNext(
                   cursor ->
                       listAsync(

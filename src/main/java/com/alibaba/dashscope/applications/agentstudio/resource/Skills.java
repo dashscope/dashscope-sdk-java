@@ -10,7 +10,6 @@ import com.alibaba.dashscope.applications.agentstudio.param.SkillCreateParam;
 import com.alibaba.dashscope.applications.agentstudio.param.SkillListParam;
 import com.alibaba.dashscope.legacy_2x.api.GeneralApi;
 import com.alibaba.dashscope.legacy_2x.base.HalfDuplexParamBase;
-import com.alibaba.dashscope.legacy_2x.common.FlattenResultBase;
 import com.alibaba.dashscope.legacy_2x.common.GeneralGetParam;
 import com.alibaba.dashscope.legacy_2x.protocol.ConnectionOptions;
 import com.alibaba.dashscope.legacy_2x.protocol.GeneralServiceOption;
@@ -108,7 +107,7 @@ public final class Skills implements Closeable {
               return AsyncHelper.callAsync(
                   api, AgentStudioConstants.withApiKey(apiKey, param), opt);
             })
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Skill.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Skill.class));
   }
 
   public CompletableFuture<Skill> retrieveAsync(String skillId) {
@@ -131,7 +130,7 @@ public final class Skills implements Closeable {
                 .headers(headers != null ? headers : new HashMap<>())
                 .build(),
             opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Skill.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Skill.class));
   }
 
   public CompletableFuture<CursorPage<Skill>> listAsync(SkillListParam param) {
@@ -146,7 +145,7 @@ public final class Skills implements Closeable {
         .thenApply(
             r -> {
               Type type = new TypeToken<CursorPage<Skill>>() {}.getType();
-              CursorPage<Skill> page = FlattenResultBase.fromDashScopeResult(r, type);
+              CursorPage<Skill> page = AgentStudioJson.fromDashScopeResult(r, type);
               page.setFetchNext(
                   cursor ->
                       listAsync(
@@ -179,7 +178,7 @@ public final class Skills implements Closeable {
                 .headers(headers != null ? headers : new HashMap<>())
                 .build(),
             opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, AgentStudioDeletionStatus.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, AgentStudioDeletionStatus.class));
   }
 
   public CompletableFuture<SkillVersion> createVersionAsync(
@@ -197,7 +196,7 @@ public final class Skills implements Closeable {
               return AsyncHelper.callAsync(
                   api, AgentStudioConstants.withApiKey(apiKey, param), opt);
             })
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, SkillVersion.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, SkillVersion.class));
   }
 
   public CompletableFuture<CursorPage<SkillVersion>> listVersionsAsync(
@@ -215,7 +214,7 @@ public final class Skills implements Closeable {
         .thenApply(
             r -> {
               Type type = new TypeToken<CursorPage<SkillVersion>>() {}.getType();
-              CursorPage<SkillVersion> page = FlattenResultBase.fromDashScopeResult(r, type);
+              CursorPage<SkillVersion> page = AgentStudioJson.fromDashScopeResult(r, type);
               page.setFetchNext(
                   cursor ->
                       listVersionsAsync(
@@ -239,7 +238,7 @@ public final class Skills implements Closeable {
             HttpMethod.GET, StringUtils.format("skills/%s/versions/%s", skillId, version), baseUrl);
     return AsyncHelper.callAsync(
             api, GeneralGetParam.builder().apiKey(apiKey).headers(new HashMap<>()).build(), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, SkillVersion.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, SkillVersion.class));
   }
 
   public CompletableFuture<JsonObject> downloadVersionAsync(String skillId, String version) {

@@ -9,13 +9,11 @@ import com.alibaba.dashscope.applications.agentstudio.param.FileListParam;
 import com.alibaba.dashscope.errors.Errors;
 import com.alibaba.dashscope.legacy_2x.api.GeneralApi;
 import com.alibaba.dashscope.legacy_2x.base.HalfDuplexParamBase;
-import com.alibaba.dashscope.legacy_2x.common.FlattenResultBase;
 import com.alibaba.dashscope.legacy_2x.common.GeneralGetParam;
 import com.alibaba.dashscope.legacy_2x.protocol.ConnectionOptions;
 import com.alibaba.dashscope.legacy_2x.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.legacy_2x.protocol.HttpMethod;
 import com.alibaba.dashscope.legacy_2x.utils.ApiKey;
-import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
 import com.alibaba.dashscope.legacy_2x.utils.StringUtils;
 import com.google.gson.reflect.TypeToken;
 import java.io.Closeable;
@@ -195,7 +193,7 @@ public final class Files implements Closeable {
                 .headers(headers != null ? headers : new HashMap<>())
                 .build(),
             opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, AgentStudioFile.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, AgentStudioFile.class));
   }
 
   public CompletableFuture<CursorPage<AgentStudioFile>> listAsync(FileListParam param) {
@@ -210,7 +208,7 @@ public final class Files implements Closeable {
         .thenApply(
             r -> {
               Type type = new TypeToken<CursorPage<AgentStudioFile>>() {}.getType();
-              CursorPage<AgentStudioFile> page = FlattenResultBase.fromDashScopeResult(r, type);
+              CursorPage<AgentStudioFile> page = AgentStudioJson.fromDashScopeResult(r, type);
               page.setFetchNext(
                   cursor ->
                       listAsync(
@@ -243,7 +241,7 @@ public final class Files implements Closeable {
                 .headers(headers != null ? headers : new HashMap<>())
                 .build(),
             opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, AgentStudioDeletionStatus.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, AgentStudioDeletionStatus.class));
   }
 
   private CompletableFuture<AgentStudioFile> uploadRequestAsync(
@@ -289,7 +287,8 @@ public final class Files implements Closeable {
                     return;
                   }
                   future.complete(
-                      JsonUtils.fromJson(body.isEmpty() ? "{}" : body, AgentStudioFile.class));
+                      AgentStudioJson.GSON.fromJson(
+                          body.isEmpty() ? "{}" : body, AgentStudioFile.class));
                 } catch (Exception e) {
                   future.completeExceptionally(AgentStudioErrors.translate(e));
                 }

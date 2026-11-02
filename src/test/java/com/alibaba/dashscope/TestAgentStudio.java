@@ -44,6 +44,7 @@ import com.alibaba.dashscope.applications.agentstudio.param.SkillListParam;
 import com.alibaba.dashscope.applications.agentstudio.param.VaultCreateParam;
 import com.alibaba.dashscope.applications.agentstudio.param.VaultListParam;
 import com.alibaba.dashscope.applications.agentstudio.param.VaultUpdateParam;
+import com.alibaba.dashscope.applications.agentstudio.resource.AgentStudioJson;
 import com.alibaba.dashscope.applications.agentstudio.resource.Agents;
 import com.alibaba.dashscope.applications.agentstudio.resource.Environments;
 import com.alibaba.dashscope.applications.agentstudio.resource.Sessions;
@@ -374,7 +375,7 @@ public class TestAgentStudio {
         "{\"object\":\"message\",\"type\":\"thread_status\","
             + "\"id\":\"sevt_1\",\"thread_id\":\"sthr_abc\","
             + "\"metadata\":{\"to_agent_name\":\"worker\"}}";
-    Message ev = JsonUtils.fromJson(json, Message.class);
+    Message ev = AgentStudioJson.GSON.fromJson(json, Message.class);
     assertEquals("sthr_abc", ev.getThreadId());
     assertEquals("thread_status", ev.getType());
     assertEquals("worker", ev.getMetadata().get("to_agent_name"));
@@ -904,7 +905,7 @@ public class TestAgentStudio {
   @Test
   public void testContentBlockText() {
     ContentBlock block =
-        JsonUtils.fromJson(
+        AgentStudioJson.GSON.fromJson(
             "{\"type\":\"text\",\"text\":\"hello world\","
                 + "\"citations\":[{\"url\":\"http://example.com\"}]}",
             ContentBlock.class);
@@ -917,7 +918,7 @@ public class TestAgentStudio {
   @Test
   public void testContentBlockImage() {
     ContentBlock block =
-        JsonUtils.fromJson(
+        AgentStudioJson.GSON.fromJson(
             "{\"type\":\"image\",\"image_url\":\"http://img.png\","
                 + "\"file_id\":\"f1\",\"media_type\":\"image/png\"}",
             ContentBlock.class);
@@ -930,7 +931,7 @@ public class TestAgentStudio {
   @Test
   public void testContentBlockData() {
     ContentBlock block =
-        JsonUtils.fromJson(
+        AgentStudioJson.GSON.fromJson(
             "{\"type\":\"data\",\"data\":{\"key\":\"val\"}," + "\"name\":\"test\"}",
             ContentBlock.class);
     assertTrue(block instanceof ContentBlock.DataContent);
@@ -940,7 +941,7 @@ public class TestAgentStudio {
   @Test
   public void testContentBlockError() {
     ContentBlock block =
-        JsonUtils.fromJson(
+        AgentStudioJson.GSON.fromJson(
             "{\"type\":\"error\",\"error_code\":\"E001\"," + "\"message\":\"something failed\"}",
             ContentBlock.class);
     assertTrue(block instanceof ContentBlock.Error);
@@ -950,7 +951,7 @@ public class TestAgentStudio {
   @Test
   public void testContentBlockRefusal() {
     ContentBlock block =
-        JsonUtils.fromJson(
+        AgentStudioJson.GSON.fromJson(
             "{\"type\":\"refusal\"," + "\"refusal\":\"I cannot do that\"}", ContentBlock.class);
     assertTrue(block instanceof ContentBlock.Refusal);
     assertEquals("I cannot do that", ((ContentBlock.Refusal) block).getRefusal());
@@ -959,7 +960,7 @@ public class TestAgentStudio {
   @Test
   public void testContentBlockUnknownFallsBackToData() {
     ContentBlock block =
-        JsonUtils.fromJson(
+        AgentStudioJson.GSON.fromJson(
             "{\"type\":\"unknown_future_type\",\"data\":{\"x\":1}}", ContentBlock.class);
     assertTrue(block instanceof ContentBlock.DataContent);
   }

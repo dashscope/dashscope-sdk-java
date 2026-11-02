@@ -9,7 +9,6 @@ import com.alibaba.dashscope.applications.agentstudio.param.SessionEventListPara
 import com.alibaba.dashscope.applications.agentstudio.param.SessionThreadListParam;
 import com.alibaba.dashscope.legacy_2x.api.GeneralApi;
 import com.alibaba.dashscope.legacy_2x.base.HalfDuplexParamBase;
-import com.alibaba.dashscope.legacy_2x.common.FlattenResultBase;
 import com.alibaba.dashscope.legacy_2x.common.GeneralGetParam;
 import com.alibaba.dashscope.legacy_2x.protocol.ConnectionOptions;
 import com.alibaba.dashscope.legacy_2x.protocol.GeneralServiceOption;
@@ -73,8 +72,7 @@ public final class SessionThreads {
         .thenApply(
             r -> {
               Type type = new TypeToken<CursorPage<Session.SessionThread>>() {}.getType();
-              CursorPage<Session.SessionThread> page =
-                  FlattenResultBase.fromDashScopeResult(r, type);
+              CursorPage<Session.SessionThread> page = AgentStudioJson.fromDashScopeResult(r, type);
               page.setFetchNext(
                   cursor ->
                       listAsync(
@@ -101,7 +99,7 @@ public final class SessionThreads {
             baseUrl);
     return AsyncHelper.callAsync(
             api, GeneralGetParam.builder().apiKey(apiKey).headers(new HashMap<>()).build(), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Session.SessionThread.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Session.SessionThread.class));
   }
 
   public CompletableFuture<Session.SessionThread> archiveAsync(String sessionId, String threadId) {
@@ -118,7 +116,7 @@ public final class SessionThreads {
             baseUrl);
     return AsyncHelper.callAsync(
             api, GeneralGetParam.builder().apiKey(apiKey).headers(new HashMap<>()).build(), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Session.SessionThread.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Session.SessionThread.class));
   }
 
   // ── nested: thread-scoped events ──
@@ -164,7 +162,7 @@ public final class SessionThreads {
           .thenApply(
               r -> {
                 Type type = new TypeToken<CursorPage<Message>>() {}.getType();
-                CursorPage<Message> page = FlattenResultBase.fromDashScopeResult(r, type);
+                CursorPage<Message> page = AgentStudioJson.fromDashScopeResult(r, type);
                 page.setFetchNext(
                     cursor ->
                         listAsync(

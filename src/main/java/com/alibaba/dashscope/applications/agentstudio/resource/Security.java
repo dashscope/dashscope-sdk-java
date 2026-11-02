@@ -45,7 +45,7 @@ public final class Security {
         AgentStudioConstants.newServiceOption(HttpMethod.GET, "security/overview", baseUrl);
     return AsyncHelper.callAsync(
             api, GeneralGetParam.builder().apiKey(apiKey).headers(new HashMap<>()).build(), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, SecurityOverview.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, SecurityOverview.class));
   }
 
   public CompletableFuture<SecurityAlertList> listAgentLogsAsync(SecurityListAgentLogsParam param) {
@@ -57,7 +57,7 @@ public final class Security {
     GeneralServiceOption opt = AgentStudioConstants.newServiceOption(HttpMethod.GET, path, baseUrl);
     return AsyncHelper.callAsync(
             api, GeneralGetParam.builder().apiKey(apiKey).headers(new HashMap<>()).build(), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, SecurityAlertList.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, SecurityAlertList.class));
   }
 
   @Data

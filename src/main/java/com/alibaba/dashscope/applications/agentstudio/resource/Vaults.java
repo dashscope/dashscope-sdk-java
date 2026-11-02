@@ -14,7 +14,6 @@ import com.alibaba.dashscope.applications.agentstudio.param.VaultListParam;
 import com.alibaba.dashscope.applications.agentstudio.param.VaultUpdateParam;
 import com.alibaba.dashscope.legacy_2x.api.GeneralApi;
 import com.alibaba.dashscope.legacy_2x.base.HalfDuplexParamBase;
-import com.alibaba.dashscope.legacy_2x.common.FlattenResultBase;
 import com.alibaba.dashscope.legacy_2x.common.GeneralGetParam;
 import com.alibaba.dashscope.legacy_2x.protocol.ConnectionOptions;
 import com.alibaba.dashscope.legacy_2x.protocol.GeneralServiceOption;
@@ -83,7 +82,7 @@ public final class Vaults {
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(HttpMethod.POST, "vaults", baseUrl);
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Vault.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Vault.class));
   }
 
   public CompletableFuture<Vault> retrieveAsync(String vaultId) {
@@ -106,7 +105,7 @@ public final class Vaults {
                 .headers(headers != null ? headers : new HashMap<>())
                 .build(),
             opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Vault.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Vault.class));
   }
 
   public CompletableFuture<Vault> updateAsync(String vaultId, VaultUpdateParam param) {
@@ -120,7 +119,7 @@ public final class Vaults {
         AgentStudioConstants.newServiceOption(
             HttpMethod.POST, StringUtils.format("vaults/%s", vaultId), baseUrl);
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Vault.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Vault.class));
   }
 
   public CompletableFuture<CursorPage<Vault>> listAsync(VaultListParam param) {
@@ -135,7 +134,7 @@ public final class Vaults {
         .thenApply(
             r -> {
               Type type = new TypeToken<CursorPage<Vault>>() {}.getType();
-              CursorPage<Vault> page = FlattenResultBase.fromDashScopeResult(r, type);
+              CursorPage<Vault> page = AgentStudioJson.fromDashScopeResult(r, type);
               page.setFetchNext(
                   cursor ->
                       listAsync(
@@ -157,7 +156,7 @@ public final class Vaults {
             HttpMethod.POST, StringUtils.format("vaults/%s/archive", vaultId), baseUrl);
     return AsyncHelper.callAsync(
             api, AgentStudioConstants.withApiKey(apiKey, VaultUpdateParam.builder().build()), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Vault.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Vault.class));
   }
 
   public CompletableFuture<AgentStudioDeletionStatus> deleteAsync(String vaultId) {
@@ -180,7 +179,7 @@ public final class Vaults {
                 .headers(headers != null ? headers : new HashMap<>())
                 .build(),
             opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, AgentStudioDeletionStatus.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, AgentStudioDeletionStatus.class));
   }
 
   public final class Credentials {
@@ -230,7 +229,7 @@ public final class Vaults {
           AgentStudioConstants.newServiceOption(
               HttpMethod.POST, StringUtils.format("vaults/%s/credentials", vaultId), baseUrl);
       return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
-          .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Credential.class));
+          .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Credential.class));
     }
 
     public CompletableFuture<Credential> retrieveAsync(String vaultId, String credentialId) {
@@ -256,7 +255,7 @@ public final class Vaults {
                   .headers(headers != null ? headers : new HashMap<>())
                   .build(),
               opt)
-          .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Credential.class));
+          .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Credential.class));
     }
 
     public CompletableFuture<Credential> updateAsync(
@@ -274,7 +273,7 @@ public final class Vaults {
               StringUtils.format("vaults/%s/credentials/%s", vaultId, credentialId),
               baseUrl);
       return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
-          .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Credential.class));
+          .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Credential.class));
     }
 
     public CompletableFuture<CursorPage<Credential>> listAsync(
@@ -297,7 +296,7 @@ public final class Vaults {
           .thenApply(
               r -> {
                 Type type = new TypeToken<CursorPage<Credential>>() {}.getType();
-                CursorPage<Credential> page = FlattenResultBase.fromDashScopeResult(r, type);
+                CursorPage<Credential> page = AgentStudioJson.fromDashScopeResult(r, type);
                 page.setFetchNext(
                     cursor ->
                         listAsync(
@@ -325,7 +324,7 @@ public final class Vaults {
               api,
               AgentStudioConstants.withApiKey(apiKey, CredentialUpdateParam.builder().build()),
               opt)
-          .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Credential.class));
+          .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Credential.class));
     }
 
     public CompletableFuture<AgentStudioDeletionStatus> deleteAsync(
@@ -352,8 +351,7 @@ public final class Vaults {
                   .headers(headers != null ? headers : new HashMap<>())
                   .build(),
               opt)
-          .thenApply(
-              r -> FlattenResultBase.fromDashScopeResult(r, AgentStudioDeletionStatus.class));
+          .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, AgentStudioDeletionStatus.class));
     }
   }
 }

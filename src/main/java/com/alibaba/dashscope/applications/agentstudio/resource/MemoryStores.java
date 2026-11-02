@@ -16,7 +16,6 @@ import com.alibaba.dashscope.applications.agentstudio.param.MemoryUpdateParam;
 import com.alibaba.dashscope.applications.agentstudio.param.MemoryVersionListParam;
 import com.alibaba.dashscope.legacy_2x.api.GeneralApi;
 import com.alibaba.dashscope.legacy_2x.base.HalfDuplexParamBase;
-import com.alibaba.dashscope.legacy_2x.common.FlattenResultBase;
 import com.alibaba.dashscope.legacy_2x.common.GeneralGetParam;
 import com.alibaba.dashscope.legacy_2x.protocol.ConnectionOptions;
 import com.alibaba.dashscope.legacy_2x.protocol.GeneralServiceOption;
@@ -124,7 +123,7 @@ public final class MemoryStores {
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(HttpMethod.POST, "memory_stores", baseUrl);
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, MemoryStore.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, MemoryStore.class));
   }
 
   public CompletableFuture<MemoryStore> retrieveAsync(String storeId) {
@@ -147,7 +146,7 @@ public final class MemoryStores {
                 .headers(headers != null ? headers : new HashMap<>())
                 .build(),
             opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, MemoryStore.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, MemoryStore.class));
   }
 
   public CompletableFuture<MemoryStore> updateAsync(String storeId, MemoryStoreUpdateParam param) {
@@ -161,7 +160,7 @@ public final class MemoryStores {
         AgentStudioConstants.newServiceOption(
             HttpMethod.POST, StringUtils.format("memory_stores/%s", storeId), baseUrl);
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, MemoryStore.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, MemoryStore.class));
   }
 
   public CompletableFuture<CursorPage<MemoryStore>> listAsync(MemoryStoreListParam param) {
@@ -176,7 +175,7 @@ public final class MemoryStores {
         .thenApply(
             r -> {
               Type type = new TypeToken<CursorPage<MemoryStore>>() {}.getType();
-              CursorPage<MemoryStore> page = FlattenResultBase.fromDashScopeResult(r, type);
+              CursorPage<MemoryStore> page = AgentStudioJson.fromDashScopeResult(r, type);
               page.setFetchNext(
                   cursor ->
                       listAsync(
@@ -200,7 +199,7 @@ public final class MemoryStores {
             api,
             AgentStudioConstants.withApiKey(apiKey, MemoryStoreUpdateParam.builder().build()),
             opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, MemoryStore.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, MemoryStore.class));
   }
 
   public CompletableFuture<AgentStudioDeletionStatus> deleteAsync(String storeId) {
@@ -223,7 +222,7 @@ public final class MemoryStores {
                 .headers(headers != null ? headers : new HashMap<>())
                 .build(),
             opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, AgentStudioDeletionStatus.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, AgentStudioDeletionStatus.class));
   }
 
   /**
@@ -304,7 +303,7 @@ public final class MemoryStores {
           AgentStudioConstants.newServiceOption(
               HttpMethod.POST, StringUtils.format("memory_stores/%s/memories", storeId), baseUrl);
       return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
-          .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Memory.class));
+          .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Memory.class));
     }
 
     public CompletableFuture<Memory> retrieveAsync(String storeId, String memoryId) {
@@ -330,7 +329,7 @@ public final class MemoryStores {
                   .headers(headers != null ? headers : new HashMap<>())
                   .build(),
               opt)
-          .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Memory.class));
+          .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Memory.class));
     }
 
     public CompletableFuture<Memory> updateAsync(
@@ -348,7 +347,7 @@ public final class MemoryStores {
               StringUtils.format("memory_stores/%s/memories/%s", storeId, memoryId),
               baseUrl);
       return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
-          .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Memory.class));
+          .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Memory.class));
     }
 
     public CompletableFuture<CursorPage<Memory>> listAsync(String storeId, MemoryListParam param) {
@@ -382,7 +381,7 @@ public final class MemoryStores {
           .thenApply(
               r -> {
                 Type type = new TypeToken<CursorPage<Memory>>() {}.getType();
-                CursorPage<Memory> page = FlattenResultBase.fromDashScopeResult(r, type);
+                CursorPage<Memory> page = AgentStudioJson.fromDashScopeResult(r, type);
                 page.setFetchNext(
                     cursor ->
                         listAsync(
@@ -425,8 +424,7 @@ public final class MemoryStores {
                   .headers(headers != null ? headers : new HashMap<>())
                   .build(),
               opt)
-          .thenApply(
-              r -> FlattenResultBase.fromDashScopeResult(r, AgentStudioDeletionStatus.class));
+          .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, AgentStudioDeletionStatus.class));
     }
   }
 
@@ -470,7 +468,7 @@ public final class MemoryStores {
           .thenApply(
               r -> {
                 Type type = new TypeToken<CursorPage<MemoryVersion>>() {}.getType();
-                CursorPage<MemoryVersion> page = FlattenResultBase.fromDashScopeResult(r, type);
+                CursorPage<MemoryVersion> page = AgentStudioJson.fromDashScopeResult(r, type);
                 page.setFetchNext(
                     cursor ->
                         listAsync(
@@ -511,7 +509,7 @@ public final class MemoryStores {
                   .headers(headers != null ? headers : new HashMap<>())
                   .build(),
               opt)
-          .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, MemoryVersion.class));
+          .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, MemoryVersion.class));
     }
 
     /** Redact a version: idempotent and irreversible. */
@@ -529,7 +527,7 @@ public final class MemoryStores {
               api,
               AgentStudioConstants.withApiKey(apiKey, MemoryUpdateParam.builder().build()),
               opt)
-          .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, MemoryVersion.class));
+          .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, MemoryVersion.class));
     }
   }
 }

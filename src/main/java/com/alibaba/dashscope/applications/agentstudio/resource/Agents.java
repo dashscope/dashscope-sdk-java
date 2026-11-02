@@ -10,7 +10,6 @@ import com.alibaba.dashscope.applications.agentstudio.param.AgentListParam;
 import com.alibaba.dashscope.applications.agentstudio.param.AgentUpdateParam;
 import com.alibaba.dashscope.legacy_2x.api.GeneralApi;
 import com.alibaba.dashscope.legacy_2x.base.HalfDuplexParamBase;
-import com.alibaba.dashscope.legacy_2x.common.FlattenResultBase;
 import com.alibaba.dashscope.legacy_2x.common.GeneralGetParam;
 import com.alibaba.dashscope.legacy_2x.protocol.ConnectionOptions;
 import com.alibaba.dashscope.legacy_2x.protocol.GeneralServiceOption;
@@ -82,7 +81,7 @@ public final class Agents {
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(HttpMethod.POST, "agents", baseUrl);
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Agent.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Agent.class));
   }
 
   public CompletableFuture<Agent> retrieveAsync(String agentId) {
@@ -116,7 +115,7 @@ public final class Agents {
                 .headers(headers != null ? headers : new HashMap<>())
                 .build(),
             opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Agent.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Agent.class));
   }
 
   public CompletableFuture<Agent> updateAsync(String agentId, AgentUpdateParam param) {
@@ -135,7 +134,7 @@ public final class Agents {
         AgentStudioConstants.newServiceOption(
             HttpMethod.POST, StringUtils.format("agents/%s", agentId), baseUrl);
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Agent.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Agent.class));
   }
 
   public CompletableFuture<CursorPage<Agent>> listAsync(AgentListParam param) {
@@ -150,7 +149,7 @@ public final class Agents {
         .thenApply(
             r -> {
               Type type = new TypeToken<CursorPage<Agent>>() {}.getType();
-              CursorPage<Agent> page = FlattenResultBase.fromDashScopeResult(r, type);
+              CursorPage<Agent> page = AgentStudioJson.fromDashScopeResult(r, type);
               page.setFetchNext(
                   cursor ->
                       listAsync(
@@ -172,7 +171,7 @@ public final class Agents {
             HttpMethod.POST, StringUtils.format("agents/%s/archive", agentId), baseUrl);
     return AsyncHelper.callAsync(
             api, AgentStudioConstants.withApiKey(apiKey, AgentUpdateParam.builder().build()), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Agent.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Agent.class));
   }
 
   public CompletableFuture<CursorPage<AgentVersion>> listVersionsAsync(
@@ -190,7 +189,7 @@ public final class Agents {
         .thenApply(
             r -> {
               Type type = new TypeToken<CursorPage<AgentVersion>>() {}.getType();
-              CursorPage<AgentVersion> page = FlattenResultBase.fromDashScopeResult(r, type);
+              CursorPage<AgentVersion> page = AgentStudioJson.fromDashScopeResult(r, type);
               page.setFetchNext(
                   cursor ->
                       listVersionsAsync(

@@ -10,7 +10,6 @@ import com.alibaba.dashscope.applications.agentstudio.param.SessionListParam;
 import com.alibaba.dashscope.applications.agentstudio.param.SessionUpdateParam;
 import com.alibaba.dashscope.legacy_2x.api.GeneralApi;
 import com.alibaba.dashscope.legacy_2x.base.HalfDuplexParamBase;
-import com.alibaba.dashscope.legacy_2x.common.FlattenResultBase;
 import com.alibaba.dashscope.legacy_2x.common.GeneralGetParam;
 import com.alibaba.dashscope.legacy_2x.protocol.ConnectionOptions;
 import com.alibaba.dashscope.legacy_2x.protocol.GeneralServiceOption;
@@ -91,7 +90,7 @@ public final class Sessions {
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(HttpMethod.POST, "sessions", baseUrl);
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Session.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Session.class));
   }
 
   public CompletableFuture<Session> retrieveAsync(String sessionId) {
@@ -114,7 +113,7 @@ public final class Sessions {
                 .headers(headers != null ? headers : new HashMap<>())
                 .build(),
             opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Session.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Session.class));
   }
 
   public CompletableFuture<Session> updateAsync(String sessionId, SessionUpdateParam param) {
@@ -128,7 +127,7 @@ public final class Sessions {
         AgentStudioConstants.newServiceOption(
             HttpMethod.POST, StringUtils.format("sessions/%s", sessionId), baseUrl);
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Session.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Session.class));
   }
 
   public CompletableFuture<CursorPage<Session>> listAsync(SessionListParam param) {
@@ -143,7 +142,7 @@ public final class Sessions {
         .thenApply(
             r -> {
               Type type = new TypeToken<CursorPage<Session>>() {}.getType();
-              CursorPage<Session> page = FlattenResultBase.fromDashScopeResult(r, type);
+              CursorPage<Session> page = AgentStudioJson.fromDashScopeResult(r, type);
               page.setFetchNext(
                   cursor ->
                       listAsync(
@@ -170,7 +169,7 @@ public final class Sessions {
             HttpMethod.POST, StringUtils.format("sessions/%s/archive", sessionId), baseUrl);
     return AsyncHelper.callAsync(
             api, AgentStudioConstants.withApiKey(apiKey, SessionUpdateParam.builder().build()), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Session.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Session.class));
   }
 
   public CompletableFuture<AgentStudioDeletionStatus> deleteAsync(String sessionId) {
@@ -193,6 +192,6 @@ public final class Sessions {
                 .headers(headers != null ? headers : new HashMap<>())
                 .build(),
             opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, AgentStudioDeletionStatus.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, AgentStudioDeletionStatus.class));
   }
 }

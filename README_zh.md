@@ -28,7 +28,7 @@ import com.alibaba.dashscope.DashScopeClient;
 import com.alibaba.dashscope.types.completions.ChatCompletion;
 import com.alibaba.dashscope.types.completions.ChatCompletionCreateParams;
 import com.alibaba.dashscope.types.messages.Message;
-import java.util.List;
+import java.util.Collections;
 
 // apiKey 走配置链：Builder 显式参数 > -Ddashscope.api.key > DASHSCOPE_API_KEY 环境变量
 // > ~/.dashscope/config.toml
@@ -36,7 +36,7 @@ try (DashScopeClient client = DashScopeClient.builder().build()) {
   ChatCompletion result = client.chat().completions().create(
       ChatCompletionCreateParams.builder()
           .model("qwen-plus")
-          .messages(List.of(Message.user("你好，最近怎么样？")))
+          .messages(Collections.singletonList(Message.user("你好，最近怎么样？")))
           .build());
   System.out.println(result.outputText());
   System.out.println("request_id: " + result.getRequestId());

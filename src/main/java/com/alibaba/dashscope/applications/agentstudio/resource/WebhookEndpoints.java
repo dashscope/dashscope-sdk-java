@@ -12,7 +12,6 @@ import com.alibaba.dashscope.applications.agentstudio.param.WebhookEndpointUpdat
 import com.alibaba.dashscope.applications.agentstudio.param.WebhookEventListParam;
 import com.alibaba.dashscope.legacy_2x.api.GeneralApi;
 import com.alibaba.dashscope.legacy_2x.base.HalfDuplexParamBase;
-import com.alibaba.dashscope.legacy_2x.common.FlattenResultBase;
 import com.alibaba.dashscope.legacy_2x.common.GeneralGetParam;
 import com.alibaba.dashscope.legacy_2x.protocol.ConnectionOptions;
 import com.alibaba.dashscope.legacy_2x.protocol.GeneralServiceOption;
@@ -94,7 +93,7 @@ public final class WebhookEndpoints {
     GeneralServiceOption option =
         AgentStudioConstants.newServiceOption(HttpMethod.POST, RESOURCE_PATH, baseUrl);
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), option)
-        .thenApply(result -> FlattenResultBase.fromDashScopeResult(result, WebhookEndpoint.class));
+        .thenApply(result -> AgentStudioJson.fromDashScopeResult(result, WebhookEndpoint.class));
   }
 
   public CompletableFuture<WebhookEndpoint> retrieveAsync(String webhookId) {
@@ -105,7 +104,7 @@ public final class WebhookEndpoints {
         AgentStudioConstants.newServiceOption(
             HttpMethod.GET, StringUtils.format("%s/%s", RESOURCE_PATH, webhookId), baseUrl);
     return AsyncHelper.callAsync(api, emptyParam(), option)
-        .thenApply(result -> FlattenResultBase.fromDashScopeResult(result, WebhookEndpoint.class));
+        .thenApply(result -> AgentStudioJson.fromDashScopeResult(result, WebhookEndpoint.class));
   }
 
   public CompletableFuture<WebhookEndpoint> getAsync(String webhookId) {
@@ -117,7 +116,7 @@ public final class WebhookEndpoints {
         AgentStudioConstants.newServiceOption(HttpMethod.GET, RESOURCE_PATH, baseUrl);
     return AsyncHelper.callAsync(api, emptyParam(), option)
         .thenApply(
-            result -> FlattenResultBase.fromDashScopeResult(result, WebhookEndpointList.class));
+            result -> AgentStudioJson.fromDashScopeResult(result, WebhookEndpointList.class));
   }
 
   public CompletableFuture<WebhookEndpoint> updateAsync(
@@ -132,7 +131,7 @@ public final class WebhookEndpoints {
         AgentStudioConstants.newServiceOption(
             HttpMethod.PUT, StringUtils.format("%s/%s", RESOURCE_PATH, webhookId), baseUrl);
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), option)
-        .thenApply(result -> FlattenResultBase.fromDashScopeResult(result, WebhookEndpoint.class));
+        .thenApply(result -> AgentStudioJson.fromDashScopeResult(result, WebhookEndpoint.class));
   }
 
   public CompletableFuture<JsonObject> deleteAsync(String webhookId) {
@@ -160,7 +159,7 @@ public final class WebhookEndpoints {
     }
     GeneralServiceOption option = actionOption(webhookId, "test");
     return AsyncHelper.callAsync(api, emptyParam(), option)
-        .thenApply(result -> FlattenResultBase.fromDashScopeResult(result, WebhookEvent.class));
+        .thenApply(result -> AgentStudioJson.fromDashScopeResult(result, WebhookEvent.class));
   }
 
   public CompletableFuture<WebhookSecretReset> resetSecretAsync(String webhookId) {
@@ -169,8 +168,7 @@ public final class WebhookEndpoints {
     }
     GeneralServiceOption option = actionOption(webhookId, "reset_secret");
     return AsyncHelper.callAsync(api, emptyParam(), option)
-        .thenApply(
-            result -> FlattenResultBase.fromDashScopeResult(result, WebhookSecretReset.class));
+        .thenApply(result -> AgentStudioJson.fromDashScopeResult(result, WebhookSecretReset.class));
   }
 
   public CompletableFuture<CursorPage<WebhookEvent>> listEventsAsync(String webhookId) {
@@ -194,7 +192,7 @@ public final class WebhookEndpoints {
         .thenApply(
             result -> {
               Type type = new TypeToken<CursorPage<WebhookEvent>>() {}.getType();
-              CursorPage<WebhookEvent> page = FlattenResultBase.fromDashScopeResult(result, type);
+              CursorPage<WebhookEvent> page = AgentStudioJson.fromDashScopeResult(result, type);
               page.setFetchNext(
                   cursor ->
                       listEventsAsync(
@@ -212,7 +210,7 @@ public final class WebhookEndpoints {
       return AsyncHelper.failedFuture(new IllegalArgumentException("webhookId is required!"));
     }
     return AsyncHelper.callAsync(api, emptyParam(), actionOption(webhookId, action))
-        .thenApply(result -> FlattenResultBase.fromDashScopeResult(result, WebhookEndpoint.class));
+        .thenApply(result -> AgentStudioJson.fromDashScopeResult(result, WebhookEndpoint.class));
   }
 
   private GeneralServiceOption actionOption(String webhookId, String action) {

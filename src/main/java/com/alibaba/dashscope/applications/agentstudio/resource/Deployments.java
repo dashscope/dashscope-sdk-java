@@ -11,7 +11,6 @@ import com.alibaba.dashscope.applications.agentstudio.param.DeploymentRunListPar
 import com.alibaba.dashscope.applications.agentstudio.param.DeploymentUpdateParam;
 import com.alibaba.dashscope.legacy_2x.api.GeneralApi;
 import com.alibaba.dashscope.legacy_2x.base.HalfDuplexParamBase;
-import com.alibaba.dashscope.legacy_2x.common.FlattenResultBase;
 import com.alibaba.dashscope.legacy_2x.common.GeneralGetParam;
 import com.alibaba.dashscope.legacy_2x.protocol.ConnectionOptions;
 import com.alibaba.dashscope.legacy_2x.protocol.GeneralServiceOption;
@@ -76,7 +75,7 @@ public final class Deployments {
     GeneralServiceOption opt =
         AgentStudioConstants.newServiceOption(HttpMethod.POST, "deployments", baseUrl);
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Deployment.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Deployment.class));
   }
 
   public CompletableFuture<Deployment> retrieveAsync(String deploymentId) {
@@ -87,7 +86,7 @@ public final class Deployments {
         AgentStudioConstants.newServiceOption(
             HttpMethod.GET, StringUtils.format("deployments/%s", deploymentId), baseUrl);
     return AsyncHelper.callAsync(api, getParam(), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Deployment.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Deployment.class));
   }
 
   public CompletableFuture<Deployment> updateAsync(
@@ -102,7 +101,7 @@ public final class Deployments {
         AgentStudioConstants.newServiceOption(
             HttpMethod.POST, StringUtils.format("deployments/%s", deploymentId), baseUrl);
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Deployment.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Deployment.class));
   }
 
   public CompletableFuture<CursorPage<Deployment>> listAsync(DeploymentListParam param) {
@@ -116,7 +115,7 @@ public final class Deployments {
         .thenApply(
             r -> {
               Type type = new TypeToken<CursorPage<Deployment>>() {}.getType();
-              CursorPage<Deployment> page = FlattenResultBase.fromDashScopeResult(r, type);
+              CursorPage<Deployment> page = AgentStudioJson.fromDashScopeResult(r, type);
               page.setFetchNext(
                   cursor ->
                       listAsync(
@@ -155,7 +154,7 @@ public final class Deployments {
             HttpMethod.POST, StringUtils.format("deployments/%s/run", deploymentId), baseUrl);
     DeploymentUpdateParam param = DeploymentUpdateParam.builder().build();
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, DeploymentRun.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, DeploymentRun.class));
   }
 
   public CompletableFuture<CursorPage<DeploymentRun>> listRunsAsync(
@@ -174,7 +173,7 @@ public final class Deployments {
         .thenApply(
             r -> {
               Type type = new TypeToken<CursorPage<DeploymentRun>>() {}.getType();
-              CursorPage<DeploymentRun> page = FlattenResultBase.fromDashScopeResult(r, type);
+              CursorPage<DeploymentRun> page = AgentStudioJson.fromDashScopeResult(r, type);
               page.setFetchNext(
                   cursor ->
                       listRunsAsync(
@@ -198,7 +197,7 @@ public final class Deployments {
             baseUrl);
     DeploymentUpdateParam param = DeploymentUpdateParam.builder().build();
     return AsyncHelper.callAsync(api, AgentStudioConstants.withApiKey(apiKey, param), opt)
-        .thenApply(r -> FlattenResultBase.fromDashScopeResult(r, Deployment.class));
+        .thenApply(r -> AgentStudioJson.fromDashScopeResult(r, Deployment.class));
   }
 
   private GeneralGetParam getParam() {
