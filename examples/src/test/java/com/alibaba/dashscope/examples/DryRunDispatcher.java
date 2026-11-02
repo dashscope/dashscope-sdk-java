@@ -21,6 +21,8 @@ public final class DryRunDispatcher extends Dispatcher {
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private static final String JSON = "application/json";
   private static final String SSE = "text/event-stream";
+  /** Sample rate the TTS examples synthesize at; only used to size the mocked WAV container. */
+  private static final int TTS_SAMPLE_RATE = 24000;
 
   private final MockWebServer server;
 
@@ -96,7 +98,7 @@ public final class DryRunDispatcher extends Dispatcher {
       case "/services/audio/asr/transcription":
         return jobCreate("dry-task");
       case "/services/audio/tts/SpeechSynthesizer":
-        return sse(ttsAudioFrames());
+        return sse(ttsAudioFrames(body));
       case "/services/audio/tts/customization":
         return voiceCustomization(body);
       case "/services/audio/asr/customization":
@@ -189,7 +191,7 @@ public final class DryRunDispatcher extends Dispatcher {
     if (isSse(request)) {
       String model = MAPPER.readTree(body).path("model").asText("");
       if (model.contains("tts")) {
-        return sse(ttsAudioFrames());
+        return sse(ttsAudioFrames(body));
       }
       return sse(
           "data: {\"output\":{\"choices\":[{\"message\":{\"role\":\"assistant\","
@@ -290,7 +292,7 @@ public final class DryRunDispatcher extends Dispatcher {
   private static String taskJson(String taskId) {
     if ("dry-tw".equals(taskId)) {
       return "{\"output\":{\"task_id\":\"dry-tw\",\"task_status\":\"SUCCEEDED\",\"TaskId\":\"dry-tw\","
-                 + "\"Result\":\"{\\\"summary\\\":\\\"ok\\\"}\"},\"request_id\":\"r-fetch\"}";
+          + "\"Result\":\"{\\\"summary\\\":\\\"ok\\\"}\"},\"request_id\":\"r-fetch\"}";
     }
     return "{\"output\":{\"task_id\":\""
         + taskId
@@ -335,18 +337,33 @@ public final class DryRunDispatcher extends Dispatcher {
 
   private static String chatDeltaFrames() {
     return "data:"
-               + " {\"output\":{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"你\"}}]},\"request_id\":\"s1\"}\n\n"
-               + "data:"
-               + " {\"output\":{\"choices\":[{\"message\":{\"content\":\"你好\"},\"finish_reason\":\"stop\"}]},\"usage\":{\"input_tokens\":1,\"output_tokens\":2,\"total_tokens\":3},\"request_id\":\"s1\"}\n\n";
+        + " {\"output\":{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"你\"}}]},\"request_id\":\"s1\"}\n\n"
+        + "data:"
+        + " {\"output\":{\"choices\":[{\"message\":{\"content\":\"你好\"},\"finish_reason\":\"stop\"}]},\"usage\":{\"input_tokens\":1,\"output_tokens\":2,\"total_tokens\":3},\"request_id\":\"s1\"}\n\n";
   }
 
   private static String appDeltaFrames() {
     return "data: {\"output\":{\"text\":\"你\",\"session_id\":\"s1\"},\"request_id\":\"rs1\"}\n\n"
-               + "data:"
-               + " {\"output\":{\"text\":\"你好\",\"finish_reason\":\"stop\"},\"usage\":{\"input_tokens\":1,\"output_tokens\":2,\"total_tokens\":3},\"request_id\":\"rs1\"}\n\n";
+        + "data:"
+        + " {\"output\":{\"text\":\"你好\",\"finish_reason\":\"stop\"},\"usage\":{\"input_tokens\":1,\"output_tokens\":2,\"total_tokens\":3},\"request_id\":\"rs1\"}\n\n";
   }
 
-  private static String ttsAudioFrames() {
+  /**
+   * TTS frames honoring the requested {@code input.format}: {@code wav} yields one RIFF/WAVE
+   * container, anything else yields raw PCM chunks. The mock has to be format-aware for the dry-run
+   * to mean anything here: an example that asks for a container yet treats the payload as raw PCM
+   * (or the reverse) then fails against the mock, not only against the real gateway.
+   */
+  private static String ttsAudioFrames(String body) throws Exception {
+    String format = MAPPER.readTree(body).path("input").path("format").asText("");
+    if ("wav".equalsIgnoreCase(format)) {
+      String container =
+          java.util.Base64.getEncoder().encodeToString(MockWs.wavFileBytes(TTS_SAMPLE_RATE));
+      return "data: {\"output\":{\"audio\":\""
+          + container
+          + "\"},\"usage\":{\"input_tokens\":2}}\n\n"
+          + "data: [DONE]\n\n";
+    }
     String chunk1 = java.util.Base64.getEncoder().encodeToString(MockWs.pcmChunk(2400));
     String chunk2 = java.util.Base64.getEncoder().encodeToString(MockWs.pcmChunk(2400));
     return "data: {\"output\":{\"audio\":\""

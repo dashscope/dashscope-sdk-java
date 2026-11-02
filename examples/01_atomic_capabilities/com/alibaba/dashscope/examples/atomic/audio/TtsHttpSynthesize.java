@@ -66,7 +66,8 @@ public final class TtsHttpSynthesize {
                       .model(model)
                       .voice(voice)
                       .text(text)
-                      .format("wav")
+                      // Request raw PCM: this example wraps it into a WAV itself below.
+                      .format("pcm")
                       .sampleRate(SAMPLE_RATE)
                       .build());
     }

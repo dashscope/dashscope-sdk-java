@@ -76,7 +76,8 @@ public final class AsrHttpStreamRecognize {
 
     Map<String, Object> asrParameters = new HashMap<>();
     asrParameters.put("format", "wav");
-    asrParameters.put("sample_rate", "16000");
+    // Integer, not a quoted string: the SDK's typed ASR channel also sends sample_rate as a number.
+    asrParameters.put("sample_rate", 16000);
     MultimodalChatCreateParams params =
         MultimodalChatCreateParams.builder()
             .model(model)

@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -324,17 +325,34 @@ public final class RealtimeMeetingHarness {
    */
   static final class MockMeetingGateway implements MeetingGateway {
     private final Map<String, List<List<JsonNode>>> scripts;
-    private final Map<String, Integer> attempts = new LinkedHashMap<>();
+    // open() is invoked from the supervisor's thread pool (one task per meeting), so the attempt
+    // counter is shared across threads and must not be a plain LinkedHashMap.
+    private final Map<String, Integer> attempts = new ConcurrentHashMap<>();
 
     MockMeetingGateway(Map<String, List<List<JsonNode>>> scripts) {
-      this.scripts = scripts;
+      // Validate eagerly. open() runs inside runMeeting's catch-all, so an exception thrown there
+      // is swallowed as a "degraded" room and the JVM still exits 0, leaving the dry-run green on
+      // a broken script table.
+      scripts.forEach(
+          (meetingId, script) -> {
+            if (script == null || script.isEmpty()) {
+              throw new IllegalArgumentException("no scripted inbox for meeting " + meetingId);
+            }
+          });
+      // Defensive copy: holding the caller's map would let a later put(id, emptyList()) escape the
+      // check above.
+      this.scripts = new LinkedHashMap<>(scripts);
     }
 
     @Override
     public MeetingLink open(String meetingId) {
-      int attempt = attempts.getOrDefault(meetingId, 0);
-      attempts.put(meetingId, attempt + 1);
+      // merge returns the post-increment count; subtract one for the 0-based attempt index.
+      int attempt = attempts.merge(meetingId, 1, Integer::sum) - 1;
       List<List<JsonNode>> script = scripts.get(meetingId);
+      if (script == null) {
+        // Unreachable for ids the constructor validated; guards against an unknown meetingId.
+        throw new IllegalArgumentException("no scripted inbox for meeting " + meetingId);
+      }
       return new ScriptedMeetingLink(script.get(Math.min(attempt, script.size() - 1)));
     }
   }

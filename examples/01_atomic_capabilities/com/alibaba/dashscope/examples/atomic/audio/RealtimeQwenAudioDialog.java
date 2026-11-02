@@ -11,9 +11,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * One Qwen-Audio realtime spoken turn from a WAV file or the microphone, saved as a 24 kHz WAV
@@ -102,9 +104,20 @@ public final class RealtimeQwenAudioDialog {
                 .enableTurnDetection(false)
                 .parameters(Collections.singletonMap("instructions", instructions))
                 .build());
-        RealtimeOmniDialog.receiveUntil(session, "session.updated", null);
+        // One receiver thread consumes the single-use event stream (see RealtimeOmniDialog).
+        CountDownLatch sessionUpdated = new CountDownLatch(1);
         Future<Integer> receiver =
-            pool.submit(() -> RealtimeOmniDialog.receiveUntil(session, "response.done", pcm));
+            pool.submit(
+                () -> {
+                  try {
+                    return RealtimeOmniDialog.receiveReply(session, pcm, sessionUpdated);
+                  } finally {
+                    sessionUpdated.countDown();
+                  }
+                });
+        if (!sessionUpdated.await(30, TimeUnit.SECONDS)) {
+          throw new RuntimeException("30 秒内未收到 session.updated 事件");
+        }
         if (audio != null) {
           RealtimeOmniDialog.sendWav(session, receiver, audio);
         } else {

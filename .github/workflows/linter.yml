@@ -19,10 +19,12 @@ on:
     branches:
       - main
       - master
+      - dev/v3
   pull_request:
     branches:
       - main
       - master
+      - dev/v3
 permissions:
   contents: read
 jobs:

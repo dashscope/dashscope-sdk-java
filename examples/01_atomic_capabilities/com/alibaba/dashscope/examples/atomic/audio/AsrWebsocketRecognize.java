@@ -9,6 +9,7 @@ import com.alibaba.dashscope.types.audio.AsrRecognizeParams;
 import com.alibaba.dashscope.types.audio.AsrResult;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -78,11 +79,14 @@ public final class AsrWebsocketRecognize {
         session.close();
         receiverPool.shutdown();
       }
+      // getFirstPackageDelay() stays null when no sentence was ever recognized (silence or
+      // speech-free audio), so it must not be dereferenced unconditionally.
+      Duration firstDelay = session.getFirstPackageDelay();
       System.err.println(
           "request_id="
               + session.getRequestId()
               + " first_package_delay_ms="
-              + session.getFirstPackageDelay().toMillis()
+              + (firstDelay == null ? "null" : firstDelay.toMillis())
               + " usage="
               + session.getUsage());
     }

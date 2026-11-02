@@ -65,7 +65,8 @@ public final class TtsHttpStreamSynthesize {
                     .model(model)
                     .voice(voice)
                     .text(text)
-                    .format("wav")
+                    // Request raw PCM: this example accumulates the chunks and wraps them below.
+                    .format("pcm")
                     .sampleRate(SAMPLE_RATE)
                     .build())) {
       for (byte[] chunk : stream) {

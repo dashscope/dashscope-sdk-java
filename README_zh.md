@@ -45,7 +45,8 @@ try (DashScopeClient client = DashScopeClient.builder().build()) {
   见 [md/dashscope-3.0-design.md](md/dashscope-3.0-design.md)。
 - 2.x 迁移：[md/dashscope-3.0-migration.md](md/dashscope-3.0-migration.md)
   （逐类对照表、unchecked 异常心智、AgentStudio 与 tokenizers 专章）。
-- 可运行示例：[examples/README.md](examples/README.md)（四层结构，CI 全量干跑）。
+- 可运行示例：[examples/README.md](examples/README.md)（四层结构，MockWebServer 干跑，命令
+  `mvn -f examples/pom.xml test`；独立工程，尚未接入 CI）。
 - 本节以下为已废弃的 2.x API 文档（`Generation`、`Conversation` 等），示例已使用当前
   `legacy_2x` imports；这些 API 将在 4.0 删除。
 

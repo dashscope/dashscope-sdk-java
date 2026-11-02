@@ -12,9 +12,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Translate speech with Qwen3.8-LiveTranslate, saving the spoken translation as a 24 kHz WAV.
@@ -97,15 +99,28 @@ public final class RealtimeTranslation {
                 .modalities(Arrays.asList("text", "audio"))
                 .translation(UpdateSessionParams.Translation.of(language))
                 .build());
-        receiveUntil(session, "session.updated", null);
+        // events() is a single-use stream, so ONE receiver thread drains it for the whole
+        // session: it releases sessionUpdated once the server acknowledges the session update
+        // (gating the input below) and finishes at session.finished — every translation segment
+        // is collected, not just the first response.done.
+        CountDownLatch sessionUpdated = new CountDownLatch(1);
         Future<Integer> receiver =
-            pool.submit(() -> receiveUntil(session, "session.finished", pcm));
+            pool.submit(
+                () -> {
+                  try {
+                    return drainTranslation(session, pcm, sessionUpdated);
+                  } finally {
+                    sessionUpdated.countDown();
+                  }
+                });
+        if (!sessionUpdated.await(30, TimeUnit.SECONDS)) {
+          throw new RuntimeException("30 秒内未收到 session.updated 事件");
+        }
         if (audio != null) {
           RealtimeOmniDialog.sendWav(session, receiver, audio);
         } else {
           RealtimeOmniDialog.sendMicrophone(session, receiver, seconds);
         }
-        // Drain all translations, not just the first response.done.
         session.endSession();
         size = receiver.get();
       } finally {
@@ -125,11 +140,13 @@ public final class RealtimeTranslation {
   }
 
   /**
-   * Consume events until {@code target} (normally {@code session.finished}); translation audio
-   * deltas go to {@code output}. Prints the source transcription and translated text.
+   * Single-pass consumer of the single-use event stream: translation audio deltas go to {@code
+   * output}, {@code sessionUpdated} counts down at {@code session.updated}, and the decoded audio
+   * byte count is returned at {@code session.finished} (after at least one completed response).
+   * Prints the source transcription and translated text.
    */
-  private static int receiveUntil(
-      RealtimeSession session, String target, ByteArrayOutputStream output) {
+  private static int drainTranslation(
+      RealtimeSession session, ByteArrayOutputStream output, CountDownLatch sessionUpdated) {
     int size = 0;
     int responses = 0;
     for (JsonNode event : session.events()) {
@@ -171,14 +188,16 @@ public final class RealtimeTranslation {
         default:
           break;
       }
-      if (kind.equals(target)) {
-        if ("session.finished".equals(target) && responses == 0) {
+      if (kind.equals("session.updated")) {
+        sessionUpdated.countDown();
+      } else if (kind.equals("session.finished")) {
+        if (responses == 0) {
           throw new RuntimeException("会话结束，但未收到翻译响应结束事件");
         }
         return size;
       }
     }
-    throw new RuntimeException("连接已关闭，未收到 " + target);
+    throw new RuntimeException("连接已关闭，未收到 session.finished");
   }
 
   private static void usage() {

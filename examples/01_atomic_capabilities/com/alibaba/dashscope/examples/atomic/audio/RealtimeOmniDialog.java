@@ -14,9 +14,11 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import javax.sound.sampled.TargetDataLine;
 
 /**
@@ -104,8 +106,23 @@ public final class RealtimeOmniDialog {
                 .enableTurnDetection(false)
                 .parameters(Collections.singletonMap("instructions", instructions))
                 .build());
-        receiveUntil(session, "session.updated", null);
-        Future<Integer> receiver = pool.submit(() -> receiveUntil(session, "response.done", pcm));
+        // events() is a single-use stream, so ONE receiver thread consumes it for the whole
+        // session: it releases sessionUpdated once the server acknowledges the session update
+        // (gating the input below) and finishes at response.done.
+        CountDownLatch sessionUpdated = new CountDownLatch(1);
+        Future<Integer> receiver =
+            pool.submit(
+                () -> {
+                  try {
+                    return receiveReply(session, pcm, sessionUpdated);
+                  } finally {
+                    // Also release a failed receiver so the sender notices via checkReceiver.
+                    sessionUpdated.countDown();
+                  }
+                });
+        if (!sessionUpdated.await(30, TimeUnit.SECONDS)) {
+          throw new RuntimeException("30 秒内未收到 session.updated 事件");
+        }
         if (audio != null) {
           sendWav(session, receiver, audio);
         } else {
@@ -131,10 +148,12 @@ public final class RealtimeOmniDialog {
   }
 
   /**
-   * Consume events until {@code target}; audio deltas go to {@code output}, text deltas print
-   * inline. Returns the decoded audio byte count.
+   * Single-pass consumer of the single-use event stream: audio deltas go to {@code output}, text
+   * deltas print inline, {@code sessionUpdated} counts down at {@code session.updated}, and the
+   * decoded audio byte count is returned at {@code response.done}.
    */
-  static int receiveUntil(RealtimeSession session, String target, ByteArrayOutputStream output) {
+  static int receiveReply(
+      RealtimeSession session, ByteArrayOutputStream output, CountDownLatch sessionUpdated) {
     int size = 0;
     for (JsonNode event : session.events()) {
       String kind = event.path("type").asText();
@@ -174,11 +193,13 @@ public final class RealtimeOmniDialog {
         default:
           break;
       }
-      if (kind.equals(target)) {
+      if (kind.equals("session.updated")) {
+        sessionUpdated.countDown();
+      } else if (kind.equals("response.done")) {
         return size;
       }
     }
-    throw new RuntimeException("连接已关闭，未收到 " + target);
+    throw new RuntimeException("连接已关闭，未收到 response.done");
   }
 
   /** Pace a 16 kHz WAV into the input buffer, one 100 ms chunk at a time. */

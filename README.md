@@ -47,7 +47,8 @@ try (DashScopeClient client = DashScopeClient.builder().build()) {
   agentStudio` — see [md/dashscope-3.0-design.md](md/dashscope-3.0-design.md).
 - Migrating from 2.x: [md/dashscope-3.0-migration.md](md/dashscope-3.0-migration.md)
   (per-class mapping, unchecked-exception model, AgentStudio and tokenizers notes).
-- Runnable samples: [examples/README.md](examples/README.md) (four layers, CI dry-run covered).
+- Runnable samples: [examples/README.md](examples/README.md) (four layers, MockWebServer dry-run
+  via `mvn -f examples/pom.xml test`; a standalone project, not wired into CI yet).
 - Everything below this section documents the deprecated 2.x API (`Generation`, `Conversation`,
   …). Its snippets use the current `legacy_2x` imports; these APIs will be removed in 4.0.
 

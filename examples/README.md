@@ -39,11 +39,20 @@ $RUN com.alibaba.dashscope.examples.atomic.chat.ChatCompletionsCreate
 `--no-play`）；真实调用可能计费，批任务类示例先打印 `task_id` 再等待，中断后可用
 `--task-id` 恢复而不是重复付费提交。
 
-## 干跑（CI）
+## 干跑（本地）
 
 ```bash
 mvn -o -f examples/pom.xml test
 ```
+
+> `examples/` 是独立 Maven 工程（根 `pom.xml` 未声明 `<module>`），因此**目前不会在任何 CI
+> 任务中编译或运行**，改动示例后需本地执行上述命令验证。设计文档 §8 要求的「CI 全量干跑」
+> 尚未接线。
+>
+> 但有一个例外：格式门禁。`lint.sh` 与 `linter.yml` 的过滤器 `./*/src/.*java` 会命中
+> `examples/src/test/java/` 下的 3 个文件（`ExamplesDryRunTest`、`DryRunDispatcher`、`MockWs`），
+> 它们必须符合 google-java-format（100 列上限）；其余 102 个文件（38 个四层活动示例 + 64 个
+> 封存的 `legacy_2x/`，后者不参与编译）不在该门禁范围内。
 
 `ExamplesDryRunTest` 用 MockWebServer 扮演全部 HTTP/SSE/WebSocket 端点，把每个示例的
 `main` 在子 JVM 里真实跑通（apiKey/baseUrl/wsBaseUrl 经 `-D` 指向 mock），断言退出码为 0。

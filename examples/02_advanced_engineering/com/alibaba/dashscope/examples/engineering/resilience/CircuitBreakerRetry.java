@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /**
@@ -117,8 +118,14 @@ public final class CircuitBreakerRetry {
   static final class MultiRegionClient implements AutoCloseable {
     private final List<String> regions;
     private final Function<String, DashScopeClient> clientFactory;
+    // Written only in the constructor and held in a final field, so safely published as-is.
     private final Map<String, CircuitBreaker> breakers = new LinkedHashMap<>();
-    private final Map<String, DashScopeClient> clients = new LinkedHashMap<>();
+    // chat() may be called from a request pool (CircuitBreaker's own methods are synchronized for
+    // exactly that reason), so this lazily filled cache must be thread-safe too: a racing
+    // computeIfAbsent on a plain map can drop an entry, and that client would then never be closed
+    // because close() only sees what the map still holds. This makes concurrent creation safe, not
+    // concurrent creation-and-close: close() must still run after all chat() calls have returned.
+    private final Map<String, DashScopeClient> clients = new ConcurrentHashMap<>();
 
     MultiRegionClient(
         List<String> regions,
@@ -139,9 +146,11 @@ public final class CircuitBreakerRetry {
     /** Return the outcome from the first healthy region. */
     ChatOutcome chat(String prompt, String model) {
       DashScopeException lastError = null;
+      List<String> openCircuits = new ArrayList<>();
       for (String region : regions) {
         CircuitBreaker breaker = breakers.get(region);
         if (!breaker.allow()) {
+          openCircuits.add(region);
           System.out.println("  [" + region + "] circuit OPEN -> skip");
           continue;
         }
@@ -180,7 +189,17 @@ public final class CircuitBreakerRetry {
           }
         }
       }
-      throw new ApiConnectionException("all regions failed: " + lastError, lastError);
+      if (lastError == null) {
+        // Every region was skipped by an open circuit, so no call was attempted and there is no
+        // underlying failure to report; name the open circuits instead of printing "...: null".
+        throw new ApiConnectionException(
+            "all regions unavailable, circuits open: " + openCircuits, null);
+      }
+      throw new ApiConnectionException(
+          "all regions failed: "
+              + lastError
+              + (openCircuits.isEmpty() ? "" : " (skipped, circuits open: " + openCircuits + ")"),
+          lastError);
     }
 
     @Override

@@ -35,6 +35,10 @@ import org.junit.jupiter.api.TestFactory;
  *
  * <p>Skipped: {@code AsrMicrophoneRecognize} (needs microphone hardware) and {@code
  * AsrJobsTranscribe} (enforces https:// download URLs, which a plain-http mock cannot serve).
+ *
+ * <p>The design-§8 "in CI" half is not wired yet: {@code examples/} is a standalone Maven project
+ * (the root pom declares no {@code <module>} for it), so this suite only runs on demand via {@code
+ * mvn -f examples/pom.xml test}. Run it locally after changing any example.
  */
 class ExamplesDryRunTest {
   private static final String PKG = "com.alibaba.dashscope.examples.";
