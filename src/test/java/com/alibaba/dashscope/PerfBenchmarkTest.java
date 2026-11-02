@@ -25,9 +25,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import okhttp3.ConnectionPool;
@@ -62,7 +60,6 @@ class PerfBenchmarkTest {
   private static final int HTTP_WARMUP = 20;
   private static final int TTS_CHUNK_BYTES = 48 * 1024;
   private static final int TTS_CHUNKS = 350; // ~16 MB downlink
-  private static final Duration RECV = Duration.ofSeconds(30);
 
   private static final String CHAT_JSON =
       "{\"output\":{\"choices\":[{\"finish_reason\":\"stop\",\"message\":{\"role\":\"assistant\","
@@ -100,7 +97,6 @@ class PerfBenchmarkTest {
   private static final class BenchSocket extends WebSocketListener {
     private final CountDownLatch opened = new CountDownLatch(1);
     private final AtomicReference<WebSocket> socket = new AtomicReference<>();
-    private final BlockingQueue<JsonNode> texts = new LinkedBlockingQueue<>();
 
     @Override
     public void onOpen(WebSocket webSocket, okhttp3.Response response) {
@@ -112,7 +108,6 @@ class PerfBenchmarkTest {
     public void onMessage(WebSocket webSocket, String text) {
       try {
         JsonNode frame = MAPPER.readTree(text);
-        texts.add(frame);
         String action = frame.get("header").get("action").asText();
         String taskId = frame.get("header").get("task_id").asText();
         if ("run-task".equals(action)) {
@@ -171,12 +166,6 @@ class PerfBenchmarkTest {
 
     void awaitOpen() throws InterruptedException {
       assertTrue(opened.await(10, TimeUnit.SECONDS), "bench server socket never opened");
-    }
-
-    JsonNode nextText() throws InterruptedException {
-      JsonNode frame = texts.poll(10, TimeUnit.SECONDS);
-      assertNotNull(frame, "timed out waiting for a client text frame");
-      return frame;
     }
 
     private static String usagePayload() {
@@ -380,8 +369,8 @@ class PerfBenchmarkTest {
   private static void report(String label, List<Long> nanos) {
     long[] sorted = nanos.stream().mapToLong(Long::longValue).sorted().toArray();
     double avgMs = Arrays.stream(sorted).average().orElse(0) / 1e6;
-    double p50Ms = sorted[(int) (sorted.length * 0.50)] / 1e6;
-    double p99Ms = sorted[Math.min(sorted.length - 1, (int) (sorted.length * 0.99))] / 1e6;
+    double p50Ms = percentileMs(sorted, 0.50);
+    double p99Ms = percentileMs(sorted, 0.99);
     double minMs = sorted[0] / 1e6;
     System.out.println(
         String.format(
@@ -393,5 +382,14 @@ class PerfBenchmarkTest {
             p50Ms,
             p99Ms,
             minMs));
+  }
+
+  /**
+   * Nearest-rank percentile: the smallest sample whose cumulative share reaches {@code q}. The
+   * previous index cast reported the maximum at n=100 for p99, inflating the tail.
+   */
+  private static double percentileMs(long[] sorted, double q) {
+    int rank = (int) Math.ceil(q * sorted.length);
+    return sorted[Math.max(0, Math.min(sorted.length - 1, rank - 1))] / 1e6;
   }
 }
