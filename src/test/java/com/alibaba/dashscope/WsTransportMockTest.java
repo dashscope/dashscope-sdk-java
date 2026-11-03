@@ -297,6 +297,32 @@ class WsTransportMockTest {
   }
 
   @Test
+  void binaryLanesAreReleasedAfterTerminalEvent() throws Exception {
+    // Regression (04f179b): the owner AtomicReference stores the caller's task_id instance,
+    // while release used the equal-but-distinct String parsed from the terminal JSON frame, so
+    // the identity-based compareAndSet never released the lane — every later binary task on the
+    // same shared connection hit a spurious BinaryOwnerConflict. Releasing must also happen
+    // before the terminal event is published, or a fast consumer claiming the next sequential
+    // task races the demux thread and sees the stale owner.
+    ServerSocket serverSocket = enqueueUpgrade();
+    try (WsConnection conn =
+        new WsConnection(transport, transport.config().getWsBaseUrl(), "audio", null)) {
+      serverSocket.awaitOpen();
+      TaskChannel first = conn.attach("task-first");
+      first.sendBinary(ByteBuffer.wrap(new byte[] {1})); // claims the uplink
+      conn.claimBinaryDownlink("task-first");
+
+      serverSocket.sendEvent("task-first", "task-finished");
+      assertEquals("task-finished", first.recv(RECV_TIMEOUT).getEvent());
+
+      // The next sequential task must be able to claim both released lanes.
+      TaskChannel second = conn.attach("task-second");
+      second.sendBinary(ByteBuffer.wrap(new byte[] {2}));
+      conn.claimBinaryDownlink("task-second");
+    }
+  }
+
+  @Test
   void duplicateTaskIdIsRejected() throws Exception {
     ServerSocket serverSocket = enqueueUpgrade();
     try (WsConnection conn =
