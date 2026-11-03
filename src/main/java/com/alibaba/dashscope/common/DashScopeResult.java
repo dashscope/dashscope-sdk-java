@@ -11,6 +11,8 @@ import com.alibaba.dashscope.utils.EncryptionUtils;
 import com.alibaba.dashscope.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -135,6 +137,7 @@ public class DashScopeResult extends Result {
         this.output = jsonObject;
       }
     }
+    fillRequestIdFromHeaders(response.getHeaders());
     return (T) this;
   }
 
@@ -157,8 +160,12 @@ public class DashScopeResult extends Result {
       } else { // HTTP
         JsonObject jsonObject = JsonUtils.parse(response.getMessage());
         this.output = jsonObject;
+        if (jsonObject.has(ApiKeywords.REQUEST_ID)) {
+          this.setRequestId(jsonObject.get(ApiKeywords.REQUEST_ID).getAsString());
+        }
         this.event = response.getEvent();
       }
+      fillRequestIdFromHeaders(response.getHeaders());
       return (T) this;
     }
   }
@@ -229,8 +236,31 @@ public class DashScopeResult extends Result {
           jsonObject.remove(ApiKeywords.REQUEST_ID);
         }
       }
+      fillRequestIdFromHeaders(response.getHeaders());
       return (T) this;
     }
     return fromResponse(protocol, response, isFlattenResult);
+  }
+
+  private void fillRequestIdFromHeaders(Map<String, List<String>> headers) {
+    if (getRequestId() != null && !getRequestId().isEmpty()) {
+      return;
+    }
+    if (headers == null) {
+      return;
+    }
+    for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
+      String name = entry.getKey();
+      if ("x-request-id".equalsIgnoreCase(name)
+          || "x-dashscope-requestid".equalsIgnoreCase(name)
+          || "x-dashscope-request-id".equalsIgnoreCase(name)) {
+        List<String> values = entry.getValue();
+        String value = values == null || values.isEmpty() ? null : values.get(0);
+        if (value != null && !value.isEmpty()) {
+          setRequestId(value);
+          return;
+        }
+      }
+    }
   }
 }

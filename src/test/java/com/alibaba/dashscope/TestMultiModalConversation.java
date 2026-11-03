@@ -3,6 +3,7 @@
 package com.alibaba.dashscope;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversation;
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationMessage;
@@ -19,6 +20,7 @@ import com.alibaba.dashscope.exception.UploadFileException;
 import com.alibaba.dashscope.utils.Constants;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.MediaType;
 import okhttp3.mockwebserver.MockResponse;
@@ -96,5 +98,42 @@ public class TestMultiModalConversation {
     assertEquals(result.getUsage().getOutputTokens(), (Integer) 46);
     assertEquals(request.getMethod(), "POST");
     assertEquals(request.getPath(), "/services/aigc/multimodal-generation/generation");
+  }
+
+  @Test
+  public void testStreamIgnoresUsageOnlyFrameAndUsesHeaderRequestId()
+      throws ApiException, NoApiKeyException, UploadFileException {
+    server.enqueue(
+        new MockResponse()
+            .setHeader("content-type", "text/event-stream")
+            .setHeader("x-request-id", "request-from-header")
+            .setBody(
+                "data: {\"usage\":{\"input_tokens\":26,\"output_tokens\":0}}\n\n"
+                    + "data: {\"output\":{\"choices\":[{\"finish_reason\":\"stop\","
+                    + "\"message\":{\"role\":\"assistant\","
+                    + "\"content\":[{\"text\":\"正常结果\"}]}}]},"
+                    + "\"usage\":{\"input_tokens\":26,\"output_tokens\":4}}\n\n"
+                    + "data: [DONE]\n\n"));
+    Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", server.getPort());
+    MultiModalConversationParam param =
+        MultiModalConversationParam.builder()
+            .model("qwen3.7-plus")
+            .message(
+                MultiModalConversationMessage.builder()
+                    .role(Role.USER.getValue())
+                    .content(Arrays.asList(new MultiModalMessageItemText("检查材料")))
+                    .build())
+            .build();
+
+    List<MultiModalConversationResult> results =
+        new MultiModalConversation().streamCall(param).toList().blockingGet();
+
+    assertEquals(1, results.size());
+    MultiModalConversationResult result = results.get(0);
+    assertEquals("request-from-header", result.getRequestId());
+    assertNotNull(result.getOutput());
+    assertEquals(
+        "正常结果",
+        result.getOutput().getChoices().get(0).getMessage().getContent().get(0).get("text"));
   }
 }
