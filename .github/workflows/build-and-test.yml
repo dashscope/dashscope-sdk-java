@@ -51,6 +51,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # The com.alibaba.dashscope.v3 intermediate packages and the root common leaf were
+      # eliminated by the 3.0 package finalization. A stale pre-migration copy re-added under
+      # them slips through a merge with zero conflict signal (the merge base usually lacks
+      # the path) and breaks the build against classes that no longer exist, so fail fast
+      # before Maven spends minutes drowning the cause in compiler errors.
+      - name: Guard eliminated packages
+        run: |
+          stale=$(find src -type f -name "*.java" 2>/dev/null \
+            | grep -E "^src/(main|test)/java/com/alibaba/dashscope/(v3|common)/" || true)
+          if [ -n "$stale" ]; then
+            echo "::error::Found files under eliminated packages (com.alibaba.dashscope.v3 / root common): the 3.0 layout owns the root packages; drop the stale copy or move the code there."
+            echo "$stale"
+            exit 1
+          fi
+
       - name: Set up JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
