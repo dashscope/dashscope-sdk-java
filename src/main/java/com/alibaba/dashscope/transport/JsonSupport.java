@@ -34,6 +34,10 @@ public final class JsonSupport {
   }
 
   public static JsonNode readTree(String text) {
+    return readTree(text, null);
+  }
+
+  public static JsonNode readTree(String text, Map<String, ?> headers) {
     try {
       return MAPPER.readTree(text);
     } catch (IOException e) {
@@ -44,9 +48,9 @@ public final class JsonSupport {
       throw Errors.fromCatalogEntry(
           PublicErrorCode.INTERNAL_ERROR,
           "failed to parse response JSON: " + e.getMessage(),
+          findRequestId(headers),
           null,
-          null,
-          null,
+          stringHeaders(headers),
           e);
     }
   }
@@ -179,22 +183,67 @@ public final class JsonSupport {
     return null;
   }
 
-  /** request_id from the body, else the x-request-id header. */
-  public static String requestId(JsonNode body, Map<String, String> headers) {
+  /** request_id from the body, else the first known request id header. */
+  public static String requestId(JsonNode body, Map<String, ?> headers) {
     if (body != null && body.isObject()) {
       JsonNode id = body.get("request_id");
       if (id != null && id.isTextual() && !id.asText().isEmpty()) {
         return id.asText();
       }
     }
-    if (headers != null) {
-      for (Map.Entry<String, String> e : headers.entrySet()) {
-        if ("x-request-id".equalsIgnoreCase(e.getKey())) {
-          return e.getValue();
+    return findRequestId(headers);
+  }
+
+  /** First non-empty value of x-request-id, x-dashscope-requestid or x-dashscope-request-id. */
+  public static String findRequestId(Map<String, ?> headers) {
+    if (headers == null) {
+      return null;
+    }
+    for (Map.Entry<String, ?> e : headers.entrySet()) {
+      String name = e.getKey();
+      if (name == null
+          || !("x-request-id".equalsIgnoreCase(name)
+              || "x-dashscope-requestid".equalsIgnoreCase(name)
+              || "x-dashscope-request-id".equalsIgnoreCase(name))) {
+        continue;
+      }
+      Object value = e.getValue();
+      if (value instanceof Iterable) {
+        for (Object item : (Iterable<?>) value) {
+          if (item != null && !item.toString().isEmpty()) {
+            return item.toString();
+          }
         }
+      } else if (value != null && !value.toString().isEmpty()) {
+        return value.toString();
       }
     }
     return null;
+  }
+
+  public static String requestIdOrUnknown(String requestId) {
+    return requestId == null || requestId.isEmpty() ? "unknown" : requestId;
+  }
+
+  private static Map<String, String> stringHeaders(Map<String, ?> headers) {
+    if (headers == null) {
+      return null;
+    }
+    Map<String, String> out = new java.util.LinkedHashMap<>();
+    for (Map.Entry<String, ?> e : headers.entrySet()) {
+      Object value = e.getValue();
+      if (value instanceof Iterable) {
+        for (Object item : (Iterable<?>) value) {
+          if (item != null && !item.toString().isEmpty()) {
+            out.put(e.getKey(), item.toString());
+            break;
+          }
+        }
+      } else if (value != null) {
+        out.put(e.getKey(), value.toString());
+      }
+    }
+    return out.isEmpty() ? null : out;
   }
 
   /** Convert a JsonNode to plain Java values (Map/List/scalars) for exception bodies. */

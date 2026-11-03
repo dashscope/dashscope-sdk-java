@@ -12,7 +12,6 @@ import com.alibaba.dashscope.types.multimodal.MultimodalChatChunk;
 import com.alibaba.dashscope.types.multimodal.MultimodalChatCompletion;
 import com.alibaba.dashscope.types.multimodal.MultimodalChatCreateParams;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -83,23 +82,35 @@ public final class MultimodalChatService {
             withOssResolve(opts, pre.ossResolve));
     MultimodalChatSupport.IncrementalMerger merger =
         merge ? new MultimodalChatSupport.IncrementalMerger() : null;
+    Map<String, String> streamHeaders = streamHeaders(sse);
     return new ResponseStream<>(
         sse,
         frame -> {
+          if (!MultimodalChatSupport.shouldEmitStreamChunk(frame, streamHeaders)) {
+            return null;
+          }
           ObjectNode flat = MultimodalChatSupport.flatten(frame);
           if (merger != null) {
             flat = merger.merge(flat);
           }
           MultimodalChatChunk chunk = MultimodalChatSupport.mapChunk(flat);
           chunk.fillEnvelope(
-              JsonSupport.requestId(frame, null),
+              JsonSupport.requestId(frame, streamHeaders),
               200,
               JsonSupport.errorCode(frame),
               JsonSupport.errorMessage(frame),
-              Collections.emptyMap());
+              streamHeaders);
           return chunk;
         },
         transport.config().isRaiseOnError());
+  }
+
+  private static Map<String, String> streamHeaders(SseStream sse) {
+    Map<String, String> headers = new LinkedHashMap<>();
+    for (String name : sse.responseHeaders().names()) {
+      headers.put(name, sse.responseHeaders().get(name));
+    }
+    return headers;
   }
 
   private static MultimodalChatCreateParams withMessages(

@@ -5,6 +5,7 @@ import com.alibaba.dashscope.RequestOptions;
 import com.alibaba.dashscope.errors.Errors;
 import com.alibaba.dashscope.errors.SdkErrorCode;
 import com.alibaba.dashscope.transport.HttpTransport;
+import com.alibaba.dashscope.transport.JsonSupport;
 import com.alibaba.dashscope.transport.RequestTags;
 import java.nio.ByteBuffer;
 import java.time.Duration;
@@ -276,7 +277,7 @@ public final class WsSession implements TaskChannel {
             response.code(),
             null,
             "websocket handshake failed: HTTP " + response.code(),
-            null,
+            JsonSupport.findRequestId(response.headers().toMultimap()),
             null,
             null);
       } finally {

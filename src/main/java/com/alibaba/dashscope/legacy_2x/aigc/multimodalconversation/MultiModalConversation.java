@@ -168,6 +168,7 @@ public final class MultiModalConversation {
     preprocessInput(param);
     return syncApi
         .streamCall(param)
+        .filter(MultiModalConversation::shouldEmitStreamResult)
         .map(MultiModalConversationResult::fromDashScopeResult)
         .map(result -> mergeSingleResponse(result, toMergeResponse))
         .doOnComplete(
@@ -215,6 +216,9 @@ public final class MultiModalConversation {
         new ResultCallback<DashScopeResult>() {
           @Override
           public void onEvent(DashScopeResult msg) {
+            if (!shouldEmitStreamResult(msg)) {
+              return;
+            }
             MultiModalConversationResult result =
                 MultiModalConversationResult.fromDashScopeResult(msg);
             MultiModalConversationResult mergedResult =
@@ -238,6 +242,27 @@ public final class MultiModalConversation {
             callback.onError(e);
           }
         });
+  }
+
+  /**
+   * The new gateway may emit usage/search/metadata SSE frames without a model output. They are
+   * successful auxiliary frames, not failed model results. Keep frames carrying an output or an
+   * explicit business error, and silently skip successful auxiliary frames.
+   */
+  private static boolean shouldEmitStreamResult(DashScopeResult result) {
+    if (result.getOutput() != null) {
+      return true;
+    }
+    String code = result.getCode();
+    boolean hasError = code != null && !code.isEmpty();
+    if (!hasError) {
+      log.debug(
+          "Ignore streaming event without output: event={}, requestId={}, usagePresent={}",
+          result.getEvent(),
+          result.getRequestIdOrUnknown(),
+          result.getUsage() != null);
+    }
+    return hasError;
   }
 
   private void preprocessInput(MultiModalConversationParam param)

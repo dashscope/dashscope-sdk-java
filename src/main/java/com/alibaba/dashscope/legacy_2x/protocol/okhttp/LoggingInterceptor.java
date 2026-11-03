@@ -2,6 +2,7 @@
 
 package com.alibaba.dashscope.legacy_2x.protocol.okhttp;
 
+import com.alibaba.dashscope.legacy_2x.protocol.DashScopeHeaders;
 import com.alibaba.dashscope.legacy_2x.utils.StringUtils;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
@@ -25,8 +26,12 @@ class LoggingInterceptor implements Interceptor {
     long t2 = System.nanoTime();
     log.info(
         StringUtils.format(
-            "Received response for %s in %.1fms%n%s",
-            response.request().url(), (t2 - t1) / 1e6d, response.headers()));
+            "Received response for %s in %.1fms%n%s, requestId=%s",
+            response.request().url(),
+            (t2 - t1) / 1e6d,
+            response.headers(),
+            DashScopeHeaders.requestIdOrUnknown(
+                DashScopeHeaders.findRequestId(response.headers().toMultimap()))));
 
     return response;
   }

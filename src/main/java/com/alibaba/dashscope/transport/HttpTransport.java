@@ -498,7 +498,7 @@ public final class HttpTransport implements AutoCloseable {
       return new ResponseEnvelope(response.code(), headers, body);
     }
 
-    JsonNode body = text.isEmpty() ? null : JsonSupport.readTree(text);
+    JsonNode body = text.isEmpty() ? null : JsonSupport.readTree(text, headers);
     body = decryptBody(body, response, headers);
     if (JsonSupport.isErrorFrame(body)) {
       ApiStatusException error =

@@ -250,6 +250,68 @@ class MultimodalMockTest {
   }
 
   @Test
+  void streamingSkipsUsageOnlyFramesAndFallsBackToHeaderRequestId() throws Exception {
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(200)
+            .setHeader("Content-Type", "text/event-stream")
+            .setHeader("x-request-id", "request-from-header")
+            .setBody(
+                "data: {\"usage\":{\"input_tokens\":3,\"output_tokens\":0}}\n\n"
+                    + "data: {\"output\":{\"choices\":[{\"message\":{\"role\":\"assistant\","
+                    + "\"content\":[{\"text\":\"正常结果\"}]}}]}}\n\n"
+                    + "data: {\"usage\":{\"input_tokens\":3,\"output_tokens\":4}}\n\n"));
+
+    List<MultimodalChatChunk> chunks = new ArrayList<>();
+    try (ResponseStream<MultimodalChatChunk> stream =
+        client.multimodal().chat().createStreaming(chatParams())) {
+      for (MultimodalChatChunk chunk : stream) {
+        chunks.add(chunk);
+      }
+    }
+
+    assertEquals(1, chunks.size());
+    assertEquals("正常结果", chunks.get(0).firstChoice().getMessage().getContent().get(0).getText());
+    assertEquals("request-from-header", chunks.get(0).getRequestId());
+  }
+
+  @Test
+  void streamingStillEmitsOutputlessErrorFrameWhenNotRaising() throws Exception {
+    DashScopeClient nonRaising =
+        DashScopeClient.builder()
+            .apiKey("test-key")
+            .baseUrl(server.url("/").toString())
+            .maxRetries(0)
+            .raiseOnError(false)
+            .build();
+    try {
+      server.enqueue(
+          new MockResponse()
+              .setResponseCode(200)
+              .setHeader("Content-Type", "text/event-stream")
+              .setHeader("x-request-id", "request-from-header")
+              .setBody(
+                  "data: {\"usage\":{\"input_tokens\":3,\"output_tokens\":0}}\n\n"
+                      + "data: {\"code\":\"InvalidParameter\",\"message\":\"bad input\"}\n\n"));
+
+      List<MultimodalChatChunk> chunks = new ArrayList<>();
+      try (ResponseStream<MultimodalChatChunk> stream =
+          nonRaising.multimodal().chat().createStreaming(chatParams())) {
+        for (MultimodalChatChunk chunk : stream) {
+          chunks.add(chunk);
+        }
+      }
+
+      assertEquals(1, chunks.size());
+      assertEquals("InvalidParameter", chunks.get(0).getCode());
+      assertEquals("request-from-header", chunks.get(0).getRequestId());
+      assertTrue(chunks.get(0).isError());
+    } finally {
+      nonRaising.close();
+    }
+  }
+
+  @Test
   void localImageIsUploadedAndReplacedWithOssUrl() throws Exception {
     Path image = Files.createTempFile("mm-test", ".png");
     Files.write(image, new byte[] {1, 2, 3});

@@ -15,6 +15,36 @@ public final class DashScopeHeaders {
   // J2: session id single-sourced from the neutral layer, shared with 3.0 in-process.
   private static final String SDK_SESSION_ID = SdkSession.ID;
 
+  public static String findRequestId(Map<String, ?> headers) {
+    if (headers == null) {
+      return null;
+    }
+    for (Map.Entry<String, ?> entry : headers.entrySet()) {
+      String name = entry.getKey();
+      if (name == null
+          || !("x-request-id".equalsIgnoreCase(name)
+              || "x-dashscope-requestid".equalsIgnoreCase(name)
+              || "x-dashscope-request-id".equalsIgnoreCase(name))) {
+        continue;
+      }
+      Object value = entry.getValue();
+      if (value instanceof Iterable) {
+        for (Object item : (Iterable<?>) value) {
+          if (item != null && !item.toString().isEmpty()) {
+            return item.toString();
+          }
+        }
+      } else if (value != null && !value.toString().isEmpty()) {
+        return value.toString();
+      }
+    }
+    return null;
+  }
+
+  public static String requestIdOrUnknown(String requestId) {
+    return requestId == null || requestId.isEmpty() ? "unknown" : requestId;
+  }
+
   public static String userAgent() {
     return userAgent(null);
   }

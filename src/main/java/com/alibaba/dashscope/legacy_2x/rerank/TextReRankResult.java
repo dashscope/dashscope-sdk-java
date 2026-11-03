@@ -43,7 +43,10 @@ public class TextReRankResult {
           JsonUtils.fromJsonObject(
               (JsonObject) dashScopeResult.getOutput(), TextReRankOutput.class));
     } else {
-      log.error("Result no output: {}", dashScopeResult);
+      log.error(
+          "Result no output: {}, requestId={}",
+          dashScopeResult,
+          dashScopeResult.getRequestIdOrUnknown());
     }
     return result;
   }

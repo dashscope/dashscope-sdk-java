@@ -85,11 +85,15 @@ public final class RetryInterceptor implements Interceptor {
       }
       long delayMs = overrideDelayMs >= 0 ? overrideDelayMs : backoffMs(attempt);
       log.debug(
-          "retrying request to {} (attempt {}/{}) after {}ms",
+          "retrying request to {} (attempt {}/{}) after {}ms, requestId={}",
           request.url(),
           attempt + 1,
           maxRetries,
-          delayMs);
+          delayMs,
+          JsonSupport.requestIdOrUnknown(
+              response != null
+                  ? JsonSupport.findRequestId(response.headers().toMultimap())
+                  : null));
       try {
         Thread.sleep(delayMs);
       } catch (InterruptedException e) {

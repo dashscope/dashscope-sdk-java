@@ -35,6 +35,10 @@ public abstract class Result {
   /** The message from server response */
   private String message;
 
+  public String getRequestIdOrUnknown() {
+    return requestId == null || requestId.isEmpty() ? "unknown" : requestId;
+  }
+
   /**
    * Load data from the server output.
    *

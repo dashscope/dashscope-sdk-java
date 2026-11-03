@@ -83,14 +83,11 @@ public final class SseStream implements AutoCloseable, Iterable<JsonNode> {
       String payload = nextData;
       nextData = null;
       pendingLoaded = false;
-      JsonNode frame = JsonSupport.readTree(payload);
+      JsonNode frame = JsonSupport.readTree(payload, headers());
       try {
         return EncryptionUtils.decryptOutput(frame, encryptionConfig);
       } catch (RuntimeException e) {
-        Map<String, String> headers = new LinkedHashMap<>();
-        for (String name : response.headers().names()) {
-          headers.put(name, response.header(name));
-        }
+        Map<String, String> headers = headers();
         throw Errors.fromCatalogEntry(
             PublicErrorCode.INTERNAL_ERROR,
             "failed to decrypt SSE output: " + e.getMessage(),
@@ -99,6 +96,14 @@ public final class SseStream implements AutoCloseable, Iterable<JsonNode> {
             headers,
             e);
       }
+    }
+
+    private Map<String, String> headers() {
+      Map<String, String> headers = new LinkedHashMap<>();
+      for (String name : response.headers().names()) {
+        headers.put(name, response.header(name));
+      }
+      return headers;
     }
 
     private void loadNext() {

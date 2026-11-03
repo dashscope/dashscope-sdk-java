@@ -10,6 +10,7 @@ import com.alibaba.dashscope.legacy_2x.exception.ApiException;
 import com.alibaba.dashscope.legacy_2x.exception.InputRequiredException;
 import com.alibaba.dashscope.legacy_2x.exception.NoApiKeyException;
 import com.alibaba.dashscope.legacy_2x.protocol.ApiServiceOption;
+import com.alibaba.dashscope.legacy_2x.protocol.DashScopeHeaders;
 import com.alibaba.dashscope.legacy_2x.protocol.HttpMethod;
 import com.alibaba.dashscope.legacy_2x.protocol.Protocol;
 import com.alibaba.dashscope.legacy_2x.protocol.StreamingMode;
@@ -38,6 +39,19 @@ public class HttpSpeechSynthesizer {
 
   /** Creates a new HttpSpeechSynthesizer instance with default settings. */
   public HttpSpeechSynthesizer() {}
+
+  private static String getRequestIdForLog(String requestId, Exception error) {
+    if (requestId != null && !requestId.isEmpty()) {
+      return requestId;
+    }
+    if (error instanceof ApiException) {
+      Status status = ((ApiException) error).getStatus();
+      if (status != null) {
+        return DashScopeHeaders.requestIdOrUnknown(status.getRequestId());
+      }
+    }
+    return "unknown";
+  }
 
   /** Creates a per-request ApiServiceOption with the specified SSE setting. */
   private SynchronizeHalfDuplexApi<HttpSpeechSynthesisParam> createApi(boolean isSSE) {
@@ -88,11 +102,15 @@ public class HttpSpeechSynthesizer {
       throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
     SynchronizeHalfDuplexApi<HttpSpeechSynthesisParam> api = createApi(false);
+    DashScopeResult result = null;
     try {
-      DashScopeResult result = api.call(param);
+      result = api.call(param);
       return convertNonSSEResult(result);
     } catch (Exception e) {
-      log.error("Synchronous speech synthesis failed", e);
+      log.error(
+          "Synchronous speech synthesis failed, requestId={}",
+          getRequestIdForLog(result == null ? null : result.getRequestId(), e),
+          e);
       throw new ApiException(e);
     }
   }
@@ -112,6 +130,7 @@ public class HttpSpeechSynthesizer {
       throws ApiException, NoApiKeyException, InputRequiredException {
     param.validate();
     SynchronizeHalfDuplexApi<HttpSpeechSynthesisParam> api = createApi(true);
+    AtomicReference<String> requestId = new AtomicReference<>(null);
 
     try {
       api.streamCall(
@@ -119,13 +138,19 @@ public class HttpSpeechSynthesizer {
           new ResultCallback<DashScopeResult>() {
             @Override
             public void onEvent(DashScopeResult message) {
+              if (message.getRequestId() != null && !message.getRequestId().isEmpty()) {
+                requestId.set(message.getRequestId());
+              }
               try {
                 HttpSpeechSynthesisResult result = convertResult(message);
                 if (callback != null) {
                   callback.onEvent(result);
                 }
               } catch (Exception e) {
-                log.error("Failed to process audio result", e);
+                log.error(
+                    "Failed to process audio result, requestId={}",
+                    DashScopeHeaders.requestIdOrUnknown(requestId.get()),
+                    e);
                 if (callback != null) {
                   callback.onError(e);
                 }
@@ -147,7 +172,8 @@ public class HttpSpeechSynthesizer {
             }
           });
     } catch (Exception e) {
-      log.error("Streaming call failed", e);
+      log.error(
+          "Streaming call failed, requestId={}", getRequestIdForLog(requestId.get(), e), e);
       throw new ApiException(e);
     }
   }
@@ -168,12 +194,16 @@ public class HttpSpeechSynthesizer {
     ByteArrayOutputStream audioBuffer = new ByteArrayOutputStream();
     CountDownLatch latch = new CountDownLatch(1);
     AtomicReference<Exception> callbackError = new AtomicReference<>();
+    AtomicReference<String> requestId = new AtomicReference<>(null);
 
     streamCall(
         param,
         new ResultCallback<HttpSpeechSynthesisResult>() {
           @Override
           public void onEvent(HttpSpeechSynthesisResult result) {
+            if (result.getRequestId() != null && !result.getRequestId().isEmpty()) {
+              requestId.set(result.getRequestId());
+            }
             try {
               if (result.getAudioData() != null) {
                 audioBuffer.write(result.getAudioData());
@@ -217,7 +247,8 @@ public class HttpSpeechSynthesizer {
     } catch (ApiException e) {
       throw e;
     } catch (Exception e) {
-      log.error("Failed to get audio data", e);
+      log.error(
+          "Failed to get audio data, requestId={}", getRequestIdForLog(requestId.get(), e), e);
       throw new ApiException(e);
     }
   }
@@ -257,7 +288,10 @@ public class HttpSpeechSynthesizer {
                 dashScopeResult.getUsage().getAsJsonObject(), SpeechSynthesisUsage.class);
         result.setUsage(usage);
       } catch (Exception e) {
-        log.debug("Failed to parse usage information", e);
+        log.debug(
+            "Failed to parse usage information, requestId={}",
+            dashScopeResult.getRequestIdOrUnknown(),
+            e);
       }
     }
 
@@ -291,7 +325,10 @@ public class HttpSpeechSynthesizer {
             try {
               return Base64.getDecoder().decode(audioBase64);
             } catch (IllegalArgumentException e) {
-              log.warn("Failed to decode Base64 audio data", e);
+              log.warn(
+                  "Failed to decode Base64 audio data, requestId={}",
+                  result.getRequestIdOrUnknown(),
+                  e);
             }
           }
         } else if (audioElement.isJsonObject()) {
@@ -303,7 +340,10 @@ public class HttpSpeechSynthesizer {
               try {
                 return Base64.getDecoder().decode(audioBase64);
               } catch (IllegalArgumentException e) {
-                log.warn("Failed to decode Base64 audio data from audio.data", e);
+                log.warn(
+                    "Failed to decode Base64 audio data from audio.data, requestId={}",
+                    result.getRequestIdOrUnknown(),
+                    e);
               }
             }
           }
@@ -317,7 +357,10 @@ public class HttpSpeechSynthesizer {
           try {
             return Base64.getDecoder().decode(binaryBase64);
           } catch (IllegalArgumentException e) {
-            log.warn("Failed to decode Base64 binary data", e);
+            log.warn(
+                "Failed to decode Base64 binary data, requestId={}",
+                result.getRequestIdOrUnknown(),
+                e);
           }
         }
       }
@@ -398,7 +441,10 @@ public class HttpSpeechSynthesizer {
                 dashScopeResult.getUsage().getAsJsonObject(), SpeechSynthesisUsage.class);
         result.setUsage(usage);
       } catch (Exception e) {
-        log.debug("Failed to parse usage information", e);
+        log.debug(
+            "Failed to parse usage information, requestId={}",
+            dashScopeResult.getRequestIdOrUnknown(),
+            e);
       }
     }
 

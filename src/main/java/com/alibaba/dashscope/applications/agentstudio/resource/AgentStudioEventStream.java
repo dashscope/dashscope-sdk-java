@@ -7,6 +7,7 @@ import com.alibaba.dashscope.errors.ApiTimeoutException;
 import com.alibaba.dashscope.errors.DashScopeException;
 import com.alibaba.dashscope.errors.Errors;
 import com.alibaba.dashscope.errors.SdkErrorCode;
+import com.alibaba.dashscope.transport.JsonSupport;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import java.io.Closeable;
@@ -99,6 +100,7 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
       return null;
     }
     int code = response.code();
+    String requestId = JsonSupport.findRequestId(response.headers().toMultimap());
     String body = "";
     String errorCode = null;
     String errorMsg = null;
@@ -107,27 +109,36 @@ public class AgentStudioEventStream implements Iterable<Message>, Closeable {
         body = rb.string();
       }
     } catch (IOException e) {
-      log.debug("Failed to read SSE failure response body", e);
+      log.debug(
+          "Failed to read SSE failure response body, requestId={}",
+          JsonSupport.requestIdOrUnknown(requestId),
+          e);
     }
     // Parse the agentstudio error envelope {type:error, error:{code,message}}
     // to surface the server's actual error code instead of a generic one.
     if (body != null && !body.isEmpty()) {
       try {
         JsonObject parsed = GSON.fromJson(body, JsonObject.class);
+        if (parsed != null && parsed.has("request_id")) {
+          requestId = parsed.get("request_id").getAsString();
+        }
         if (parsed != null && parsed.has("error") && parsed.get("error").isJsonObject()) {
           JsonObject errObj = parsed.getAsJsonObject("error");
           if (errObj.has("code")) errorCode = errObj.get("code").getAsString();
           if (errObj.has("message")) errorMsg = errObj.get("message").getAsString();
         }
       } catch (Exception e) {
-        log.debug("Failed to parse SSE error body as JSON", e);
+        log.debug(
+            "Failed to parse SSE error body as JSON, requestId={}",
+            JsonSupport.requestIdOrUnknown(requestId),
+            e);
       }
     }
     return Errors.fromStatus(
         code,
         errorCode,
         errorMsg != null ? errorMsg : (body.isEmpty() ? null : body),
-        response.header("x-request-id"),
+        requestId,
         body,
         null);
   }

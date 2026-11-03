@@ -15,6 +15,7 @@ import com.alibaba.dashscope.legacy_2x.protocol.GeneralServiceOption;
 import com.alibaba.dashscope.legacy_2x.protocol.HttpMethod;
 import com.alibaba.dashscope.legacy_2x.utils.ApiKey;
 import com.alibaba.dashscope.legacy_2x.utils.StringUtils;
+import com.alibaba.dashscope.transport.JsonSupport;
 import com.google.gson.reflect.TypeToken;
 import java.io.Closeable;
 import java.io.File;
@@ -123,7 +124,12 @@ public final class Files implements Closeable {
                     String body = r.body() != null ? r.body().string() : "";
                     future.completeExceptionally(
                         Errors.fromStatus(
-                            r.code(), null, body, r.header("x-request-id"), body, null));
+                            r.code(),
+                            null,
+                            body,
+                            JsonSupport.findRequestId(r.headers().toMultimap()),
+                            body,
+                            null));
                     return;
                   }
                   byte[] bytes = r.body() != null ? r.body().bytes() : new byte[0];
@@ -283,7 +289,12 @@ public final class Files implements Closeable {
                   if (!r.isSuccessful()) {
                     future.completeExceptionally(
                         Errors.fromStatus(
-                            r.code(), null, body, r.header("x-request-id"), body, null));
+                            r.code(),
+                            null,
+                            body,
+                            JsonSupport.findRequestId(r.headers().toMultimap()),
+                            body,
+                            null));
                     return;
                   }
                   future.complete(

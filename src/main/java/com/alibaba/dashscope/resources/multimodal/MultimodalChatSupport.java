@@ -14,12 +14,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Wire mapping for multimodal-generation: body building, envelope flattening, and the 2.x-parity
  * client-side merge that turns incremental frames into cumulative ones when the caller asked for
  * {@code incremental_output=false} on a model without server-side cumulative output.
  */
+@Slf4j
 final class MultimodalChatSupport {
   private MultimodalChatSupport() {}
 
@@ -101,6 +103,25 @@ final class MultimodalChatSupport {
 
   static MultimodalChatChunk mapChunk(JsonNode frame) {
     return JsonSupport.mapper().convertValue(frame, MultimodalChatChunk.class);
+  }
+
+  /**
+   * 2.x parity: successful usage/search/metadata frames carry no model output and are skipped;
+   * error frames are still surfaced.
+   */
+  static boolean shouldEmitStreamChunk(JsonNode frame, Map<String, ?> headers) {
+    if (frame != null && frame.has("output") && !frame.get("output").isNull()) {
+      return true;
+    }
+    String code = JsonSupport.errorCode(frame);
+    boolean hasError = code != null && !code.isEmpty();
+    if (!hasError) {
+      log.debug(
+          "Ignore streaming event without output: requestId={}, usagePresent={}",
+          JsonSupport.requestId(frame, headers),
+          frame != null && frame.has("usage"));
+    }
+    return hasError;
   }
 
   /**
