@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.resources.tokenization;
 
 import com.alibaba.dashscope.RequestOptions;
+import com.alibaba.dashscope.resources.AsyncFutures;
 import com.alibaba.dashscope.types.tokenization.TokenCount;
 import com.alibaba.dashscope.types.tokenization.TokenizationCountParams;
 import java.util.concurrent.CompletableFuture;
@@ -24,6 +25,6 @@ public final class TokenizationAsyncService {
 
   public CompletableFuture<TokenCount> count(
       TokenizationCountParams params, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.count(params, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.count(params, options), executor);
   }
 }

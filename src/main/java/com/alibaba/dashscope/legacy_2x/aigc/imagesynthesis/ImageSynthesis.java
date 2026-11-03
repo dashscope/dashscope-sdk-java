@@ -126,8 +126,9 @@ public final class ImageSynthesis {
   }
 
   /**
-   * Note: This method currently now only supports wan2.2-t2i-flash and wan2.2-t2i-plus. Using other
-   * models will result in an error，More raw image models may be added for use later
+   * Synchronously generate images on the legacy image-synthesis endpoint. Model availability is
+   * governed by the server; multimodal-generation-only models are not served here — use {@link
+   * com.alibaba.dashscope.legacy_2x.aigc.imagegeneration.ImageGeneration} for those.
    */
   public ImageSynthesisResult syncCall(ImageSynthesisParam param)
       throws ApiException, NoApiKeyException {

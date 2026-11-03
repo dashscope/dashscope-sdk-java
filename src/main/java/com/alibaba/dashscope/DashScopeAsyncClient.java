@@ -53,6 +53,9 @@ import okhttp3.OkHttpClient;
  */
 public final class DashScopeAsyncClient implements AutoCloseable {
 
+  /** Idle threads of the default bounded pool are reclaimed after this keep-alive. */
+  private static final long KEEP_ALIVE_MS = 60_000L;
+
   private final ClientOptions options;
   private final HttpTransport transport;
   private final Executor executor;
@@ -228,14 +231,19 @@ public final class DashScopeAsyncClient implements AutoCloseable {
         };
     int threads = Math.max(1, maxConcurrency);
     int queueCapacity = threads > Integer.MAX_VALUE / 4 ? Integer.MAX_VALUE : threads * 4;
-    return new ThreadPoolExecutor(
-        threads,
-        threads,
-        0L,
-        TimeUnit.MILLISECONDS,
-        new ArrayBlockingQueue<>(Math.max(1, queueCapacity)),
-        factory,
-        new ThreadPoolExecutor.AbortPolicy());
+    ThreadPoolExecutor executor =
+        new ThreadPoolExecutor(
+            threads,
+            threads,
+            KEEP_ALIVE_MS,
+            TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(Math.max(1, queueCapacity)),
+            factory,
+            new ThreadPoolExecutor.AbortPolicy());
+    // Burst capacity otherwise stays resident: idle core threads are reclaimed after the
+    // keep-alive.
+    executor.allowCoreThreadTimeOut(true);
+    return executor;
   }
 
   public static final class Builder {

@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.resources.finetunes;
 
 import com.alibaba.dashscope.RequestOptions;
+import com.alibaba.dashscope.resources.AsyncFutures;
 import com.alibaba.dashscope.resources.RxStreams;
 import com.alibaba.dashscope.types.common.JobStatus;
 import com.alibaba.dashscope.types.finetunes.FineTune;
@@ -29,7 +30,7 @@ public final class FineTunesAsyncService {
   }
 
   public CompletableFuture<FineTune> create(FineTuneCreateParams params, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.create(params, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.create(params, options), executor);
   }
 
   public CompletableFuture<FineTune> get(String jobId) {
@@ -37,7 +38,7 @@ public final class FineTunesAsyncService {
   }
 
   public CompletableFuture<FineTune> get(String jobId, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.get(jobId, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.get(jobId, options), executor);
   }
 
   public CompletableFuture<FineTuneList> list(int pageNo, int pageSize) {
@@ -45,7 +46,7 @@ public final class FineTunesAsyncService {
   }
 
   public CompletableFuture<FineTuneList> list(int pageNo, int pageSize, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.list(pageNo, pageSize, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.list(pageNo, pageSize, options), executor);
   }
 
   public CompletableFuture<JobStatus> cancel(String jobId) {
@@ -53,7 +54,7 @@ public final class FineTunesAsyncService {
   }
 
   public CompletableFuture<JobStatus> cancel(String jobId, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.cancel(jobId, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.cancel(jobId, options), executor);
   }
 
   public CompletableFuture<JobStatus> delete(String jobId) {
@@ -61,7 +62,7 @@ public final class FineTunesAsyncService {
   }
 
   public CompletableFuture<JobStatus> delete(String jobId, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.delete(jobId, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.delete(jobId, options), executor);
   }
 
   public CompletableFuture<JobLogs> logs(String jobId, int offset, int lines) {
@@ -70,7 +71,7 @@ public final class FineTunesAsyncService {
 
   public CompletableFuture<JobLogs> logs(
       String jobId, int offset, int lines, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.logs(jobId, offset, lines, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.logs(jobId, offset, lines, options), executor);
   }
 
   public Flowable<FineTuneEvent> streamEvents(String jobId) {
@@ -82,11 +83,11 @@ public final class FineTunesAsyncService {
   }
 
   public CompletableFuture<FineTune> wait(String jobId, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.wait(jobId, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.wait(jobId, options), executor);
   }
 
   public CompletableFuture<FineTune> wait(
       String jobId, Duration waitTimeout, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.wait(jobId, waitTimeout, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.wait(jobId, waitTimeout, options), executor);
   }
 }

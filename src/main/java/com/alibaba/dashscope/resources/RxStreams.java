@@ -6,6 +6,7 @@ import com.alibaba.dashscope.types.common.ResponseStream;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -39,48 +40,54 @@ public final class RxStreams {
             emitter -> {
               AtomicReference<AutoCloseable> activeStream = new AtomicReference<>();
               emitter.setCancellable(() -> closeQuietly(activeStream.getAndSet(null)));
-              executor.execute(
-                  () -> {
-                    S stream;
-                    try {
-                      stream = streamSupplier.get();
-                    } catch (Throwable e) {
-                      if (!emitter.isCancelled()) {
-                        emitter.onError(e);
-                      }
-                      return;
-                    }
-                    if (emitter.isCancelled()) {
-                      closeQuietly(stream);
-                      return;
-                    }
-                    activeStream.set(stream);
-                    // Cancellation may race between the preceding check and set(). Re-check after
-                    // publication so the cancellable always closes an idle blocking read.
-                    if (emitter.isCancelled()) {
-                      closeQuietly(activeStream.getAndSet(null));
-                      return;
-                    }
-                    // The resource variable must be explicitly typed AutoCloseable:
-                    // try-with-resources over the intersection type
-                    // S extends Iterable<T> & AutoCloseable emits a call to Iterable.close(),
-                    // which does not exist and fails at runtime with NoSuchMethodError.
-                    try (AutoCloseable closeGuard = stream) {
-                      for (T item : stream) {
-                        if (emitter.isCancelled()) {
-                          return;
+              try {
+                executor.execute(
+                    () -> {
+                      S stream;
+                      try {
+                        stream = streamSupplier.get();
+                      } catch (Throwable e) {
+                        if (!emitter.isCancelled()) {
+                          emitter.onError(e);
                         }
-                        emitter.onNext(item);
+                        return;
                       }
-                      emitter.onComplete();
-                    } catch (Throwable e) {
-                      if (!emitter.isCancelled()) {
-                        emitter.onError(e);
+                      if (emitter.isCancelled()) {
+                        closeQuietly(stream);
+                        return;
                       }
-                    } finally {
-                      activeStream.compareAndSet(stream, null);
-                    }
-                  });
+                      activeStream.set(stream);
+                      // Cancellation may race between the preceding check and set(). Re-check
+                      // after publication so the cancellable always closes an idle blocking read.
+                      if (emitter.isCancelled()) {
+                        closeQuietly(activeStream.getAndSet(null));
+                        return;
+                      }
+                      // The resource variable must be explicitly typed AutoCloseable:
+                      // try-with-resources over the intersection type
+                      // S extends Iterable<T> & AutoCloseable emits a call to Iterable.close(),
+                      // which does not exist and fails at runtime with NoSuchMethodError.
+                      try (AutoCloseable closeGuard = stream) {
+                        for (T item : stream) {
+                          if (emitter.isCancelled()) {
+                            return;
+                          }
+                          emitter.onNext(item);
+                        }
+                        emitter.onComplete();
+                      } catch (Throwable e) {
+                        if (!emitter.isCancelled()) {
+                          emitter.onError(e);
+                        }
+                      } finally {
+                        activeStream.compareAndSet(stream, null);
+                      }
+                    });
+              } catch (RejectedExecutionException e) {
+                // A saturated bounded executor must fail the subscription, not throw
+                // synchronously out of subscribe().
+                emitter.onError(e);
+              }
             },
             BackpressureStrategy.BUFFER)
         .publish()

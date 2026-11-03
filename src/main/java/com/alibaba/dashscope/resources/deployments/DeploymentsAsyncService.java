@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.resources.deployments;
 
 import com.alibaba.dashscope.RequestOptions;
+import com.alibaba.dashscope.resources.AsyncFutures;
 import com.alibaba.dashscope.resources.RxStreams;
 import com.alibaba.dashscope.types.common.JobStatus;
 import com.alibaba.dashscope.types.deployments.Deployment;
@@ -28,7 +29,7 @@ public final class DeploymentsAsyncService {
 
   public CompletableFuture<Deployment> create(
       DeploymentCreateParams params, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.create(params, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.create(params, options), executor);
   }
 
   public CompletableFuture<Deployment> get(String deployedModel) {
@@ -36,7 +37,7 @@ public final class DeploymentsAsyncService {
   }
 
   public CompletableFuture<Deployment> get(String deployedModel, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.get(deployedModel, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.get(deployedModel, options), executor);
   }
 
   public CompletableFuture<DeploymentList> list(int pageNo, int pageSize) {
@@ -44,7 +45,7 @@ public final class DeploymentsAsyncService {
   }
 
   public CompletableFuture<DeploymentList> list(int pageNo, int pageSize, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.list(pageNo, pageSize, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.list(pageNo, pageSize, options), executor);
   }
 
   public CompletableFuture<Deployment> scale(String deployedModel, int capacity) {
@@ -53,8 +54,7 @@ public final class DeploymentsAsyncService {
 
   public CompletableFuture<Deployment> scale(
       String deployedModel, int capacity, RequestOptions options) {
-    return CompletableFuture.supplyAsync(
-        () -> sync.scale(deployedModel, capacity, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.scale(deployedModel, capacity, options), executor);
   }
 
   public CompletableFuture<JobStatus> delete(String deployedModel) {
@@ -62,7 +62,7 @@ public final class DeploymentsAsyncService {
   }
 
   public CompletableFuture<JobStatus> delete(String deployedModel, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.delete(deployedModel, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.delete(deployedModel, options), executor);
   }
 
   public Flowable<DeploymentEvent> streamEvents(String deployedModel) {

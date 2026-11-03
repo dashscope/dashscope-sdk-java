@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.resources.rerank;
 
 import com.alibaba.dashscope.RequestOptions;
+import com.alibaba.dashscope.resources.AsyncFutures;
 import com.alibaba.dashscope.types.rerank.RerankCreateParams;
 import com.alibaba.dashscope.types.rerank.RerankResponse;
 import java.util.concurrent.CompletableFuture;
@@ -24,6 +25,6 @@ public final class RerankAsyncService {
 
   public CompletableFuture<RerankResponse> create(
       RerankCreateParams params, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.create(params, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.create(params, options), executor);
   }
 }

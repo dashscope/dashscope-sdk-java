@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.resources.multimodal;
 
 import com.alibaba.dashscope.RequestOptions;
+import com.alibaba.dashscope.resources.AsyncFutures;
 import com.alibaba.dashscope.types.multimodal.MultimodalEmbeddingCreateParams;
 import com.alibaba.dashscope.types.multimodal.MultimodalEmbeddingResponse;
 import java.util.concurrent.CompletableFuture;
@@ -25,6 +26,6 @@ public final class MultimodalEmbeddingAsyncService {
 
   public CompletableFuture<MultimodalEmbeddingResponse> create(
       MultimodalEmbeddingCreateParams params, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.create(params, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.create(params, options), executor);
   }
 }

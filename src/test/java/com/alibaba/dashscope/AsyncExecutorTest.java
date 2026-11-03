@@ -3,6 +3,7 @@ package com.alibaba.dashscope;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -18,6 +19,7 @@ class AsyncExecutorTest {
       ThreadPoolExecutor pool = (ThreadPoolExecutor) executor;
       assertEquals(3, pool.getMaximumPoolSize());
       assertEquals(12, pool.getQueue().remainingCapacity());
+      assertTrue(pool.allowsCoreThreadTimeOut());
     } finally {
       executor.shutdownNow();
     }

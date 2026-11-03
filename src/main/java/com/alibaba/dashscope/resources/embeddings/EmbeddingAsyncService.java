@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.resources.embeddings;
 
 import com.alibaba.dashscope.RequestOptions;
+import com.alibaba.dashscope.resources.AsyncFutures;
 import com.alibaba.dashscope.types.embeddings.EmbeddingCreateParams;
 import com.alibaba.dashscope.types.embeddings.EmbeddingResponse;
 import java.util.concurrent.CompletableFuture;
@@ -31,6 +32,6 @@ public final class EmbeddingAsyncService {
 
   public CompletableFuture<EmbeddingResponse> create(
       EmbeddingCreateParams params, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.create(params, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.create(params, options), executor);
   }
 }

@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.resources.audio;
 
 import com.alibaba.dashscope.RequestOptions;
+import com.alibaba.dashscope.resources.AsyncFutures;
 import com.alibaba.dashscope.resources.jobs.Job;
 import com.alibaba.dashscope.resources.jobs.JobsAsyncService;
 import com.alibaba.dashscope.types.audio.AsrTranscribeParams;
@@ -28,7 +29,7 @@ public final class AsrAsyncService {
   }
 
   public CompletableFuture<Job> transcribe(AsrTranscribeParams params, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.transcribe(params, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.transcribe(params, options), executor);
   }
 
   /** The async-job handle for transcription: create/fetch/wait/cancel/list. */

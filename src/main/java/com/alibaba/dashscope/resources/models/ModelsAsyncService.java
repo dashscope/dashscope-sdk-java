@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.resources.models;
 
 import com.alibaba.dashscope.RequestOptions;
+import com.alibaba.dashscope.resources.AsyncFutures;
 import com.alibaba.dashscope.types.models.Model;
 import com.alibaba.dashscope.types.models.ModelList;
 import java.util.concurrent.CompletableFuture;
@@ -23,8 +24,7 @@ public final class ModelsAsyncService {
 
   public CompletableFuture<ModelList> list(
       int pageNo, int pageSize, String provider, RequestOptions options) {
-    return CompletableFuture.supplyAsync(
-        () -> sync.list(pageNo, pageSize, provider, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.list(pageNo, pageSize, provider, options), executor);
   }
 
   public CompletableFuture<Model> get(String model) {
@@ -32,6 +32,6 @@ public final class ModelsAsyncService {
   }
 
   public CompletableFuture<Model> get(String model, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.get(model, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.get(model, options), executor);
   }
 }

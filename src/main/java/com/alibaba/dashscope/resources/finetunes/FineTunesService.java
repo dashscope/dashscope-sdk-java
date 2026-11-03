@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.resources.finetunes;
 
 import com.alibaba.dashscope.RequestOptions;
+import com.alibaba.dashscope.errors.ApiTimeoutException;
 import com.alibaba.dashscope.errors.Errors;
 import com.alibaba.dashscope.errors.SdkErrorCode;
 import com.alibaba.dashscope.transport.HttpTransport;
@@ -178,12 +179,9 @@ public final class FineTunesService {
     if (current == null) {
       long remainingNanos = timeoutNanos - (System.nanoTime() - start);
       if (remainingNanos <= 0) {
-        throw Errors.timeout(
-            SdkErrorCode.SDK_TIMEOUT,
-            "waiting for fine-tune job " + jobId + " after " + budget.toMillis() + "ms",
-            null);
+        throw waitTimeout(jobId, budget);
       }
-      current = get(jobId, boundedOptions(options, remainingNanos));
+      current = poll(jobId, options, timeoutNanos, start, budget);
     }
     while (!current.isFinished()) {
       // Compat mode (raiseOnError=false): a transport-level failure comes back as an error
@@ -194,10 +192,7 @@ public final class FineTunesService {
       long elapsedNanos = System.nanoTime() - start;
       long remainingNanos = timeoutNanos - elapsedNanos;
       if (remainingNanos <= 0) {
-        throw Errors.timeout(
-            SdkErrorCode.SDK_TIMEOUT,
-            "waiting for fine-tune job " + jobId + " after " + budget.toMillis() + "ms",
-            null);
+        throw waitTimeout(jobId, budget);
       }
       long sleepMs = Math.min(pollMs, Duration.ofNanos(remainingNanos).toMillis());
       pollMs = Math.min(pollMs * 2, MAX_POLL_MS);
@@ -210,14 +205,39 @@ public final class FineTunesService {
       }
       remainingNanos = timeoutNanos - (System.nanoTime() - start);
       if (remainingNanos <= 0) {
-        throw Errors.timeout(
-            SdkErrorCode.SDK_TIMEOUT,
-            "waiting for fine-tune job " + jobId + " after " + budget.toMillis() + "ms",
-            null);
+        throw waitTimeout(jobId, budget);
       }
-      current = get(jobId, boundedOptions(options, remainingNanos));
+      current = poll(jobId, options, timeoutNanos, start, budget);
     }
     return checkTerminal(current, jobId);
+  }
+
+  /**
+   * A single poll bounded by the remaining budget. A poll that times out after the budget is
+   * exhausted is reported as a wait timeout carrying the job id (the transport-level message has no
+   * job context); a caller-configured shorter per-call timeout propagates unchanged.
+   */
+  private FineTune poll(
+      String jobId, RequestOptions options, long timeoutNanos, long start, Duration budget) {
+    try {
+      return get(jobId, boundedOptions(options, timeoutNanos - (System.nanoTime() - start)));
+    } catch (ApiTimeoutException e) {
+      if (timeoutNanos - (System.nanoTime() - start) <= 0) {
+        throw waitTimeout(jobId, budget, e);
+      }
+      throw e;
+    }
+  }
+
+  private static RuntimeException waitTimeout(String jobId, Duration budget) {
+    return waitTimeout(jobId, budget, null);
+  }
+
+  private static RuntimeException waitTimeout(String jobId, Duration budget, Throwable cause) {
+    return Errors.timeout(
+        SdkErrorCode.SDK_TIMEOUT,
+        "waiting for fine-tune job " + jobId + " after " + budget.toMillis() + "ms",
+        cause);
   }
 
   private RequestOptions boundedOptions(RequestOptions options, long remainingNanos) {

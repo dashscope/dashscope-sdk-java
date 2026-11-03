@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.resources.files;
 
 import com.alibaba.dashscope.RequestOptions;
+import com.alibaba.dashscope.resources.AsyncFutures;
 import com.alibaba.dashscope.types.files.DeletionStatus;
 import com.alibaba.dashscope.types.files.FileList;
 import com.alibaba.dashscope.types.files.FileObject;
@@ -24,7 +25,7 @@ public final class FilesAsyncService {
   }
 
   public CompletableFuture<FileObject> upload(FileUploadParams params, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.upload(params, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.upload(params, options), executor);
   }
 
   public CompletableFuture<FileList> list(int pageNo, int pageSize) {
@@ -32,7 +33,7 @@ public final class FilesAsyncService {
   }
 
   public CompletableFuture<FileList> list(int pageNo, int pageSize, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.list(pageNo, pageSize, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.list(pageNo, pageSize, options), executor);
   }
 
   public CompletableFuture<FileObject> get(String fileId) {
@@ -40,7 +41,7 @@ public final class FilesAsyncService {
   }
 
   public CompletableFuture<FileObject> get(String fileId, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.get(fileId, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.get(fileId, options), executor);
   }
 
   public CompletableFuture<DeletionStatus> delete(String fileId) {
@@ -48,6 +49,6 @@ public final class FilesAsyncService {
   }
 
   public CompletableFuture<DeletionStatus> delete(String fileId, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.delete(fileId, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.delete(fileId, options), executor);
   }
 }

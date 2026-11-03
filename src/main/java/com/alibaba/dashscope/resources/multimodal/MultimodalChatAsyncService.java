@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.resources.multimodal;
 
 import com.alibaba.dashscope.RequestOptions;
+import com.alibaba.dashscope.resources.AsyncFutures;
 import com.alibaba.dashscope.resources.RxStreams;
 import com.alibaba.dashscope.types.multimodal.MultimodalChatChunk;
 import com.alibaba.dashscope.types.multimodal.MultimodalChatCompletion;
@@ -27,7 +28,7 @@ public final class MultimodalChatAsyncService {
 
   public CompletableFuture<MultimodalChatCompletion> create(
       MultimodalChatCreateParams params, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.create(params, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.create(params, options), executor);
   }
 
   public Flowable<MultimodalChatChunk> createStreaming(MultimodalChatCreateParams params) {

@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.resources.decision;
 
 import com.alibaba.dashscope.RequestOptions;
+import com.alibaba.dashscope.resources.AsyncFutures;
 import com.alibaba.dashscope.types.decision.DecisionCreateParams;
 import com.alibaba.dashscope.types.decision.DecisionResult;
 import java.util.concurrent.CompletableFuture;
@@ -23,6 +24,6 @@ public final class DecisionAsyncService {
 
   public CompletableFuture<DecisionResult> create(
       DecisionCreateParams params, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.create(params, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.create(params, options), executor);
   }
 }

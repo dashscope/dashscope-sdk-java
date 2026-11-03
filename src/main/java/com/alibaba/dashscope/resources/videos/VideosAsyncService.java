@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.resources.videos;
 
 import com.alibaba.dashscope.RequestOptions;
+import com.alibaba.dashscope.resources.AsyncFutures;
 import com.alibaba.dashscope.resources.jobs.Job;
 import com.alibaba.dashscope.types.videos.VideoGenerateParams;
 import java.util.concurrent.CompletableFuture;
@@ -28,6 +29,6 @@ public final class VideosAsyncService {
   }
 
   public CompletableFuture<Job> generate(VideoGenerateParams params, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.generate(params, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.generate(params, options), executor);
   }
 }

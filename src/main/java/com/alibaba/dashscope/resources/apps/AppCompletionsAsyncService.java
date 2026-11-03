@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.resources.apps;
 
 import com.alibaba.dashscope.RequestOptions;
+import com.alibaba.dashscope.resources.AsyncFutures;
 import com.alibaba.dashscope.resources.RxStreams;
 import com.alibaba.dashscope.types.apps.AppCompletion;
 import com.alibaba.dashscope.types.apps.AppCompletionCreateParams;
@@ -33,7 +34,7 @@ public final class AppCompletionsAsyncService {
   /** Sugar for the two required fields (2.x {@code Application.call} parity). */
   public CompletableFuture<AppCompletion> create(
       String appId, String prompt, RequestOptions options) {
-    return CompletableFuture.supplyAsync(
+    return AsyncFutures.supplyAsync(
         () ->
             sync.create(
                 AppCompletionCreateParams.builder().appId(appId).prompt(prompt).build(), options),
@@ -42,7 +43,7 @@ public final class AppCompletionsAsyncService {
 
   public CompletableFuture<AppCompletion> create(
       AppCompletionCreateParams params, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.create(params, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.create(params, options), executor);
   }
 
   public Flowable<AppCompletion> createStreaming(AppCompletionCreateParams params) {

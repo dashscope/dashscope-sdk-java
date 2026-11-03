@@ -2,6 +2,7 @@
 package com.alibaba.dashscope.resources.jobs;
 
 import com.alibaba.dashscope.RequestOptions;
+import com.alibaba.dashscope.errors.ApiTimeoutException;
 import com.alibaba.dashscope.errors.Errors;
 import com.alibaba.dashscope.errors.SdkErrorCode;
 import com.alibaba.dashscope.transport.HttpTransport;
@@ -77,7 +78,7 @@ public final class JobsService {
       if (remainingNanos <= 0) {
         throw waitTimeout(taskId, elapsedNanos);
       }
-      Job job = fetch(taskId, boundedOptions(options, remainingNanos));
+      Job job = poll(taskId, options, timeoutNanos, start);
       if (job.isFinished()) {
         return job;
       }
@@ -98,6 +99,22 @@ public final class JobsService {
     }
   }
 
+  /**
+   * A single poll bounded by the remaining budget. A poll that times out after the budget is
+   * exhausted is reported as a wait timeout carrying the task id (the transport-level message has
+   * no task context); a caller-configured shorter per-call timeout propagates unchanged.
+   */
+  private Job poll(String taskId, RequestOptions options, long timeoutNanos, long start) {
+    try {
+      return fetch(taskId, boundedOptions(options, timeoutNanos - (System.nanoTime() - start)));
+    } catch (ApiTimeoutException e) {
+      if (timeoutNanos - (System.nanoTime() - start) <= 0) {
+        throw waitTimeout(taskId, System.nanoTime() - start, e);
+      }
+      throw e;
+    }
+  }
+
   private RequestOptions boundedOptions(RequestOptions options, long remainingNanos) {
     RequestOptions opts = options == null ? RequestOptions.NONE : options;
     Duration remaining = Duration.ofNanos(Math.max(1_000_000L, remainingNanos));
@@ -108,6 +125,10 @@ public final class JobsService {
   }
 
   private static RuntimeException waitTimeout(String taskId, long elapsedNanos) {
+    return waitTimeout(taskId, elapsedNanos, null);
+  }
+
+  private static RuntimeException waitTimeout(String taskId, long elapsedNanos, Throwable cause) {
     return Errors.timeout(
         SdkErrorCode.SDK_TIMEOUT,
         "waiting for task ["
@@ -115,7 +136,7 @@ public final class JobsService {
             + "] after "
             + Duration.ofNanos(Math.max(0L, elapsedNanos)).toMillis()
             + " ms",
-        null);
+        cause);
   }
 
   public Job cancel(String taskId, RequestOptions options) {

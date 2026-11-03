@@ -3,6 +3,7 @@
 package com.alibaba.dashscope.resources.chat;
 
 import com.alibaba.dashscope.RequestOptions;
+import com.alibaba.dashscope.resources.AsyncFutures;
 import com.alibaba.dashscope.resources.RxStreams;
 import com.alibaba.dashscope.types.completions.ChatCompletion;
 import com.alibaba.dashscope.types.completions.ChatCompletionChunk;
@@ -28,7 +29,7 @@ public final class ChatCompletionsAsyncService {
 
   public CompletableFuture<ChatCompletion> create(
       ChatCompletionCreateParams params, RequestOptions options) {
-    return CompletableFuture.supplyAsync(() -> sync.create(params, options), executor);
+    return AsyncFutures.supplyAsync(() -> sync.create(params, options), executor);
   }
 
   public Flowable<ChatCompletionChunk> createStreaming(ChatCompletionCreateParams params) {

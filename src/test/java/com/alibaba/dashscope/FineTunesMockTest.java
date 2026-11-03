@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.errors.ApiStatusException;
+import com.alibaba.dashscope.errors.ApiTimeoutException;
 import com.alibaba.dashscope.errors.BadRequestException;
 import com.alibaba.dashscope.resources.finetunes.FineTuneEventStream;
 import com.alibaba.dashscope.types.common.JobStatus;
@@ -18,6 +19,7 @@ import com.alibaba.dashscope.types.finetunes.JobLogs;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -295,6 +297,25 @@ class FineTunesMockTest {
     assertTrue(job.isSucceeded());
     assertEquals("m", job.getFinetunedModel());
     assertEquals(2, server.getRequestCount());
+  }
+
+  @Test
+  void waitTimeoutBoundsAnInFlightPoll() {
+    server.enqueue(
+        okJson("{\"output\":{\"job_id\":\"ft-slow\",\"status\":\"RUNNING\"}}")
+            .setBodyDelay(5, TimeUnit.SECONDS));
+    long started = System.nanoTime();
+
+    // The in-flight poll hits its budget-bounded call timeout; the reported failure must be a
+    // wait timeout carrying the job id, not the context-free transport-level timeout message.
+    ApiTimeoutException e =
+        assertThrows(
+            ApiTimeoutException.class,
+            () -> client.fineTunes().wait("ft-slow", Duration.ofMillis(150), RequestOptions.NONE));
+    assertTrue(e.getMessage().contains("ft-slow"), e.getMessage());
+
+    long elapsedMillis = Duration.ofNanos(System.nanoTime() - started).toMillis();
+    assertTrue(elapsedMillis < 2000, "wait exceeded its total budget: " + elapsedMillis + "ms");
   }
 
   @Test

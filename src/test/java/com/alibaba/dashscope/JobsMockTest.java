@@ -125,9 +125,13 @@ class JobsMockTest {
         jobJson("task-slow", "RUNNING").setBodyDelay(5, java.util.concurrent.TimeUnit.SECONDS));
     long started = System.nanoTime();
 
-    assertThrows(
-        ApiTimeoutException.class,
-        () -> jobs.wait("task-slow", Duration.ofMillis(150), RequestOptions.NONE));
+    // The in-flight poll hits its budget-bounded call timeout; the reported failure must be a
+    // wait timeout carrying the task id, not the context-free transport-level timeout message.
+    ApiTimeoutException e =
+        assertThrows(
+            ApiTimeoutException.class,
+            () -> jobs.wait("task-slow", Duration.ofMillis(150), RequestOptions.NONE));
+    assertTrue(e.getMessage().contains("task-slow"), e.getMessage());
 
     long elapsedMillis = Duration.ofNanos(System.nanoTime() - started).toMillis();
     assertTrue(elapsedMillis < 2000, "wait exceeded its total budget: " + elapsedMillis + "ms");
