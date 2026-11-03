@@ -1,3 +1,4 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.legacy_2x.tokenizers;
 
 import java.util.Arrays;
