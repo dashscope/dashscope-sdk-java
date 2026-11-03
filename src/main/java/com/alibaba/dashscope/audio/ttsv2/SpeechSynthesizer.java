@@ -648,8 +648,7 @@ public final class SpeechSynthesizer {
         log.debug("stopLatch is done, requestId={}", getRequestIdForLog());
       } catch (InterruptedException ignored) {
         log.error(
-          "Interrupted while waiting for streaming complete, requestId={}",
-          getRequestIdForLog());
+            "Interrupted while waiting for streaming complete, requestId={}", getRequestIdForLog());
       }
     }
   }
@@ -752,8 +751,7 @@ public final class SpeechSynthesizer {
         }
       } catch (InterruptedException ignored) {
         log.error(
-          "Interrupted while waiting for streaming complete, requestId={}",
-          getRequestIdForLog());
+            "Interrupted while waiting for streaming complete, requestId={}", getRequestIdForLog());
       }
     } else {
       this.submitText(text);
@@ -845,8 +843,7 @@ public final class SpeechSynthesizer {
       }
     } catch (InterruptedException ignored) {
       log.error(
-          "Interrupted while waiting for streaming complete, requestId={}",
-          getRequestIdForLog());
+          "Interrupted while waiting for streaming complete, requestId={}", getRequestIdForLog());
     } catch (RuntimeException e) {
       // The real cause may already have been recorded by the error callback, in which case the
       // exception raised here only masks it.

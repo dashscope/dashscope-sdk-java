@@ -152,8 +152,7 @@ public final class SpeechSynthesizer {
           channel.close();
           outputStream.close();
         } catch (IOException e) {
-          log.error(
-              "Failed to close channel: {}, requestId={}", channel, getRequestIdForLog(), e);
+          log.error("Failed to close channel: {}, requestId={}", channel, getRequestIdForLog(), e);
         }
         callback.onComplete();
       }

@@ -274,8 +274,7 @@ public final class TingWuRealtime {
     if (this.startStreamTimeStamp < 0) {
       this.startStreamTimeStamp = System.currentTimeMillis();
     }
-    log.debug(
-        "send audio frame: {}, requestId={}", audioFrame.remaining(), getRequestIdForLog());
+    log.debug("send audio frame: {}, requestId={}", audioFrame.remaining(), getRequestIdForLog());
     synchronized (this) {
       if (audioEmitter == null || !isListenState) {
         cmdBuffer.add(AsyncCmdBuffer.builder().audioFrame(audioFrame).build());

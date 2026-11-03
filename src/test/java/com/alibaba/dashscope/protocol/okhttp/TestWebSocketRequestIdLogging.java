@@ -125,8 +125,7 @@ public class TestWebSocketRequestIdLogging {
   public void testOkHttpHandshakeFailureLogsResponseHeaderRequestId() throws Exception {
     OkHttpWebSocketClient client = new OkHttpWebSocketClient(new OkHttpClient(), false);
     try (SdkLogCapture capture = new SdkLogCapture(OkHttpWebSocketClient.class)) {
-      client.onFailure(
-          null, new IOException("handshake failed"), failureResponse("handshake-id"));
+      client.onFailure(null, new IOException("handshake failed"), failureResponse("handshake-id"));
       assertTrue(capture.output().contains("requestId=handshake-id"));
     }
   }

@@ -282,9 +282,9 @@ public final class TranslationRecognizerRealtime {
                 if (firstPackageTimeStamp < 0) {
                   firstPackageTimeStamp = System.currentTimeMillis();
                   log.debug(
-                    "first package delay: {}, requestId={}",
-                    getFirstPackageDelay(),
-                    getRequestIdForLog());
+                      "first package delay: {}, requestId={}",
+                      getFirstPackageDelay(),
+                      getRequestIdForLog());
                 }
                 log.debug(
                     "[Recv Result] transcription: {}, translation: {}, requestId={}",
@@ -408,9 +408,9 @@ public final class TranslationRecognizerRealtime {
                   if (firstPackageTimeStamp < 0) {
                     firstPackageTimeStamp = System.currentTimeMillis();
                     log.debug(
-                    "first package delay: {}, requestId={}",
-                    getFirstPackageDelay(),
-                    getRequestIdForLog());
+                        "first package delay: {}, requestId={}",
+                        getFirstPackageDelay(),
+                        getRequestIdForLog());
                   }
                   log.debug(
                       "[Recv SentenceEnd]: transcription {}, translation: {}, requestId={}",
@@ -456,8 +456,7 @@ public final class TranslationRecognizerRealtime {
     if (this.startStreamTimeStamp < 0) {
       this.startStreamTimeStamp = System.currentTimeMillis();
     }
-    log.debug(
-        "send audio frame: {}, requestId={}", audioFrame.remaining(), getRequestIdForLog());
+    log.debug("send audio frame: {}, requestId={}", audioFrame.remaining(), getRequestIdForLog());
     synchronized (this) {
       if (state != TranslationRecognizerState.SPEECH_TRANSLATION_STARTED) {
         throw new ApiException(

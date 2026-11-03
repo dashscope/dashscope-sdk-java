@@ -172,8 +172,7 @@ public class HttpSpeechSynthesizer {
             }
           });
     } catch (Exception e) {
-      log.error(
-          "Streaming call failed, requestId={}", getRequestIdForLog(requestId.get(), e), e);
+      log.error("Streaming call failed, requestId={}", getRequestIdForLog(requestId.get(), e), e);
       throw new ApiException(e);
     }
   }

@@ -201,8 +201,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
     while (true) {
       // Bail out immediately if cancel() has been called
       if (isClosed.get()) {
-        log.debug(
-            "Connection cancelled, stop reconnecting. requestId={}", getRequestIdOrUnknown());
+        log.debug("Connection cancelled, stop reconnecting. requestId={}", getRequestIdOrUnknown());
         return;
       }
       try {
@@ -511,8 +510,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
         case TASK_FAILED:
           log.error(
               StringUtils.format(
-                  "Receive task_failed message: %s, requestId=%s",
-                  text, getRequestIdOrUnknown()));
+                  "Receive task_failed message: %s, requestId=%s", text, getRequestIdOrUnknown()));
           Status st =
               Status.builder()
                   .code(response.header.code)
@@ -654,8 +652,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
       // when pass througn task started, no need to retry.
       if (webSocketClient == null) {
         log.warn(
-            "webSocketClient is null, cannot send message. requestId={}",
-            getRequestIdOrUnknown());
+            "webSocketClient is null, cannot send message. requestId={}", getRequestIdOrUnknown());
         return;
       }
       log.info("Sending message: {}, requestId={}", message, getRequestIdOrUnknown());
@@ -673,8 +670,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
       }
       if (webSocketClient == null) {
         log.warn(
-            "webSocketClient is null, cannot send message. requestId={}",
-            getRequestIdOrUnknown());
+            "webSocketClient is null, cannot send message. requestId={}", getRequestIdOrUnknown());
         return;
       }
       log.debug("Sending message: {}, requestId={}", message, getRequestIdOrUnknown());
