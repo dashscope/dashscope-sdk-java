@@ -41,9 +41,9 @@ import okhttp3.WebSocketListener;
  * prefer the task protocol for heavy traffic), no {@code task_id}, so every session owns a
  * dedicated socket and cannot share a {@code WsConnection}.
  *
- * <p>Pull model — no SDK threads: OkHttp's reader enqueues events, {@link #events()} replays the
- * buffer then live-follows, blocking the caller's thread. User discipline is one send thread + one
- * receive thread, {@code finally close()}.
+ * <p>Pull model — no SDK threads: OkHttp's reader enqueues events, {@link #events()} streams them
+ * to the caller's blocking thread, consuming each frame after delivery. User discipline is one send
+ * thread + one receive thread, {@code finally close()}.
  *
  * <p>{@link #close()} is idempotent and the session may re-{@link #connect()} afterwards; a
  * generation counter drops late frames from a previous socket so stale events never leak into the
@@ -340,10 +340,11 @@ public final class RealtimeSession implements AutoCloseable {
   }
 
   /**
-   * Raw event frames, replayed from the beginning then live-followed; ends when the socket closes
-   * (after a completion was seen or a local close) — an early disconnect raises {@link
-   * ApiConnectionException} mid-iteration, a transport failure raises its mapped exception. Server
-   * {@code error}-type frames are delivered as ordinary events.
+   * Raw event frames, delivered once and released after delivery (a consuming, single-use stream: a
+   * second {@code iterator()} throws {@link SdkException}; the claim resets on {@link #connect()});
+   * ends when the socket closes (after a completion was seen or a local close) — an early
+   * disconnect raises {@link ApiConnectionException} mid-iteration, a transport failure raises its
+   * mapped exception. Server {@code error}-type frames are delivered as ordinary events.
    */
   public Iterable<JsonNode> events() {
     return () -> {

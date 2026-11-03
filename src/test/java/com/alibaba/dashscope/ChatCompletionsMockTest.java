@@ -112,6 +112,7 @@ class ChatCompletionsMockTest {
     assertEquals(
         "java-sdk/" + SdkInfo.VERSION + "/aigc", request.getHeader("x-dashscope-sdk-client"));
     assertNotNull(request.getHeader("x-dashscope-sdk-session-id"));
+    assertEquals("3", request.getHeader("x-dashscope-sdk-generation"));
 
     JsonNode body = bodyOf(request);
     assertEquals("qwen-plus", body.get("model").asText());
@@ -344,6 +345,7 @@ class ChatCompletionsMockTest {
       assertNotNull(request.getHeader("x-dashscope-sdk-session-id"));
       assertEquals(
           "java-sdk/" + SdkInfo.VERSION + "/aigc", request.getHeader("x-dashscope-sdk-client"));
+      assertEquals("3", request.getHeader("x-dashscope-sdk-generation"));
     }
   }
 
@@ -386,11 +388,13 @@ class ChatCompletionsMockTest {
             RequestOptions.builder()
                 .header("Authorization", "Bearer custom-key")
                 .header("User-Agent", "custom-agent/1.0")
+                .header("x-dashscope-sdk-generation", "custom")
                 .build());
 
     RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
     assertEquals("Bearer custom-key", request.getHeader("Authorization"));
     assertEquals("custom-agent/1.0", request.getHeader("User-Agent"));
+    assertEquals("custom", request.getHeader("x-dashscope-sdk-generation"));
   }
 
   @Test

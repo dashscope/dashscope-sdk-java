@@ -401,7 +401,12 @@ public final class WsConnection implements AutoCloseable {
     if (!socket.close(1000, "bye")) {
       socket.cancel();
     }
-    rawQueue.offer(POISON);
+    if (!rawQueue.offer(POISON)) {
+      // Queue full (bursty downlink): the poison cannot be queued, so terminate the reader the
+      // same way failConnection does — otherwise it blocks on rawQueue.take() forever, leaking
+      // the thread and the whole object graph.
+      reader.interrupt();
+    }
     try {
       reader.join(2000);
     } catch (InterruptedException e) {

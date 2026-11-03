@@ -32,12 +32,13 @@ import java.util.concurrent.atomic.AtomicReference;
  * TTS duplex session (audio design §1.2): ws task protocol, text up, binary audio down. Pull model
  * — no SDK threads.
  *
- * <p>{@link #events()} (mixed JsonNode + byte[]) and {@link #audioChunks()} (audio only) are
- * mutually exclusive single readers: the first claim wins, a conflicting claim throws {@link
- * SdkException} immediately. Pumped items are buffered, so a reader may also start after {@link
- * #stop()} and replay. {@link #close()} is idempotent but the session is NOT restartable (Python
- * parity — asymmetric with ASR). On a shared {@link WsConnection} the binary downlink is claimed at
- * {@code start()} and released at task end.
+ * <p>{@link #events()} (mixed JsonNode + byte[]) and {@link #audioChunks()} (audio only) share one
+ * single-use reader: whichever claims first (at {@code iterator()} time) wins, and any second claim
+ * throws {@link SdkException} immediately. Frames are consumed on delivery — a reader that starts
+ * late sees only the frames not yet consumed, e.g. buffered before {@link #stop()}. {@link
+ * #close()} is idempotent but the session is NOT restartable (Python parity — asymmetric with ASR).
+ * On a shared {@link WsConnection} the binary downlink is claimed at {@code start()} and released
+ * at task end.
  */
 public final class SynthesisSession implements AutoCloseable {
   private static final String TASK_GROUP = "audio";
@@ -290,7 +291,8 @@ public final class SynthesisSession implements AutoCloseable {
 
   /**
    * Mixed stream: JsonNode for text events (task-finished included), byte[] for audio frames.
-   * Mutually exclusive with {@link #audioChunks()}; task-failed raises.
+   * Single-use and mutually exclusive with {@link #audioChunks()} (a second claim throws); frames
+   * are consumed on delivery; task-failed raises.
    */
   public Iterable<Object> events() {
     return () -> {
@@ -299,7 +301,7 @@ public final class SynthesisSession implements AutoCloseable {
     };
   }
 
-  /** Audio frames only. Mutually exclusive with {@link #events()}. */
+  /** Audio frames only. Single-use, mutually exclusive with {@link #events()}. */
   public Iterable<byte[]> audioChunks() {
     return () -> {
       claimReader("audioChunks");
