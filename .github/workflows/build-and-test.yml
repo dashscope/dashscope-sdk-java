@@ -19,26 +19,21 @@ on:
     branches:
       - main
       - master
-      - dev/v3
     paths-ignore:
       - '**.md'
   pull_request:
     branches:
       - main
       - master
-      - dev/v3
     paths-ignore:
       - '**.md'
   workflow_dispatch:  # Allow manual trigger
 
 env:
-  # JDK 21 is the floor, not a free choice: .mvn/jvm.config passes --add-exports=jdk.compiler/...,
-  # which the JDK 8 launcher cannot parse ("Could not create the Java Virtual Machine"), so CI
-  # would abort before running a single test. 21 is also the ceiling for now: Lombok's
-  # annotationProcessorPaths is declared only inside the errorprone profile, and javac 23+ stopped
-  # discovering processors from the classpath. Bytecode target stays Java 8 via <release>8</release>
-  # (design doc §4: "target = Java 8, 开发/CI 用 JDK 21 工具链构建").
-  JAVA_VERSION: '21'
+  # JDK 8 toolchain end to end: javac 8 lacks the --release flag and its JVM rejects
+  # --add-opens, so the pom defaults to source/target 8 and the jdk9-plus profile covers
+  # newer JDKs (release 8 API checking + junit-pioneer test opens).
+  JAVA_VERSION: '8'
   JAVA_DISTRIBUTION: 'temurin'
 
 permissions:

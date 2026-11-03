@@ -43,7 +43,13 @@
     <version>3.0.0</version>
 
     <properties>
-        <maven.compiler.release>8</maven.compiler.release>
+        <!-- JDK 8 toolchain: plain javac 8 lacks the release flag, so the default build runs with
+             source/target 8; the jdk9-plus profile flips to release 8 for API checking on
+             newer JDKs (release wins over source/target when both are resolved). -->
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <!-- Empty on JDK 8 (its JVM rejects the add-opens flags); jdk9-plus fills them in. -->
+        <surefireArgLine></surefireArgLine>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-antrun.version>1.8</maven-antrun.version>
         <commons-lang3.version>3.11</commons-lang3.version>
@@ -188,9 +194,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
-                <configuration>
-                    <release>8</release>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -204,8 +207,9 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <!-- junit-pioneer env/sysprop mutation needs these on JDK 16+. -->
-                    <argLine>--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED</argLine>
+                    <!-- junit-pioneer env/sysprop mutation needs the java.base opens on JDK 16+;
+                         a JDK 8 JVM rejects them, so they live in the jdk9-plus profile property. -->
+                    <argLine>${surefireArgLine}</argLine>
                     <properties>
                         <configurationParameters>
                             junit.jupiter.execution.parallel.enabled=false
@@ -275,8 +279,24 @@
         </plugins>
     </build>
     <profiles>
+        <!-- JDK 9+ toolchain: release 8 cross-checks the Java 8 API surface when building on a
+             modern JDK, and junit-pioneer's reflective mutation needs the java.base opens on
+             JDK 16+. Both are impossible on JDK 8 (no release flag, unrecognized add-opens
+             options), so the pom defaults to plain source/target 8 with an empty test argLine. -->
+        <profile>
+            <id>jdk9-plus</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.release>8</maven.compiler.release>
+                <surefireArgLine>--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED</surefireArgLine>
+            </properties>
+        </profile>
         <!-- M1 静默错误清零门禁：ErrorProne 只扫 3.0 新包（2.x 冻结代码豁免），
-             空 catch / 打印堆栈继续 直接编不过。需 JDK 21 工具链：mvn -Perrorprone compile -->
+             空 catch / 打印堆栈继续 直接编不过。需 JDK 21 工具链，且 jdk.compiler 的
+             exports/opens 已随 .mvn/jvm.config 移除、须经 MAVEN_OPTS 传入：
+             mvn -Perrorprone compile -->
         <profile>
             <id>errorprone</id>
             <build>
@@ -287,8 +307,10 @@
                         <version>3.13.0</version>
                         <configuration>
                             <release>8</release>
-                            <!-- ErrorProne runs in the Maven JVM; the jdk.compiler exports/opens
-                                 live in .mvn/jvm.config (forked javac would swallow EP's JVM). -->
+                            <!-- ErrorProne runs in the Maven JVM and needs the jdk.compiler
+                                 exports/opens via MAVEN_OPTS (formerly .mvn/jvm.config, removed
+                                 so the JDK 8 toolchain can start Maven; forked javac would
+                                 swallow EP's JVM). -->
                             <compilerArgs>
                                 <arg>-XDcompilePolicy=simple</arg>
                                 <arg>--should-stop=ifError=FLOW</arg>

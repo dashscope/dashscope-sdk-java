@@ -6,5 +6,4 @@
  *     com.alibaba.dashscope.*} (3.0 entry: {@code com.alibaba.dashscope.DashScopeClient}); see
  *     md/dashscope-3.0-migration.md for the class-by-class mapping.
  */
-@Deprecated
 package com.alibaba.dashscope.legacy_2x.threads.messages;

@@ -12,8 +12,8 @@ import java.util.Map;
 /**
  * One multimodal content part (design §4): the wire shape is a single-key object — {@code {"text":
  * "..."}}, {@code {"image": "<url>"}}, {@code {"audio": "<url>"}}, {@code {"video": ["f1","f2"]}} —
- * with arbitrary keys allowed (forward compatibility). Values may be String or List<String>.
- * Instances are immutable.
+ * with arbitrary keys allowed (forward compatibility). Values may be String or {@code
+ * List<String>}. Instances are immutable.
  */
 public final class ContentPart {
   private final Map<String, Object> entries;
@@ -40,7 +40,7 @@ public final class ContentPart {
     return of("audio", url);
   }
 
-  /** Video as a frame list (wire value is List<String>) or a single video URL. */
+  /** Video as a frame list (wire value is {@code List<String>}) or a single video URL. */
   public static ContentPart video(List<String> frames) {
     return of("video", new ArrayList<>(frames));
   }

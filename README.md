@@ -20,8 +20,10 @@ Version 3.0 introduces a new client entry point in the same artifact. The 3.0 im
 packages live directly under `com.alibaba.dashscope.*`; legacy 2.x APIs other than AgentStudio
 have moved to `com.alibaba.dashscope.legacy_2x.*` and are deprecated for removal in 4.0. This
 is an intentional FQCN, source, and binary compatibility break: existing 2.x imports must be
-updated. Java 8+ is required at runtime (bytecode target 8); building from source needs JDK 9-21
-(CI uses 21). The package-level `@Deprecated` markers under `legacy_2x` are Javadoc and IDE
+updated. Java 8+ is required at runtime (bytecode target 8), and the build baseline is JDK 8
+as well: CI builds and tests on JDK 8. Building from source on JDK 9+ also works — the pom's
+jdk9-plus profile auto-activates and compiles with release 8 API checking. The package-level
+`@deprecated` Javadoc markers under `legacy_2x` are Javadoc and IDE
 signals only: javac does not propagate package deprecation to types, so no compile warnings are
 emitted for existing imports.
 

@@ -19,8 +19,10 @@
 3.0 在同一 artifact 中引入新的客户端入口，实现包直接使用 `com.alibaba.dashscope.*`。
 除 AgentStudio 外，旧 2.x API 已迁至 `com.alibaba.dashscope.legacy_2x.*`，均已废弃并将在
 4.0 删除。这是有意的 FQCN、源码与二进制破坏性变更，存量 2.x imports 必须调整。运行期要求
-Java 8+（字节码 target 8），从源码构建需 JDK 9-21（CI 使用 21）。`legacy_2x` 的包级
-`@Deprecated` 仅为 Javadoc 与 IDE 层面的提示：javac 不会把包级弃用传播到包内类型，存量
+Java 8+（字节码 target 8），构建基线也是 JDK 8：CI 使用 JDK 8 构建与测试。在 JDK 9+ 上从
+源码构建同样可行——pom 的 `jdk9-plus` profile 会自动激活并以 release 8 做 API 校验。
+`legacy_2x` 的包级 `@deprecated` Javadoc 标签仅为 Javadoc 与 IDE 层面的提示：javac 不会把
+包级弃用传播到包内类型，存量
 imports 不会产生 deprecation 编译告警。
 
 ```java
