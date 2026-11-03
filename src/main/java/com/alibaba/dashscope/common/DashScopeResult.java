@@ -35,6 +35,7 @@ public class DashScopeResult extends Result {
   protected <T extends Result> T fromResponse(Protocol protocol, NetworkResponse response)
       throws ApiException {
     this.setHeaders(changeHeaders(response.getHeaders()));
+    fillRequestIdFromHeaders();
     if (protocol == Protocol.WEBSOCKET) {
       if (response.getBinary() == null) {
         String message = response.getMessage();
@@ -83,6 +84,7 @@ public class DashScopeResult extends Result {
       return fromResponse(protocol, response);
     }
     this.setHeaders(changeHeaders(response.getHeaders()));
+    fillRequestIdFromHeaders();
     if (protocol == Protocol.WEBSOCKET) {
       if (response.getBinary() == null) {
         this.output = parseJson(response.getMessage(), "Failed to parse WebSocket message");
@@ -112,6 +114,7 @@ public class DashScopeResult extends Result {
       Protocol protocol, NetworkResponse response, boolean isFlattenResult, HalfDuplexRequest req)
       throws ApiException {
     this.setHeaders(changeHeaders(response.getHeaders()));
+    fillRequestIdFromHeaders();
     if ((response.getHeaders().containsKey("X-DashScope-OutputEncrypted".toLowerCase())
             || req.isEncryptRequest())
         && protocol == Protocol.HTTP) {
@@ -262,5 +265,27 @@ public class DashScopeResult extends Result {
                 },
                 (v1, v2) -> v1,
                 java.util.LinkedHashMap::new));
+  }
+
+  private void fillRequestIdFromHeaders() {
+    if (getRequestId() != null && !getRequestId().isEmpty()) {
+      return;
+    }
+    Map<String, Object> headers = getHeaders();
+    if (headers == null) {
+      return;
+    }
+    for (Map.Entry<String, Object> entry : headers.entrySet()) {
+      String name = entry.getKey();
+      if ("x-request-id".equalsIgnoreCase(name)
+          || "x-dashscope-requestid".equalsIgnoreCase(name)
+          || "x-dashscope-request-id".equalsIgnoreCase(name)) {
+        String value = entry.getValue() == null ? null : String.valueOf(entry.getValue());
+        if (value != null && !value.isEmpty()) {
+          setRequestId(value);
+          return;
+        }
+      }
+    }
   }
 }
