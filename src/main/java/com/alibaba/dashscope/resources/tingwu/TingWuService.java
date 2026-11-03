@@ -41,7 +41,8 @@ public final class TingWuService {
 
   /**
    * Realtime understanding multiplexed on a shared connection. {@code close()} on the returned
-   * session detaches the task only; the socket stays open.
+   * session detaches the task only; if the task was closed before its terminal event while owning
+   * the binary uplink, the whole shared connection is torn down.
    */
   public TingWuRealtimeSession realtime(TingWuRealtimeParams params, WsConnection connection) {
     return realtime(params, connection, RequestOptions.NONE);

@@ -109,6 +109,11 @@ public final class TingWuRealtimeSession implements AutoCloseable {
             ? shared.attach(taskId)
             : new WsSession(transport, url, taskId, TingWuService.MODULE, options);
     try {
+      if (shared != null) {
+        // Claim before run-task, not on the first audio frame: an early local close must not let a
+        // second TingWu task reuse the headerless binary lane while the old server task is active.
+        shared.claimBinaryUplink(taskId);
+      }
       channel.sendText(
           TaskProtocol.frame(TaskProtocol.RUN_TASK, taskId, TaskProtocol.STREAMING_DUPLEX, payload)
               .toString());
@@ -129,6 +134,12 @@ public final class TingWuRealtimeSession implements AutoCloseable {
         } else if (event.getKind() == TaskEvent.Kind.CLOSED) {
           throw Errors.connection(
               SdkErrorCode.SDK_CONNECTION_ERROR, "websocket closed before task-started", null);
+        } else if (event.getKind() == TaskEvent.Kind.LOCAL_CLOSED) {
+          // Defensive only: start() holds the session monitor through this wait loop, so a
+          // concurrent close() blocks on the monitor and cannot deliver LOCAL_CLOSED here. Kept
+          // for symmetry with RecognitionSession/SynthesisSession, whose start() waits outside
+          // the monitor and does observe this kind.
+          throw illegalState("session closed while waiting for task-started");
         }
       }
     } catch (RuntimeException e) {
@@ -212,8 +223,10 @@ public final class TingWuRealtimeSession implements AutoCloseable {
   }
 
   /**
-   * Idempotent. With a shared connection this detaches the task only; the socket stays open. The
-   * session may be re-started afterwards.
+   * Idempotent. With a shared connection this detaches the task only — unless the task owns the
+   * binary uplink and closed before its terminal event, which tears the whole shared connection
+   * down (binary frames carry no task id, so the lane cannot be handed over safely). The session
+   * may be re-started afterwards; on a torn-down shared connection the re-start fails fast.
    */
   @Override
   public synchronized void close() {
@@ -279,6 +292,9 @@ public final class TingWuRealtimeSession implements AutoCloseable {
           terminal = true;
           close();
           throw event.getFailure();
+        case LOCAL_CLOSED:
+          terminal = true;
+          break;
         default:
           break;
       }

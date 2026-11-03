@@ -450,6 +450,26 @@ class WsTransportMockTest {
   }
 
   @Test
+  void attachFailsFastAfterServerClose() throws Exception {
+    ServerSocket serverSocket = enqueueUpgrade();
+    try (WsConnection conn =
+        new WsConnection(transport, transport.config().getWsBaseUrl(), "audio", null)) {
+      serverSocket.awaitOpen();
+      TaskChannel handle = conn.attach("task-server-close");
+      serverSocket.sendEvent("task-server-close", "task-started");
+      assertEquals("task-started", handle.recv(RECV_TIMEOUT).getEvent());
+
+      serverSocket.socket.get().close(1000, "server done");
+
+      assertEquals(TaskEvent.Kind.CLOSED, handle.recv(RECV_TIMEOUT).getKind());
+      // The demux reader exits on a server close; a later attach must fail fast instead of
+      // handing out a handle that can only time out on the dead socket.
+      SdkException failure = assertThrows(SdkException.class, () -> conn.attach("task-new"));
+      assertEquals("sdk.ws.IllegalState", failure.getCode());
+    }
+  }
+
+  @Test
   void dedicatedSessionCloseWakesBlockedReceiverImmediately() throws Exception {
     ServerSocket serverSocket = enqueueUpgrade();
     WsSession session =

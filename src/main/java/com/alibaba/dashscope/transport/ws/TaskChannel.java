@@ -25,7 +25,14 @@ public interface TaskChannel extends AutoCloseable {
    */
   TaskEvent recv(Duration timeout);
 
-  /** Idempotent. On a shared connection this detaches the task only; the socket stays open. */
+  /**
+   * Idempotent. On a shared connection this detaches the task only; if the task owns a binary lane
+   * and has not reached its terminal event, the whole shared connection is torn down instead
+   * (binary frames carry no task id, so the lane cannot be handed over safely). A local close is
+   * surfaced to a blocked {@link #recv} as a {@code LOCAL_CLOSED} event; a binary-owner teardown is
+   * surfaced to every unfinished task, including the closer, as a terminal event instead (a thrown
+   * failure — or {@code CLOSED} if the peer closed the connection concurrently).
+   */
   @Override
   void close();
 }

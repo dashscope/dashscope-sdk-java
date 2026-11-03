@@ -375,8 +375,10 @@ public final class RecognitionSession implements AutoCloseable {
   }
 
   /**
-   * Idempotent. With a shared connection this detaches the task only; the socket stays open. The
-   * session may be re-started afterwards.
+   * Idempotent. With a shared connection this detaches the task only — unless the task owns the
+   * binary uplink and closed before its terminal event, which tears the whole shared connection
+   * down (binary frames carry no task id, so the lane cannot be handed over safely). The session
+   * may be re-started afterwards; on a torn-down shared connection the re-start fails fast.
    */
   @Override
   public void close() {

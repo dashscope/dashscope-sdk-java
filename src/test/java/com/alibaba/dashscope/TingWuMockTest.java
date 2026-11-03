@@ -8,8 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.errors.ApiStatusException;
+import com.alibaba.dashscope.errors.SdkException;
 import com.alibaba.dashscope.resources.jobs.Job;
 import com.alibaba.dashscope.resources.tingwu.TingWuRealtimeSession;
+import com.alibaba.dashscope.transport.ws.WsConnection;
 import com.alibaba.dashscope.types.tingwu.TingWuJobParams;
 import com.alibaba.dashscope.types.tingwu.TingWuRealtimeParams;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -358,6 +360,21 @@ class TingWuMockTest {
       assertEquals("asr broke", e.getMessage());
       assertEquals("rid-9", e.getRequestId());
     }
+  }
+
+  @Test
+  void earlySharedRealtimeCloseInvalidatesConnection() throws Exception {
+    TingWuServerSocket socket = enqueueUpgrade();
+    WsConnection connection = client.wsConnection();
+    socket.awaitOpen();
+    TingWuRealtimeSession session = client.tingwu().realtime(realtimeParams(), connection);
+    session.start();
+    socket.nextText();
+    session.close();
+    // Binary frames carry no task id. Until the old server task reaches a terminal event, the
+    // physical connection cannot be safely reused by another binary task.
+    assertThrows(SdkException.class, () -> connection.attach("task-other"));
+    connection.close();
   }
 
   @Test

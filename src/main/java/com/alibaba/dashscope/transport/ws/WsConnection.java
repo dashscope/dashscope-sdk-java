@@ -126,7 +126,10 @@ public final class WsConnection implements AutoCloseable {
     awaitOpen(connectTimeout);
   }
 
-  /** Register a task on this connection. Duplicate task_id → {@code sdk.ws.IllegalState}. */
+  /**
+   * Register a task on this connection. Duplicate task_id / connection already closed (by either
+   * side) → {@code sdk.ws.IllegalState}.
+   */
   public TaskHandle attach(String taskId) {
     if (closed.get()) {
       throw illegalState("attach on closed connection");
@@ -134,6 +137,14 @@ public final class WsConnection implements AutoCloseable {
     TaskHandle handle = new TaskHandle(taskId);
     if (tasks.putIfAbsent(taskId, handle) != null) {
       throw illegalState("duplicate task_id " + taskId);
+    }
+    // Re-check after publishing: if the demux reader terminated while we raced the pre-check, the
+    // terminal broadcast may already have passed this handle. Unpublish and fail fast instead of
+    // leaving a handle whose recv can only time out.
+    if (closed.get()) {
+      tasks.remove(taskId, handle);
+      handle.detached.set(true);
+      throw illegalState("attach on closed connection");
     }
     return handle;
   }
@@ -205,13 +216,18 @@ public final class WsConnection implements AutoCloseable {
       if (item == POISON) {
         return;
       }
+      // Both terminal exits below leave the connection dead: latch closed so a later attach()
+      // fails fast instead of handing out a handle whose recv can only time out on a socket the
+      // peer already closed.
       if (item.failure != null) {
+        closed.set(true);
         broadcast(TaskEvent.failure(item.failure));
         markAllDetached();
         tasks.clear();
         return;
       }
       if (item.closeCode != null) {
+        closed.set(true);
         broadcast(TaskEvent.closed(item.closeCode, item.closeReason));
         markAllDetached();
         tasks.clear();
@@ -398,7 +414,10 @@ public final class WsConnection implements AutoCloseable {
     tasks.clear();
   }
 
-  /** One task's channel over this shared connection. {@link #close} detaches the task only. */
+  /**
+   * One task's channel over this shared connection. {@link #close} detaches the task only; a
+   * binary-lane owner closed before its terminal event tears the connection down.
+   */
   public final class TaskHandle implements TaskChannel {
     private final String taskId;
     private final LinkedBlockingQueue<TaskEvent> inbox = new LinkedBlockingQueue<>();

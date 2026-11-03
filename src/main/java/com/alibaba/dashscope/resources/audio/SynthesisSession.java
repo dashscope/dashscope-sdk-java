@@ -334,7 +334,10 @@ public final class SynthesisSession implements AutoCloseable {
     return lastPackageDelay;
   }
 
-  /** Idempotent; detaches from a shared connection (socket stays open). NOT restartable. */
+  /**
+   * Idempotent; detaches from a shared connection — unless closed before the terminal event while
+   * owning the binary downlink, which tears the whole shared connection down. NOT restartable.
+   */
   @Override
   public void close() {
     if (!closed.compareAndSet(false, true)) {
