@@ -258,7 +258,7 @@ public final class MultiModalConversation {
       log.debug(
           "Ignore streaming event without output: event={}, requestId={}, usagePresent={}",
           result.getEvent(),
-          result.getRequestId(),
+          result.getRequestIdOrUnknown(),
           result.getUsage() != null);
     }
     return hasError;

@@ -40,6 +40,20 @@ public class OmniRealtimeConversation extends WebSocketListener {
   private long lastFirstTextDelay = -1;
   private AtomicBoolean isClosed = new AtomicBoolean(false);
   private final AtomicReference<CountDownLatch> disconnectLatch = new AtomicReference<>(null);
+  private volatile String requestId;
+
+  private String getRequestIdForLog() {
+    return DashScopeHeaders.requestIdOrUnknown(requestId);
+  }
+
+  private void updateRequestIdFromResponse(Response response) {
+    if (response != null && (requestId == null || requestId.isEmpty())) {
+      String responseRequestId = DashScopeHeaders.findRequestId(response.headers().toMultimap());
+      if (responseRequestId != null && !responseRequestId.isEmpty()) {
+        requestId = responseRequestId;
+      }
+    }
+  }
 
   /**
    * Constructor
@@ -160,7 +174,11 @@ public class OmniRealtimeConversation extends WebSocketListener {
         OmniRealtimeConstants.PROTOCOL_TYPE,
         OmniRealtimeConstants.PROTOCOL_EVENT_TYPE_APPEND_AUDIO);
     append_request.put(OmniRealtimeConstants.PROTOCOL_AUDIO, audioBase64);
-    log.debug("append audio with eid: {}, length: {}", event_id, audioBase64.length());
+    log.debug(
+        "append audio with eid: {}, length: {}, requestId={}",
+        event_id,
+        audioBase64.length(),
+        getRequestIdForLog());
     sendMessage(createGson().toJson(append_request), false);
   }
 
@@ -178,7 +196,11 @@ public class OmniRealtimeConversation extends WebSocketListener {
         OmniRealtimeConstants.PROTOCOL_TYPE,
         OmniRealtimeConstants.PROTOCOL_EVENT_TYPE_APPEND_VIDEO);
     append_request.put(OmniRealtimeConstants.PROTOCOL_VIDEO, videoBase64);
-    log.debug("append video with eid: " + event_id + ", length: " + videoBase64.length());
+    log.debug(
+        "append video with eid: {}, length: {}, requestId={}",
+        event_id,
+        videoBase64.length(),
+        getRequestIdForLog());
     sendMessage(createGson().toJson(append_request), false);
   }
 
@@ -337,7 +359,7 @@ public class OmniRealtimeConversation extends WebSocketListener {
 
   private void sendMessage(String message, boolean enableLog) {
     if (enableLog == true) {
-      log.debug("send message: " + message);
+      log.debug("send message: {}, requestId={}", message, getRequestIdForLog());
     }
     Boolean isOk = websocktetClient.send(message);
   }
@@ -349,21 +371,23 @@ public class OmniRealtimeConversation extends WebSocketListener {
   /** WebSocket callbacks */
   @Override
   public void onOpen(WebSocket webSocket, Response response) {
+    updateRequestIdFromResponse(response);
     isOpen.set(true);
     CountDownLatch latch = connectLatch.get();
     if (latch != null && latch.getCount() > 0) {
       latch.countDown();
     }
-    log.debug("WebSocket opened");
+    log.debug("WebSocket opened, requestId={}", getRequestIdForLog());
     callback.onOpen();
   }
 
   @Override
   public void onMessage(WebSocket webSocket, String text) {
     if (text.length() > 1024) {
-      log.debug("Received message: " + text.substring(0, 1024));
+      log.debug(
+          "Received message: {}, requestId={}", text.substring(0, 1024), getRequestIdForLog());
     } else {
-      log.debug("Received message: " + text);
+      log.debug("Received message: {}, requestId={}", text, getRequestIdForLog());
     }
     JsonObject response = JsonUtils.parse(text);
     callback.onEvent(response);
@@ -391,16 +415,14 @@ public class OmniRealtimeConversation extends WebSocketListener {
           break;
         case OmniRealtimeConstants.PROTOCOL_RESPONSE_TYPE_RESPONSE_DONE:
           log.debug(
-              "[Metric] response: "
-                  + lastResponseId
-                  + ", first text delay: "
-                  + lastFirstTextDelay
-                  + " ms, first audio delay: "
-                  + lastFirstAudioDelay
-                  + " ms");
+              "[Metric] response: {}, first text delay: {} ms, first audio delay: {} ms, requestId={}",
+              lastResponseId,
+              lastFirstTextDelay,
+              lastFirstAudioDelay,
+              getRequestIdForLog());
           break;
         case OmniRealtimeConstants.PROTOCOL_RESPONSE_TYPE_SESSION_FINISHED:
-          log.info("session: " + sessionId + " finished");
+          log.info("session: {} finished, requestId={}", sessionId, getRequestIdForLog());
           CountDownLatch latch = disconnectLatch.get();
           if (latch != null) {
             latch.countDown();
@@ -417,12 +439,13 @@ public class OmniRealtimeConversation extends WebSocketListener {
     if (latch != null && latch.getCount() > 0) {
       latch.countDown();
     }
-    log.debug("WebSocket closed: " + code + ", " + reason);
+    log.debug("WebSocket closed: {}, {}, requestId={}", code, reason, getRequestIdForLog());
     callback.onClose(code, reason);
   }
 
   @Override
   public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+    updateRequestIdFromResponse(response);
     isOpen.set(false);
     isClosed.set(true);
     CountDownLatch cLatch = connectLatch.get();
@@ -433,7 +456,7 @@ public class OmniRealtimeConversation extends WebSocketListener {
     if (dLatch != null) {
       dLatch.countDown();
     }
-    log.error("WebSocket failed: " + t.getMessage(), t);
+    log.error("WebSocket failed: {}, requestId={}", t.getMessage(), getRequestIdForLog(), t);
     callback.onError(t);
   }
 
@@ -441,6 +464,6 @@ public class OmniRealtimeConversation extends WebSocketListener {
   public void onClosing(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
     isClosed.set(true);
     websocktetClient.close(code, reason);
-    log.debug("WebSocket closing: " + code + ", " + reason);
+    log.debug("WebSocket closing: {}, {}, requestId={}", code, reason, getRequestIdForLog());
   }
 }

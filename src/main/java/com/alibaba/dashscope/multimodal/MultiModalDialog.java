@@ -8,6 +8,7 @@ import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
+import com.alibaba.dashscope.protocol.DashScopeHeaders;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import com.alibaba.dashscope.utils.JsonUtils;
@@ -56,6 +57,12 @@ public class MultiModalDialog {
   private State.DialogState currentState = State.DialogState.IDLE; // Current dialogue state
 
   private String currentDialogId = ""; // Current dialogue ID
+
+  private final AtomicReference<String> lastRequestId = new AtomicReference<>(null);
+
+  private String getRequestIdForLog() {
+    return DashScopeHeaders.requestIdOrUnknown(lastRequestId.get());
+  }
 
   @SuperBuilder
   private static class AsyncCmdBuffer { // Asynchronous command buffer class
@@ -214,6 +221,7 @@ public class MultiModalDialog {
             BackpressureStrategy.BUFFER);
 
     closed.set(false); // Reset idempotent close guard for reuse across sessions
+    lastRequestId.set(null);
     stopLatch.set(new CountDownLatch(1)); // Initializes stop signal latch
 
     String preTaskId =
@@ -228,13 +236,20 @@ public class MultiModalDialog {
           new ResultCallback<DashScopeResult>() { // Registers callback handler
             @Override
             public void onEvent(DashScopeResult message) {
+              if (message.getRequestId() != null && !message.getRequestId().isEmpty()) {
+                lastRequestId.set(message.getRequestId());
+              }
               if (message.isBinaryOutput()) {
                 callback.onSpeechAudioData(
                     (ByteBuffer) message.getOutput()); // Handles speech output data
                 return;
               }
 
-              log.info("onEvent: {}", message); // Logs event information
+              log.info(
+                  "onEvent: event={}, output={}, requestId={}",
+                  message.getEvent(),
+                  message.getOutput(),
+                  message.getRequestIdOrUnknown()); // Logs event information
 
               if (message.getOutput() != null) {
                 JsonObject output =
@@ -311,8 +326,9 @@ public class MultiModalDialog {
                 if (message.getEvent().equals("task-started")) {
                   callback.onConnected();
                   log.debug(
-                      "MultiModalDialog connected, state is {}",
-                      currentState.getValue()); // Logs connection status
+                      "MultiModalDialog connected, state is {}, requestId={}",
+                      currentState.getValue(),
+                      message.getRequestIdOrUnknown()); // Logs connection status
                 }
               }
             }
@@ -486,7 +502,9 @@ public class MultiModalDialog {
         // Use timeout to prevent deadlock: if server doesn't respond in 30s, force close
         boolean completed = latch.await(30, TimeUnit.SECONDS);
         if (!completed) {
-          log.warn("stop() timed out waiting for server acknowledgement, forcing close");
+          log.warn(
+              "stop() timed out waiting for server acknowledgement, forcing close, requestId={}",
+              getRequestIdForLog());
           close();
         }
       } catch (InterruptedException e) {
@@ -555,8 +573,9 @@ public class MultiModalDialog {
     synchronized (MultiModalDialog.this) { // Synchronized block ensures thread safety
       if (conversationEmitter != null) {
         log.debug(
-            "submitAudioFrame to new emitter: "
-                + audioFrame); // Logs submission of audio frame information
+            "submitAudioFrame to new emitter: {}, requestId={}",
+            audioFrame,
+            getRequestIdForLog()); // Logs submission of audio frame information
         conversationEmitter.onNext(audioFrame); // Sends audio frame data
       } else {
         DialogBuffer.add(
@@ -580,8 +599,9 @@ public class MultiModalDialog {
     synchronized (MultiModalDialog.this) { // Synchronized block ensures thread safety
       if (conversationEmitter != null) {
         log.debug(
-            "submitText to new emitter: {}",
-            textFrame); // Logs submission of text frame information
+            "submitText to new emitter: {}, requestId={}",
+            textFrame,
+            getRequestIdForLog()); // Logs submission of text frame information
 
         if ("RequestToRespond".equals(textFrame) || "UpdateInfo".equals(textFrame)) {
           // RequestToRespond and UpdateInfo have special inputs and parameters

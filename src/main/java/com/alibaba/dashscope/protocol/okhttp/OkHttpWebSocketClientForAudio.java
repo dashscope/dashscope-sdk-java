@@ -89,7 +89,10 @@ public class OkHttpWebSocketClientForAudio extends OkHttpWebSocketClient {
 
   @Override
   protected void onBeforeSendStartMessage(JsonObject startMessage) {
-    log.info("send run-task request {}", JsonUtils.toJson(startMessage));
+    log.info(
+        "send run-task request {}, requestId={}",
+        JsonUtils.toJson(startMessage),
+        getRequestIdOrUnknown());
   }
 
   @Override

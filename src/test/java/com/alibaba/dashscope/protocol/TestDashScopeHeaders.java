@@ -14,6 +14,7 @@ import com.alibaba.dashscope.audio.asr.phrase.AsrPhraseOperationType;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.task.AsyncTaskParam;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -211,5 +212,25 @@ public class TestDashScopeHeaders {
     HalfDuplexRequest request = new HalfDuplexRequest(param, option);
     assertEquals("tasks", request.getModule());
     assertEquals(CLIENT_PREFIX + "/tasks", request.getHttpRequest().getHeaders().get(SDK_CLIENT));
+  }
+
+  @Test
+  public void testFindRequestIdSupportsResponseHeaderVariants() {
+    assertEquals(
+        "request-1",
+        DashScopeHeaders.findRequestId(
+            Collections.singletonMap("X-Request-Id", Collections.singletonList("request-1"))));
+    assertEquals(
+        "request-2",
+        DashScopeHeaders.findRequestId(
+            Collections.singletonMap("x-dashscope-requestid", "request-2")));
+    assertEquals(
+        "request-3",
+        DashScopeHeaders.findRequestId(
+            Collections.singletonMap("X-DashScope-Request-Id", "request-3")));
+    assertNull(DashScopeHeaders.findRequestId(null));
+    assertEquals("unknown", DashScopeHeaders.requestIdOrUnknown(null));
+    assertEquals("unknown", DashScopeHeaders.requestIdOrUnknown(""));
+    assertEquals("request-4", DashScopeHeaders.requestIdOrUnknown("request-4"));
   }
 }

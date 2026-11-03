@@ -14,6 +14,36 @@ public final class DashScopeHeaders {
   private static final String SDK_CLIENT = "java-sdk";
   private static final String SDK_SESSION_ID = UUID.randomUUID().toString();
 
+  public static String findRequestId(Map<String, ?> headers) {
+    if (headers == null) {
+      return null;
+    }
+    for (Map.Entry<String, ?> entry : headers.entrySet()) {
+      String name = entry.getKey();
+      if (name == null
+          || !("x-request-id".equalsIgnoreCase(name)
+              || "x-dashscope-requestid".equalsIgnoreCase(name)
+              || "x-dashscope-request-id".equalsIgnoreCase(name))) {
+        continue;
+      }
+      Object value = entry.getValue();
+      if (value instanceof Iterable) {
+        for (Object item : (Iterable<?>) value) {
+          if (item != null && !item.toString().isEmpty()) {
+            return item.toString();
+          }
+        }
+      } else if (value != null && !value.toString().isEmpty()) {
+        return value.toString();
+      }
+    }
+    return null;
+  }
+
+  public static String requestIdOrUnknown(String requestId) {
+    return requestId == null || requestId.isEmpty() ? "unknown" : requestId;
+  }
+
   public static String userAgent() {
     return userAgent(null);
   }

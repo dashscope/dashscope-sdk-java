@@ -45,7 +45,10 @@ public class VideoSynthesisListResult {
       rs.message = dashScopeResult.getMessage();
       return rs;
     } else {
-      log.error("Result no output: {}", dashScopeResult);
+      log.error(
+          "Result no output: {}, requestId={}",
+          dashScopeResult,
+          dashScopeResult.getRequestIdOrUnknown());
     }
     return null;
   }

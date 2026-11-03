@@ -4,6 +4,7 @@ package com.alibaba.dashscope;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversation;
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationMessage;
@@ -11,6 +12,7 @@ import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationP
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationResult;
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalMessageItemImage;
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalMessageItemText;
+import com.alibaba.dashscope.common.DashScopeResult;
 import com.alibaba.dashscope.common.MultiModalMessage;
 import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.ApiException;
@@ -18,7 +20,11 @@ import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.exception.UploadFileException;
 import com.alibaba.dashscope.utils.Constants;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +38,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
+import org.slf4j.LoggerFactory;
+import org.slf4j.simple.SimpleLogger;
 
 @Execution(ExecutionMode.SAME_THREAD)
 @Slf4j
@@ -40,6 +48,35 @@ public class TestMultiModalConversation {
   private static final MediaType MEDIA_TYPE_APPLICATION_JSON =
       MediaType.parse("application/json; charset=utf-8");
   MockWebServer server;
+
+  private static class SdkLogCapture implements AutoCloseable {
+    private final PrintStream originalErr = System.err;
+    private final ByteArrayOutputStream output = new ByteArrayOutputStream();
+    private final SimpleLogger logger;
+    private final Field levelField;
+    private final int originalLevel;
+
+    SdkLogCapture(Class<?> loggerClass, boolean debug) throws Exception {
+      logger = (SimpleLogger) LoggerFactory.getLogger(loggerClass);
+      levelField = SimpleLogger.class.getDeclaredField("currentLogLevel");
+      levelField.setAccessible(true);
+      originalLevel = levelField.getInt(logger);
+      if (debug) {
+        levelField.setInt(logger, 10);
+      }
+      System.setErr(new PrintStream(output, true, StandardCharsets.UTF_8.name()));
+    }
+
+    String output() {
+      return new String(output.toByteArray(), StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public void close() throws Exception {
+      System.setErr(originalErr);
+      levelField.setInt(logger, originalLevel);
+    }
+  }
 
   @BeforeEach
   public void before() {
@@ -101,8 +138,7 @@ public class TestMultiModalConversation {
   }
 
   @Test
-  public void testStreamIgnoresUsageOnlyFrameAndUsesHeaderRequestId()
-      throws ApiException, NoApiKeyException, UploadFileException {
+  public void testStreamIgnoresUsageOnlyFrameAndUsesHeaderRequestId() throws Exception {
     server.enqueue(
         new MockResponse()
             .setHeader("content-type", "text/event-stream")
@@ -125,8 +161,11 @@ public class TestMultiModalConversation {
                     .build())
             .build();
 
-    List<MultiModalConversationResult> results =
-        new MultiModalConversation().streamCall(param).toList().blockingGet();
+    List<MultiModalConversationResult> results;
+    try (SdkLogCapture capture = new SdkLogCapture(MultiModalConversation.class, true)) {
+      results = new MultiModalConversation().streamCall(param).toList().blockingGet();
+      assertTrue(capture.output().contains("requestId=request-from-header"));
+    }
 
     assertEquals(1, results.size());
     MultiModalConversationResult result = results.get(0);
@@ -135,5 +174,20 @@ public class TestMultiModalConversation {
     assertEquals(
         "正常结果",
         result.getOutput().getChoices().get(0).getMessage().getContent().get(0).get("text"));
+  }
+
+  @Test
+  public void testResultNoOutputLogsRequestId() throws Exception {
+    DashScopeResult withRequestId = new DashScopeResult();
+    withRequestId.setRequestId("request-from-body");
+    try (SdkLogCapture capture = new SdkLogCapture(MultiModalConversationResult.class, false)) {
+      MultiModalConversationResult.fromDashScopeResult(withRequestId);
+      assertTrue(capture.output().contains("requestId=request-from-body"));
+    }
+
+    try (SdkLogCapture capture = new SdkLogCapture(MultiModalConversationResult.class, false)) {
+      MultiModalConversationResult.fromDashScopeResult(new DashScopeResult());
+      assertTrue(capture.output().contains("requestId=unknown"));
+    }
   }
 }

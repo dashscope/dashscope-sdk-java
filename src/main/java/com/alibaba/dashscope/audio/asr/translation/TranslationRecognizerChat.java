@@ -10,6 +10,7 @@ import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
+import com.alibaba.dashscope.protocol.DashScopeHeaders;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import io.reactivex.BackpressureStrategy;
@@ -55,6 +56,11 @@ public final class TranslationRecognizerChat {
   private AtomicBoolean isSentenceEnd = new AtomicBoolean(false);
   private AtomicBoolean stopped = new AtomicBoolean(false);
   private String preRequestId = null;
+  private AtomicReference<String> lastRequestId = new AtomicReference<>(null);
+
+  private String getRequestIdForLog() {
+    return DashScopeHeaders.requestIdOrUnknown(lastRequestId.get());
+  }
 
   @SuperBuilder
   private static class TranslationRecognizerParamWithStream extends TranslationRecognizerParam {
@@ -197,18 +203,26 @@ public final class TranslationRecognizerChat {
             public void onEvent(DashScopeResult message) {
               TranslationRecognizerResult translationRecognizerResult =
                   TranslationRecognizerResult.fromDashScopeResult(message);
+              if (translationRecognizerResult.getRequestId() != null
+                  && !translationRecognizerResult.getRequestId().isEmpty()) {
+                lastRequestId.set(translationRecognizerResult.getRequestId());
+              }
               if (!translationRecognizerResult.isCompleteResult()) {
                 if (firstPackageTimeStamp < 0) {
                   firstPackageTimeStamp = System.currentTimeMillis();
-                  log.debug("first package delay: " + getFirstPackageDelay());
+                  log.debug(
+                      "first package delay: {}, requestId={}",
+                      getFirstPackageDelay(),
+                      getRequestIdForLog());
                 }
                 log.debug(
-                    "[Recv Result] transcription: "
-                        + translationRecognizerResult.getTranslationResult()
-                        + " translation: "
-                        + translationRecognizerResult.getTranscriptionResult());
+                    "[Recv Result] transcription: {}, translation: {}, requestId={}",
+                    translationRecognizerResult.getTranslationResult(),
+                    translationRecognizerResult.getTranscriptionResult(),
+                    getRequestIdForLog());
                 if (translationRecognizerResult.isSentenceEnd()) {
-                  log.debug("[Chat] recv sentence end, stop asr");
+                  log.debug(
+                      "[Chat] recv sentence end, stop asr, requestId={}", getRequestIdForLog());
                   isSentenceEnd.set(true);
                 }
                 callback.onEvent(translationRecognizerResult);
@@ -218,7 +232,10 @@ public final class TranslationRecognizerChat {
             @Override
             public void onComplete() {
               onCompleteTimeStamp = System.currentTimeMillis();
-              log.debug("last package delay: " + getLastPackageDelay());
+              log.debug(
+                  "last package delay: {}, requestId={}",
+                  getLastPackageDelay(),
+                  getRequestIdForLog());
               synchronized (TranslationRecognizerChat.this) {
                 state = TranslationRecognizerState.IDLE;
               }
@@ -249,7 +266,10 @@ public final class TranslationRecognizerChat {
         stopLatch.get().countDown();
       }
     }
-    log.debug("TranslationRecognizerChat started, state is {}", state.getValue());
+    log.debug(
+        "TranslationRecognizerChat started, state is {}, requestId={}",
+        state.getValue(),
+        getRequestIdForLog());
   }
 
   /**
@@ -263,7 +283,7 @@ public final class TranslationRecognizerChat {
    */
   public boolean sendAudioFrame(ByteBuffer audioFrame) {
     if (isSentenceEnd.get()) {
-      log.debug("skip audio due to has sentence end");
+      log.debug("skip audio due to has sentence end, requestId={}", getRequestIdForLog());
       return false;
     }
     if (audioFrame == null) {
@@ -272,7 +292,8 @@ public final class TranslationRecognizerChat {
     if (this.startStreamTimeStamp < 0) {
       this.startStreamTimeStamp = System.currentTimeMillis();
     }
-    log.debug("send audio frame: " + audioFrame.remaining());
+    log.debug(
+        "send audio frame: {}, requestId={}", audioFrame.remaining(), getRequestIdForLog());
     synchronized (this) {
       if (state != TranslationRecognizerState.SPEECH_TRANSLATION_STARTED) {
         throw new ApiException(
@@ -295,10 +316,12 @@ public final class TranslationRecognizerChat {
   public void stop() {
     this.stopStreamTimeStamp = System.currentTimeMillis();
     if (stopped.get()) {
-      log.debug("TranslationRecognizerChat has already been stopped, skip");
+      log.debug(
+          "TranslationRecognizerChat has already been stopped, skip, requestId={}",
+          getRequestIdForLog());
       return;
     }
-    log.debug("stop TranslationRecognizerChat");
+    log.debug("stop TranslationRecognizerChat, requestId={}", getRequestIdForLog());
     synchronized (this) {
       if (state != TranslationRecognizerState.SPEECH_TRANSLATION_STARTED) {
         throw new ApiException(
@@ -314,7 +337,7 @@ public final class TranslationRecognizerChat {
 
     if (stopLatch.get() != null) {
       try {
-        log.debug("start waiting for task-finished");
+        log.debug("start waiting for task-finished, requestId={}", getRequestIdForLog());
         stopLatch.get().await();
       } catch (InterruptedException ignored) {
       }
@@ -333,6 +356,7 @@ public final class TranslationRecognizerChat {
     this.isSentenceEnd.set(false);
     this.stopped.set(false);
     this.preRequestId = null;
+    this.lastRequestId.set(null);
   }
 
   /** First Package Delay is the time between start sending audio and receive first words package */

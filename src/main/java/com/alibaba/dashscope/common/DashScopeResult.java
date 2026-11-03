@@ -3,6 +3,7 @@
 package com.alibaba.dashscope.common;
 
 import com.alibaba.dashscope.exception.ApiException;
+import com.alibaba.dashscope.protocol.DashScopeHeaders;
 import com.alibaba.dashscope.protocol.HalfDuplexRequest;
 import com.alibaba.dashscope.protocol.NetworkResponse;
 import com.alibaba.dashscope.protocol.Protocol;
@@ -41,8 +42,9 @@ public class DashScopeResult extends Result {
         String message = response.getMessage();
         if (message == null || message.isEmpty()) {
           log.warn(
-              "WebSocket response message is null or empty, httpStatusCode: {}",
-              response.getHttpStatusCode());
+              "WebSocket response message is null or empty, httpStatusCode: {}, requestId={}",
+              response.getHttpStatusCode(),
+              getRequestIdOrUnknown());
           setInternalError();
           return (T) this;
         }
@@ -62,7 +64,7 @@ public class DashScopeResult extends Result {
         this.setMessage("");
         return (T) this;
       }
-      JsonObject jsonObject = parseJson(message, "Failed to parse HTTP response as JSON: {}");
+      JsonObject jsonObject = parseJson(message, "Failed to parse HTTP response as JSON");
       if (jsonObject == null) {
         return (T) this;
       }
@@ -237,7 +239,7 @@ public class DashScopeResult extends Result {
     try {
       return JsonUtils.parse(raw);
     } catch (Exception e) {
-      log.error(logMsg, e);
+      log.error("{}, requestId={}", logMsg, getRequestIdOrUnknown(), e);
       setInternalError();
       return null;
     }
@@ -271,21 +273,9 @@ public class DashScopeResult extends Result {
     if (getRequestId() != null && !getRequestId().isEmpty()) {
       return;
     }
-    Map<String, Object> headers = getHeaders();
-    if (headers == null) {
-      return;
-    }
-    for (Map.Entry<String, Object> entry : headers.entrySet()) {
-      String name = entry.getKey();
-      if ("x-request-id".equalsIgnoreCase(name)
-          || "x-dashscope-requestid".equalsIgnoreCase(name)
-          || "x-dashscope-request-id".equalsIgnoreCase(name)) {
-        String value = entry.getValue() == null ? null : String.valueOf(entry.getValue());
-        if (value != null && !value.isEmpty()) {
-          setRequestId(value);
-          return;
-        }
-      }
+    String requestId = DashScopeHeaders.findRequestId(getHeaders());
+    if (requestId != null) {
+      setRequestId(requestId);
     }
   }
 }

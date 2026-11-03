@@ -9,6 +9,7 @@ import com.alibaba.dashscope.common.ResultCallback;
 import com.alibaba.dashscope.common.Status;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
+import com.alibaba.dashscope.protocol.DashScopeHeaders;
 import com.alibaba.dashscope.protocol.HalfDuplexClient;
 import com.alibaba.dashscope.protocol.HalfDuplexRequest;
 import com.alibaba.dashscope.protocol.HttpMethod;
@@ -52,6 +53,14 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       Collections.newSetFromMap(new ConcurrentHashMap<>());
   private static final MediaType MEDIA_TYPE_APPLICATION_JSON =
       MediaType.parse("application/json; charset=utf-8");
+
+  private static String requestId(Response response) {
+    if (response == null) {
+      return "unknown";
+    }
+    return DashScopeHeaders.requestIdOrUnknown(
+        DashScopeHeaders.findRequestId(response.headers().toMultimap()));
+  }
 
   private Status parseStreamEventData(String data) {
     try {
@@ -368,7 +377,13 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       Response response,
       HalfDuplexRequest req,
       AtomicBoolean terminated) {
-    log.debug(StringUtils.format("Event: id %s, type: %s, data: %s", id, eventType, data));
+    log.debug(
+        StringUtils.format(
+            "Event: id %s, type: %s, data: %s, requestId=%s",
+            id,
+            eventType,
+            data,
+            requestId(response)));
     if (terminated.get()) {
       return;
     }
@@ -393,7 +408,13 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                   isFlattenResult,
                   req));
     } else if (SSEEventType.DONE.equals(eventType)) { // event done ignore message
-      log.debug(StringUtils.format("Ignore event id: %s, type: %s, data: %s", id, eventType, data));
+      log.debug(
+          StringUtils.format(
+              "Ignore event id: %s, type: %s, data: %s, requestId=%s",
+              id,
+              eventType,
+              data,
+              requestId(response)));
     } else if (eventType != null) {
       // process assistant events.
       emitter.onNext(
@@ -530,7 +551,13 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                   java.lang.String id,
                   java.lang.String type,
                   java.lang.String data) {
-                log.debug(StringUtils.format("Event: id %s, type: %s, data: %s", id, type, data));
+                log.debug(
+                    StringUtils.format(
+                        "Event: id %s, type: %s, data: %s, requestId=%s",
+                        id,
+                        type,
+                        data,
+                        requestId(response)));
                 if (terminated.get()) {
                   return;
                 }

@@ -11,6 +11,7 @@ import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
+import com.alibaba.dashscope.protocol.DashScopeHeaders;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import io.reactivex.BackpressureStrategy;
@@ -57,6 +58,11 @@ public final class TranslationRecognizerRealtime {
   private long stopStreamTimeStamp = -1;
   private long onCompleteTimeStamp = -1;
   private String preRequestId = null;
+  private AtomicReference<String> lastRequestId = new AtomicReference<>(null);
+
+  private String getRequestIdForLog() {
+    return DashScopeHeaders.requestIdOrUnknown(lastRequestId.get());
+  }
 
   @SuperBuilder
   private static class TranslationRecognizerParamWithStream extends TranslationRecognizerParam {
@@ -164,7 +170,10 @@ public final class TranslationRecognizerRealtime {
                       if (startStreamTimeStamp < 0) {
                         startStreamTimeStamp = System.currentTimeMillis();
                       }
-                      log.debug("send audio frame: " + buffer.remaining());
+                      log.debug(
+                          "send audio frame: {}, requestId={}",
+                          buffer.remaining(),
+                          getRequestIdForLog());
                     }),
                 preRequestId))
         .doOnComplete(
@@ -183,20 +192,29 @@ public final class TranslationRecognizerRealtime {
                     && !item.isCompleteResult())
         .doOnNext(
             result -> {
+              if (result.getRequestId() != null && !result.getRequestId().isEmpty()) {
+                lastRequestId.set(result.getRequestId());
+              }
               if (firstPackageTimeStamp < 0) {
                 firstPackageTimeStamp = System.currentTimeMillis();
-                log.debug("first package delay: " + getFirstPackageDelay());
+                log.debug(
+                    "first package delay: {}, requestId={}",
+                    getFirstPackageDelay(),
+                    getRequestIdForLog());
               }
               log.debug(
-                  "[Recv Result] transcription: "
-                      + result.getTranslationResult()
-                      + " translation: "
-                      + result.getTranscriptionResult());
+                  "[Recv Result] transcription: {}, translation: {}, requestId={}",
+                  result.getTranslationResult(),
+                  result.getTranscriptionResult(),
+                  getRequestIdForLog());
             })
         .doOnComplete(
             () -> {
               onCompleteTimeStamp = System.currentTimeMillis();
-              log.debug("last package delay: " + getLastPackageDelay());
+              log.debug(
+                  "last package delay: {}, requestId={}",
+                  getLastPackageDelay(),
+                  getRequestIdForLog());
             });
   }
 
@@ -256,16 +274,23 @@ public final class TranslationRecognizerRealtime {
             public void onEvent(DashScopeResult message) {
               TranslationRecognizerResult translationRecognizerResult =
                   TranslationRecognizerResult.fromDashScopeResult(message);
+              if (translationRecognizerResult.getRequestId() != null
+                  && !translationRecognizerResult.getRequestId().isEmpty()) {
+                lastRequestId.set(translationRecognizerResult.getRequestId());
+              }
               if (!translationRecognizerResult.isCompleteResult()) {
                 if (firstPackageTimeStamp < 0) {
                   firstPackageTimeStamp = System.currentTimeMillis();
-                  log.debug("first package delay: " + getFirstPackageDelay());
+                  log.debug(
+                    "first package delay: {}, requestId={}",
+                    getFirstPackageDelay(),
+                    getRequestIdForLog());
                 }
                 log.debug(
-                    "[Recv Result] transcription: "
-                        + translationRecognizerResult.getTranslationResult()
-                        + " translation: "
-                        + translationRecognizerResult.getTranscriptionResult());
+                    "[Recv Result] transcription: {}, translation: {}, requestId={}",
+                    translationRecognizerResult.getTranslationResult(),
+                    translationRecognizerResult.getTranscriptionResult(),
+                    getRequestIdForLog());
                 callback.onEvent(translationRecognizerResult);
               }
             }
@@ -273,7 +298,10 @@ public final class TranslationRecognizerRealtime {
             @Override
             public void onComplete() {
               onCompleteTimeStamp = System.currentTimeMillis();
-              log.debug("last package delay: " + getLastPackageDelay());
+              log.debug(
+                  "last package delay: {}, requestId={}",
+                  getLastPackageDelay(),
+                  getRequestIdForLog());
               synchronized (TranslationRecognizerRealtime.this) {
                 state = TranslationRecognizerState.IDLE;
               }
@@ -304,7 +332,7 @@ public final class TranslationRecognizerRealtime {
         stopLatch.get().countDown();
       }
     }
-    log.debug("TranslationRecognizerRealtime started");
+    log.debug("TranslationRecognizerRealtime started, requestId={}", getRequestIdForLog());
   }
 
   /**
@@ -362,23 +390,33 @@ public final class TranslationRecognizerRealtime {
           .doOnComplete(
               () -> {
                 onCompleteTimeStamp = System.currentTimeMillis();
-                log.debug("last package delay: " + getLastPackageDelay());
+                log.debug(
+                    "last package delay: {}, requestId={}",
+                    getLastPackageDelay(),
+                    getRequestIdForLog());
               })
           .blockingSubscribe(
               res -> {
                 TranslationRecognizerResult translationRecognizerResult =
                     TranslationRecognizerResult.fromDashScopeResult(res);
+                if (translationRecognizerResult.getRequestId() != null
+                    && !translationRecognizerResult.getRequestId().isEmpty()) {
+                  lastRequestId.set(translationRecognizerResult.getRequestId());
+                }
                 if (!translationRecognizerResult.isCompleteResult()
                     && translationRecognizerResult.isSentenceEnd()) {
                   if (firstPackageTimeStamp < 0) {
                     firstPackageTimeStamp = System.currentTimeMillis();
-                    log.debug("first package delay: " + getFirstPackageDelay());
+                    log.debug(
+                    "first package delay: {}, requestId={}",
+                    getFirstPackageDelay(),
+                    getRequestIdForLog());
                   }
                   log.debug(
-                      "[Recv SentenceEnd]: transcription"
-                          + translationRecognizerResult.getTranslationResult()
-                          + ", translation: "
-                          + translationRecognizerResult.getTranscriptionResult());
+                      "[Recv SentenceEnd]: transcription {}, translation: {}, requestId={}",
+                      translationRecognizerResult.getTranslationResult(),
+                      translationRecognizerResult.getTranscriptionResult(),
+                      getRequestIdForLog());
                   results.setRequestId(translationRecognizerResult.getRequestId());
                   results
                       .getTranslationResultList()
@@ -418,7 +456,8 @@ public final class TranslationRecognizerRealtime {
     if (this.startStreamTimeStamp < 0) {
       this.startStreamTimeStamp = System.currentTimeMillis();
     }
-    log.debug("send audio frame: " + audioFrame.remaining());
+    log.debug(
+        "send audio frame: {}, requestId={}", audioFrame.remaining(), getRequestIdForLog());
     synchronized (this) {
       if (state != TranslationRecognizerState.SPEECH_TRANSLATION_STARTED) {
         throw new ApiException(
@@ -471,6 +510,7 @@ public final class TranslationRecognizerRealtime {
     this.stopStreamTimeStamp = -1;
     this.onCompleteTimeStamp = -1;
     preRequestId = null;
+    lastRequestId.set(null);
   }
 
   /** First Package Delay is the time between start sending audio and receive first words package */

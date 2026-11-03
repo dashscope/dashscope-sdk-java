@@ -36,6 +36,20 @@ public class QwenTtsRealtime extends WebSocketListener {
   private long lastFirstTextTime = -1;
   private long lastFirstAudioDelay = -1;
   private AtomicBoolean isClosed = new AtomicBoolean(false);
+  private volatile String requestId;
+
+  private String getRequestIdForLog() {
+    return DashScopeHeaders.requestIdOrUnknown(requestId);
+  }
+
+  private void updateRequestIdFromResponse(Response response) {
+    if (response != null && (requestId == null || requestId.isEmpty())) {
+      String responseRequestId = DashScopeHeaders.findRequestId(response.headers().toMultimap());
+      if (responseRequestId != null && !responseRequestId.isEmpty()) {
+        requestId = responseRequestId;
+      }
+    }
+  }
 
   /**
    * Constructor
@@ -236,7 +250,7 @@ public class QwenTtsRealtime extends WebSocketListener {
 
   private void sendMessage(String message, boolean enableLog) {
     if (enableLog == true) {
-      log.debug("send message: " + message);
+      log.debug("send message: {}, requestId={}", message, getRequestIdForLog());
     }
     Boolean isOk = websocktetClient.send(message);
   }
@@ -248,18 +262,20 @@ public class QwenTtsRealtime extends WebSocketListener {
   /** WebSocket callbacks */
   @Override
   public void onOpen(WebSocket webSocket, Response response) {
+    updateRequestIdFromResponse(response);
     isOpen.set(true);
     connectLatch.get().countDown();
-    log.debug("WebSocket opened");
+    log.debug("WebSocket opened, requestId={}", getRequestIdForLog());
     callback.onOpen();
   }
 
   @Override
   public void onMessage(WebSocket webSocket, String text) {
     if (text.length() > 1024) {
-      log.debug("Received message: " + text.substring(0, 1024));
+      log.debug(
+          "Received message: {}, requestId={}", text.substring(0, 1024), getRequestIdForLog());
     } else {
-      log.debug("Received message: " + text);
+      log.debug("Received message: {}, requestId={}", text, getRequestIdForLog());
     }
     JsonObject response = JsonUtils.parse(text);
     callback.onEvent(response);
@@ -279,11 +295,10 @@ public class QwenTtsRealtime extends WebSocketListener {
           break;
         case QwenTtsRealtimeConstants.PROTOCOL_RESPONSE_TYPE_RESPONSE_DONE:
           log.debug(
-              "[Metric] response: "
-                  + lastResponseId
-                  + ", first audio delay: "
-                  + lastFirstAudioDelay
-                  + " ms");
+              "[Metric] response: {}, first audio delay: {} ms, requestId={}",
+              lastResponseId,
+              lastFirstAudioDelay,
+              getRequestIdForLog());
           break;
       }
     }
@@ -293,7 +308,7 @@ public class QwenTtsRealtime extends WebSocketListener {
   public void onClosed(WebSocket webSocket, int code, String reason) {
     isOpen.set(false);
     connectLatch.get().countDown();
-    log.debug("WebSocket closed");
+    log.debug("WebSocket closed, requestId={}", getRequestIdForLog());
     callback.onClose(code, reason);
   }
 
@@ -301,12 +316,13 @@ public class QwenTtsRealtime extends WebSocketListener {
   public void onClosing(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
     isClosed.set(true);
     websocktetClient.close(code, reason);
-    log.debug("WebSocket closing: " + code + ", " + reason);
+    log.debug("WebSocket closing: {}, {}, requestId={}", code, reason, getRequestIdForLog());
   }
 
   @Override
   public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+    updateRequestIdFromResponse(response);
     connectLatch.get().countDown();
-    log.error("WebSocket failed: " + t.getMessage());
+    log.error("WebSocket failed: {}, requestId={}", t.getMessage(), getRequestIdForLog());
   }
 }

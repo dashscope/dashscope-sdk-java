@@ -14,6 +14,9 @@ import com.alibaba.dashscope.protocol.HalfDuplexRequest;
 import com.alibaba.dashscope.protocol.NetworkResponse;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.google.gson.JsonObject;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import org.junit.jupiter.api.Test;
 
@@ -135,5 +138,44 @@ public class TestDashScopeResultEmptyBody {
     DashScopeResult result = flattenResult(200, "not json at all");
     assertEquals(PublicErrorDef.INTERNAL_ERROR.getStatusCode(), result.getStatusCode());
     assertEquals(PublicErrorDef.INTERNAL_ERROR.getErrorCode(), result.getCode());
+  }
+
+  @Test
+  public void testBodyRequestIdOverridesResponseHeader() throws Exception {
+    NetworkResponse response =
+        NetworkResponse.builder()
+            .headers(
+                Collections.singletonMap(
+                    "x-request-id", Collections.singletonList("request-from-header")))
+            .message("{\"request_id\":\"request-from-body\",\"output\":{}}")
+            .httpStatusCode(200)
+            .build();
+    DashScopeResult result = new DashScopeResult().fromResponse(Protocol.HTTP, response, false);
+    assertEquals("request-from-body", result.getRequestId());
+  }
+
+  @Test
+  public void testMalformedBodyLogsHeaderRequestId() throws Exception {
+    NetworkResponse response =
+        NetworkResponse.builder()
+            .headers(
+                Collections.singletonMap(
+                    "x-request-id", Collections.singletonList("request-from-header")))
+            .message("not json at all")
+            .httpStatusCode(200)
+            .build();
+    PrintStream originalErr = System.err;
+    ByteArrayOutputStream output = new ByteArrayOutputStream();
+    DashScopeResult result;
+    try {
+      System.setErr(new PrintStream(output, true, StandardCharsets.UTF_8.name()));
+      result = new DashScopeResult().fromResponse(Protocol.HTTP, response, false);
+    } finally {
+      System.setErr(originalErr);
+    }
+    assertEquals("request-from-header", result.getRequestId());
+    assertTrue(
+        new String(output.toByteArray(), StandardCharsets.UTF_8)
+            .contains("requestId=request-from-header"));
   }
 }
