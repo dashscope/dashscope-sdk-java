@@ -662,9 +662,9 @@ public final class RealtimeSession implements AutoCloseable {
       CountDownLatch latch = openLatch;
       if (latch != null && latch.getCount() > 0) {
         openFailure = mapped;
-        // connect() holds the session monitor while awaiting this latch. Count down before trying
-        // to take that monitor, otherwise close-during-connect deadlocks until the handshake
-        // timeout.
+        // Count down before clearCurrentSocket so connect() wakes promptly: the handshake await
+        // runs outside the session monitor, and the post-await cleanup re-acquires the monitor
+        // guarded by the socket identity, so it tolerates this callback detaching the socket.
         latch.countDown();
         clearCurrentSocket(webSocket);
       } else {

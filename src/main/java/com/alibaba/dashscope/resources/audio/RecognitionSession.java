@@ -90,19 +90,22 @@ public final class RecognitionSession implements AutoCloseable {
         throw illegalState("session already started; close() before re-starting");
       }
       starting = true;
-      synchronized (pumpLock) {
-        delivered.clear();
-        terminal = false;
-        terminalFailure = null;
-      }
-      lastResponse = null;
-      usage = null;
-      requestId = null;
-      firstFrameNanos = -1;
-      stopNanos = -1;
-      firstPackageDelay = null;
-      lastPackageDelay = null;
     }
+    // Never take pumpLock inside the session monitor: pumpOnce's terminal paths call close()
+    // while holding pumpLock (pumpLock -> this), so nesting this block in synchronized(this)
+    // would invert the lock order and can deadlock against a pumping reader.
+    synchronized (pumpLock) {
+      delivered.clear();
+      terminal = false;
+      terminalFailure = null;
+    }
+    lastResponse = null;
+    usage = null;
+    requestId = null;
+    firstFrameNanos = -1;
+    stopNanos = -1;
+    firstPackageDelay = null;
+    lastPackageDelay = null;
 
     Map<String, Object> parameters = new LinkedHashMap<>();
     if (params.getFormat() != null) {
@@ -131,6 +134,7 @@ public final class RecognitionSession implements AutoCloseable {
     payload.set("input", mapper.createObjectNode());
     payload.set("parameters", mapper.valueToTree(parameters));
     if (params.getPhraseId() != null) {
+      // phraseId rides as top-level resources (design §1.4), never inside parameters.
       payload
           .putArray("resources")
           .addObject()
@@ -194,6 +198,7 @@ public final class RecognitionSession implements AutoCloseable {
         throw illegalState("session closed while completing start");
       }
     } catch (RuntimeException e) {
+      // run-task failure: close first, then raise (audio design §6).
       close();
       throw e;
     } finally {

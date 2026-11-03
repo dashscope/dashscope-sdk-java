@@ -6,9 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.errors.ApiConnectionException;
+import com.alibaba.dashscope.errors.ApiTimeoutException;
 import com.alibaba.dashscope.resources.audio.RealtimeSession;
 import com.alibaba.dashscope.types.audio.RealtimeParams;
 import com.alibaba.dashscope.types.audio.UpdateSessionParams;
@@ -34,6 +36,7 @@ import okhttp3.WebSocketListener;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import okhttp3.mockwebserver.SocketPolicy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -139,6 +142,28 @@ class RealtimeMockTest {
       assertNotNull(request);
       assertEquals("/api-ws/v1/realtime?model=qwen3-omni-flash-realtime", request.getPath());
     }
+  }
+
+  @Test
+  void handshakeHonorsRequestOptionsTimeout() {
+    // The upgrade never completes: the SDK's own handshake latch must honor the per-request
+    // timeout instead of falling back to the default connect timeout.
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
+    assertTimeoutPreemptively(
+        Duration.ofSeconds(2),
+        () -> {
+          ApiTimeoutException e =
+              assertThrows(
+                  ApiTimeoutException.class,
+                  () ->
+                      client
+                          .audio()
+                          .realtime()
+                          .connect(
+                              RealtimeParams.builder().model("qwen3-omni-flash-realtime").build(),
+                              RequestOptions.builder().timeout(Duration.ofMillis(200)).build()));
+          assertTrue(e.getMessage().contains("websocket handshake after"));
+        });
   }
 
   @Test
