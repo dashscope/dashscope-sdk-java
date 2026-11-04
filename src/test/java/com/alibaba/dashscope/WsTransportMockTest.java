@@ -300,10 +300,13 @@ class WsTransportMockTest {
   void binaryLanesAreReleasedAfterTerminalEvent() throws Exception {
     // Regression (04f179b): the owner AtomicReference stores the caller's task_id instance,
     // while release used the equal-but-distinct String parsed from the terminal JSON frame, so
-    // the identity-based compareAndSet never released the lane — every later binary task on the
-    // same shared connection hit a spurious BinaryOwnerConflict. Releasing must also happen
-    // before the terminal event is published, or a fast consumer claiming the next sequential
-    // task races the demux thread and sees the stale owner.
+    // the identity-based compareAndSet never released the lane—every later binary task on the
+    // same shared connection hit a spurious BinaryOwnerConflict. This test pins that state
+    // deterministically: once the terminal event is observable, routeText has already released
+    // both lanes (release happens before enqueue, see WsConnection.routeText). Claiming before
+    // consuming the event is NOT sound — the uplink is legitimately held until the demux thread
+    // processes the terminal frame — so a publish-before-release regression surfaces here only
+    // as intermittent BinaryOwnerConflict, not a deterministic red.
     ServerSocket serverSocket = enqueueUpgrade();
     try (WsConnection conn =
         new WsConnection(transport, transport.config().getWsBaseUrl(), "audio", null)) {
