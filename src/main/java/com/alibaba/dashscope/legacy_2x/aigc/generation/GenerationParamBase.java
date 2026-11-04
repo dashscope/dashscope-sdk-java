@@ -22,6 +22,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public abstract class GenerationParamBase extends HalfDuplexServiceParam {
   /** The input prompt. */
   private String prompt;

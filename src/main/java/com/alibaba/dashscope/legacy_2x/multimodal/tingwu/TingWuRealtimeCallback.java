@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
  *
  * <p>author songsong.shao date 2025/4/27
  */
+@Deprecated
 public abstract class TingWuRealtimeCallback {
 
   /** Called when a conversation starts with a specific dialog ID. */

@@ -15,6 +15,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class TextMessageParam extends MessageParamBase {
   /** The role, can be `user` and `system` and `assistant` and 'tool'. */
   @NonNull String role;

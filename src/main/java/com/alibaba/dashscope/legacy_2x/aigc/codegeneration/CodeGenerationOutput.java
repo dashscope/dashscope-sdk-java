@@ -6,6 +6,7 @@ import java.util.List;
 import lombok.Data;
 
 @Data
+@Deprecated
 public final class CodeGenerationOutput {
   // output message.
   @Data

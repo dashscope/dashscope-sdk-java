@@ -1,6 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.legacy_2x.common;
 
+@Deprecated
 public enum ErrorType {
 
   /** The error happens in the response body. */

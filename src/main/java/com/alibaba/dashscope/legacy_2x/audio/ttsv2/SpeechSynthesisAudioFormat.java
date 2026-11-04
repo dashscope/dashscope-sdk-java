@@ -2,6 +2,7 @@ package com.alibaba.dashscope.legacy_2x.audio.ttsv2;
 
 import com.alibaba.dashscope.legacy_2x.utils.StringUtils;
 
+@Deprecated
 public enum SpeechSynthesisAudioFormat {
   DEFAULT("Default", 0, "0", 0),
   WAV_8000HZ_MONO_16BIT("wav", 8000, "mono", 16),

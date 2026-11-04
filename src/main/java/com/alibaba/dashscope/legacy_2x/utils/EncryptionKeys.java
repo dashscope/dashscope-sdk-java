@@ -12,6 +12,7 @@ import com.alibaba.dashscope.legacy_2x.protocol.HttpMethod;
 import com.alibaba.dashscope.legacy_2x.protocol.Protocol;
 import com.alibaba.dashscope.legacy_2x.protocol.StreamingMode;
 
+@Deprecated
 public class EncryptionKeys {
   private final GeneralApi<HalfDuplexParamBase> api;
   private final GeneralServiceOption serviceOption;

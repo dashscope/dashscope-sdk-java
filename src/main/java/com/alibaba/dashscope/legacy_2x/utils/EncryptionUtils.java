@@ -19,6 +19,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 
+@Deprecated
 public class EncryptionUtils {
   private static final String algorithm = "AES/GCM/NoPadding";
   private static final Integer keyLength = 256;

@@ -9,6 +9,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 @NoArgsConstructor
+@Deprecated
 public class ImageGenerationMessage {
 
   /** The role, can be `user` and `bot`. */

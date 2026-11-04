@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import java.lang.reflect.Type;
 
+@Deprecated
 public class ToolGsonDeserializer implements JsonDeserializer<Object> {
   @Override
   public Object deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)

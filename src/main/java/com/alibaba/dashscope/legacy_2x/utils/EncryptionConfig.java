@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 @Data
 @SuperBuilder
+@Deprecated
 public class EncryptionConfig {
   @NotNull private String publicKeyId;
   @NotNull private String base64PublicKey;

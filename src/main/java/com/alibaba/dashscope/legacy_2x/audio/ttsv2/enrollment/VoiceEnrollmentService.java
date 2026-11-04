@@ -11,6 +11,7 @@ import com.alibaba.dashscope.legacy_2x.protocol.Protocol;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Deprecated
 public class VoiceEnrollmentService {
   private final SynchronizeHalfDuplexApi<HalfDuplexServiceParam> syncApi;
   private final ApiServiceOption createServiceOptions;

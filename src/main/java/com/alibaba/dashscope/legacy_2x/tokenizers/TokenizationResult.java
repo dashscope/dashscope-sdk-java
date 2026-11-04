@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Data
+@Deprecated
 public class TokenizationResult {
   private String requestId;
   private TokenizationUsage usage;
@@ -32,8 +33,7 @@ public class TokenizationResult {
       log.error(
           StringUtils.format(
               "Result no output: %s, requestId=%s",
-              dashScopeResult,
-              dashScopeResult.getRequestIdOrUnknown()));
+              dashScopeResult, dashScopeResult.getRequestIdOrUnknown()));
     }
     return result;
   }

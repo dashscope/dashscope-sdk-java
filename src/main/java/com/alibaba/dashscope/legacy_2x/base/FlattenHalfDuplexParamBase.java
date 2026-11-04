@@ -16,6 +16,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
+@Deprecated
 public abstract class FlattenHalfDuplexParamBase extends HalfDuplexParamBase {
   @Override
   public String getModel() {

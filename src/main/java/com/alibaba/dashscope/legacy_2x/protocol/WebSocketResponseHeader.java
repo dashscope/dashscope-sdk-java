@@ -6,6 +6,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class WebSocketResponseHeader {
   @SerializedName("task_id")
   public String taskId;

@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Deprecated
 public class FilePathAnnotation extends AnnotationBase {
   private Long index = null;
 

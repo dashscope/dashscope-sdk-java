@@ -9,4 +9,5 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public abstract class MessageParamBase extends FlattenHalfDuplexParamBase {}

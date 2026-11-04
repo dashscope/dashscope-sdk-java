@@ -16,6 +16,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @Data
+@Deprecated
 public class TingWuParam extends HalfDuplexServiceParam {
 
   private Map<String, Object> input;

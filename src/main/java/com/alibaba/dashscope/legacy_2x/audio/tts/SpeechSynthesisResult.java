@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 @Data
 @EqualsAndHashCode()
 @Slf4j
+@Deprecated
 public class SpeechSynthesisResult {
   @SerializedName(ApiKeywords.REQUEST_ID)
   private String requestId;

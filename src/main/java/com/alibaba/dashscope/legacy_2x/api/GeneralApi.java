@@ -15,6 +15,7 @@ import com.alibaba.dashscope.legacy_2x.protocol.ServiceOption;
 import io.reactivex.Flowable;
 
 /** Support DashScope async task CRUD. */
+@Deprecated
 public final class GeneralApi<ParamT extends HalfDuplexParamBase> {
   final HalfDuplexClient client;
   ConnectionOptions connectionOptions;

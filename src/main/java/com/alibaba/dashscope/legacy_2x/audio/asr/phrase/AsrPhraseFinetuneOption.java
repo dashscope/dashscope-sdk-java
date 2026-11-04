@@ -13,6 +13,7 @@ import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder
+@Deprecated
 public class AsrPhraseFinetuneOption implements ServiceOption {
   // set websocket service stream mode[NONE, IN, OUT, DUPLEX]
   @Builder.Default private StreamingMode streamingMode = StreamingMode.NONE;

@@ -7,6 +7,7 @@ import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @Data
+@Deprecated
 public class TranslationOptions {
   /** Full English name of the source language. */
   @SerializedName("source_lang")

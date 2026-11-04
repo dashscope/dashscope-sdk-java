@@ -5,6 +5,7 @@ import lombok.Data;
 
 /** tool request base */
 @Data
+@Deprecated
 public abstract class ContentBase {
   private static final TypeRegistry<ContentBase> contentRegistry = new TypeRegistry<>();
 

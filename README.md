@@ -22,10 +22,11 @@ have moved to `com.alibaba.dashscope.legacy_2x.*` and are deprecated for removal
 is an intentional FQCN, source, and binary compatibility break: existing 2.x imports must be
 updated. Java 8+ is required at runtime (bytecode target 8), and the build baseline is JDK 8
 as well: CI builds and tests on JDK 8. Building from source on JDK 9+ also works — the pom's
-jdk9-plus profile auto-activates and compiles with release 8 API checking. The package-level
-`@deprecated` Javadoc markers under `legacy_2x` are Javadoc and IDE
-signals only: javac does not propagate package deprecation to types, so no compile warnings are
-emitted for existing imports.
+jdk9-plus profile auto-activates and compiles with release 8 API checking. All public top-level
+types under `legacy_2x` carry type-level `@Deprecated`, so javac reports deprecation when they
+are used (`-Xlint:deprecation` shows details). Packages retain only `@deprecated` Javadoc tags:
+combining a package annotation with that tag fails on Java 8, and package deprecation does not
+propagate to types. AgentStudio and `shared` are not deprecated.
 
 ```java
 import com.alibaba.dashscope.DashScopeClient;
@@ -53,7 +54,8 @@ try (DashScopeClient client = DashScopeClient.builder().build()) {
 - Migrating from 2.x: [md/dashscope-3.0-migration.md](md/dashscope-3.0-migration.md)
   (per-class mapping, unchecked-exception model, AgentStudio and tokenizers notes).
 - Runnable samples: [examples/README.md](examples/README.md) (four layers, MockWebServer dry-run
-  via `mvn -f examples/pom.xml test`; a standalone project, not wired into CI yet).
+  via `mvn -f examples/pom.xml clean test`; CI installs the current SDK with
+  `mvn install -DskipTests -Dgpg.skip=true` after root tests, then runs the standalone examples project).
 - Everything below this section documents the deprecated 2.x API (`Generation`, `Conversation`,
   …). Its snippets use the current `legacy_2x` imports; these APIs will be removed in 4.0.
 

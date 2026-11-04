@@ -8,6 +8,7 @@ import lombok.experimental.SuperBuilder;
 /** DashScope auth: "auth": { "type": "dashscope_plugin", "user_token": "the api-key value" } */
 @Data
 @SuperBuilder
+@Deprecated
 public class ToolAuthUserToken implements ToolAuthenticationBase {
   @Default String type = "user_http";
 

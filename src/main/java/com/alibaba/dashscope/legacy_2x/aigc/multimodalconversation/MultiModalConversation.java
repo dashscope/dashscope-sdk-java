@@ -22,6 +22,7 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Deprecated
 public final class MultiModalConversation {
   /* Auto history messages */
   private final SynchronizeHalfDuplexApi<MultiModalConversationParam> syncApi;

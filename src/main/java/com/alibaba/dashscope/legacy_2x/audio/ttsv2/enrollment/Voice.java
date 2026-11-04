@@ -7,6 +7,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class Voice {
   @SerializedName("voice_id")
   String voiceId;

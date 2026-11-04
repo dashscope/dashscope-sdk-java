@@ -6,6 +6,7 @@ import com.alibaba.dashscope.shared.EnvNames;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Deprecated
 public final class Constants {
 
   public static final String NO_API_KEY_ERROR = "Can not find api-key.";

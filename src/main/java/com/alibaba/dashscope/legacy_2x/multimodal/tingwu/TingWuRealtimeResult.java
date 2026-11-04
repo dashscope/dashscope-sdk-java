@@ -12,6 +12,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode()
+@Deprecated
 public class TingWuRealtimeResult {
   @SerializedName(ApiKeywords.TASKID)
   private String taskId;

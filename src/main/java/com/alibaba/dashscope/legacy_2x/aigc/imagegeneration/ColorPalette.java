@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Deprecated
 public class ColorPalette {
 
   /** Hex color code, e.g., "#FF5733" */

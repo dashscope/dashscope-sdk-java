@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
  * @deprecated use `Generation` instead
  */
 @Slf4j
+@Deprecated
 public final class Conversation {
   /* Auto history messages */
   private final SynchronizeHalfDuplexApi<ConversationParam> syncApi;

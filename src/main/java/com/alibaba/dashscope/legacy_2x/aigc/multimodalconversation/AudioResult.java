@@ -16,6 +16,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 @NoArgsConstructor
+@Deprecated
 public class AudioResult implements Serializable {
   @SerializedName("data")
   private String data;

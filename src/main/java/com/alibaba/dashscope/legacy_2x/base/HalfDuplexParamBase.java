@@ -15,6 +15,7 @@ import lombok.experimental.SuperBuilder;
 /** The user input and parameter. */
 @Data
 @SuperBuilder
+@Deprecated
 public abstract class HalfDuplexParamBase {
   /** The apiKey. */
   private String apiKey;

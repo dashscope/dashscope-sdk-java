@@ -2,6 +2,7 @@
 
 package com.alibaba.dashscope.legacy_2x.audio.asr.transcription;
 
+@Deprecated
 public class TranscriptionApiKeywords {
   public static final String FILE_URLS = "file_urls";
 

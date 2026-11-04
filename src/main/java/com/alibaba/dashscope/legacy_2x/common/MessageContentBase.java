@@ -5,6 +5,7 @@ import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder
+@Deprecated
 public abstract class MessageContentBase {
   public abstract String getType();
 }

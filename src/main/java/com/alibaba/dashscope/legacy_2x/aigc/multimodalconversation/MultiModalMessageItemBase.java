@@ -1,5 +1,6 @@
 package com.alibaba.dashscope.legacy_2x.aigc.multimodalconversation;
 
+@Deprecated
 public interface MultiModalMessageItemBase {
   public String getModal();
 

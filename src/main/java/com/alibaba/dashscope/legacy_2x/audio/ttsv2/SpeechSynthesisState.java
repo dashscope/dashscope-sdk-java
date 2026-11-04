@@ -1,5 +1,6 @@
 package com.alibaba.dashscope.legacy_2x.audio.ttsv2;
 
+@Deprecated
 public enum SpeechSynthesisState {
   IDLE("idle"),
   TTS_STARTED("stream_input_tts_started"),

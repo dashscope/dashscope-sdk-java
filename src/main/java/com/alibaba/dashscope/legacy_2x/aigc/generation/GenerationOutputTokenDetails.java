@@ -6,6 +6,7 @@ import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder
+@Deprecated
 public class GenerationOutputTokenDetails {
   @SerializedName("reasoning_tokens")
   private Integer reasoningTokens;

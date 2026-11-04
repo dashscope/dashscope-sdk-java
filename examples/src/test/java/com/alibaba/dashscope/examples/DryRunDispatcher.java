@@ -292,7 +292,7 @@ public final class DryRunDispatcher extends Dispatcher {
   private static String taskJson(String taskId) {
     if ("dry-tw".equals(taskId)) {
       return "{\"output\":{\"task_id\":\"dry-tw\",\"task_status\":\"SUCCEEDED\",\"TaskId\":\"dry-tw\","
-          + "\"Result\":\"{\\\"summary\\\":\\\"ok\\\"}\"},\"request_id\":\"r-fetch\"}";
+                 + "\"Result\":\"{\\\"summary\\\":\\\"ok\\\"}\"},\"request_id\":\"r-fetch\"}";
     }
     return "{\"output\":{\"task_id\":\""
         + taskId
@@ -337,15 +337,15 @@ public final class DryRunDispatcher extends Dispatcher {
 
   private static String chatDeltaFrames() {
     return "data:"
-        + " {\"output\":{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"你\"}}]},\"request_id\":\"s1\"}\n\n"
-        + "data:"
-        + " {\"output\":{\"choices\":[{\"message\":{\"content\":\"你好\"},\"finish_reason\":\"stop\"}]},\"usage\":{\"input_tokens\":1,\"output_tokens\":2,\"total_tokens\":3},\"request_id\":\"s1\"}\n\n";
+               + " {\"output\":{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"你\"}}]},\"request_id\":\"s1\"}\n\n"
+               + "data:"
+               + " {\"output\":{\"choices\":[{\"message\":{\"content\":\"你好\"},\"finish_reason\":\"stop\"}]},\"usage\":{\"input_tokens\":1,\"output_tokens\":2,\"total_tokens\":3},\"request_id\":\"s1\"}\n\n";
   }
 
   private static String appDeltaFrames() {
     return "data: {\"output\":{\"text\":\"你\",\"session_id\":\"s1\"},\"request_id\":\"rs1\"}\n\n"
-        + "data:"
-        + " {\"output\":{\"text\":\"你好\",\"finish_reason\":\"stop\"},\"usage\":{\"input_tokens\":1,\"output_tokens\":2,\"total_tokens\":3},\"request_id\":\"rs1\"}\n\n";
+               + "data:"
+               + " {\"output\":{\"text\":\"你好\",\"finish_reason\":\"stop\"},\"usage\":{\"input_tokens\":1,\"output_tokens\":2,\"total_tokens\":3},\"request_id\":\"rs1\"}\n\n";
   }
 
   /**

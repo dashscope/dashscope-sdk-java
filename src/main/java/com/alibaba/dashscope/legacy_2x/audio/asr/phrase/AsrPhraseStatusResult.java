@@ -10,6 +10,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode()
+@Deprecated
 public class AsrPhraseStatusResult {
   @SerializedName(ApiKeywords.REQUEST_ID)
   private String requestId;

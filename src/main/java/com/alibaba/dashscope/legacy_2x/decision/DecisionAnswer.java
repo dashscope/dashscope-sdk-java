@@ -23,6 +23,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Deprecated
 public class DecisionAnswer {
   /** The question type, one of choice/noul/score. */
   private String type;

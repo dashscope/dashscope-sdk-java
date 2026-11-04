@@ -32,6 +32,7 @@ import okhttp3.WebSocket;
  * @author songsong.sss
  */
 @Slf4j
+@Deprecated
 public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
   private SpeechSynthesisState state = SpeechSynthesisState.IDLE;
   private ResultCallback<SpeechSynthesisResult> callback;
@@ -300,8 +301,7 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
               handleResultGenerated(messageObj);
               break;
             default:
-              log.warn(
-                  "Unknown event: {}, requestId={}", event, getRequestIdForLog(messageObj));
+              log.warn("Unknown event: {}, requestId={}", event, getRequestIdForLog(messageObj));
               break;
           }
         }
@@ -318,9 +318,7 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
   @Override
   public void onMessage(WebSocket webSocket, ByteBuffer bytes) {
     log.debug(
-        "Received binary message, size: {}, requestId={}",
-        bytes.remaining(),
-        getRequestIdForLog());
+        "Received binary message, size: {}, requestId={}", bytes.remaining(), getRequestIdForLog());
     try {
       ByteBuffer audioFrame = ByteBuffer.allocate(bytes.remaining());
       audioFrame.put(bytes);
@@ -375,10 +373,7 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
   @Override
   public void onClose(int code, String reason) {
     log.warn(
-        "WebSocket connection closed: {} ({}), requestId={}",
-        reason,
-        code,
-        getRequestIdForLog());
+        "WebSocket connection closed: {} ({}), requestId={}", reason, code, getRequestIdForLog());
     releaseLatches();
   }
 
@@ -534,8 +529,7 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
       log.debug("stopLatch is done, requestId={}", getRequestIdForLog());
     } catch (InterruptedException ignored) {
       log.error(
-          "Interrupted while waiting for streaming complete, requestId={}",
-          getRequestIdForLog());
+          "Interrupted while waiting for streaming complete, requestId={}", getRequestIdForLog());
       Thread.currentThread().interrupt();
     }
   }

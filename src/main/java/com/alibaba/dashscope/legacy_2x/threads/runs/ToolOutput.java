@@ -6,6 +6,7 @@ import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder
+@Deprecated
 public class ToolOutput {
   @SerializedName("tool_call_id")
   private String toolCallId;

@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Data
+@Deprecated
 public class ImageGenerationResult {
   private String requestId;
   private ImageGenerationUsage usage;

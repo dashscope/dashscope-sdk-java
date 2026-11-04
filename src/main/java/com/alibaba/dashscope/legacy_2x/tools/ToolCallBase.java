@@ -6,6 +6,7 @@ import lombok.Data;
 
 /** base class of the tool call response. */
 @Data
+@Deprecated
 public abstract class ToolCallBase {
   private static final Map<String, Class<?>> toolCallRegistry = new HashMap<>();
 

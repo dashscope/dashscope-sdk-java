@@ -8,6 +8,7 @@ import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder
+@Deprecated
 public abstract class MultiModalEmbeddingItemBase implements MultiModalMessageItemBase {
   protected Double factor;
 

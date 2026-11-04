@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Data
 @Slf4j
+@Deprecated
 public class VideoSynthesisListResult {
   @SerializedName("request_id")
   private String requestId;

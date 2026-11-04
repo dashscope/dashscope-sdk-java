@@ -1,5 +1,6 @@
 package com.alibaba.dashscope.legacy_2x.audio.asr.vocabulary;
 
+@Deprecated
 public enum VocabularyOperationType {
   CREATE("create_vocabulary"),
   LIST("list_vocabulary"),

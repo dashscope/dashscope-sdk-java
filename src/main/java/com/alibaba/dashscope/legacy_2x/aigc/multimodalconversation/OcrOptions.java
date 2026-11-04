@@ -9,6 +9,7 @@ import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder
+@Deprecated
 public class OcrOptions implements Serializable {
   @SerializedName("task")
   private OcrOptions.Task task;

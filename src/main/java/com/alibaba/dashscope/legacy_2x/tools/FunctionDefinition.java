@@ -6,6 +6,7 @@ import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder
+@Deprecated
 public class FunctionDefinition {
   private String name;
   private String description;

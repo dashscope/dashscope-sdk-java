@@ -3,6 +3,7 @@ package com.alibaba.dashscope.legacy_2x.aigc.codegeneration.models;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class OtherRoleContentMessageParam extends MessageParamBase {
 
   private String content;

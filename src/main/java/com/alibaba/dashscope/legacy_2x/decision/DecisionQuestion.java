@@ -15,6 +15,7 @@ import lombok.Data;
  */
 @Data
 @Builder
+@Deprecated
 public class DecisionQuestion {
   /** Question types. */
   public static final class Types {

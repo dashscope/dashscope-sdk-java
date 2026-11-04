@@ -8,6 +8,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class TranscriptionMetrics {
   @SerializedName("TOTAL")
   private int total;

@@ -11,6 +11,7 @@ import lombok.experimental.SuperBuilder;
 /** The model service base class */
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
+@Deprecated
 public abstract class HalfDuplexServiceParam extends HalfDuplexParamBase {
   /** The model to use. */
   @lombok.NonNull private String model;

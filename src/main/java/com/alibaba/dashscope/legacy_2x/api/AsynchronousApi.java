@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /** Support DashScope async task CRUD. */
+@Deprecated
 public final class AsynchronousApi<ParamT extends HalfDuplexParamBase> {
   final HalfDuplexClient client;
   ConnectionOptions connectionOptions;

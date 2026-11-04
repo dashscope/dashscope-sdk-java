@@ -13,6 +13,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
+@Deprecated
 public abstract class FullDuplexServiceParam extends FullDuplexParamBase {
   @Default private Object resources = null;
 

@@ -3,6 +3,7 @@ package com.alibaba.dashscope.legacy_2x.threads.runs;
 import com.alibaba.dashscope.legacy_2x.threads.AssistantThread;
 import com.alibaba.dashscope.legacy_2x.threads.messages.ThreadMessage;
 
+@Deprecated
 public interface AssistantEventHandler {
   public void onThreadCreated(AssistantThread thread);
 

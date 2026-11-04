@@ -10,6 +10,7 @@ import com.alibaba.dashscope.legacy_2x.protocol.*;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Deprecated
 public final class TextReRank {
 
   private final SynchronizeHalfDuplexApi<TextReRankParam> syncApi;

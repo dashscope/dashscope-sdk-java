@@ -12,6 +12,7 @@ import com.google.gson.JsonArray;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Deprecated
 public class VocabularyService {
   private final SynchronizeHalfDuplexApi<HalfDuplexServiceParam> syncApi;
   private final ApiServiceOption createServiceOptions;

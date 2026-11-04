@@ -13,6 +13,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class UpdateMetadataParam extends FlattenHalfDuplexParamBase {
   @SerializedName("metadata")
   @Default

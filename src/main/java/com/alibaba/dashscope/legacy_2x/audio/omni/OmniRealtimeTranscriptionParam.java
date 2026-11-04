@@ -8,6 +8,7 @@ import lombok.Data;
  * @author songsong.shao
  */
 @Data
+@Deprecated
 public class OmniRealtimeTranscriptionParam {
   /** input audio sample rate */
   private Integer inputSampleRate = null;

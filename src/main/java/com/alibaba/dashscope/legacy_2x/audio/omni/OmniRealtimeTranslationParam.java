@@ -10,6 +10,7 @@ import lombok.Data;
  */
 @Builder
 @Data
+@Deprecated
 public class OmniRealtimeTranslationParam {
   /** language for translation */
   private String language;

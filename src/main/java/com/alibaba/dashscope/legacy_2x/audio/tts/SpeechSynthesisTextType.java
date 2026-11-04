@@ -2,6 +2,7 @@
 
 package com.alibaba.dashscope.legacy_2x.audio.tts;
 
+@Deprecated
 public enum SpeechSynthesisTextType {
   PLAIN_TEXT("PlainText"),
   SSML("SSML"),

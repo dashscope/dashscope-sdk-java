@@ -17,6 +17,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class ThreadParam extends FlattenHalfDuplexParamBase {
   @Singular private List<MessageParamBase> messages;
 

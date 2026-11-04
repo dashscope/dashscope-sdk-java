@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
+@Deprecated
 public class BatchTextEmbeddingParam extends HalfDuplexServiceParam {
   public enum TextType {
     QUERY("query"),

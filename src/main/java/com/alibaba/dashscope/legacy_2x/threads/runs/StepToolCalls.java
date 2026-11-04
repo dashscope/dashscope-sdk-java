@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Deprecated
 public class StepToolCalls extends StepDetailBase {
   @SerializedName("tool_calls")
   private List<ToolCallBase> toolCalls;

@@ -6,6 +6,7 @@ import lombok.Data;
 
 /** The token usage of the decision model api. */
 @Data
+@Deprecated
 public class DecisionModelUsage {
   @SerializedName("input_tokens")
   private Integer inputTokens;

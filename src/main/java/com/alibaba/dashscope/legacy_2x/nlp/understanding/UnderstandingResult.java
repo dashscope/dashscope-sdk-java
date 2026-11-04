@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Data
+@Deprecated
 public final class UnderstandingResult {
   private String requestId;
   private UnderstandingUsage usage;
@@ -33,8 +34,7 @@ public final class UnderstandingResult {
       log.error(
           StringUtils.format(
               "Result no output: %s, requestId=%s",
-              dashScopeResult,
-              dashScopeResult.getRequestIdOrUnknown()));
+              dashScopeResult, dashScopeResult.getRequestIdOrUnknown()));
     }
     return result;
   }

@@ -9,6 +9,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class MultiModalEmbeddingItemAudio extends MultiModalEmbeddingItemBase {
   public String audio;
 

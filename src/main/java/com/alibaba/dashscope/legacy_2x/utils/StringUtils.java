@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
+@Deprecated
 public class StringUtils {
   /**
    * Locale-independent String.format using Locale.ROOT to guarantee ASCII output for numeric format

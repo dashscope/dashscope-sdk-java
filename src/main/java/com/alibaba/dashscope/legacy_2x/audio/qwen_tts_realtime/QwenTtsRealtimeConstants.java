@@ -5,6 +5,7 @@ package com.alibaba.dashscope.legacy_2x.audio.qwen_tts_realtime;
 /**
  * @author lengjiayi
  */
+@Deprecated
 public class QwenTtsRealtimeConstants {
   public static final String MODALITIES = "modalities";
   public static final String VOICE = "voice";

@@ -8,6 +8,7 @@ import java.net.ConnectException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
@@ -70,7 +71,7 @@ public final class RetryInterceptor implements Interceptor {
         } else {
           retryable = RETRYABLE_STATUSES.contains(response.code());
         }
-        overrideDelayMs = retryAfterMs(response);
+        overrideDelayMs = retryAfterMs(response, System.currentTimeMillis());
       }
 
       if (!retryable || attempt >= maxRetries) {
@@ -127,8 +128,8 @@ public final class RetryInterceptor implements Interceptor {
     return (long) (base * jitter);
   }
 
-  /** {@code Retry-After-ms} wins over {@code Retry-After} (seconds); absent → -1. */
-  private static long retryAfterMs(Response response) {
+  /** {@code Retry-After-ms} wins over {@code Retry-After} (seconds or HTTP-date); absent → -1. */
+  static long retryAfterMs(Response response, long nowMillis) {
     String afterMs = response.header("Retry-After-ms");
     if (afterMs != null) {
       try {
@@ -140,8 +141,11 @@ public final class RetryInterceptor implements Interceptor {
     String after = response.header("Retry-After");
     if (after != null) {
       try {
-        return Long.parseLong(after.trim()) * 1000;
+        return Math.multiplyExact(Long.parseLong(after.trim()), 1000);
       } catch (NumberFormatException e) {
+        Date date = response.headers().getDate("Retry-After");
+        return date == null ? -1 : Math.max(0, date.getTime() - nowMillis);
+      } catch (ArithmeticException e) {
         return -1;
       }
     }

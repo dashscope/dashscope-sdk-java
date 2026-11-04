@@ -27,6 +27,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class VideoSynthesisParam extends HalfDuplexServiceParam {
 
   @Data

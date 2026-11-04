@@ -15,6 +15,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class AsyncTaskListParam extends HalfDuplexParamBase {
   String startTime;
   String endTime;

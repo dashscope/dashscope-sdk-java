@@ -6,6 +6,7 @@ import com.alibaba.dashscope.legacy_2x.common.OutputMode;
 import com.alibaba.dashscope.legacy_2x.utils.Constants;
 
 /** Internal used for config the service. */
+@Deprecated
 public interface ServiceOption {
   public default String getTaskGroup() {
     return null;

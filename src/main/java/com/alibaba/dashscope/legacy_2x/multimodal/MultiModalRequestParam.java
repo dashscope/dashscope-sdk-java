@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @Data
+@Deprecated
 public class MultiModalRequestParam extends FullDuplexServiceParam {
   private UpStream upStream;
   private DownStream downStream;

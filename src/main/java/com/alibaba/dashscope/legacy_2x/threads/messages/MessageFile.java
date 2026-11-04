@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 /** MessageFile */
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Deprecated
 public class MessageFile extends FlattenResultBase {
 
   /**

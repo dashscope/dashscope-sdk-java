@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Deprecated
 public class StepMessageCreation extends StepDetailBase {
   @Data
   public class MessageCreation {

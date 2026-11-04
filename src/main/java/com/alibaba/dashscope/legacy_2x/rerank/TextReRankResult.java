@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Data
+@Deprecated
 public class TextReRankResult {
   @SerializedName("request_id")
   private String requestId;

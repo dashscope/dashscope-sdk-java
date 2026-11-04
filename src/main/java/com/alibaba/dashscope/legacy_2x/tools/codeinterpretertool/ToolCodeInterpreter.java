@@ -10,6 +10,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = false)
+@Deprecated
 public class ToolCodeInterpreter extends ToolBase {
   static {
     registerTool("code_interpreter", ToolCodeInterpreter.class);

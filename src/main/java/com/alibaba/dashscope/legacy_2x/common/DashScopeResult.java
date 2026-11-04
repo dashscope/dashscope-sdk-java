@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Deprecated
 public class DashScopeResult extends Result {
   private Object output;
   private String event;

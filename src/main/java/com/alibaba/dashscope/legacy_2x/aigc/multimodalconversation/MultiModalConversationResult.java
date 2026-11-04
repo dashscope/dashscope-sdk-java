@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Data
+@Deprecated
 public class MultiModalConversationResult {
   private String requestId;
   private MultiModalConversationUsage usage;

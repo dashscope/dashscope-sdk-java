@@ -8,6 +8,7 @@ import com.alibaba.dashscope.legacy_2x.exception.ApiException;
 import com.alibaba.dashscope.legacy_2x.exception.NoApiKeyException;
 import io.reactivex.Flowable;
 
+@Deprecated
 public interface FullDuplexClient {
   /*
    * Multiple inputs, only for websocket.

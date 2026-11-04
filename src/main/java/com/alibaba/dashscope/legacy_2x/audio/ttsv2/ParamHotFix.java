@@ -10,6 +10,7 @@ import lombok.Data;
 
 /** Hot fix configuration for speech synthesis, including pronunciation and replace rules. */
 @Data
+@Deprecated
 public class ParamHotFix {
 
   /** Pronunciation rules to customize specific words. */

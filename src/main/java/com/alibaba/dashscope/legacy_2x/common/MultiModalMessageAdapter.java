@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Deprecated
 public class MultiModalMessageAdapter extends TypeAdapter<MultiModalMessage> {
   private void writeMapObject(JsonWriter out, Map<String, Object> mapObject) throws IOException {
     if (mapObject != null) {

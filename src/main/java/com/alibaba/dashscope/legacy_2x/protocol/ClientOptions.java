@@ -9,6 +9,7 @@ import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder
+@Deprecated
 public final class ClientOptions {
   // enable detail log of the communication.
   // [NONE, BASIC, HEADERS, BODY]

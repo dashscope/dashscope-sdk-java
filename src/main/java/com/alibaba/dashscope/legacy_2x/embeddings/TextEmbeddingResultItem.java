@@ -5,6 +5,7 @@ import java.util.List;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class TextEmbeddingResultItem {
   @SerializedName("text_index")
   private Integer textIndex;

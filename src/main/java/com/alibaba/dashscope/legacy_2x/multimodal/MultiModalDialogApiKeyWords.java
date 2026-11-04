@@ -1,6 +1,7 @@
 package com.alibaba.dashscope.legacy_2x.multimodal;
 
 /** author songsong.shao date 2025/4/25 */
+@Deprecated
 public class MultiModalDialogApiKeyWords {
   public static String CONST_AUDIO_FORMAT_PCM = "pcm";
 

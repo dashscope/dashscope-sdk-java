@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * @author lengjiayi
  */
 @Slf4j
+@Deprecated
 public class QwenTtsRealtime extends WebSocketListener {
   private QwenTtsRealtimeParam parameters;
   private QwenTtsRealtimeCallback callback;

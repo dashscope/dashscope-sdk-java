@@ -6,6 +6,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class Word {
   /** Word begin time in milliseconds. */
   @SerializedName("begin_time")

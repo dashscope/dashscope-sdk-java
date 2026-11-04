@@ -11,6 +11,7 @@ import lombok.EqualsAndHashCode;
 /** MessageDeltaEvent */
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Deprecated
 public class ThreadMessageDelta extends FlattenResultBase {
 
   /**

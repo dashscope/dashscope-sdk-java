@@ -17,6 +17,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 @ToString
+@Deprecated
 public class ApplicationUsage {
   /** Completion usage for llm models */
   private List<ModelUsage> models;

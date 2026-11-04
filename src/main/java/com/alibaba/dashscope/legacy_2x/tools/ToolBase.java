@@ -9,6 +9,7 @@ import lombok.experimental.SuperBuilder;
 
 /** tool request base */
 @SuperBuilder
+@Deprecated
 public abstract class ToolBase implements ToolInterface {
   private static final TypeRegistry<ToolBase> toolRegistry = new TypeRegistry<>();
 

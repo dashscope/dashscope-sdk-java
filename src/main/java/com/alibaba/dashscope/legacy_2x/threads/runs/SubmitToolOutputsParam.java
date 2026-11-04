@@ -15,6 +15,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class SubmitToolOutputsParam extends FlattenHalfDuplexParamBase {
   @Singular
   @SerializedName("tool_outputs")

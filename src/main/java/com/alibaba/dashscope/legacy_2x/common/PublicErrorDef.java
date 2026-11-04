@@ -5,6 +5,7 @@ package com.alibaba.dashscope.legacy_2x.common;
 import java.util.Map;
 
 /** Customer-facing error definitions. */
+@Deprecated
 public enum PublicErrorDef {
   INVALID_REQUEST(
       400,

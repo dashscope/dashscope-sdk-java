@@ -15,6 +15,7 @@ import com.alibaba.dashscope.legacy_2x.protocol.StreamingMode;
 import io.reactivex.Flowable;
 
 /** Support openai compatible api, for test usage. */
+@Deprecated
 public final class ChatCompletions {
   private final GeneralApi<HalfDuplexParamBase> api;
   private final GeneralServiceOption serviceOption;

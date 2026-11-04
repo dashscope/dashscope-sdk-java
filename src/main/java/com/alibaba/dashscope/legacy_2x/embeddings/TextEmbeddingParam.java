@@ -17,6 +17,7 @@ import lombok.experimental.SuperBuilder;
 
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
+@Deprecated
 public class TextEmbeddingParam extends HalfDuplexServiceParam {
   public enum TextType {
     QUERY("query"),

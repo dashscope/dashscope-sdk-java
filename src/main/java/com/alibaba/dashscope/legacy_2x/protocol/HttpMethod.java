@@ -3,6 +3,7 @@
 package com.alibaba.dashscope.legacy_2x.protocol;
 
 /** HTTP methods supported by the SDK transport. */
+@Deprecated
 public enum HttpMethod {
   /** Create or invoke an action. */
   POST,

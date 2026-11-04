@@ -11,6 +11,7 @@ import okhttp3.Authenticator;
 
 @Data
 @SuperBuilder
+@Deprecated
 public final class ConnectionOptions {
   private static final String PROXY_HOST_ENV = "DASHSCOPE_PROXY_HOST";
   private static final String PROXY_PORT_ENV = "DASHSCOPE_PROXY_PORT";

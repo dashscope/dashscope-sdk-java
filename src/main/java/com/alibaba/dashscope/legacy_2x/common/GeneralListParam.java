@@ -9,6 +9,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
+@Deprecated
 public class GeneralListParam extends GeneralGetParam {
   private Long limit;
   private String order;

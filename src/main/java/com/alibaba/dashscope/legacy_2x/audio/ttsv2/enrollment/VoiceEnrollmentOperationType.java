@@ -1,5 +1,6 @@
 package com.alibaba.dashscope.legacy_2x.audio.ttsv2.enrollment;
 
+@Deprecated
 public enum VoiceEnrollmentOperationType {
   CREATE("create_voice"),
   LIST("list_voice"),

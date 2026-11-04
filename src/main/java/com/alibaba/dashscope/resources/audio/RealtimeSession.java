@@ -108,10 +108,9 @@ public final class RealtimeSession implements AutoCloseable {
   /**
    * (Re)connects the session. Idempotent while a socket is open (2.x omni parity); after {@link
    * #close()} it opens a fresh generation and drops everything buffered from the old one. The
-   * handshake wait runs outside the session monitor so {@link #close()} can always take the
-   * monitor promptly and cancel a still-connecting socket. A concurrent {@link #connect()}
-   * returns as soon as a connect attempt owns the socket, i.e. while its handshake may still be
-   * in flight.
+   * handshake wait runs outside the session monitor so {@link #close()} can always take the monitor
+   * promptly and cancel a still-connecting socket. A concurrent {@link #connect()} returns as soon
+   * as a connect attempt owns the socket, i.e. while its handshake may still be in flight.
    */
   public void connect() {
     CountDownLatch latch;
@@ -415,11 +414,11 @@ public final class RealtimeSession implements AutoCloseable {
   }
 
   /**
-   * Idempotent; the session may be re-{@link #connect()}ed afterwards. The handshake wait in
-   * {@link #connect()} runs outside this monitor, so this call always takes it promptly; a socket
-   * whose handshake is still in flight is cancelled, failing that connect fast instead of
-   * blocking here for the whole connect timeout (2.x c891540 parity: okhttp's close alone does
-   * not abort an in-flight handshake).
+   * Idempotent; the session may be re-{@link #connect()}ed afterwards. The handshake wait in {@link
+   * #connect()} runs outside this monitor, so this call always takes it promptly; a socket whose
+   * handshake is still in flight is cancelled, failing that connect fast instead of blocking here
+   * for the whole connect timeout (2.x c891540 parity: okhttp's close alone does not abort an
+   * in-flight handshake).
    */
   @Override
   public void close() {
@@ -657,6 +656,9 @@ public final class RealtimeSession implements AutoCloseable {
     @Override
     public void onFailure(WebSocket webSocket, Throwable t, Response response) {
       if (stale()) {
+        if (response != null) {
+          response.close();
+        }
         return;
       }
       RuntimeException mapped = WsSession.mapFailure(t, response);

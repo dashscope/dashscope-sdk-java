@@ -2,6 +2,7 @@
 
 package com.alibaba.dashscope.legacy_2x.audio.tts;
 
+@Deprecated
 public enum SpeechSynthesisAudioFormat {
   PCM("pcm"),
   WAV("wav"),

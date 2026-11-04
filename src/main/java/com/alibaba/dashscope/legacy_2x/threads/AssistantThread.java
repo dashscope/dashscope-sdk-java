@@ -9,6 +9,7 @@ import lombok.EqualsAndHashCode;
 /** AssistantThread */
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Deprecated
 public final class AssistantThread extends FlattenResultBase {
 
   /**

@@ -6,6 +6,7 @@ import com.google.gson.annotations.SerializedName;
 /**
  * @author lengjiayi
  */
+@Deprecated
 public enum OmniRealtimeModality {
   @SerializedName("text")
   TEXT("text"),

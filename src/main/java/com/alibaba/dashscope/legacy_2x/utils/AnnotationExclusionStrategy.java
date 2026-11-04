@@ -3,6 +3,7 @@ package com.alibaba.dashscope.legacy_2x.utils;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 
+@Deprecated
 public class AnnotationExclusionStrategy implements ExclusionStrategy {
 
   @Override

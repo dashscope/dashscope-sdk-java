@@ -2,6 +2,7 @@
 
 package com.alibaba.dashscope.legacy_2x.audio.asr.translation;
 
+@Deprecated
 public enum TranslationRecognizerState {
   IDLE("idle"),
   SPEECH_TRANSLATION_STARTED("speech_translation_started"),

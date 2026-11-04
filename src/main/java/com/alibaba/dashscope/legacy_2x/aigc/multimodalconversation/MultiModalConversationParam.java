@@ -22,6 +22,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class MultiModalConversationParam extends HalfDuplexServiceParam {
 
   @Singular private List<Object> messages;

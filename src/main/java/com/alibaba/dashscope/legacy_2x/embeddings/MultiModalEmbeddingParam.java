@@ -17,6 +17,7 @@ import lombok.experimental.SuperBuilder;
 
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
+@Deprecated
 public class MultiModalEmbeddingParam extends HalfDuplexServiceParam {
   @NonNull private List<MultiModalEmbeddingItemBase> contents;
 

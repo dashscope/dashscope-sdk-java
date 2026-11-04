@@ -17,6 +17,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode
+@Deprecated
 public class HttpSpeechSynthesisResult {
 
   /** The request ID for tracking. */

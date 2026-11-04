@@ -9,6 +9,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @SuperBuilder
+@Deprecated
 public class Text2Image extends ToolBase {
   static {
     registerTool("text_to_image", Text2Image.class);

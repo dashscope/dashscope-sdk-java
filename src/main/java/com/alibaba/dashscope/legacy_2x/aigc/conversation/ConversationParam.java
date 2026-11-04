@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class ConversationParam extends GenerationParamBase {
   public static class ResultFormat {
     public static String TEXT = "text";

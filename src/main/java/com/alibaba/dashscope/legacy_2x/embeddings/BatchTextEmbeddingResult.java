@@ -9,6 +9,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class BatchTextEmbeddingResult {
   @SerializedName("request_id")
   private String requestId;

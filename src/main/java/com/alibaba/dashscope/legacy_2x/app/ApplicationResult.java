@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Data
 @ToString
+@Deprecated
 public class ApplicationResult {
   /** Request id of completion call */
   @SerializedName("request_id")
@@ -64,8 +65,7 @@ public class ApplicationResult {
       log.error(
           StringUtils.format(
               "Result no output: %s, requestId=%s",
-              dashScopeResult,
-              dashScopeResult.getRequestIdOrUnknown()));
+              dashScopeResult, dashScopeResult.getRequestIdOrUnknown()));
     }
 
     return result;

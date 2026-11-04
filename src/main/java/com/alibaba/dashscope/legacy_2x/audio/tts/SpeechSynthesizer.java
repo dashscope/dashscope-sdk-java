@@ -23,6 +23,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Deprecated
 public final class SpeechSynthesizer {
 
   @Getter
@@ -118,7 +119,8 @@ public final class SpeechSynthesizer {
             long current = System.currentTimeMillis();
             double current_rtf = (current - startStreamTimeStamp) / recvAudioLength;
             log.debug(
-                "[TtsV2] Recv Audio Binary: {} bytes, total audio {} ms, current_rtf: {}, requestId={}",
+                "[TtsV2] Recv Audio Binary: {} bytes, total audio {} ms, current_rtf: {},"
+                    + " requestId={}",
                 result.getAudioFrame().capacity(),
                 recvAudioLength,
                 current_rtf,
@@ -152,8 +154,7 @@ public final class SpeechSynthesizer {
           channel.close();
           outputStream.close();
         } catch (IOException e) {
-          log.error(
-              "Failed to close channel: {}, requestId={}", channel, getRequestIdForLog(), e);
+          log.error("Failed to close channel: {}, requestId={}", channel, getRequestIdForLog(), e);
         }
         callback.onComplete();
       }
@@ -221,7 +222,8 @@ public final class SpeechSynthesizer {
                   long current = System.currentTimeMillis();
                   double current_rtf = (current - startStreamTimeStamp) / recvAudioLength;
                   log.debug(
-                      "[TtsV2] Recv Audio Binary: {} bytes, total audio {} ms, current_rtf: {}, requestId={}",
+                      "[TtsV2] Recv Audio Binary: {} bytes, total audio {} ms, current_rtf: {},"
+                          + " requestId={}",
                       result.getAudioFrame().capacity(),
                       recvAudioLength,
                       current_rtf,

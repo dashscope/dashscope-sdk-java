@@ -9,6 +9,7 @@ import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder
+@Deprecated
 public final class AsyncTaskOption implements ServiceOption {
   @Default private final Protocol protocol = Protocol.HTTP;
   @Default private final HttpMethod httpMethod = HttpMethod.POST;

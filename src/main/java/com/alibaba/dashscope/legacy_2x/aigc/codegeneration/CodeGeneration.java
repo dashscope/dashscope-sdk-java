@@ -10,6 +10,7 @@ import io.reactivex.Flowable;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Deprecated
 public class CodeGeneration {
   private final SynchronizeHalfDuplexApi<CodeGenerationParam> syncApi;
   private final ApiServiceOption serviceOption;

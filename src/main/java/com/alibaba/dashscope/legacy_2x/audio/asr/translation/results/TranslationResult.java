@@ -10,6 +10,7 @@ import java.util.Map;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class TranslationResult {
   private Map<String, Translation> translations = new java.util.HashMap<>();
 

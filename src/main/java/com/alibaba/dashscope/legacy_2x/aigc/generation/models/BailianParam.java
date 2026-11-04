@@ -16,6 +16,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class BailianParam extends GenerationParamBase {
   /* The maximum length of tokens to generate.
   The token count of your prompt plus max_length

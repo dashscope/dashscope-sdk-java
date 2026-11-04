@@ -2,6 +2,7 @@
 
 package com.alibaba.dashscope.legacy_2x.audio.asr.phrase;
 
+@Deprecated
 public enum AsrPhraseOperationType {
   CREATE("Create"),
   UPDATE("Update"),

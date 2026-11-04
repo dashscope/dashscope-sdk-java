@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * @author lengjiayi
  */
 @Slf4j
+@Deprecated
 public class OmniRealtimeConversation extends WebSocketListener {
   private static final int DEFAULT_TIMEOUT = 20;
   private OmniRealtimeParam parameters;
@@ -417,7 +418,8 @@ public class OmniRealtimeConversation extends WebSocketListener {
           break;
         case OmniRealtimeConstants.PROTOCOL_RESPONSE_TYPE_RESPONSE_DONE:
           log.debug(
-              "[Metric] response: {}, first text delay: {} ms, first audio delay: {} ms, requestId={}",
+              "[Metric] response: {}, first text delay: {} ms, first audio delay: {} ms,"
+                  + " requestId={}",
               lastResponseId,
               lastFirstTextDelay,
               lastFirstAudioDelay,

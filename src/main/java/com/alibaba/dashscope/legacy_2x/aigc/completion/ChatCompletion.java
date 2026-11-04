@@ -9,6 +9,7 @@ import java.util.List;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class ChatCompletion {
   private String id;
   private List<Choice> choices;

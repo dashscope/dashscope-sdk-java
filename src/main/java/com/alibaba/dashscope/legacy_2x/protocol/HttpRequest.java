@@ -9,6 +9,7 @@ import lombok.experimental.SuperBuilder;
 /** Dashscope Http request */
 @Data
 @SuperBuilder
+@Deprecated
 public class HttpRequest {
   private HttpMethod httpMethod;
   private String url;

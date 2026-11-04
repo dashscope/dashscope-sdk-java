@@ -15,6 +15,7 @@ import com.alibaba.dashscope.legacy_2x.protocol.ServiceOption;
 import io.reactivex.Flowable;
 
 /** Dashscope synchronize half duplex request processing, both http and websocket support. */
+@Deprecated
 public final class SynchronizeHalfDuplexApi<ParamT extends HalfDuplexParamBase> {
   final HalfDuplexClient client;
   ConnectionOptions connectionOptions;

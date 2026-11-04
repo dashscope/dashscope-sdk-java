@@ -37,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author lengjiayi
  */
 @Slf4j
+@Deprecated
 public final class SpeechSynthesizer {
   private final Queue<AsyncCmdBuffer> cmdBuffer = new LinkedList<>();
 
@@ -288,7 +289,8 @@ public final class SpeechSynthesizer {
                 long current = System.currentTimeMillis();
                 double currentRtf = (current - startStreamTimeStamp) / recvAudioLength;
                 log.debug(
-                    "[TtsV2] Recv Audio Binary: {} bytes, total audio {} ms, current_rtf: {}, requestId={}",
+                    "[TtsV2] Recv Audio Binary: {} bytes, total audio {} ms, current_rtf: {},"
+                        + " requestId={}",
                     result.getAudioFrame().capacity(),
                     recvAudioLength,
                     currentRtf,
@@ -347,7 +349,8 @@ public final class SpeechSynthesizer {
                 long current = System.currentTimeMillis();
                 double currentRtf = (current - startStreamTimeStamp) / recvAudioLength;
                 log.debug(
-                    "[TtsV2] Recv Audio Binary: {} bytes, total audio {} ms, current_rtf: {}, requestId={}",
+                    "[TtsV2] Recv Audio Binary: {} bytes, total audio {} ms, current_rtf: {},"
+                        + " requestId={}",
                     result.getAudioFrame().capacity(),
                     recvAudioLength,
                     currentRtf,
@@ -462,7 +465,8 @@ public final class SpeechSynthesizer {
                   long current = System.currentTimeMillis();
                   double currentRtf = (current - startStreamTimeStamp) / recvAudioLength;
                   log.debug(
-                      "[TtsV2] Recv Audio Binary: {} bytes, total audio {} ms, current_rtf: {}, requestId={}",
+                      "[TtsV2] Recv Audio Binary: {} bytes, total audio {} ms, current_rtf: {},"
+                          + " requestId={}",
                       speechSynthesisResult.getAudioFrame().capacity(),
                       recvAudioLength,
                       currentRtf,
@@ -650,8 +654,7 @@ public final class SpeechSynthesizer {
         log.debug("stopLatch is done, requestId={}", getRequestIdForLog());
       } catch (InterruptedException ignored) {
         log.error(
-            "Interrupted while waiting for streaming complete, requestId={}",
-            getRequestIdForLog());
+            "Interrupted while waiting for streaming complete, requestId={}", getRequestIdForLog());
       }
     }
   }
@@ -754,8 +757,7 @@ public final class SpeechSynthesizer {
         }
       } catch (InterruptedException ignored) {
         log.error(
-            "Interrupted while waiting for streaming complete, requestId={}",
-            getRequestIdForLog());
+            "Interrupted while waiting for streaming complete, requestId={}", getRequestIdForLog());
       }
     } else {
       this.submitText(text);
@@ -847,8 +849,7 @@ public final class SpeechSynthesizer {
       }
     } catch (InterruptedException ignored) {
       log.error(
-          "Interrupted while waiting for streaming complete, requestId={}",
-          getRequestIdForLog());
+          "Interrupted while waiting for streaming complete, requestId={}", getRequestIdForLog());
     } catch (RuntimeException e) {
       // The real cause may already have been recorded by the error callback, in which case the
       // exception raised here only masks it.

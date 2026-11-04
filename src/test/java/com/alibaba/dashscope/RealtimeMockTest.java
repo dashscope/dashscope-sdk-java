@@ -17,6 +17,7 @@ import com.alibaba.dashscope.types.audio.UpdateSessionParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,13 +31,21 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import okhttp3.MediaType;
+import okhttp3.Protocol;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
+import okio.Buffer;
+import okio.BufferedSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -324,6 +333,70 @@ class RealtimeMockTest {
             .connect(RealtimeParams.builder().model("qwen-audio-asr-realtime").build())) {
       assertThrows(UnsupportedOperationException.class, rt::endSession);
       assertThrows(UnsupportedOperationException.class, rt::endSessionAsync);
+    }
+  }
+
+  @Test
+  void staleFailureClosesHandshakeResponseWithoutAffectingNewGeneration() throws Exception {
+    RealtimeServerSocket first = enqueueUpgrade();
+    try (RealtimeSession rt =
+        client
+            .audio()
+            .realtime()
+            .connect(RealtimeParams.builder().model("qwen3-omni-flash-realtime").build())) {
+      first.awaitOpen();
+      Constructor<?> constructor =
+          Class.forName(RealtimeSession.class.getName() + "$Listener")
+              .getDeclaredConstructor(RealtimeSession.class, int.class);
+      constructor.setAccessible(true);
+      WebSocketListener oldListener = (WebSocketListener) constructor.newInstance(rt, 1);
+      rt.close();
+
+      RealtimeServerSocket second = enqueueUpgrade();
+      rt.connect();
+      second.awaitOpen();
+      AtomicBoolean responseClosed = new AtomicBoolean();
+      ResponseBody body =
+          new ResponseBody() {
+            @Override
+            public MediaType contentType() {
+              return null;
+            }
+
+            @Override
+            public long contentLength() {
+              return 0;
+            }
+
+            @Override
+            public BufferedSource source() {
+              return new Buffer();
+            }
+
+            @Override
+            public void close() {
+              responseClosed.set(true);
+            }
+          };
+      try (Response response =
+          new Response.Builder()
+              .request(new Request.Builder().url(server.url("/")).build())
+              .protocol(Protocol.HTTP_1_1)
+              .code(403)
+              .message("Forbidden")
+              .body(body)
+              .build()) {
+        oldListener.onFailure(
+            first.socket.get(), new IOException("late handshake failure"), response);
+        assertTrue(responseClosed.get());
+      }
+      oldListener.onFailure(first.socket.get(), new IOException("late transport failure"), null);
+      second.send("{\"type\":\"session.created\",\"session\":{\"id\":\"fresh\"}}");
+      Iterator<JsonNode> it = rt.events().iterator();
+      assertTrue(it.hasNext());
+      assertEquals("fresh", it.next().path("session").path("id").asText());
+      rt.createResponse();
+      assertEquals("response.create", second.nextText().path("type").asText());
     }
   }
 

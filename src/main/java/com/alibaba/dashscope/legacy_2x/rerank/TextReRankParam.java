@@ -18,6 +18,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class TextReRankParam extends HalfDuplexServiceParam {
 
   /** The query text for reranking. Maximum length is 4,000 tokens. */

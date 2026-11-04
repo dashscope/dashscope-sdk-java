@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class MultiModalEmbeddingUsage {
   @SerializedName("input_tokens")
   private Integer inputTokens;

@@ -10,6 +10,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = false)
+@Deprecated
 public class ToolQuarkSearch extends ToolBase {
   static {
     registerTool("quark_search", ToolQuarkSearch.class);

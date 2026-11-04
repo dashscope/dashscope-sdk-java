@@ -6,6 +6,7 @@ import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder
+@Deprecated
 public class ChatCompletionStreamOptions {
   @SerializedName("include_usage")
   private Boolean includeUsage;

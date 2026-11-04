@@ -24,6 +24,7 @@ import java.util.regex.Pattern;
  * BPE encode and decode, implementation reference https://github.com/openai/tiktoken and
  * https://github.com/karpathy/minbpe
  */
+@Deprecated
 public class QwenTokenizer implements Tokenizer {
   private static final String SPECIAL_START = "<|";
   private static final String SPECIAL_END = "|>";

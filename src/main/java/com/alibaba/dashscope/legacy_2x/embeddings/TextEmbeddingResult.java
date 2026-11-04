@@ -9,6 +9,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class TextEmbeddingResult {
   private String requestId;
   private TextEmbeddingOutput output;

@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Deprecated
 public final class ApiKey {
   public static String getApiKey(String apiKey) throws NoApiKeyException {
     if (apiKey != null) { // api specified

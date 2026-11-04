@@ -4,6 +4,7 @@ import lombok.Data;
 
 /** OSS upload certificate for reuse across multiple file uploads. */
 @Data
+@Deprecated
 public class OSSUploadCertificate {
   private String uploadHost;
   private String ossAccessKeyId;

@@ -9,6 +9,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class TranscriptionTaskResult {
   @SerializedName("file_url")
   String fileUrl;

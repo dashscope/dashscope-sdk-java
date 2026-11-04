@@ -2,6 +2,7 @@
 
 package com.alibaba.dashscope.legacy_2x.audio.qwen_asr;
 
+@Deprecated
 public class QwenTranscriptionApiKeywords {
 
   public static final String CHANNEL_ID = "channel_id";

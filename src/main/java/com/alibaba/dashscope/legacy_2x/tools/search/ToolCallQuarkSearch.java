@@ -19,6 +19,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
+@Deprecated
 public class ToolCallQuarkSearch extends ToolCallBase {
   private String type = "quark_search";
   private String id;

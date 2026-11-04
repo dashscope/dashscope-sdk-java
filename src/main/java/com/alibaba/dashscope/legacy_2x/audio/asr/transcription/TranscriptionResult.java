@@ -17,6 +17,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode()
+@Deprecated
 public class TranscriptionResult {
   @SerializedName(ApiKeywords.REQUEST_ID)
   private String requestId;

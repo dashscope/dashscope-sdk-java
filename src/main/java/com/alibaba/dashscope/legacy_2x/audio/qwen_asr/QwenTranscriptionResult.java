@@ -14,6 +14,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode()
+@Deprecated
 public class QwenTranscriptionResult {
   @SerializedName(ApiKeywords.REQUEST_ID)
   private String requestId;

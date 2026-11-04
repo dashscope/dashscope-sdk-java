@@ -18,6 +18,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @Data
+@Deprecated
 public class TingWuRealtimeParam extends FullDuplexServiceParam {
   private Integer sampleRate;
   private String format;

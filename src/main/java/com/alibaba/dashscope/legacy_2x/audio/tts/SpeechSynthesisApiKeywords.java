@@ -2,6 +2,7 @@
 
 package com.alibaba.dashscope.legacy_2x.audio.tts;
 
+@Deprecated
 public class SpeechSynthesisApiKeywords {
   public static final String TEXT_TYPE = "text_type";
 

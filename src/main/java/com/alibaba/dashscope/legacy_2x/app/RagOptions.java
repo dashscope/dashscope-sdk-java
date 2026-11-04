@@ -20,6 +20,7 @@ import lombok.experimental.SuperBuilder;
  */
 @Data
 @SuperBuilder
+@Deprecated
 public class RagOptions {
   /** knowledge base ids */
   @SerializedName("pipeline_ids")

@@ -47,6 +47,7 @@ import okhttp3.sse.EventSources;
 import org.jetbrains.annotations.NotNull;
 
 @Slf4j
+@Deprecated
 public final class OkHttpHttpClient implements HalfDuplexClient {
   private final OkHttpClient client;
   private final Set<EventSource> activeEventSources =
@@ -380,10 +381,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
     log.debug(
         StringUtils.format(
             "Event: id %s, type: %s, data: %s, requestId=%s",
-            id,
-            eventType,
-            data,
-            requestId(response)));
+            id, eventType, data, requestId(response)));
     if (terminated.get()) {
       return;
     }
@@ -411,10 +409,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
       log.debug(
           StringUtils.format(
               "Ignore event id: %s, type: %s, data: %s, requestId=%s",
-              id,
-              eventType,
-              data,
-              requestId(response)));
+              id, eventType, data, requestId(response)));
     } else if (eventType != null) {
       // process assistant events.
       emitter.onNext(
@@ -554,10 +549,7 @@ public final class OkHttpHttpClient implements HalfDuplexClient {
                 log.debug(
                     StringUtils.format(
                         "Event: id %s, type: %s, data: %s, requestId=%s",
-                        id,
-                        type,
-                        data,
-                        requestId(response)));
+                        id, type, data, requestId(response)));
                 if (terminated.get()) {
                   return;
                 }

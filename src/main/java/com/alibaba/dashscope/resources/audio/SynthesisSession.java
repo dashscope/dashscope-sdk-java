@@ -537,7 +537,6 @@ public final class SynthesisSession implements AutoCloseable {
         null);
   }
 
-  /** ByteBuffer view → owned array (the one allowed copy on the downlink path). */
   private static byte[] toBytes(java.nio.ByteBuffer buffer) {
     java.nio.ByteBuffer slice = buffer.slice();
     byte[] out = new byte[slice.remaining()];

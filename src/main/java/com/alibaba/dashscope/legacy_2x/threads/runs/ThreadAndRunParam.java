@@ -10,6 +10,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class ThreadAndRunParam extends RunParam {
   private ThreadParam thread;
 

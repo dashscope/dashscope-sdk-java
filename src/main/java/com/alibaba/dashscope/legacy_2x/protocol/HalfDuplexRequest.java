@@ -20,6 +20,7 @@ import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Deprecated
 public class HalfDuplexRequest {
   HalfDuplexParamBase param;
   ServiceOption serviceOption;

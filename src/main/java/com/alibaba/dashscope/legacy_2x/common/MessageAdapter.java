@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@Deprecated
 public class MessageAdapter extends TypeAdapter<Message> {
   @Override
   public void write(JsonWriter out, Message value) throws IOException {

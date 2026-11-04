@@ -18,6 +18,7 @@ import io.reactivex.Flowable;
  *
  * @since jdk8
  */
+@Deprecated
 public class Application {
   private final SynchronizeHalfDuplexApi<ApplicationParam> syncApi;
 

@@ -12,6 +12,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.UUID;
 
+@Deprecated
 public class FullDuplexRequest {
   FullDuplexServiceParam param;
   ServiceOption serviceOption;

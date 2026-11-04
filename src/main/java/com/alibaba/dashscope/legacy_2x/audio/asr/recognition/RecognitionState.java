@@ -2,6 +2,7 @@
 
 package com.alibaba.dashscope.legacy_2x.audio.asr.recognition;
 
+@Deprecated
 public enum RecognitionState {
   IDLE("idle"),
   RECOGNITION_STARTED("recognition_started"),

@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Deprecated
 public final class PreprocessMessageInput {
 
   public static boolean isValidPath(String pathString) {

@@ -7,6 +7,7 @@ import lombok.Data;
 
 @Data
 @Builder
+@Deprecated
 public class Status {
 
   /** The protocol (like http) status code */

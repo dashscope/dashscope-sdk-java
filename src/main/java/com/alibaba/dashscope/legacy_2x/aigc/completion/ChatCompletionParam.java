@@ -18,6 +18,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class ChatCompletionParam extends FlattenHalfDuplexParamBase {
   @NonNull private List<Message> messages;
   @NonNull private String model;

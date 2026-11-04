@@ -8,6 +8,7 @@ import java.util.List;
 import lombok.Data;
 
 @Data
+@Deprecated
 public final class GenerationOutput {
   // output message.
   @Data

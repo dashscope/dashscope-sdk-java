@@ -9,6 +9,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
+@Deprecated
 public class MessageContentDocURL extends MessageContentBase {
   @Builder.Default private String type = "doc_url";
 

@@ -1,6 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.legacy_2x.utils;
 
+@Deprecated
 public class ApiKeywords {
 
   public static final String HISTORY = "history";

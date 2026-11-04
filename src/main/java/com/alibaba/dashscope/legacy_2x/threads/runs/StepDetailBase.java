@@ -4,6 +4,7 @@ import com.alibaba.dashscope.legacy_2x.common.TypeRegistry;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class StepDetailBase {
   private static final TypeRegistry<StepDetailBase> stepDetailRegistry = new TypeRegistry<>();
 

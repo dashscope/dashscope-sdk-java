@@ -16,6 +16,7 @@ import com.alibaba.dashscope.legacy_2x.protocol.HttpMethod;
 import com.alibaba.dashscope.legacy_2x.protocol.Protocol;
 import com.alibaba.dashscope.legacy_2x.protocol.StreamingMode;
 
+@Deprecated
 public class TextEmbedding {
   private final SynchronizeHalfDuplexApi<TextEmbeddingParam> syncApi;
   private final ApiServiceOption serviceOption;

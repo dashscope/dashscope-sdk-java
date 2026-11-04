@@ -8,6 +8,7 @@ import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @Data
+@Deprecated
 public class SearchOptions {
   /** Whether to include search results in the response. */
   @SerializedName("enable_source")

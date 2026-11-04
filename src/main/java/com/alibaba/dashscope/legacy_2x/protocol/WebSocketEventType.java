@@ -3,6 +3,7 @@ package com.alibaba.dashscope.legacy_2x.protocol;
 
 import com.google.gson.annotations.SerializedName;
 
+@Deprecated
 public enum WebSocketEventType {
   // receive
   @SerializedName("task-started")

@@ -37,6 +37,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
+@Deprecated
 public class JsonUtils {
   public static final Gson gson =
       new GsonBuilder()

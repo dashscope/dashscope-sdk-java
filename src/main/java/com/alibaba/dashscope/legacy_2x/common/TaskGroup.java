@@ -4,6 +4,7 @@ package com.alibaba.dashscope.legacy_2x.common;
 import lombok.Getter;
 
 @Getter
+@Deprecated
 public enum TaskGroup {
   AIGC("aigc"),
   EMBEDDINGS("embeddings"),

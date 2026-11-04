@@ -8,6 +8,7 @@ import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder
+@Deprecated
 public final class SpeechSynthesisUsage {
   private Integer characters;
 

@@ -12,6 +12,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 @NoArgsConstructor
+@Deprecated
 public class MultiModalMessage {
 
   /** The role, can be `user` and `bot`. */

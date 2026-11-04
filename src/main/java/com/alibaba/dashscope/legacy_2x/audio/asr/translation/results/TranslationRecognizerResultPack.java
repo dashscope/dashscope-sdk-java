@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import lombok.Getter;
 import lombok.Setter;
 
+@Deprecated
 public class TranslationRecognizerResultPack {
   @Setter @Getter private String requestId = "";
   @Getter private ArrayList<TranslationRecognizerUsage> usageList = new ArrayList<>();

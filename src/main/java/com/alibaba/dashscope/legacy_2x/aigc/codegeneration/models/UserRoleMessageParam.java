@@ -4,6 +4,7 @@ import com.alibaba.dashscope.legacy_2x.common.Role;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class UserRoleMessageParam extends MessageParamBase {
 
   private String content;

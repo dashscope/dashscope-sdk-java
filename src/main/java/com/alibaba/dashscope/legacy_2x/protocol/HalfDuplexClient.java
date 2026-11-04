@@ -8,6 +8,7 @@ import com.alibaba.dashscope.legacy_2x.exception.ApiException;
 import com.alibaba.dashscope.legacy_2x.exception.NoApiKeyException;
 import io.reactivex.Flowable;
 
+@Deprecated
 public interface HalfDuplexClient {
   /**
    * Blocking send http request and get the response body.

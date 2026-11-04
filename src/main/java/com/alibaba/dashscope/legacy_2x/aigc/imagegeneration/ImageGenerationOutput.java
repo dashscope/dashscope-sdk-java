@@ -10,6 +10,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 @NoArgsConstructor
+@Deprecated
 public class ImageGenerationOutput {
   // output message.
   @Data

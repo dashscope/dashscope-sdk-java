@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
  *
  * <p>author songsong.shao date 2025/4/27
  */
+@Deprecated
 public abstract class MultiModalDialogCallback {
 
   /** Called when the conversation is connected. */

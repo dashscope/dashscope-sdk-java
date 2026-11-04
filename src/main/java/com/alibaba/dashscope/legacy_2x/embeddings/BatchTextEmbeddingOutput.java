@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class BatchTextEmbeddingOutput {
   @SerializedName("task_id")
   private String taskId;

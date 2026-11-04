@@ -19,6 +19,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class RunParam extends FlattenHalfDuplexParamBase {
   @NonNull
   @SerializedName("assistant_id")

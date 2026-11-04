@@ -32,6 +32,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 @Slf4j
+@Deprecated
 public final class OSSUtils {
   /**
    * Upload file to OSS without certificate reuse.

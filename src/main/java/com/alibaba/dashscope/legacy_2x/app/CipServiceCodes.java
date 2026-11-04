@@ -11,6 +11,7 @@ import lombok.Data;
  */
 @Data
 @Builder
+@Deprecated
 public class CipServiceCodes {
   /** Text security check configuration */
   private Text text;

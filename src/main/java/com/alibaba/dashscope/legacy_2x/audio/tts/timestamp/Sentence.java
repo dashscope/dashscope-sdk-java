@@ -9,6 +9,7 @@ import java.util.List;
 import lombok.*;
 
 @Data
+@Deprecated
 public class Sentence {
   /** Sentence begin time in milliseconds. */
   @SerializedName("begin_time")

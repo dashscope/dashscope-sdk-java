@@ -21,9 +21,10 @@
 4.0 删除。这是有意的 FQCN、源码与二进制破坏性变更，存量 2.x imports 必须调整。运行期要求
 Java 8+（字节码 target 8），构建基线也是 JDK 8：CI 使用 JDK 8 构建与测试。在 JDK 9+ 上从
 源码构建同样可行——pom 的 `jdk9-plus` profile 会自动激活并以 release 8 做 API 校验。
-`legacy_2x` 的包级 `@deprecated` Javadoc 标签仅为 Javadoc 与 IDE 层面的提示：javac 不会把
-包级弃用传播到包内类型，存量
-imports 不会产生 deprecation 编译告警。
+`legacy_2x` 的全部公开顶层类型均带类型级 `@Deprecated`，使用这些类型时 javac 会报告
+弃用（`-Xlint:deprecation` 显示详细告警）。包级仅保留 `@deprecated` Javadoc 标签：
+包注解与标签同现会在 Java 8 上编译失败，且包级弃用不会传播到类型。AgentStudio 与
+`shared` 不废弃。
 
 ```java
 import com.alibaba.dashscope.DashScopeClient;
@@ -51,7 +52,8 @@ try (DashScopeClient client = DashScopeClient.builder().build()) {
 - 2.x 迁移：[md/dashscope-3.0-migration.md](md/dashscope-3.0-migration.md)
   （逐类对照表、unchecked 异常心智、AgentStudio 与 tokenizers 专章）。
 - 可运行示例：[examples/README.md](examples/README.md)（四层结构，MockWebServer 干跑，命令
-  `mvn -f examples/pom.xml test`；独立工程，尚未接入 CI）。
+  `mvn -f examples/pom.xml clean test`；CI 在根测试之后先以 `mvn install -DskipTests -Dgpg.skip=true` 安装
+  当前 SDK，再运行独立示例工程）。
 - 本节以下为已废弃的 2.x API 文档（`Generation`、`Conversation` 等），示例已使用当前
   `legacy_2x` imports；这些 API 将在 4.0 删除。
 

@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class AttachmentRoleMessageParam extends MessageParamBase {
 
   public JsonObject meta;

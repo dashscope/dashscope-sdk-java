@@ -20,6 +20,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class ImageGenerationParam extends HalfDuplexServiceParam {
 
   @Singular private List<ImageGenerationMessage> messages;

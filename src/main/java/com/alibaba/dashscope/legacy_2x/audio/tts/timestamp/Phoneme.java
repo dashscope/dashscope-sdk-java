@@ -6,6 +6,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.*;
 
 @Data
+@Deprecated
 public class Phoneme {
   /** Phoneme begin time in milliseconds. */
   @SerializedName("begin_time")

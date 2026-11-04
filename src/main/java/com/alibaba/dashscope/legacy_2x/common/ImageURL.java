@@ -5,6 +5,7 @@ import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder
+@Deprecated
 public class ImageURL {
   private String url;
   private String detail;

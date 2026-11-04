@@ -14,12 +14,14 @@ legacy_2x/                 # 2.x 旧样例 64 个，整体封存（不编译）�
 活动四层示例使用 `com.alibaba.dashscope` 根包 3.0 API。`legacy_2x/` 保留历史旧 FQCN；
 复用其中样例时，2.x imports 须调整为 `com.alibaba.dashscope.legacy_2x.*`，AgentStudio
 imports 须调整为 `com.alibaba.dashscope.applications.agentstudio.*`，详见归档目录说明。
+SDK 的 `legacy_2x` 全部公开顶层类型带类型级 `@Deprecated`，使用时 javac 会报告弃用；
+包级仅保留 `@deprecated` Javadoc 标签以兼容 Java 8。AgentStudio 与 `shared` 不废弃。
 
 ## 准备
 
 ```bash
 # 仓库根目录：先把 SDK 装进本地仓库（示例模块按 3.0.0 解析）
-JAVA_HOME=<jdk17+> mvn -o install -DskipTests -Dgpg.skip=true -Dmaven.javadoc.skip=true
+JAVA_HOME=<jdk8+> mvn install -DskipTests -Dgpg.skip=true -Dmaven.javadoc.skip=true
 
 export DASHSCOPE_API_KEY=sk-...
 # 可选：DASHSCOPE_REGION / DASHSCOPE_WORKSPACE / DASHSCOPE_BASE_URL
@@ -39,17 +41,19 @@ $RUN com.alibaba.dashscope.examples.atomic.chat.ChatCompletionsCreate
 `--no-play`）；真实调用可能计费，批任务类示例先打印 `task_id` 再等待，中断后可用
 `--task-id` 恢复而不是重复付费提交。
 
-## 干跑（本地）
+## 干跑（本地与 CI）
 
 ```bash
-mvn -o -f examples/pom.xml test
+mvn -f examples/pom.xml clean test
 ```
 
-> `examples/` 是独立 Maven 工程（根 `pom.xml` 未声明 `<module>`），因此**目前不会在任何 CI
-> 任务中编译或运行**，改动示例后需本地执行上述命令验证。设计文档 §8 要求的「CI 全量干跑」
-> 尚未接线。
+> `examples/` 是独立 Maven 工程（根 `pom.xml` 未声明 `<module>`）。`build-and-test.yml`
+> 的 test job 在根 `mvn clean test` 后先执行 `mvn install -DskipTests -Dgpg.skip=true`，再执行上述命令，
+> 确保示例 clean 编译与 MockWebServer 干跑依赖同一 checkout 的当前 SDK，而非已发布版本。
+> 本地验证也应先执行「准备」中的 SDK 安装命令。SDK 与示例都默认以 JDK 8 的 source/target 8
+> 编译，JDK 9+ 自动启用 `jdk9-plus` profile 的 release 8 API 校验。
 >
-> 但有一个例外：格式门禁。`lint.sh` 与 `linter.yml` 的过滤器 `./*/src/.*java` 会命中
+> 格式门禁独立保留：`lint.sh` 与 `linter.yml` 的过滤器 `./*/src/.*java` 会命中
 > `examples/src/test/java/` 下的 3 个文件（`ExamplesDryRunTest`、`DryRunDispatcher`、`MockWs`），
 > 它们必须符合 google-java-format（100 列上限）；其余 102 个文件（38 个四层活动示例 + 64 个
 > 封存的 `legacy_2x/`，后者不参与编译）不在该门禁范围内。

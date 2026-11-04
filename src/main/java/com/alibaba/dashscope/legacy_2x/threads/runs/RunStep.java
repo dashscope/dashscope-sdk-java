@@ -10,6 +10,7 @@ import lombok.EqualsAndHashCode;
 /** RunStep */
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Deprecated
 public class RunStep extends FlattenResultBase {
 
   /**

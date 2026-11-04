@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class AsrPhraseInfo {
   @SerializedName(AsrPhraseApiKeywords.ASR_PHRASE_CREATE_TIME)
   private String createTime;

@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 /**
  * @author lengjiayi
  */
+@Deprecated
 public abstract class OmniRealtimeCallback {
   /** Will be called as soon as the connection is established, only for http stream request. */
   public void onOpen() {}

@@ -20,6 +20,7 @@ import okio.ByteString;
  * @author songsong.shao
  */
 @Slf4j
+@Deprecated
 public class AudioWebsocketRequest extends WebSocketListener {
 
   private OkHttpClient client;

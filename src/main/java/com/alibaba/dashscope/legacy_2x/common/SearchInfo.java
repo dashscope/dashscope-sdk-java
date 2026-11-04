@@ -8,6 +8,7 @@ import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @Data
+@Deprecated
 public class SearchInfo {
   /** Results returned by web search. */
   @SerializedName("search_results")

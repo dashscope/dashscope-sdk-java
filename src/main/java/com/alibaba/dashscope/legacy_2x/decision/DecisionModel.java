@@ -27,6 +27,7 @@ import com.alibaba.dashscope.legacy_2x.utils.Constants;
  * https://{WorkspaceId}.{region}.maas.aliyuncs.com/compatible-mode/v1/systemone}. A workspace id
  * must be supplied either via the constructor or the {@value #ENV_WORKSPACE} environment variable.
  */
+@Deprecated
 public final class DecisionModel {
 
   /** Hostname template for the workspace-scoped decision model gateway. */

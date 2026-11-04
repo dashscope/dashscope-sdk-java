@@ -14,6 +14,7 @@ import okhttp3.OkHttpClient;
  * @author songsong.shao
  */
 @Slf4j
+@Deprecated
 public class OkHttpWebSocketClientForAudio extends OkHttpWebSocketClient {
 
   private static final AtomicInteger STREAMING_REQUEST_THREAD_NUM = new AtomicInteger(0);

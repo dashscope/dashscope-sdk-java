@@ -13,6 +13,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
+@Deprecated
 public class GeneralGetParam extends HalfDuplexParamBase {
   @Override
   public String getModel() {

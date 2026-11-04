@@ -3,6 +3,7 @@ package com.alibaba.dashscope.legacy_2x.threads;
 import com.alibaba.dashscope.legacy_2x.common.TypeRegistry;
 import com.google.gson.annotations.SerializedName;
 
+@Deprecated
 public class AnnotationBase {
   /**
    * End Index

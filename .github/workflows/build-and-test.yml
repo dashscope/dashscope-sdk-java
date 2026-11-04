@@ -73,12 +73,21 @@ jobs:
         env:
           DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
 
+      # examples/ is a standalone Maven project, so install this checkout's SDK first.
+      - name: Install current SDK for examples
+        run: mvn install -DskipTests -Dgpg.skip=true
+
+      - name: Run examples dry-run tests
+        run: mvn -f examples/pom.xml clean test
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: target/surefire-reports/
+          path: |
+            target/surefire-reports/
+            examples/target/surefire-reports/
 
   build:
     runs-on: ubuntu-22.04

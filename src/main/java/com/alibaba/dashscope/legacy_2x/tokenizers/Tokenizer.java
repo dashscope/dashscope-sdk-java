@@ -4,6 +4,7 @@ import com.alibaba.dashscope.legacy_2x.exception.NoSpecialTokenExists;
 import com.alibaba.dashscope.legacy_2x.exception.UnSupportedSpecialTokenMode;
 import java.util.List;
 
+@Deprecated
 public interface Tokenizer {
   /**
    * Encoding that ignores any special tokens. There is no guarantee that the results will be

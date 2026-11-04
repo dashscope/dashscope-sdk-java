@@ -22,6 +22,7 @@ import lombok.Data;
  * }</pre>
  */
 @Data
+@Deprecated
 public class OmniRealtimeAudioFormatConfig {
   private static final Set<Integer> SUPPORTED_SAMPLE_RATES =
       new HashSet<>(Arrays.asList(8000, 16000, 24000, 48000));

@@ -31,6 +31,7 @@ import lombok.experimental.SuperBuilder;
  */
 @Data
 @SuperBuilder
+@Deprecated
 public class AudioParameters implements Serializable {
   /** Audio output voice, support: Cherry, Serena, Ethan and Chelsie. Default value: Cherry */
   @SerializedName("voice")

@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Data
+@Deprecated
 public final class CodeGenerationResult {
   private String requestId;
   private CodeGenerationUsage usage;
@@ -36,8 +37,7 @@ public final class CodeGenerationResult {
       log.error(
           StringUtils.format(
               "Result no output: %s, requestId=%s",
-              dashScopeResult,
-              dashScopeResult.getRequestIdOrUnknown()));
+              dashScopeResult, dashScopeResult.getRequestIdOrUnknown()));
     }
     return result;
   }

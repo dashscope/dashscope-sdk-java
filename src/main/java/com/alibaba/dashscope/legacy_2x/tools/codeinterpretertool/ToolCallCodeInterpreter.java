@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
+@Deprecated
 public class ToolCallCodeInterpreter extends ToolCallBase {
   private String type = "code_interpreter";
   private String id;

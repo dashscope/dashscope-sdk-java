@@ -5,6 +5,7 @@ import java.util.List;
 import lombok.Data;
 
 @Data
+@Deprecated
 public final class GenerationLogprobs {
   @Data
   public static class TopLogprob {

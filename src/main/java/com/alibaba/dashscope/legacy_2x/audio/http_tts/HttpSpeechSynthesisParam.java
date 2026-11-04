@@ -31,6 +31,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
+@Deprecated
 public class HttpSpeechSynthesisParam extends HalfDuplexServiceParam {
 
   /** The text to be synthesized into speech. */

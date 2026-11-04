@@ -10,6 +10,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class DollyParam extends GenerationParamBase {
   /* empty current */
 }

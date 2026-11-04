@@ -4,6 +4,7 @@ package com.alibaba.dashscope.legacy_2x.common;
 import lombok.Getter;
 
 @Getter
+@Deprecated
 public enum Task {
   TEXT_GENERATION("text-generation"),
   CODE_GENERATION("code-generation"),

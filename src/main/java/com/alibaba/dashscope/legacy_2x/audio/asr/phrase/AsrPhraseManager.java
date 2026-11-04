@@ -6,6 +6,7 @@ import com.alibaba.dashscope.legacy_2x.exception.InputRequiredException;
 import com.alibaba.dashscope.legacy_2x.exception.NoApiKeyException;
 import com.alibaba.dashscope.legacy_2x.protocol.*;
 
+@Deprecated
 public final class AsrPhraseManager {
   public static AsrPhraseStatusResult CreatePhrases(AsrPhraseParam param)
       throws ApiException, NoApiKeyException, InputRequiredException {

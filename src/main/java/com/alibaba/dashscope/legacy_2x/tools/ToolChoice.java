@@ -6,6 +6,7 @@ import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder
+@Deprecated
 public class ToolChoice {
   /*
    * Tool usage strategy, null means not to use it,

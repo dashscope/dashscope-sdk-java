@@ -6,6 +6,7 @@ import okhttp3.WebSocket;
 /**
  * @author songsong.shao
  */
+@Deprecated
 public interface AudioWebsocketCallback {
 
   void onOpen();

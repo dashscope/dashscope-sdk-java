@@ -8,6 +8,7 @@ package com.alibaba.dashscope.legacy_2x.app;
  *
  * @since jdk8
  */
+@Deprecated
 public interface AppKeywords {
   /** http headers */
   String X_DASHSCOPE_WORKSPACE = "X-DashScope-WorkSpace";

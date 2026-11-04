@@ -8,6 +8,7 @@ import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder
+@Deprecated
 public final class GeneralServiceOption implements ServiceOption {
   // set websocket service stream mode[NONE, IN, OUT, DUPLEX]
   @Default private StreamingMode streamingMode = StreamingMode.NONE;

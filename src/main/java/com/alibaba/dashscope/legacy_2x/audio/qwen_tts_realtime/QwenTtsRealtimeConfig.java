@@ -16,6 +16,7 @@ import lombok.experimental.SuperBuilder;
  */
 @SuperBuilder
 @Data
+@Deprecated
 public class QwenTtsRealtimeConfig {
   /** voice to be used in session */
   @NonNull String voice;

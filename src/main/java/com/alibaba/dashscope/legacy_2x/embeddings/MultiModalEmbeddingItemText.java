@@ -9,6 +9,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class MultiModalEmbeddingItemText extends MultiModalEmbeddingItemBase {
   public String text;
 

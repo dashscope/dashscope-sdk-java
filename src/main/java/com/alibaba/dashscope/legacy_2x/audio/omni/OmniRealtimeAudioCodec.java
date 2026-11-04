@@ -7,6 +7,7 @@ import com.google.gson.annotations.SerializedName;
  * Audio codec/format type used in the new-style upstream/downstream audio configuration (see {@link
  * OmniRealtimeAudioFormatConfig}), e.g.
  */
+@Deprecated
 public enum OmniRealtimeAudioCodec {
   @SerializedName("pcm")
   PCM,

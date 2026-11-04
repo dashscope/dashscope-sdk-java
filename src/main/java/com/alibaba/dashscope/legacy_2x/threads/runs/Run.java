@@ -15,6 +15,7 @@ import lombok.Singular;
 /** Run */
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Deprecated
 public class Run extends FlattenResultBase {
 
   /** (Required) */

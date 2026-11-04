@@ -13,6 +13,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode
+@Deprecated
 public class AudioInfo {
 
   /** The audio URL for downloading the synthesized audio file. */

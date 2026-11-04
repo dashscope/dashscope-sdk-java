@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import java.lang.reflect.Type;
 
+@Deprecated
 public class MessageContentDeserializer implements JsonDeserializer<Object> {
 
   @Override

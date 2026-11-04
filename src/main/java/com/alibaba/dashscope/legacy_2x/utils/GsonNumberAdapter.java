@@ -7,6 +7,7 @@ import com.google.gson.stream.JsonWriter;
 import com.google.gson.stream.MalformedJsonException;
 import java.io.IOException;
 
+@Deprecated
 public class GsonNumberAdapter extends TypeAdapter<Number> {
 
   @Override

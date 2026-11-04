@@ -16,6 +16,7 @@ import com.alibaba.dashscope.legacy_2x.protocol.StreamingMode;
 import com.alibaba.dashscope.legacy_2x.task.AsyncTaskListParam;
 import com.alibaba.dashscope.legacy_2x.task.AsyncTaskListResult;
 
+@Deprecated
 public class BatchTextEmbedding {
   private final AsynchronousApi<BatchTextEmbeddingParam> asyncApi;
   private final ApiServiceOption serviceOption;

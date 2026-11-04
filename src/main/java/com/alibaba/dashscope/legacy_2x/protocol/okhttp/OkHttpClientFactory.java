@@ -18,6 +18,7 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 
 @Slf4j
+@Deprecated
 public class OkHttpClientFactory {
   private OkHttpClientFactory() {
     if (Holder.INSTANCE != null) {

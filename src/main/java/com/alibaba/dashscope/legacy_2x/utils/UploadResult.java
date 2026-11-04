@@ -4,6 +4,7 @@ import lombok.Data;
 
 /** Result of file upload containing OSS URL and certificate. */
 @Data
+@Deprecated
 public class UploadResult {
   private String ossUrl;
   private OSSUploadCertificate certificate;

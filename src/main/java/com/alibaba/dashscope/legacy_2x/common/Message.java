@@ -12,6 +12,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 @NoArgsConstructor
+@Deprecated
 public class Message {
 
   /** The role, can be `user` and `system` and `assistant` and 'tool'. */

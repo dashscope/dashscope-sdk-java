@@ -34,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 @Slf4j
+@Deprecated
 public final class TranslationRecognizerRealtime {
   @Getter SynchronizeFullDuplexApi<TranslationRecognizerParamWithStream> duplexApi;
 
@@ -456,8 +457,7 @@ public final class TranslationRecognizerRealtime {
     if (this.startStreamTimeStamp < 0) {
       this.startStreamTimeStamp = System.currentTimeMillis();
     }
-    log.debug(
-        "send audio frame: {}, requestId={}", audioFrame.remaining(), getRequestIdForLog());
+    log.debug("send audio frame: {}, requestId={}", audioFrame.remaining(), getRequestIdForLog());
     synchronized (this) {
       if (state != TranslationRecognizerState.SPEECH_TRANSLATION_STARTED) {
         throw new ApiException(

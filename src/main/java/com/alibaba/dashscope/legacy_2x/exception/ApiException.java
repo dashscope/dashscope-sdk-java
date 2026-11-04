@@ -8,6 +8,7 @@ import com.alibaba.dashscope.legacy_2x.utils.StringUtils;
 import lombok.Getter;
 import lombok.Setter;
 
+@Deprecated
 public class ApiException extends RuntimeException {
 
   @Getter @Setter private Status status = null;

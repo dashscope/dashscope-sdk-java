@@ -5,6 +5,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
+@Deprecated
 public class ToolCallFunction extends ToolCallBase {
   static {
     registerToolCall("function", ToolCallFunction.class);

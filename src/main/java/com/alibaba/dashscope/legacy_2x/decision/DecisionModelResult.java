@@ -11,6 +11,7 @@ import lombok.Data;
 
 /** The output result of the decision model api. */
 @Data
+@Deprecated
 public class DecisionModelResult {
   private String model;
 

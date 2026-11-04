@@ -4,6 +4,7 @@ import lombok.Getter;
 
 /** author songsong.shao date 2025/4/27 */
 @Getter
+@Deprecated
 public class State {
   @Getter
   public enum DialogState {

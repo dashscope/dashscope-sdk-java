@@ -7,6 +7,7 @@ import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder
+@Deprecated
 public final class Usage {
   @SerializedName("prompt_tokens")
   private Integer promptTokens;

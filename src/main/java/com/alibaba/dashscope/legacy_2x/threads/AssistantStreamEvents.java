@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import java.util.HashMap;
 import java.util.Map;
 
+@Deprecated
 public enum AssistantStreamEvents {
   @SerializedName("thread.created")
   THREAD_CREATED("thread.created"),

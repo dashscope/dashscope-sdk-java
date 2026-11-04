@@ -27,6 +27,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class ImageSynthesisParam extends HalfDuplexServiceParam {
   @Builder.Default private Integer n = null;
   @Builder.Default private String size = null;

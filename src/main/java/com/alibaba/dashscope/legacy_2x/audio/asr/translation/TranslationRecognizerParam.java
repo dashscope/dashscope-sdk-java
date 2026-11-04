@@ -20,6 +20,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @Data
+@Deprecated
 public class TranslationRecognizerParam extends FullDuplexServiceParam {
 
   @Builder.Default private boolean disfluencyRemovalEnabled = false;

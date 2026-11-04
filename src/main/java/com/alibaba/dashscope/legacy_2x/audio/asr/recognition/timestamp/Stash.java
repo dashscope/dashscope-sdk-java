@@ -9,6 +9,7 @@ import java.util.List;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class Stash {
   @SerializedName("sentence_id")
   Long sentenceId;

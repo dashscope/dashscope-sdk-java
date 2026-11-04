@@ -7,6 +7,7 @@ import java.util.List;
 import lombok.*;
 
 @Data
+@Deprecated
 public class Word {
   /** Word begin time in milliseconds. */
   @SerializedName("begin_time")

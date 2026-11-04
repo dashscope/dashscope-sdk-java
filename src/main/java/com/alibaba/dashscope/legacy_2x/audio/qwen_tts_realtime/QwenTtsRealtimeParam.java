@@ -16,6 +16,7 @@ import lombok.experimental.SuperBuilder;
  */
 @Data
 @SuperBuilder
+@Deprecated
 public class QwenTtsRealtimeParam {
 
   public static String baseWebsocketApiUrl =

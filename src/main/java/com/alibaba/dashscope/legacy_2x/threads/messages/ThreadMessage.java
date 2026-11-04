@@ -13,6 +13,7 @@ import lombok.EqualsAndHashCode;
 /** Message */
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Deprecated
 public final class ThreadMessage extends FlattenResultBase {
 
   /**

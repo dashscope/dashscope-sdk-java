@@ -2,6 +2,7 @@
 
 package com.alibaba.dashscope.legacy_2x.audio.asr.recognition;
 
+@Deprecated
 public class RecognitionApiKeywords {
   public static final String SAMPLE_RATE = "sample_rate";
 

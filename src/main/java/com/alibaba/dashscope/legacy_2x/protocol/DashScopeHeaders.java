@@ -10,6 +10,7 @@ import com.alibaba.dashscope.shared.SdkSession;
 import java.util.HashMap;
 import java.util.Map;
 
+@Deprecated
 public final class DashScopeHeaders {
   private static final String SDK_CLIENT = "java-sdk";
   // J2: session id single-sourced from the neutral layer, shared with 3.0 in-process.

@@ -1,6 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.legacy_2x.app;
 
+@Deprecated
 public enum FlowStreamMode {
 
   /** The streaming results from all nodes will be output in the thoughts field. */

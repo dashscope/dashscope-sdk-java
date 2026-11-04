@@ -34,6 +34,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class GenerationParam extends GenerationParamBase {
   public static class ResultFormat {
     public static String TEXT = "text";

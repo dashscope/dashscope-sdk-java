@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 /** AssistantDeleted */
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Deprecated
 public final class ListResult<T> extends FlattenResultBase {
   @SerializedName("first_id")
   private String firstId;

@@ -16,6 +16,7 @@ import java.lang.reflect.Type;
 import lombok.Data;
 
 @Data
+@Deprecated
 public abstract class FlattenResultBase {
   /** The request if. */
   @SerializedName(

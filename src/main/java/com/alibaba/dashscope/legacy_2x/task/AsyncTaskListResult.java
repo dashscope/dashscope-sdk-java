@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Data
 @Slf4j
+@Deprecated
 public class AsyncTaskListResult {
   @SerializedName("request_id")
   private String requestId;
@@ -49,8 +50,7 @@ public class AsyncTaskListResult {
       log.error(
           StringUtils.format(
               "Result no output: %s, requestId=%s",
-              dashScopeResult,
-              dashScopeResult.getRequestIdOrUnknown()));
+              dashScopeResult, dashScopeResult.getRequestIdOrUnknown()));
     }
     return null;
   }

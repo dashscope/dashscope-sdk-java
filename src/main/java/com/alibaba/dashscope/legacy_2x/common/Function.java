@@ -1,6 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.legacy_2x.common;
 
+@Deprecated
 public enum Function {
   GENERATION("generation"),
   IMAGE_SYNTHESIS("image-synthesis"),

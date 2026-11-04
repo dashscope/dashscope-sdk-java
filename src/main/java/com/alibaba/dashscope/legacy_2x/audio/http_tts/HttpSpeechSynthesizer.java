@@ -35,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author songsong.sss
  */
 @Slf4j
+@Deprecated
 public class HttpSpeechSynthesizer {
 
   /** Creates a new HttpSpeechSynthesizer instance with default settings. */
@@ -172,8 +173,7 @@ public class HttpSpeechSynthesizer {
             }
           });
     } catch (Exception e) {
-      log.error(
-          "Streaming call failed, requestId={}", getRequestIdForLog(requestId.get(), e), e);
+      log.error("Streaming call failed, requestId={}", getRequestIdForLog(requestId.get(), e), e);
       throw new ApiException(e);
     }
   }

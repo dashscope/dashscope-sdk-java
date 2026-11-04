@@ -5,6 +5,7 @@ import java.util.List;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class AsrPhraseStatusOutput {
   @SerializedName(AsrPhraseApiKeywords.ASR_PHRASE_JOB_ID)
   private String jobId;

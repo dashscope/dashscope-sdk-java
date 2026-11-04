@@ -9,6 +9,7 @@ import lombok.Data;
 
 /** An sample assistant event handler. */
 @Data
+@Deprecated
 public class DefaultAssistantEventHandler implements AssistantEventHandler {
   private AssistantThread assistantThread;
   private Run run;

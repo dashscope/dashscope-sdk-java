@@ -7,6 +7,7 @@ import com.alibaba.dashscope.legacy_2x.protocol.okhttp.OkHttpHttpClient;
 import com.alibaba.dashscope.legacy_2x.protocol.okhttp.OkHttpWebSocketClient;
 import com.alibaba.dashscope.legacy_2x.protocol.okhttp.OkHttpWebSocketClientForAudio;
 
+@Deprecated
 public class ClientProviders {
   public static HalfDuplexClient getHalfDuplexClient(String protocol) {
     return getHalfDuplexClient(null, protocol);

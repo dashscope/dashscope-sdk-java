@@ -5,6 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
+@Deprecated
 public abstract class MessageParamBase {
 
   private String role;

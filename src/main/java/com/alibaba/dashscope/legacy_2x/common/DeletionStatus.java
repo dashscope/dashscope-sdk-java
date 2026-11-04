@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 /** AssistantDeleted */
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Deprecated
 public final class DeletionStatus extends FlattenResultBase {
 
   /**

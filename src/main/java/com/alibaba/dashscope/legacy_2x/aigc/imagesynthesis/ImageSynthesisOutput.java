@@ -6,6 +6,7 @@ import java.util.Map;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class ImageSynthesisOutput {
   @SerializedName("task_id")
   private String taskId;

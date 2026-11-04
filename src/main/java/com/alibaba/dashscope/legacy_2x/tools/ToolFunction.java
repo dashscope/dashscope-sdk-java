@@ -8,6 +8,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @SuperBuilder
+@Deprecated
 public class ToolFunction extends ToolBase {
   static {
     registerTool("function", ToolFunction.class);

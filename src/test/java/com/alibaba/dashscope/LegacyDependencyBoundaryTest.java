@@ -3,7 +3,9 @@ package com.alibaba.dashscope;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,6 +13,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
@@ -49,6 +52,37 @@ class LegacyDependencyBoundaryTest {
               });
     }
     assertTrue(violations.isEmpty(), "legacy reverse dependencies: " + violations);
+  }
+
+  @Test
+  void legacyPublicTopLevelTypesAreDeprecated() throws IOException, ClassNotFoundException {
+    Path root = Paths.get("src/main/java");
+    List<String> violations = new ArrayList<>();
+    int publicTypes = 0;
+    try (Stream<Path> files = Files.walk(root.resolve("com/alibaba/dashscope/legacy_2x"))) {
+      List<Path> sources =
+          files
+              .filter(path -> path.toString().endsWith(".java"))
+              .filter(path -> !path.getFileName().toString().equals("package-info.java"))
+              .collect(Collectors.toList());
+      for (Path source : sources) {
+        String relative = root.relativize(source).toString();
+        String className =
+            relative
+                .substring(0, relative.length() - ".java".length())
+                .replace(File.separatorChar, '.');
+        Class<?> type = Class.forName(className, false, getClass().getClassLoader());
+        if (Modifier.isPublic(type.getModifiers()) && type.getEnclosingClass() == null) {
+          publicTypes++;
+          if (!type.isAnnotationPresent(Deprecated.class)) {
+            violations.add(className);
+          }
+        }
+      }
+    }
+    assertTrue(publicTypes > 0, "no legacy public top-level types checked");
+    assertTrue(
+        violations.isEmpty(), "legacy public top-level types missing @Deprecated: " + violations);
   }
 
   /**

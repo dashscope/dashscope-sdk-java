@@ -14,6 +14,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @EqualsAndHashCode
 @Data
+@Deprecated
 public class VocabularyParam extends HalfDuplexServiceParam {
   private String prefix;
   private String targetModel;

@@ -17,6 +17,7 @@ import lombok.experimental.SuperBuilder;
  */
 @SuperBuilder
 @Data
+@Deprecated
 public class OmniRealtimeConfig {
   /** omni output modalities to be used in session */
   @NonNull List<OmniRealtimeModality> modalities;

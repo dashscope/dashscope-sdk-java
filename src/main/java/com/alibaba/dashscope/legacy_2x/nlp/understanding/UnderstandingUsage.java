@@ -7,6 +7,7 @@ import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder
+@Deprecated
 public final class UnderstandingUsage {
 
   @SerializedName("input_tokens")

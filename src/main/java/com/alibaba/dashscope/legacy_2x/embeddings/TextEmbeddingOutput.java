@@ -4,6 +4,7 @@ import java.util.List;
 import lombok.Data;
 
 @Data
+@Deprecated
 public final class TextEmbeddingOutput {
   private List<TextEmbeddingResultItem> embeddings;
 }

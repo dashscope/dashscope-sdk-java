@@ -36,6 +36,7 @@ import okhttp3.Request.Builder;
 import okio.ByteString;
 
 @Slf4j
+@Deprecated
 public class OkHttpWebSocketClient extends WebSocketListener
     implements HalfDuplexClient, FullDuplexClient {
   // we will try 3 times for connection, only for retryable failures.
@@ -509,9 +510,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
         case TASK_FAILED:
           log.error(
               StringUtils.format(
-                  "Receive task_failed message: %s, requestId=%s",
-                  text,
-                  getRequestIdOrUnknown()));
+                  "Receive task_failed message: %s, requestId=%s", text, getRequestIdOrUnknown()));
           Status st =
               Status.builder()
                   .code(response.header.code)
@@ -527,8 +526,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
             log.error(
                 StringUtils.format(
                     "Something wrong, receive task failed message: %s, requestId=%s",
-                    text,
-                    getRequestIdOrUnknown()));
+                    text, getRequestIdOrUnknown()));
           }
         case TASK_FINISHED:
           // check the payload and usage is null.
@@ -680,7 +678,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
             apiKey, isSecurityCheck, workspace, customHeaders, baseWebSocketUrl, module);
         log.warn(
             StringUtils.format(
-                "Send request failed, the connection may closed, will reconnect and send again, requestId=%s",
+                "Send request failed, the connection may closed, will reconnect and send again,"
+                    + " requestId=%s",
                 getRequestIdOrUnknown()));
       }
       Observable.timer(5000, TimeUnit.MILLISECONDS).blockingSingle();
@@ -725,7 +724,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
             apiKey, isSecurityCheck, workspace, customHeaders, baseWebSocketUrl, module);
         log.warn(
             StringUtils.format(
-                "Send request failed, the connection may closed, will reconnect and send again, requestId=%s",
+                "Send request failed, the connection may closed, will reconnect and send again,"
+                    + " requestId=%s",
                 getRequestIdOrUnknown()));
       }
       Observable.timer(5000, TimeUnit.MILLISECONDS).blockingSingle();
@@ -969,8 +969,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
                   log.error(
                       StringUtils.format(
                           "sendStreamData exception: %s, requestId=%s",
-                          ex.getMessage(),
-                          getRequestIdOrUnknown()));
+                          ex.getMessage(), getRequestIdOrUnknown()));
                   emitResponseError(ex);
                 }
               },
@@ -1007,8 +1006,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
       log.error(
           StringUtils.format(
               "sendStreamData exception: %s, requestId=%s",
-              ex.getMessage(),
-              getRequestIdOrUnknown()));
+              ex.getMessage(), getRequestIdOrUnknown()));
       emitResponseError(ex);
     }
   }

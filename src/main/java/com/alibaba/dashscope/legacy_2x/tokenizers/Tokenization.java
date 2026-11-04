@@ -16,6 +16,7 @@ import com.alibaba.dashscope.legacy_2x.protocol.StreamingMode;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Deprecated
 public final class Tokenization {
   private final SynchronizeHalfDuplexApi<HalfDuplexServiceParam> syncApi;
   private final ApiServiceOption serviceOption;

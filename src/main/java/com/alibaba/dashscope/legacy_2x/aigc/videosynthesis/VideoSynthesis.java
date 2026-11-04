@@ -14,6 +14,7 @@ import com.alibaba.dashscope.legacy_2x.protocol.Protocol;
 import com.alibaba.dashscope.legacy_2x.protocol.StreamingMode;
 import com.alibaba.dashscope.legacy_2x.task.AsyncTaskListParam;
 
+@Deprecated
 public final class VideoSynthesis {
   /** default task, function & taskGroup */
   private String task = "video-generation";

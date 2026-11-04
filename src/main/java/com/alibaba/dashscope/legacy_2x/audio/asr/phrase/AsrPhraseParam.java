@@ -12,6 +12,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @Data
+@Deprecated
 public class AsrPhraseParam extends HalfDuplexServiceParam {
 
   private static final String TRAIN_TYPE = "compile_asr_phrase";

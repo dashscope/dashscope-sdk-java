@@ -3,6 +3,7 @@ package com.alibaba.dashscope.legacy_2x.aigc.multimodalconversation;
 import lombok.Data;
 
 @Data
+@Deprecated
 public class MultiModalMessageItemImage implements MultiModalMessageItemBase {
   private String image;
 

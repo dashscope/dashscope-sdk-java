@@ -1,5 +1,6 @@
 package com.alibaba.dashscope.legacy_2x.utils;
 
+@Deprecated
 public class ParamUtils {
 
   /** Private constructor to prevent instantiation of utility class */

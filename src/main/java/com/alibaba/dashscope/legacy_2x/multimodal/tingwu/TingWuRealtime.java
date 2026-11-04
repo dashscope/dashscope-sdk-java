@@ -27,6 +27,7 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Deprecated
 public final class TingWuRealtime {
   @Getter SynchronizeFullDuplexApi<TingWuRealtimeWithStream> duplexApi;
 
@@ -274,8 +275,7 @@ public final class TingWuRealtime {
     if (this.startStreamTimeStamp < 0) {
       this.startStreamTimeStamp = System.currentTimeMillis();
     }
-    log.debug(
-        "send audio frame: {}, requestId={}", audioFrame.remaining(), getRequestIdForLog());
+    log.debug("send audio frame: {}, requestId={}", audioFrame.remaining(), getRequestIdForLog());
     synchronized (this) {
       if (audioEmitter == null || !isListenState) {
         cmdBuffer.add(AsyncCmdBuffer.builder().audioFrame(audioFrame).build());

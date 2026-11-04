@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 /** RunStepDeltaEvent */
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Deprecated
 public class RunStepDelta extends FlattenResultBase {
 
   /**

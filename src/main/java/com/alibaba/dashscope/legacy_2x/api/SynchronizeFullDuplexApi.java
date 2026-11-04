@@ -15,6 +15,7 @@ import com.alibaba.dashscope.legacy_2x.protocol.FullDuplexRequest;
 import io.reactivex.Flowable;
 
 /** DashScope synchronize full duplex request processing, only websocket support. */
+@Deprecated
 public final class SynchronizeFullDuplexApi<ParamT extends FullDuplexServiceParam> {
   final FullDuplexClient client;
   ConnectionOptions connectionOptions;

@@ -13,7 +13,6 @@ import com.alibaba.dashscope.legacy_2x.audio.asr.phrase.AsrPhraseFinetuneOption;
 import com.alibaba.dashscope.legacy_2x.audio.asr.phrase.AsrPhraseOperationType;
 import com.alibaba.dashscope.legacy_2x.exception.ApiException;
 import com.alibaba.dashscope.legacy_2x.exception.NoApiKeyException;
-import com.alibaba.dashscope.legacy_2x.protocol.DashScopeHeaders;
 import com.alibaba.dashscope.legacy_2x.task.AsyncTaskParam;
 import java.util.Collections;
 import java.util.HashMap;

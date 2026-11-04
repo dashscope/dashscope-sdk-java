@@ -18,6 +18,7 @@ import com.alibaba.dashscope.legacy_2x.protocol.Protocol;
 import com.alibaba.dashscope.legacy_2x.protocol.StreamingMode;
 import com.alibaba.dashscope.legacy_2x.utils.PreprocessMessageInput;
 
+@Deprecated
 public class MultiModalEmbedding {
   private final SynchronizeHalfDuplexApi<MultiModalEmbeddingParam> syncApi;
   private final ApiServiceOption serviceOption;

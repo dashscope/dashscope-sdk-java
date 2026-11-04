@@ -1,6 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.legacy_2x.common;
 
+@Deprecated
 public enum Role {
 
   /** The human side. */

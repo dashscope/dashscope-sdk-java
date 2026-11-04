@@ -10,6 +10,7 @@ import java.util.Map;
 import lombok.Data;
 
 @Data
+@Deprecated
 public final class ConversationResult {
   private String requestId;
   private GenerationUsage usage;

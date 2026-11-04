@@ -12,6 +12,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @SuperBuilder
+@Deprecated
 public class ToolWanX extends ToolBase {
   static {
     registerTool("wanx", ToolWanX.class);

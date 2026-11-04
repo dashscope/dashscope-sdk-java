@@ -7,6 +7,7 @@ import com.google.gson.annotations.SerializedName;
 /**
  * @author lengjiayi
  */
+@Deprecated
 public enum QwenTtsRealtimeAudioFormat {
   @SerializedName("pcm24")
   PCM_24000HZ_MONO_16BIT("pcm", 24000, "mono", "16bit");

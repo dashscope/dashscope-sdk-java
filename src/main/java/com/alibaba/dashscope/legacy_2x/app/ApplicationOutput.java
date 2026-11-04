@@ -18,6 +18,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 @ToString
+@Deprecated
 public class ApplicationOutput {
   /** Completion call response text */
   @SerializedName("text")

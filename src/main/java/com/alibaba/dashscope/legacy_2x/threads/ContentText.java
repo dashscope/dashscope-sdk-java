@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 /** Thread */
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Deprecated
 public final class ContentText extends ContentBase {
   static {
     registerContent("text", ContentText.class);

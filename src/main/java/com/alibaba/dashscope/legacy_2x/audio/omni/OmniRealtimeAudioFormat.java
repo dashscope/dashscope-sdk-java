@@ -7,6 +7,7 @@ import com.google.gson.annotations.SerializedName;
 /**
  * @author lengjiayi
  */
+@Deprecated
 public enum OmniRealtimeAudioFormat {
   @SerializedName("pcm16")
   PCM_16000HZ_MONO_16BIT("pcm", 16000, "mono", "16bit"),

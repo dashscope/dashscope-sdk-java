@@ -33,6 +33,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
+@Deprecated
 public class ApplicationParam extends HalfDuplexParamBase {
   @Builder.Default private Object resources = null;
 

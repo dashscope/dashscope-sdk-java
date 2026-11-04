@@ -12,6 +12,7 @@ import lombok.experimental.SuperBuilder;
 /** The model service base class */
 @Data
 @SuperBuilder
+@Deprecated
 public abstract class FullDuplexParamBase {
   /** The model to use. */
   @lombok.NonNull private String model;

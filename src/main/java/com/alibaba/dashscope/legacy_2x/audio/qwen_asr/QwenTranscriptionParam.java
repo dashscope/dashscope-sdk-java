@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 @Data
 @SuperBuilder
 @Slf4j
+@Deprecated
 public class QwenTranscriptionParam extends HalfDuplexServiceParam {
 
   @NonNull private String fileUrl;

@@ -9,6 +9,7 @@ import com.alibaba.dashscope.legacy_2x.exception.NoApiKeyException;
 import com.alibaba.dashscope.legacy_2x.protocol.*;
 
 /** The tingwu client. */
+@Deprecated
 public final class TingWu {
   private final SynchronizeHalfDuplexApi<HalfDuplexServiceParam> syncApi;
   private final ApiServiceOption serviceOption;

@@ -2,6 +2,7 @@
 
 package com.alibaba.dashscope.legacy_2x.common;
 
+@Deprecated
 public enum TaskStatus {
   PENDING("PENDING"),
 
