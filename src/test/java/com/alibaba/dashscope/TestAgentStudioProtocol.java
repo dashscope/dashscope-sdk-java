@@ -11,6 +11,7 @@ import com.alibaba.dashscope.agentstudio.message.ClientEvents;
 import com.alibaba.dashscope.agentstudio.message.ContentBlock;
 import com.alibaba.dashscope.agentstudio.message.Message;
 import com.alibaba.dashscope.agentstudio.model.Configs;
+import com.alibaba.dashscope.agentstudio.model.Mount;
 import com.alibaba.dashscope.agentstudio.model.Session;
 import com.alibaba.dashscope.agentstudio.param.AgentCreateParam;
 import com.alibaba.dashscope.agentstudio.param.SessionEventListParam;
@@ -20,6 +21,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.mockwebserver.MockResponse;
@@ -211,5 +213,112 @@ class TestAgentStudioProtocol {
     assertTrue(dcJson.has("permission_policy"));
     assertEquals(
         "always_ask", dcJson.getAsJsonObject("permission_policy").get("type").getAsString());
+  }
+
+  @Test
+  void testMountUsesWireKeys() {
+    Mount bailian =
+        Mount.bailianMemory("0123", "customer_001")
+            .projectIds(Arrays.asList("fact_rule_1"))
+            .profileSchema("schema_demo")
+            .description("ctx")
+            .readOnly();
+    assertEquals(
+        new HashSet<>(
+            Arrays.asList(
+                "type",
+                "provider",
+                "memory_store_id",
+                "entity_id",
+                "project_ids",
+                "profile_schema",
+                "description",
+                "access")),
+        bailian.keySet());
+    assertEquals("agentstudio_memory", bailian.get("provider"));
+    assertEquals("read_only", bailian.get("access"));
+
+    Mount oss = Mount.oss("cn-beijing", "bkt", "datasets/", "/data").readOnly();
+    assertEquals(
+        new HashSet<>(
+            Arrays.asList("type", "region", "bucket", "oss_path", "mount_path", "access")),
+        oss.keySet());
+  }
+
+  @Test
+  void testToolConfigParamsSerialized() {
+    Configs.ToolConfig.PerToolConfig perTool = new Configs.ToolConfig.PerToolConfig();
+    perTool.setName("search_knowledgebases");
+    perTool.setEnabled(true);
+    java.util.HashMap<String, Object> params = new java.util.HashMap<>();
+    params.put("knowledge_application_id", "aid_demo");
+    perTool.setParams(params);
+
+    Configs.ToolConfig tool = new Configs.ToolConfig();
+    tool.setType("builtin_toolkit");
+    tool.setConfigs(Arrays.asList(perTool));
+
+    JsonObject body =
+        AgentCreateParam.builder()
+            .name("rag")
+            .model("qwen-max")
+            .tools(Arrays.asList(tool))
+            .build()
+            .getHttpBody();
+    JsonObject perToolJson =
+        body.getAsJsonArray("tools")
+            .get(0)
+            .getAsJsonObject()
+            .getAsJsonArray("configs")
+            .get(0)
+            .getAsJsonObject();
+    assertEquals(
+        "aid_demo",
+        perToolJson.getAsJsonObject("params").get("knowledge_application_id").getAsString());
+
+    // Read back: Agent.tools keeps params, so read-modify-write resubmits them.
+    Configs.ToolConfig parsed =
+        GSON.fromJson(body.getAsJsonArray("tools").get(0), Configs.ToolConfig.class);
+    assertEquals(
+        "aid_demo", parsed.getConfigs().get(0).getParams().get("knowledge_application_id"));
+  }
+
+  @Test
+  void testSessionResourceParsesMountFields() {
+    Session.SessionResource memory =
+        GSON.fromJson(
+            "{\"id\":\"mount_1\",\"type\":\"memory_store\",\"memory_store_id\":\"0123\","
+                + "\"provider\":\"agentstudio_memory\",\"entity_id\":\"customer_001\","
+                + "\"project_ids\":[\"fact_rule_1\"],\"profile_schema\":\"schema_demo\","
+                + "\"description\":\"ctx\",\"access\":\"read_only\"}",
+            Session.SessionResource.class);
+    assertEquals("agentstudio_memory", memory.getProvider());
+    assertEquals("customer_001", memory.getEntityId());
+    assertEquals(Arrays.asList("fact_rule_1"), memory.getProjectIds());
+    assertEquals("schema_demo", memory.getProfileSchema());
+    assertEquals("read_only", memory.getAccess());
+    assertNull(memory.getMountPath());
+
+    Session.SessionResource oss =
+        GSON.fromJson(
+            "{\"id\":\"sesrsc_1\",\"type\":\"oss\",\"region\":\"cn-beijing\","
+                + "\"bucket\":\"agentstudio-ma-oss-mnt\",\"oss_path\":\"datasets/\","
+                + "\"mount_path\":\"/data\",\"access\":\"read_only\"}",
+            Session.SessionResource.class);
+    assertEquals("cn-beijing", oss.getRegion());
+    assertEquals("agentstudio-ma-oss-mnt", oss.getBucket());
+    assertEquals("datasets/", oss.getOssPath());
+    assertEquals("/data", oss.getMountPath());
+
+    // Historical built-in mounts predate provider; those fields stay null.
+    Session.SessionResource legacy =
+        GSON.fromJson(
+            "{\"id\":\"mount_2\",\"type\":\"memory_store\",\"memory_store_id\":\"memstore_1\","
+                + "\"mount_path\":\"/uploads/memory\"}",
+            Session.SessionResource.class);
+    assertNull(legacy.getProvider());
+    assertNull(legacy.getEntityId());
+    assertEquals("memstore_1", legacy.getMemoryStoreId());
+    assertEquals("/uploads/memory", legacy.getMountPath());
   }
 }
