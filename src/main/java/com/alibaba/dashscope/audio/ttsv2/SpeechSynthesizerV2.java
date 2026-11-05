@@ -139,6 +139,20 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
     return preRequestId;
   }
 
+  private String getRequestIdForLog() {
+    return DashScopeHeaders.requestIdOrUnknown(taskId);
+  }
+
+  private String getRequestIdForLog(JsonObject message) {
+    if (message != null && message.has("header")) {
+      JsonObject header = message.getAsJsonObject("header");
+      if (header.has(TASK_ID) && !header.get(TASK_ID).isJsonNull()) {
+        return DashScopeHeaders.requestIdOrUnknown(header.get(TASK_ID).getAsString());
+      }
+    }
+    return getRequestIdForLog();
+  }
+
   private void checkConnectStatus() {
     websocketRequest.checkStatus();
   }
@@ -165,7 +179,10 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
       try {
         websocketRequest.close();
       } catch (Exception e) {
-        log.warn("Failed to close websocket connection: " + e.getMessage());
+        log.warn(
+            "Failed to close websocket connection: {}, requestId={}",
+            e.getMessage(),
+            getRequestIdForLog());
       }
     }
     releaseLatches();
@@ -209,7 +226,7 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
 
     wsMessage.add("header", JsonUtils.toJsonObject(bailianHeader));
     wsMessage.add("payload", JsonUtils.toJsonObject(payload));
-    log.debug("sendTaskMessage: {}", wsMessage.toString());
+    log.debug("sendTaskMessage: {}, requestId={}", wsMessage.toString(), getRequestIdForLog());
     websocketRequest.sendTextMessage(wsMessage.toString());
   }
 
@@ -251,7 +268,7 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
 
   @Override
   public void onOpen() {
-    log.info("WebSocket connection opened");
+    log.info("WebSocket connection opened, requestId={}", getRequestIdForLog());
     if (callback != null) {
       callback.onOpen(null);
     }
@@ -259,7 +276,7 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
 
   @Override
   public void onMessage(WebSocket webSocket, String text) {
-    log.debug("Received text message: " + text);
+    log.debug("Received text message: {}, requestId={}", text, getRequestIdForLog());
     try {
       JsonObject messageObj = JsonParser.parseString(text).getAsJsonObject();
       if (messageObj.has("header")) {
@@ -281,19 +298,24 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
               handleResultGenerated(messageObj);
               break;
             default:
-              log.warn("Unknown event: " + event);
+              log.warn("Unknown event: {}, requestId={}", event, getRequestIdForLog(messageObj));
               break;
           }
         }
       }
     } catch (Exception e) {
-      log.error("Error processing text message: " + e.getMessage(), e);
+      log.error(
+          "Error processing text message: {}, requestId={}",
+          e.getMessage(),
+          getRequestIdForLog(),
+          e);
     }
   }
 
   @Override
   public void onMessage(WebSocket webSocket, ByteBuffer bytes) {
-    log.debug("Received binary message, size: {}", bytes.remaining());
+    log.debug(
+        "Received binary message, size: {}, requestId={}", bytes.remaining(), getRequestIdForLog());
     try {
       ByteBuffer audioFrame = ByteBuffer.allocate(bytes.remaining());
       audioFrame.put(bytes);
@@ -312,7 +334,7 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
       recvAudioLength += bytes.remaining();
 
     } catch (Exception e) {
-      log.error("Error processing binary message", e);
+      log.error("Error processing binary message, requestId={}", getRequestIdForLog(), e);
       if (callback != null) {
         callback.onError(e);
       }
@@ -347,12 +369,13 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
 
   @Override
   public void onClose(int code, String reason) {
-    log.warn("WebSocket connection closed: " + reason + " (" + code + ")");
+    log.warn(
+        "WebSocket connection closed: {} ({}), requestId={}", reason, code, getRequestIdForLog());
     releaseLatches();
   }
 
   private void handleTaskStarted(JsonObject message) {
-    log.info("Task started");
+    log.info("Task started, requestId={}", getRequestIdForLog(message));
     state = SpeechSynthesisState.TTS_STARTED;
     firstPackageTimeStamp = -1;
     CountDownLatch startLatch = this.startLatch.get();
@@ -362,7 +385,7 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
   }
 
   private void handleTaskFinished(JsonObject message) {
-    log.info("Task finished");
+    log.info("Task finished, requestId={}", getRequestIdForLog(message));
     CountDownLatch stopLatch = this.stopLatch.get();
     if (stopLatch != null) {
       stopLatch.countDown();
@@ -378,7 +401,7 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
   }
 
   private void handleTaskFailed(JsonObject message) {
-    log.error("Task failed: " + message.toString());
+    log.error("Task failed: {}, requestId={}", message, getRequestIdForLog(message));
     if (callback != null) {
       String errorMessage = "Unknown error";
       if (message.has("header") && message.getAsJsonObject("header").has("error_message")) {
@@ -400,7 +423,7 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
   }
 
   private void handleResultGenerated(JsonObject message) {
-    log.debug("Result generated: " + message.toString());
+    log.debug("Result generated: {}, requestId={}", message, getRequestIdForLog(message));
     if (callback == null) {
       return;
     }
@@ -475,7 +498,10 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
   }
 
   public void streamingComplete(long completeTimeoutMillis) {
-    log.debug("streamingComplete with timeout: " + completeTimeoutMillis);
+    log.debug(
+        "streamingComplete with timeout: {}, requestId={}",
+        completeTimeoutMillis,
+        getRequestIdForLog());
     synchronized (this) {
       if (state != SpeechSynthesisState.TTS_STARTED) {
         throw new ApiException(
@@ -489,17 +515,18 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
 
     try {
       if (completeTimeoutMillis > 0) {
-        log.debug("start waiting for stopLatch");
+        log.debug("start waiting for stopLatch, requestId={}", getRequestIdForLog());
         if (!stopLatch.await(completeTimeoutMillis, TimeUnit.MILLISECONDS)) {
           throw new RuntimeException("TimeoutError: waiting for streaming complete");
         }
       } else {
-        log.debug("start waiting for stopLatch");
+        log.debug("start waiting for stopLatch, requestId={}", getRequestIdForLog());
         stopLatch.await();
       }
-      log.debug("stopLatch is done");
+      log.debug("stopLatch is done, requestId={}", getRequestIdForLog());
     } catch (InterruptedException ignored) {
-      log.error("Interrupted while waiting for streaming complete");
+      log.error(
+          "Interrupted while waiting for streaming complete, requestId={}", getRequestIdForLog());
       Thread.currentThread().interrupt();
     }
   }
@@ -537,7 +564,10 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
         this.submitText(text);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt(); // 恢复中断状态
-        log.error("Interrupted while waiting for streaming complete", e);
+        log.error(
+            "Interrupted while waiting for streaming complete, requestId={}",
+            getRequestIdForLog(),
+            e);
         throw new ApiException(e);
       } catch (NoApiKeyException e) {
         throw new ApiException(e);
@@ -578,7 +608,10 @@ public final class SpeechSynthesizerV2 implements AudioWebsocketCallback {
       this.submitText(text);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt(); // 恢复中断状态
-      log.error("Interrupted while waiting for streaming complete", e);
+      log.error(
+          "Interrupted while waiting for streaming complete, requestId={}",
+          getRequestIdForLog(),
+          e);
       throw new ApiException(e);
     } catch (NoApiKeyException e) {
       throw new ApiException(e);

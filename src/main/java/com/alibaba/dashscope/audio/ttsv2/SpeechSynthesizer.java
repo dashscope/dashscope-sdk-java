@@ -55,6 +55,7 @@ public final class SpeechSynthesizer {
   @Getter private ByteBuffer audioData;
   private ByteArrayOutputStream outputStream;
   private String preRequestId = null;
+  private AtomicReference<String> lastRequestId = new AtomicReference<>(null);
   private boolean isFirst = true;
   private AtomicBoolean canceled = new AtomicBoolean(false);
   private final AtomicReference<Exception> lastError = new AtomicReference<>(null);
@@ -160,6 +161,7 @@ public final class SpeechSynthesizer {
     this.textEmitter = null;
     this.isFirst = true;
     this.lastError.set(null);
+    this.lastRequestId.set(null);
 
     this.asyncCall = this.callback != null;
   }
@@ -228,6 +230,10 @@ public final class SpeechSynthesizer {
     return preRequestId;
   }
 
+  private String getRequestIdForLog() {
+    return DashScopeHeaders.requestIdOrUnknown(lastRequestId.get());
+  }
+
   /**
    * Returns the given options, or a default instance routed to the dedicated audio client
    * (useDefaultClient=false) when null.
@@ -252,6 +258,7 @@ public final class SpeechSynthesizer {
     startStreamTimeStamp = System.currentTimeMillis();
     recvAudioLength = 0;
     preRequestId = UUID.randomUUID().toString();
+    lastRequestId.set(null);
     Flowable<TextStreamItem> inputStream = textStream.map(text -> new TextStreamItem(text));
     return duplexApi
         .duplexCall(
@@ -262,10 +269,16 @@ public final class SpeechSynthesizer {
         .filter(item -> !canceled.get())
         .doOnNext(
             result -> {
+              if (result.getRequestId() != null && !result.getRequestId().isEmpty()) {
+                lastRequestId.set(result.getRequestId());
+              }
               if (result.getAudioFrame() != null) {
                 if (recvAudioLength == 0) {
                   firstPackageTimeStamp = System.currentTimeMillis();
-                  log.debug("[TtsV2] first package delay: " + getFirstPackageDelay() + " ms");
+                  log.debug(
+                      "[TtsV2] first package delay: {} ms, requestId={}",
+                      getFirstPackageDelay(),
+                      getRequestIdForLog());
                 }
                 recvAudioLength +=
                     (double) result.getAudioFrame().capacity()
@@ -273,12 +286,11 @@ public final class SpeechSynthesizer {
                 long current = System.currentTimeMillis();
                 double currentRtf = (current - startStreamTimeStamp) / recvAudioLength;
                 log.debug(
-                    "[TtsV2] Recv Audio Binary: "
-                        + result.getAudioFrame().capacity()
-                        + " bytes, total audio "
-                        + recvAudioLength
-                        + " ms, current_rtf: "
-                        + currentRtf);
+                    "[TtsV2] Recv Audio Binary: {} bytes, total audio {} ms, current_rtf: {}, requestId={}",
+                    result.getAudioFrame().capacity(),
+                    recvAudioLength,
+                    currentRtf,
+                    getRequestIdForLog());
               }
             });
   }
@@ -294,6 +306,7 @@ public final class SpeechSynthesizer {
     startStreamTimeStamp = System.currentTimeMillis();
     recvAudioLength = 0;
     preRequestId = UUID.randomUUID().toString();
+    lastRequestId.set(null);
     return duplexApi
         .duplexCall(
             StreamInputTtsParamWithStream.fromStreamInputTtsParam(
@@ -315,10 +328,16 @@ public final class SpeechSynthesizer {
         .map(SpeechSynthesisResult::fromDashScopeResult)
         .doOnNext(
             result -> {
+              if (result.getRequestId() != null && !result.getRequestId().isEmpty()) {
+                lastRequestId.set(result.getRequestId());
+              }
               if (result.getAudioFrame() != null) {
                 if (recvAudioLength == 0) {
                   firstPackageTimeStamp = System.currentTimeMillis();
-                  log.debug("[TtsV2] first package delay: " + getFirstPackageDelay() + " ms");
+                  log.debug(
+                      "[TtsV2] first package delay: {} ms, requestId={}",
+                      getFirstPackageDelay(),
+                      getRequestIdForLog());
                 }
                 recvAudioLength +=
                     (double) result.getAudioFrame().capacity()
@@ -326,12 +345,11 @@ public final class SpeechSynthesizer {
                 long current = System.currentTimeMillis();
                 double currentRtf = (current - startStreamTimeStamp) / recvAudioLength;
                 log.debug(
-                    "[TtsV2] Recv Audio Binary: "
-                        + result.getAudioFrame().capacity()
-                        + " bytes, total audio "
-                        + recvAudioLength
-                        + " ms, current_rtf: "
-                        + currentRtf);
+                    "[TtsV2] Recv Audio Binary: {} bytes, total audio {} ms, current_rtf: {}, requestId={}",
+                    result.getAudioFrame().capacity(),
+                    recvAudioLength,
+                    currentRtf,
+                    getRequestIdForLog());
               }
             });
   }
@@ -371,7 +389,7 @@ public final class SpeechSynthesizer {
                   }
                   cmdBuffer.clear();
                 }
-                log.debug("set textEmitter");
+                log.debug("set textEmitter, requestId={}", getRequestIdForLog());
                 textEmitter = emitter;
               }
             },
@@ -384,6 +402,7 @@ public final class SpeechSynthesizer {
     startLatch = new AtomicReference<>(new CountDownLatch(1));
     firstAudioLatch = new AtomicReference<>(new CountDownLatch(1));
     preRequestId = UUID.randomUUID().toString();
+    lastRequestId.set(null);
     // Bind the callback that owns this session: once updateParamAndCallback() installs a new
     // callback, a late event from this session must not be delivered to the next one.
     final ResultCallback<SpeechSynthesisResult> sessionCallback = this.callback;
@@ -396,6 +415,9 @@ public final class SpeechSynthesizer {
 
             @Override
             public void onEvent(DashScopeResult message) {
+              if (message.getRequestId() != null && !message.getRequestId().isEmpty()) {
+                lastRequestId.set(message.getRequestId());
+              }
               if (message.getEvent() == WebSocketEventType.TASK_STARTED.getValue()) {
                 startLatch.get().countDown();
                 return;
@@ -427,7 +449,10 @@ public final class SpeechSynthesizer {
                   if (recvAudioLength == 0) {
                     firstAudioLatch.get().countDown();
                     firstPackageTimeStamp = System.currentTimeMillis();
-                    log.debug("[TtsV2] first package delay: " + getFirstPackageDelay() + " ms");
+                    log.debug(
+                        "[TtsV2] first package delay: {} ms, requestId={}",
+                        getFirstPackageDelay(),
+                        getRequestIdForLog());
                   }
                   recvAudioLength +=
                       (double) speechSynthesisResult.getAudioFrame().capacity()
@@ -435,23 +460,30 @@ public final class SpeechSynthesizer {
                   long current = System.currentTimeMillis();
                   double currentRtf = (current - startStreamTimeStamp) / recvAudioLength;
                   log.debug(
-                      "[TtsV2] Recv Audio Binary: "
-                          + speechSynthesisResult.getAudioFrame().capacity()
-                          + " bytes, total audio "
-                          + recvAudioLength
-                          + " ms, current_rtf: "
-                          + currentRtf);
+                      "[TtsV2] Recv Audio Binary: {} bytes, total audio {} ms, current_rtf: {}, requestId={}",
+                      speechSynthesisResult.getAudioFrame().capacity(),
+                      recvAudioLength,
+                      currentRtf,
+                      getRequestIdForLog());
                   if (!asyncCall) {
                     try {
                       channel.write(speechSynthesisResult.getAudioFrame());
                     } catch (IOException e) {
                       log.error(
-                          "Failed to write audio: {}", speechSynthesisResult.getAudioFrame(), e);
+                          "Failed to write audio: {}, requestId={}",
+                          speechSynthesisResult.getAudioFrame(),
+                          getRequestIdForLog(),
+                          e);
                     }
                   }
                 }
               } catch (Exception e) {
-                log.error("Failed to parse response: {}", message, e);
+                log.error(
+                    "Failed to parse response, event: {}, output: {}, requestId={}",
+                    message.getEvent(),
+                    message.getOutput(),
+                    getRequestIdForLog(),
+                    e);
                 sessionCallback.onError(e);
               }
               if (speechSynthesisResult.getRequestId() == null) {
@@ -462,7 +494,7 @@ public final class SpeechSynthesizer {
 
             @Override
             public void onComplete() {
-              log.debug("[TtsV2] onComplete");
+              log.debug("[TtsV2] onComplete, requestId={}", getRequestIdForLog());
               synchronized (SpeechSynthesizer.this) {
                 state = SpeechSynthesisState.IDLE;
               }
@@ -470,7 +502,7 @@ public final class SpeechSynthesizer {
               try {
                 outputStream.close();
               } catch (IOException e) {
-                log.error("Failed to close channel: {}", e);
+                log.error("Failed to close channel, requestId={}", getRequestIdForLog(), e);
               }
               sessionCallback.onComplete();
               if (stopLatch.get() != null) {
@@ -487,7 +519,10 @@ public final class SpeechSynthesizer {
                 // releaseLatches() only unblocks streamingComplete()/streamingCall(); a
                 // callback-driven caller waits on onComplete/onError and would otherwise never
                 // get any signal. Report onComplete, matching the cancel-then-success path.
-                log.debug("[TtsV2] error after cancel, reported as complete: " + e.getMessage());
+                log.debug(
+                    "[TtsV2] error after cancel, reported as complete: {}, requestId={}",
+                    e.getMessage(),
+                    getRequestIdForLog());
                 synchronized (SpeechSynthesizer.this) {
                   state = SpeechSynthesisState.IDLE;
                 }
@@ -562,10 +597,10 @@ public final class SpeechSynthesizer {
                 "State invalid: expect stream input tts state is started but " + state.getValue()));
       }
       if (textEmitter == null) {
-        log.debug("submitText to new emitter: " + text);
+        log.debug("submitText to new emitter: {}, requestId={}", text, getRequestIdForLog());
         cmdBuffer.add(AsyncCmdBuffer.builder().item(new TextStreamItem(text)).build());
       } else {
-        log.debug("submitText to emitter: " + text);
+        log.debug("submitText to emitter: {}, requestId={}", text, getRequestIdForLog());
         textEmitter.onNext(new TextStreamItem(text));
       }
     }
@@ -580,7 +615,10 @@ public final class SpeechSynthesizer {
    *     will wait indefinitely. Throws TimeoutError exception if it times out.
    */
   public void streamingComplete(long completeTimeoutMillis) {
-    log.debug("streamingComplete with timeout: " + completeTimeoutMillis);
+    log.debug(
+        "streamingComplete with timeout: {}, requestId={}",
+        completeTimeoutMillis,
+        getRequestIdForLog());
     synchronized (this) {
       if (state != SpeechSynthesisState.TTS_STARTED) {
         throw new ApiException(
@@ -588,10 +626,10 @@ public final class SpeechSynthesizer {
                 "State invalid: expect stream input tts state is started but " + state.getValue()));
       }
       if (textEmitter == null) {
-        log.debug("adding stop to new emitter");
+        log.debug("adding stop to new emitter, requestId={}", getRequestIdForLog());
         cmdBuffer.add(AsyncCmdBuffer.builder().isStop(true).build());
       } else {
-        log.debug("adding stop to emitter");
+        log.debug("adding stop to emitter, requestId={}", getRequestIdForLog());
         textEmitter.onComplete();
       }
     }
@@ -599,17 +637,18 @@ public final class SpeechSynthesizer {
     if (stopLatch.get() != null) {
       try {
         if (completeTimeoutMillis > 0) {
-          log.debug("start waiting for stopLatch");
+          log.debug("start waiting for stopLatch, requestId={}", getRequestIdForLog());
           if (!stopLatch.get().await(completeTimeoutMillis, TimeUnit.MILLISECONDS)) {
             throw new RuntimeException("TimeoutError: waiting for streaming complete");
           }
         } else {
-          log.debug("start waiting for stopLatch");
+          log.debug("start waiting for stopLatch, requestId={}", getRequestIdForLog());
           stopLatch.get().await();
         }
-        log.debug("stopLatch is done");
+        log.debug("stopLatch is done, requestId={}", getRequestIdForLog());
       } catch (InterruptedException ignored) {
-        log.error("Interrupted while waiting for streaming complete");
+        log.error(
+            "Interrupted while waiting for streaming complete, requestId={}", getRequestIdForLog());
       }
     }
   }
@@ -686,11 +725,10 @@ public final class SpeechSynthesizer {
                 "TimeoutError: waiting for task started more than " + this.startedTimeout + " ms.");
           }
           log.debug(
-              "get started within "
-                  + this.startedTimeout
-                  + " ms, cost: "
-                  + (System.currentTimeMillis() - startTime)
-                  + " ms");
+              "get started within {} ms, cost: {} ms, requestId={}",
+              this.startedTimeout,
+              System.currentTimeMillis() - startTime,
+              getRequestIdForLog());
         }
         this.submitText(text);
         if (this.firstAudioTimeout > 0 && this.firstAudioTimeout - this.startedTimeout > 0) {
@@ -706,14 +744,14 @@ public final class SpeechSynthesizer {
                     + " ms.");
           }
           log.debug(
-              "get first audio within "
-                  + this.firstAudioTimeout
-                  + " ms, cost: "
-                  + (System.currentTimeMillis() - startTime)
-                  + " ms");
+              "get first audio within {} ms, cost: {} ms, requestId={}",
+              this.firstAudioTimeout,
+              System.currentTimeMillis() - startTime,
+              getRequestIdForLog());
         }
       } catch (InterruptedException ignored) {
-        log.error("Interrupted while waiting for streaming complete");
+        log.error(
+            "Interrupted while waiting for streaming complete, requestId={}", getRequestIdForLog());
       }
     } else {
       this.submitText(text);
@@ -732,10 +770,10 @@ public final class SpeechSynthesizer {
                 "State invalid: expect stream input tts state is started but " + state.getValue()));
       }
       if (textEmitter == null) {
-        log.debug("submitFlush to new emitter");
+        log.debug("submitFlush to new emitter, requestId={}", getRequestIdForLog());
         cmdBuffer.add(AsyncCmdBuffer.builder().item(new TextStreamItem(true, params)).build());
       } else {
-        log.debug("submitFlush to emitter");
+        log.debug("submitFlush to emitter, requestId={}", getRequestIdForLog());
         textEmitter.onNext(new TextStreamItem(true, params));
       }
     }
@@ -781,11 +819,10 @@ public final class SpeechSynthesizer {
               "TimeoutError: waiting for task started more than " + this.startedTimeout + " ms.");
         }
         log.debug(
-            "get started within "
-                + this.startedTimeout
-                + " ms, cost: "
-                + (System.currentTimeMillis() - startTime)
-                + " ms");
+            "get started within {} ms, cost: {} ms, requestId={}",
+            this.startedTimeout,
+            System.currentTimeMillis() - startTime,
+            getRequestIdForLog());
       }
       this.submitText(text);
       if (this.firstAudioTimeout > 0 && this.firstAudioTimeout - this.startedTimeout > 0) {
@@ -799,14 +836,14 @@ public final class SpeechSynthesizer {
               "TimeoutError: waiting for first audio more than " + this.firstAudioTimeout + " ms.");
         }
         log.debug(
-            "get first audio within "
-                + this.firstAudioTimeout
-                + " ms, cost: "
-                + (System.currentTimeMillis() - startTime)
-                + " ms");
+            "get first audio within {} ms, cost: {} ms, requestId={}",
+            this.firstAudioTimeout,
+            System.currentTimeMillis() - startTime,
+            getRequestIdForLog());
       }
     } catch (InterruptedException ignored) {
-      log.error("Interrupted while waiting for streaming complete");
+      log.error(
+          "Interrupted while waiting for streaming complete, requestId={}", getRequestIdForLog());
     } catch (RuntimeException e) {
       // The real cause may already have been recorded by the error callback, in which case the
       // exception raised here only masks it.

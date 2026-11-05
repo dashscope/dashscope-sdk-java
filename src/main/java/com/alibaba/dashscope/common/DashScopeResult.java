@@ -3,6 +3,7 @@
 package com.alibaba.dashscope.common;
 
 import com.alibaba.dashscope.exception.ApiException;
+import com.alibaba.dashscope.protocol.DashScopeHeaders;
 import com.alibaba.dashscope.protocol.HalfDuplexRequest;
 import com.alibaba.dashscope.protocol.NetworkResponse;
 import com.alibaba.dashscope.protocol.Protocol;
@@ -35,13 +36,15 @@ public class DashScopeResult extends Result {
   protected <T extends Result> T fromResponse(Protocol protocol, NetworkResponse response)
       throws ApiException {
     this.setHeaders(changeHeaders(response.getHeaders()));
+    fillRequestIdFromHeaders();
     if (protocol == Protocol.WEBSOCKET) {
       if (response.getBinary() == null) {
         String message = response.getMessage();
         if (message == null || message.isEmpty()) {
           log.warn(
-              "WebSocket response message is null or empty, httpStatusCode: {}",
-              response.getHttpStatusCode());
+              "WebSocket response message is null or empty, httpStatusCode: {}, requestId={}",
+              response.getHttpStatusCode(),
+              getRequestIdOrUnknown());
           setInternalError();
           return (T) this;
         }
@@ -61,7 +64,7 @@ public class DashScopeResult extends Result {
         this.setMessage("");
         return (T) this;
       }
-      JsonObject jsonObject = parseJson(message, "Failed to parse HTTP response as JSON: {}");
+      JsonObject jsonObject = parseJson(message, "Failed to parse HTTP response as JSON");
       if (jsonObject == null) {
         return (T) this;
       }
@@ -83,6 +86,7 @@ public class DashScopeResult extends Result {
       return fromResponse(protocol, response);
     }
     this.setHeaders(changeHeaders(response.getHeaders()));
+    fillRequestIdFromHeaders();
     if (protocol == Protocol.WEBSOCKET) {
       if (response.getBinary() == null) {
         this.output = parseJson(response.getMessage(), "Failed to parse WebSocket message");
@@ -112,6 +116,7 @@ public class DashScopeResult extends Result {
       Protocol protocol, NetworkResponse response, boolean isFlattenResult, HalfDuplexRequest req)
       throws ApiException {
     this.setHeaders(changeHeaders(response.getHeaders()));
+    fillRequestIdFromHeaders();
     if ((response.getHeaders().containsKey("X-DashScope-OutputEncrypted".toLowerCase())
             || req.isEncryptRequest())
         && protocol == Protocol.HTTP) {
@@ -234,7 +239,7 @@ public class DashScopeResult extends Result {
     try {
       return JsonUtils.parse(raw);
     } catch (Exception e) {
-      log.error(logMsg, e);
+      log.error("{}, requestId={}", logMsg, getRequestIdOrUnknown(), e);
       setInternalError();
       return null;
     }
@@ -262,5 +267,15 @@ public class DashScopeResult extends Result {
                 },
                 (v1, v2) -> v1,
                 java.util.LinkedHashMap::new));
+  }
+
+  private void fillRequestIdFromHeaders() {
+    if (getRequestId() != null && !getRequestId().isEmpty()) {
+      return;
+    }
+    String requestId = DashScopeHeaders.findRequestId(getHeaders());
+    if (requestId != null) {
+      setRequestId(requestId);
+    }
   }
 }

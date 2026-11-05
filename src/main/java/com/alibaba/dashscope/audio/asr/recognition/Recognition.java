@@ -10,6 +10,7 @@ import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
+import com.alibaba.dashscope.protocol.DashScopeHeaders;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import com.google.gson.Gson;
@@ -58,6 +59,10 @@ public final class Recognition {
   private AtomicReference<String> lastRequestId = new AtomicReference<>(null);
 
   private String preRequestId = null;
+
+  private String getRequestIdForLog() {
+    return DashScopeHeaders.requestIdOrUnknown(lastRequestId.get());
+  }
 
   @SuperBuilder
   private static class RecognitionParamWithStream extends RecognitionParam {
@@ -163,7 +168,10 @@ public final class Recognition {
                       if (startStreamTimeStamp < 0) {
                         startStreamTimeStamp = System.currentTimeMillis();
                       }
-                      log.debug("send audio frame: " + buffer.remaining());
+                      log.debug(
+                          "send audio frame: {}, requestId={}",
+                          buffer.remaining(),
+                          getRequestIdForLog());
                     }),
                 preRequestId))
         .doOnComplete(
@@ -190,18 +198,24 @@ public final class Recognition {
                   && result.getSentence().getText() != null
                   && !result.getSentence().getText().isEmpty()) {
                 firstPackageTimeStamp = System.currentTimeMillis();
-                log.debug("first package delay: " + getFirstPackageDelay());
+                log.debug(
+                    "first package delay: {}, requestId={}",
+                    getFirstPackageDelay(),
+                    getRequestIdForLog());
               }
               log.debug(
-                  "Recv Result: "
-                      + result.getSentence().getText()
-                      + ", isEnd: "
-                      + result.isSentenceEnd());
+                  "Recv Result: {}, isEnd: {}, requestId={}",
+                  result.getSentence().getText(),
+                  result.isSentenceEnd(),
+                  getRequestIdForLog());
             })
         .doOnComplete(
             () -> {
               onCompleteTimeStamp = System.currentTimeMillis();
-              log.debug("last package delay: " + getLastPackageDelay());
+              log.debug(
+                  "last package delay: {}, requestId={}",
+                  getLastPackageDelay(),
+                  getRequestIdForLog());
             });
   }
 
@@ -250,13 +264,13 @@ public final class Recognition {
             @Override
             public void onEvent(DashScopeResult message) {
               RecognitionResult recognitionResult = RecognitionResult.fromDashScopeResult(message);
-              if (recognitionResult.getSentence() != null
-                  && recognitionResult.getSentence().isHeartbeat()) {
-                log.debug("recv heartbeat");
-                return;
-              }
               if (lastRequestId.get() == null && recognitionResult.getRequestId() != null) {
                 lastRequestId.set(recognitionResult.getRequestId());
+              }
+              if (recognitionResult.getSentence() != null
+                  && recognitionResult.getSentence().isHeartbeat()) {
+                log.debug("recv heartbeat, requestId={}", getRequestIdForLog());
+                return;
               }
               if (!recognitionResult.isCompleteResult()) {
                 if (firstPackageTimeStamp < 0
@@ -264,13 +278,16 @@ public final class Recognition {
                     && recognitionResult.getSentence().getText() != null
                     && !recognitionResult.getSentence().getText().isEmpty()) {
                   firstPackageTimeStamp = System.currentTimeMillis();
-                  log.debug("first package delay: " + getFirstPackageDelay());
+                  log.debug(
+                      "first package delay: {}, requestId={}",
+                      getFirstPackageDelay(),
+                      getRequestIdForLog());
                 }
                 log.debug(
-                    "Recv Result: "
-                        + recognitionResult.getSentence().getText()
-                        + ", isEnd: "
-                        + recognitionResult.isSentenceEnd());
+                    "Recv Result: {}, isEnd: {}, requestId={}",
+                    recognitionResult.getSentence().getText(),
+                    recognitionResult.isSentenceEnd(),
+                    getRequestIdForLog());
                 callback.onEvent(recognitionResult);
               }
             }
@@ -278,7 +295,10 @@ public final class Recognition {
             @Override
             public void onComplete() {
               onCompleteTimeStamp = System.currentTimeMillis();
-              log.debug("last package delay: " + getLastPackageDelay());
+              log.debug(
+                  "last package delay: {}, requestId={}",
+                  getLastPackageDelay(),
+                  getRequestIdForLog());
               synchronized (Recognition.this) {
                 state = RecognitionState.IDLE;
               }
@@ -309,7 +329,7 @@ public final class Recognition {
         stopLatch.get().countDown();
       }
     }
-    log.debug("Recognition started");
+    log.debug("Recognition started, requestId={}", getRequestIdForLog());
   }
 
   public String call(RecognitionParam param, File file) {
@@ -361,17 +381,20 @@ public final class Recognition {
           .doOnComplete(
               () -> {
                 onCompleteTimeStamp = System.currentTimeMillis();
-                log.debug("last package delay: " + getLastPackageDelay());
+                log.debug(
+                    "last package delay: {}, requestId={}",
+                    getLastPackageDelay(),
+                    getRequestIdForLog());
               })
           .blockingSubscribe(
               res -> {
                 RecognitionResult recognitionResult = RecognitionResult.fromDashScopeResult(res);
-                if (recognitionResult.getSentence().isHeartbeat()) {
-                  log.debug("recv heartbeat");
-                  return;
-                }
                 if (lastRequestId.get() == null && recognitionResult.getRequestId() != null) {
                   lastRequestId.set(recognitionResult.getRequestId());
+                }
+                if (recognitionResult.getSentence().isHeartbeat()) {
+                  log.debug("recv heartbeat, requestId={}", getRequestIdForLog());
+                  return;
                 }
                 if (!recognitionResult.isCompleteResult()
                     && recognitionResult.getSentence() != null
@@ -379,13 +402,16 @@ public final class Recognition {
                     && !recognitionResult.getSentence().getText().isEmpty()) {
                   if (firstPackageTimeStamp < 0) {
                     firstPackageTimeStamp = System.currentTimeMillis();
-                    log.debug("first package delay: " + getFirstPackageDelay());
+                    log.debug(
+                        "first package delay: {}, requestId={}",
+                        getFirstPackageDelay(),
+                        getRequestIdForLog());
                   }
                   log.debug(
-                      "Recv Result: "
-                          + recognitionResult.getSentence().getText()
-                          + ", isEnd: "
-                          + recognitionResult.isSentenceEnd());
+                      "Recv Result: {}, isEnd: {}, requestId={}",
+                      recognitionResult.getSentence().getText(),
+                      recognitionResult.isSentenceEnd(),
+                      getRequestIdForLog());
                   sentenceList.add(recognitionResult.getSentence());
                 }
               },
@@ -416,7 +442,7 @@ public final class Recognition {
     if (this.startStreamTimeStamp < 0) {
       this.startStreamTimeStamp = System.currentTimeMillis();
     }
-    log.debug("send audio frame: " + audioFrame.remaining());
+    log.debug("send audio frame: {}, requestId={}", audioFrame.remaining(), getRequestIdForLog());
     synchronized (this) {
       if (state != RecognitionState.RECOGNITION_STARTED) {
         throw new ApiException(

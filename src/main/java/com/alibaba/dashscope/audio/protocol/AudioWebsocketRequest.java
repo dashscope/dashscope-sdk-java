@@ -5,6 +5,8 @@ import com.alibaba.dashscope.protocol.DashScopeHeaders;
 import com.alibaba.dashscope.protocol.okhttp.OkHttpClientFactory;
 import com.alibaba.dashscope.utils.ApiKey;
 import com.alibaba.dashscope.utils.Constants;
+import com.alibaba.dashscope.utils.JsonUtils;
+import com.google.gson.JsonObject;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -20,11 +22,46 @@ public class AudioWebsocketRequest extends WebSocketListener {
 
   private OkHttpClient client;
   private WebSocket websocketClient;
+  private volatile String requestId;
   private AtomicBoolean isOpen = new AtomicBoolean(false);
   private AtomicReference<CountDownLatch> connectLatch = new AtomicReference<>(null);
   private AtomicBoolean isClosed = new AtomicBoolean(false);
   private AudioWebsocketCallback callback;
   private Integer connectTimeout = 5000;
+
+  private String getRequestIdOrUnknown() {
+    return DashScopeHeaders.requestIdOrUnknown(requestId);
+  }
+
+  private void updateRequestIdFromMessage(String message) {
+    try {
+      JsonObject jsonMessage = JsonUtils.fromJson(message, JsonObject.class);
+      if (jsonMessage == null || !jsonMessage.has("header")) {
+        return;
+      }
+      JsonObject header = jsonMessage.getAsJsonObject("header");
+      if (header != null && header.has("task_id") && !header.get("task_id").isJsonNull()) {
+        String messageRequestId = header.get("task_id").getAsString();
+        if (messageRequestId != null && !messageRequestId.isEmpty()) {
+          this.requestId = messageRequestId;
+        }
+      }
+    } catch (RuntimeException ignored) {
+      // Preserve support for non-JSON messages; the original message handling reports any error.
+    }
+  }
+
+  private void updateRequestIdFromResponse(Response response) {
+    if (response != null && (requestId == null || requestId.isEmpty())) {
+      updateRequestId(DashScopeHeaders.findRequestId(response.headers().toMultimap()));
+    }
+  }
+
+  private void updateRequestId(String requestId) {
+    if (requestId != null && !requestId.isEmpty()) {
+      this.requestId = requestId;
+    }
+  }
 
   public boolean isOpen() {
     return isOpen.get();
@@ -84,11 +121,14 @@ public class AudioWebsocketRequest extends WebSocketListener {
 
   private void sendMessage(String message, boolean enableLog) {
     checkStatus();
+    updateRequestIdFromMessage(message);
     if (enableLog) {
-      log.debug("send message: " + message);
+      log.debug("send message: {}, requestId={}", message, getRequestIdOrUnknown());
     }
     if (!websocketClient.send(message)) {
-      log.warn("Failed to enqueue websocket text message for sending.");
+      log.warn(
+          "Failed to enqueue websocket text message for sending. requestId={}",
+          getRequestIdOrUnknown());
     }
   }
 
@@ -110,29 +150,33 @@ public class AudioWebsocketRequest extends WebSocketListener {
   public void sendBinaryMessage(ByteString rawData) {
     checkStatus();
     if (!websocketClient.send(rawData)) {
-      log.warn("Failed to enqueue websocket binary message for sending.");
+      log.warn(
+          "Failed to enqueue websocket binary message for sending. requestId={}",
+          getRequestIdOrUnknown());
     }
   }
 
   @Override
   public void onOpen(WebSocket webSocket, Response response) {
+    updateRequestIdFromResponse(response);
     isOpen.set(true);
     if (connectLatch.get() != null) {
       connectLatch.get().countDown();
     }
 
-    log.debug("WebSocket opened");
+    log.debug("WebSocket opened, requestId={}", getRequestIdOrUnknown());
     callback.onOpen();
   }
 
   @Override
   public void onMessage(WebSocket webSocket, String text) {
+    updateRequestIdFromMessage(text);
     callback.onMessage(webSocket, text);
   }
 
   @Override
   public void onMessage(WebSocket webSocket, ByteString bytes) {
-    log.debug("Received binary message");
+    log.debug("Received binary message, requestId={}", getRequestIdOrUnknown());
     callback.onMessage(webSocket, bytes.asByteBuffer());
   }
 
@@ -143,13 +187,14 @@ public class AudioWebsocketRequest extends WebSocketListener {
     if (connectLatch.get() != null) {
       connectLatch.get().countDown();
     }
-    log.debug("WebSocket closed");
+    log.debug("WebSocket closed, requestId={}", getRequestIdOrUnknown());
     callback.onClose(code, reason);
   }
 
   @Override
   public void onFailure(WebSocket webSocket, Throwable t, Response response) {
-    log.error("WebSocket failed: " + t);
+    updateRequestIdFromResponse(response);
+    log.error("WebSocket failed: {}, requestId={}", t, getRequestIdOrUnknown());
     if (connectLatch.get() != null) {
       connectLatch.get().countDown();
     }

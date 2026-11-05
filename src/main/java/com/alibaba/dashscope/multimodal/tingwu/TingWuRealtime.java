@@ -9,6 +9,7 @@ import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
 import com.alibaba.dashscope.protocol.ConnectionOptions;
+import com.alibaba.dashscope.protocol.DashScopeHeaders;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import io.reactivex.BackpressureStrategy;
@@ -49,6 +50,11 @@ public final class TingWuRealtime {
   private long onCompleteTimeStamp = -1;
   private String preRequestId = null;
   private boolean isListenState = false;
+  private final AtomicReference<String> lastRequestId = new AtomicReference<>(null);
+
+  private String getRequestIdForLog() {
+    return DashScopeHeaders.requestIdOrUnknown(lastRequestId.get());
+  }
 
   @SuperBuilder
   private static class TingWuRealtimeWithStream extends TingWuRealtimeParam {
@@ -185,7 +191,10 @@ public final class TingWuRealtime {
           new ResultCallback<DashScopeResult>() {
             @Override
             public void onEvent(DashScopeResult message) {
-              log.debug("Response Result :" + message);
+              if (lastRequestId.get() == null && message.getRequestId() != null) {
+                lastRequestId.set(message.getRequestId());
+              }
+              log.debug("Response Result: {}, requestId={}", message, getRequestIdForLog());
               TingWuRealtimeResult tingWuRealtimeResult =
                   TingWuRealtimeResult.fromDashScopeResult(message);
 
@@ -221,7 +230,10 @@ public final class TingWuRealtime {
             @Override
             public void onComplete() {
               onCompleteTimeStamp = System.currentTimeMillis();
-              log.debug("last package delay: " + getLastPackageDelay());
+              log.debug(
+                  "last package delay: {}, requestId={}",
+                  getLastPackageDelay(),
+                  getRequestIdForLog());
               callback.onClosed();
               if (stopLatch.get() != null) {
                 stopLatch.get().countDown();
@@ -246,7 +258,7 @@ public final class TingWuRealtime {
         stopLatch.get().countDown();
       }
     }
-    log.debug("TingWu Realtime client started");
+    log.debug("TingWu Realtime client started, requestId={}", getRequestIdForLog());
   }
 
   /**
@@ -262,7 +274,7 @@ public final class TingWuRealtime {
     if (this.startStreamTimeStamp < 0) {
       this.startStreamTimeStamp = System.currentTimeMillis();
     }
-    log.debug("send audio frame: " + audioFrame.remaining());
+    log.debug("send audio frame: {}, requestId={}", audioFrame.remaining(), getRequestIdForLog());
     synchronized (this) {
       if (audioEmitter == null || !isListenState) {
         cmdBuffer.add(AsyncCmdBuffer.builder().audioFrame(audioFrame).build());
@@ -305,6 +317,7 @@ public final class TingWuRealtime {
     this.firstPackageTimeStamp = -1;
     this.stopStreamTimeStamp = -1;
     this.onCompleteTimeStamp = -1;
+    this.lastRequestId.set(null);
     preRequestId = null;
   }
 

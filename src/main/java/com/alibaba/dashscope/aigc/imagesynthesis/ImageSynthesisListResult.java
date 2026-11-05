@@ -46,7 +46,10 @@ public class ImageSynthesisListResult {
       rs.message = dashScopeResult.getMessage();
       return rs;
     } else {
-      log.error(StringUtils.format("Result no output: %s", dashScopeResult));
+      log.error(
+          StringUtils.format(
+              "Result no output: %s, requestId=%s",
+              dashScopeResult, dashScopeResult.getRequestIdOrUnknown()));
     }
     return null;
   }

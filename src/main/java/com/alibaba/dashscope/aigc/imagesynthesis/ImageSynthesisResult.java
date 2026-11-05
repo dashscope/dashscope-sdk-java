@@ -46,7 +46,10 @@ public class ImageSynthesisResult {
           JsonUtils.fromJsonObject(
               (JsonObject) dashScopeResult.getOutput(), ImageSynthesisOutput.class));
     } else {
-      log.error(StringUtils.format("Result no output: %s", dashScopeResult));
+      log.error(
+          StringUtils.format(
+              "Result no output: %s, requestId=%s",
+              dashScopeResult, dashScopeResult.getRequestIdOrUnknown()));
     }
     return result;
   }

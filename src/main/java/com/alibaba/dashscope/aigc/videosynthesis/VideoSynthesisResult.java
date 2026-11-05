@@ -46,7 +46,10 @@ public class VideoSynthesisResult {
               (JsonObject) dashScopeResult.getOutput(), VideoSynthesisOutput.class);
       result.setOutput(outputTemp);
     } else {
-      log.error("Result no output: {}", dashScopeResult);
+      log.error(
+          "Result no output: {}, requestId={}",
+          dashScopeResult,
+          dashScopeResult.getRequestIdOrUnknown());
     }
     return result;
   }

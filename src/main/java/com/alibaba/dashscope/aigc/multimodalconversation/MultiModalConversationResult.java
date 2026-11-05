@@ -41,7 +41,10 @@ public class MultiModalConversationResult {
           JsonUtils.fromJsonObject(
               (JsonObject) dashScopeResult.getOutput(), MultiModalConversationOutput.class));
     } else {
-      log.error("Result no output: {}", dashScopeResult);
+      log.error(
+          "Result no output: {}, requestId={}",
+          dashScopeResult,
+          dashScopeResult.getRequestIdOrUnknown());
     }
     return result;
   }

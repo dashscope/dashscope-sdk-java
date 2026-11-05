@@ -30,7 +30,10 @@ public final class UnderstandingResult {
           JsonUtils.fromJsonObject(
               (JsonObject) dashScopeResult.getOutput(), UnderstandingOutput.class));
     } else {
-      log.error(StringUtils.format("Result no output: %s", dashScopeResult));
+      log.error(
+          StringUtils.format(
+              "Result no output: %s, requestId=%s",
+              dashScopeResult, dashScopeResult.getRequestIdOrUnknown()));
     }
     return result;
   }

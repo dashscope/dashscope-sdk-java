@@ -8,6 +8,7 @@ import com.alibaba.dashscope.common.*;
 import com.alibaba.dashscope.exception.ApiException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.alibaba.dashscope.protocol.ApiServiceOption;
+import com.alibaba.dashscope.protocol.DashScopeHeaders;
 import com.alibaba.dashscope.protocol.Protocol;
 import com.alibaba.dashscope.protocol.StreamingMode;
 import io.reactivex.Flowable;
@@ -37,6 +38,10 @@ public final class SpeechSynthesizer {
 
   private String preRequestId = null;
 
+  private String getRequestIdForLog() {
+    return DashScopeHeaders.requestIdOrUnknown(lastRequestId.get());
+  }
+
   public String getLastRequestId() {
     return preRequestId;
   }
@@ -61,6 +66,7 @@ public final class SpeechSynthesizer {
     recvAudioLength = 0;
     firstPackageTimeStamp = -1;
     preRequestId = UUID.randomUUID().toString();
+    lastRequestId.set(null);
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("pre_task_id", preRequestId);
     param.setParameters(parameters);
@@ -79,6 +85,9 @@ public final class SpeechSynthesizer {
 
       @Override
       public void onEvent(DashScopeResult message) {
+        if (message.getRequestId() != null && !message.getRequestId().isEmpty()) {
+          lastRequestId.set(message.getRequestId());
+        }
         SpeechSynthesisResult result = SpeechSynthesisResult.fromDashScopeResult(message);
         try {
           if (result.getTimestamp() != null) {
@@ -98,7 +107,10 @@ public final class SpeechSynthesizer {
           if (result.getAudioFrame() != null) {
             if (recvAudioLength == 0) {
               firstPackageTimeStamp = System.currentTimeMillis();
-              log.debug("[TtsV2] first package delay: " + getFirstPackageDelay() + " ms");
+              log.debug(
+                  "[TtsV2] first package delay: {} ms, requestId={}",
+                  getFirstPackageDelay(),
+                  getRequestIdForLog());
             }
             recvAudioLength +=
                 (double) result.getAudioFrame().capacity()
@@ -106,20 +118,28 @@ public final class SpeechSynthesizer {
             long current = System.currentTimeMillis();
             double current_rtf = (current - startStreamTimeStamp) / recvAudioLength;
             log.debug(
-                "[TtsV2] Recv Audio Binary: "
-                    + result.getAudioFrame().capacity()
-                    + " bytes, total audio "
-                    + recvAudioLength
-                    + " ms, current_rtf: "
-                    + current_rtf);
+                "[TtsV2] Recv Audio Binary: {} bytes, total audio {} ms, current_rtf: {}, requestId={}",
+                result.getAudioFrame().capacity(),
+                recvAudioLength,
+                current_rtf,
+                getRequestIdForLog());
             try {
               channel.write(result.getAudioFrame());
             } catch (IOException e) {
-              log.error("Failed to write audio: {}", result.getAudioFrame(), e);
+              log.error(
+                  "Failed to write audio: {}, requestId={}",
+                  result.getAudioFrame(),
+                  getRequestIdForLog(),
+                  e);
             }
           }
         } catch (Exception e) {
-          log.error("Failed to parse response: {}", message, e);
+          log.error(
+              "Failed to parse response, event: {}, output: {}, requestId={}",
+              message.getEvent(),
+              message.getOutput(),
+              getRequestIdForLog(),
+              e);
           callback.onError(e);
         }
         callback.onEvent(result);
@@ -132,7 +152,7 @@ public final class SpeechSynthesizer {
           channel.close();
           outputStream.close();
         } catch (IOException e) {
-          log.error("Failed to close channel: {}", channel, e);
+          log.error("Failed to close channel: {}, requestId={}", channel, getRequestIdForLog(), e);
         }
         callback.onComplete();
       }
@@ -154,6 +174,7 @@ public final class SpeechSynthesizer {
     recvAudioLength = 0;
     firstPackageTimeStamp = -1;
     preRequestId = UUID.randomUUID().toString();
+    lastRequestId.set(null);
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("pre_task_id", preRequestId);
     param.setParameters(parameters);
@@ -167,6 +188,9 @@ public final class SpeechSynthesizer {
           .streamCall(param)
           .map(
               message -> {
+                if (message.getRequestId() != null && !message.getRequestId().isEmpty()) {
+                  lastRequestId.set(message.getRequestId());
+                }
                 SpeechSynthesisResult result = SpeechSynthesisResult.fromDashScopeResult(message);
                 if (result.getTimestamp() != null) {
                   Sentence sentence = result.getTimestamp();
@@ -185,7 +209,10 @@ public final class SpeechSynthesizer {
                 if (result.getAudioFrame() != null) {
                   if (recvAudioLength == 0) {
                     firstPackageTimeStamp = System.currentTimeMillis();
-                    log.debug("[TtsV2] first package delay: " + getFirstPackageDelay() + " ms");
+                    log.debug(
+                        "[TtsV2] first package delay: {} ms, requestId={}",
+                        getFirstPackageDelay(),
+                        getRequestIdForLog());
                   }
                   recvAudioLength +=
                       (double) result.getAudioFrame().capacity()
@@ -193,16 +220,19 @@ public final class SpeechSynthesizer {
                   long current = System.currentTimeMillis();
                   double current_rtf = (current - startStreamTimeStamp) / recvAudioLength;
                   log.debug(
-                      "[TtsV2] Recv Audio Binary: "
-                          + result.getAudioFrame().capacity()
-                          + " bytes, total audio "
-                          + recvAudioLength
-                          + " ms, current_rtf: "
-                          + current_rtf);
+                      "[TtsV2] Recv Audio Binary: {} bytes, total audio {} ms, current_rtf: {}, requestId={}",
+                      result.getAudioFrame().capacity(),
+                      recvAudioLength,
+                      current_rtf,
+                      getRequestIdForLog());
                   try {
                     channel.write(result.getAudioFrame());
                   } catch (IOException e) {
-                    log.error("Failed to write audio: {}", result.getAudioFrame(), e);
+                    log.error(
+                        "Failed to write audio: {}, requestId={}",
+                        result.getAudioFrame(),
+                        getRequestIdForLog(),
+                        e);
                   }
                 }
                 return result;
@@ -214,7 +244,11 @@ public final class SpeechSynthesizer {
                   channel.close();
                   outputStream.close();
                 } catch (IOException e) {
-                  log.error("Failed to close channel: {}", channel, e);
+                  log.error(
+                      "Failed to close channel: {}, requestId={}",
+                      channel,
+                      getRequestIdForLog(),
+                      e);
                 }
               })
           .doOnError(
@@ -225,7 +259,11 @@ public final class SpeechSynthesizer {
                   timestamps.clear();
                   audioData = null;
                 } catch (IOException ex) {
-                  log.error("Failed to close channel: {}", channel, ex);
+                  log.error(
+                      "Failed to close channel: {}, requestId={}",
+                      channel,
+                      getRequestIdForLog(),
+                      ex);
                 }
               });
     } catch (NoApiKeyException e) {
