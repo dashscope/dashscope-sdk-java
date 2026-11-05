@@ -11,6 +11,7 @@ import com.alibaba.dashscope.agentstudio.message.ClientEvents;
 import com.alibaba.dashscope.agentstudio.message.ContentBlock;
 import com.alibaba.dashscope.agentstudio.message.Message;
 import com.alibaba.dashscope.agentstudio.model.Configs;
+import com.alibaba.dashscope.agentstudio.model.Mount;
 import com.alibaba.dashscope.agentstudio.model.Session;
 import com.alibaba.dashscope.agentstudio.param.AgentCreateParam;
 import com.alibaba.dashscope.agentstudio.param.SessionEventListParam;
@@ -20,6 +21,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.mockwebserver.MockResponse;
@@ -214,7 +216,37 @@ class TestAgentStudioProtocol {
   }
 
   @Test
-  void testToolConfigParamsRoundTrip() {
+  void testMountUsesWireKeys() {
+    Mount bailian =
+        Mount.bailianMemory("0123", "customer_001")
+            .projectIds(Arrays.asList("fact_rule_1"))
+            .profileSchema("schema_demo")
+            .description("ctx")
+            .readOnly();
+    assertEquals(
+        new HashSet<>(
+            Arrays.asList(
+                "type",
+                "provider",
+                "memory_store_id",
+                "entity_id",
+                "project_ids",
+                "profile_schema",
+                "description",
+                "access")),
+        bailian.keySet());
+    assertEquals("agentstudio_memory", bailian.get("provider"));
+    assertEquals("read_only", bailian.get("access"));
+
+    Mount oss = Mount.oss("cn-beijing", "bkt", "datasets/", "/data").readOnly();
+    assertEquals(
+        new HashSet<>(
+            Arrays.asList("type", "region", "bucket", "oss_path", "mount_path", "access")),
+        oss.keySet());
+  }
+
+  @Test
+  void testToolConfigParamsSerialized() {
     Configs.ToolConfig.PerToolConfig perTool = new Configs.ToolConfig.PerToolConfig();
     perTool.setName("search_knowledgebases");
     perTool.setEnabled(true);
@@ -252,7 +284,7 @@ class TestAgentStudioProtocol {
   }
 
   @Test
-  void testSessionResourceMemoryOssAndLegacyFields() {
+  void testSessionResourceParsesMountFields() {
     Session.SessionResource memory =
         GSON.fromJson(
             "{\"id\":\"mount_1\",\"type\":\"memory_store\",\"memory_store_id\":\"0123\","
