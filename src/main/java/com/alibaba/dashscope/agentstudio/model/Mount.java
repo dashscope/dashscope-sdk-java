@@ -6,8 +6,8 @@ import java.util.List;
 /**
  * Typed session-resource mount descriptor (create-time input on POST /sessions).
  *
- * <p>Extends {@link LinkedHashMap} so it fits the existing
- * {@code List<Map<String, Object>>} resources parameter without conversion:
+ * <p>Extends {@link LinkedHashMap} so it fits the existing {@code List<Map<String, Object>>}
+ * resources parameter without conversion:
  *
  * <pre>{@code
  * List<Map<String, Object>> resources = new ArrayList<>();
