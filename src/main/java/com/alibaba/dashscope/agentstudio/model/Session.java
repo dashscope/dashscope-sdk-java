@@ -114,6 +114,15 @@ public class Session extends FlattenResultBase {
     private List<String> pendingCallIds;
   }
 
+  /**
+   * A resource mounted into a session. Fields depend on {@code type}: {@code file} carries {@code
+   * fileId}/{@code mountPath}; {@code memory_store} carries {@code memoryStoreId}/{@code
+   * access}/{@code instructions}/{@code name}/{@code description} and — when {@code provider} is
+   * {@code agentstudio_memory} — {@code entityId}/{@code projectIds}/{@code profileSchema} (Bailian
+   * memory mounts carry no mount path); {@code oss} carries {@code region}/{@code bucket}/{@code
+   * ossPath}/{@code mountPath}/{@code access}. {@code provider} values are not validated so
+   * historical responses stay readable. Memory and OSS mounts are create-only.
+   */
   @Data
   @EqualsAndHashCode(callSuper = true)
   public static class SessionResource extends FlattenResultBase {
@@ -126,8 +135,44 @@ public class Session extends FlattenResultBase {
     @SerializedName("file_id")
     private String fileId;
 
+    @SerializedName("memory_store_id")
+    private String memoryStoreId;
+
+    @SerializedName("provider")
+    private String provider;
+
+    @SerializedName("entity_id")
+    private String entityId;
+
+    @SerializedName("project_ids")
+    private List<String> projectIds;
+
+    @SerializedName("profile_schema")
+    private String profileSchema;
+
+    @SerializedName("access")
+    private String access;
+
+    @SerializedName("instructions")
+    private String instructions;
+
+    @SerializedName("name")
+    private String name;
+
+    @SerializedName("description")
+    private String description;
+
     @SerializedName("mount_path")
     private String mountPath;
+
+    @SerializedName("region")
+    private String region;
+
+    @SerializedName("bucket")
+    private String bucket;
+
+    @SerializedName("oss_path")
+    private String ossPath;
 
     @SerializedName("created_at")
     private String createdAt;

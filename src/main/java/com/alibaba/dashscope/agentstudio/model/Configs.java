@@ -3,6 +3,7 @@ package com.alibaba.dashscope.agentstudio.model;
 
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
+import java.util.Map;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -82,6 +83,13 @@ public final class Configs {
 
       @SerializedName("permission_policy")
       private PermissionPolicy permissionPolicy;
+
+      /**
+       * Per-tool parameters, e.g. {@code knowledge_application_id} for the {@code
+       * search_knowledgebases} knowledge-retrieval tool. Serialized only when set.
+       */
+      @SerializedName("params")
+      private Map<String, Object> params;
     }
   }
 

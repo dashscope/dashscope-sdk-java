@@ -212,4 +212,81 @@ class TestAgentStudioProtocol {
     assertEquals(
         "always_ask", dcJson.getAsJsonObject("permission_policy").get("type").getAsString());
   }
+
+  @Test
+  void testToolConfigParamsRoundTrip() {
+    Configs.ToolConfig.PerToolConfig perTool = new Configs.ToolConfig.PerToolConfig();
+    perTool.setName("search_knowledgebases");
+    perTool.setEnabled(true);
+    java.util.HashMap<String, Object> params = new java.util.HashMap<>();
+    params.put("knowledge_application_id", "aid_demo");
+    perTool.setParams(params);
+
+    Configs.ToolConfig tool = new Configs.ToolConfig();
+    tool.setType("builtin_toolkit");
+    tool.setConfigs(Arrays.asList(perTool));
+
+    JsonObject body =
+        AgentCreateParam.builder()
+            .name("rag")
+            .model("qwen-max")
+            .tools(Arrays.asList(tool))
+            .build()
+            .getHttpBody();
+    JsonObject perToolJson =
+        body.getAsJsonArray("tools")
+            .get(0)
+            .getAsJsonObject()
+            .getAsJsonArray("configs")
+            .get(0)
+            .getAsJsonObject();
+    assertEquals(
+        "aid_demo",
+        perToolJson.getAsJsonObject("params").get("knowledge_application_id").getAsString());
+
+    // Read back: Agent.tools keeps params, so read-modify-write resubmits them.
+    Configs.ToolConfig parsed =
+        GSON.fromJson(body.getAsJsonArray("tools").get(0), Configs.ToolConfig.class);
+    assertEquals(
+        "aid_demo", parsed.getConfigs().get(0).getParams().get("knowledge_application_id"));
+  }
+
+  @Test
+  void testSessionResourceMemoryOssAndLegacyFields() {
+    Session.SessionResource memory =
+        GSON.fromJson(
+            "{\"id\":\"mount_1\",\"type\":\"memory_store\",\"memory_store_id\":\"0123\","
+                + "\"provider\":\"agentstudio_memory\",\"entity_id\":\"customer_001\","
+                + "\"project_ids\":[\"fact_rule_1\"],\"profile_schema\":\"schema_demo\","
+                + "\"description\":\"ctx\",\"access\":\"read_only\"}",
+            Session.SessionResource.class);
+    assertEquals("agentstudio_memory", memory.getProvider());
+    assertEquals("customer_001", memory.getEntityId());
+    assertEquals(Arrays.asList("fact_rule_1"), memory.getProjectIds());
+    assertEquals("schema_demo", memory.getProfileSchema());
+    assertEquals("read_only", memory.getAccess());
+    assertNull(memory.getMountPath());
+
+    Session.SessionResource oss =
+        GSON.fromJson(
+            "{\"id\":\"sesrsc_1\",\"type\":\"oss\",\"region\":\"cn-beijing\","
+                + "\"bucket\":\"agentstudio-ma-oss-mnt\",\"oss_path\":\"datasets/\","
+                + "\"mount_path\":\"/data\",\"access\":\"read_only\"}",
+            Session.SessionResource.class);
+    assertEquals("cn-beijing", oss.getRegion());
+    assertEquals("agentstudio-ma-oss-mnt", oss.getBucket());
+    assertEquals("datasets/", oss.getOssPath());
+    assertEquals("/data", oss.getMountPath());
+
+    // Historical built-in mounts predate provider; those fields stay null.
+    Session.SessionResource legacy =
+        GSON.fromJson(
+            "{\"id\":\"mount_2\",\"type\":\"memory_store\",\"memory_store_id\":\"memstore_1\","
+                + "\"mount_path\":\"/uploads/memory\"}",
+            Session.SessionResource.class);
+    assertNull(legacy.getProvider());
+    assertNull(legacy.getEntityId());
+    assertEquals("memstore_1", legacy.getMemoryStoreId());
+    assertEquals("/uploads/memory", legacy.getMountPath());
+  }
 }
