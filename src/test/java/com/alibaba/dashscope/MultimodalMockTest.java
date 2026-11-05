@@ -109,7 +109,7 @@ class MultimodalMockTest {
     RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
     assertEquals("/services/aigc/multimodal-generation/generation", request.getPath());
     assertEquals(
-        "java-sdk/" + SdkInfo.VERSION + "/aigc", request.getHeader("x-dashscope-sdk-client"));
+        "java-sdk/" + SdkInfo.VERSION + "/aigc3", request.getHeader("x-dashscope-sdk-client"));
     JsonNode body = bodyOf(request);
     assertEquals("qwen-vl-plus", body.get("model").asText());
     JsonNode content = body.get("input").get("messages").get(0).get("content");
@@ -512,7 +512,8 @@ class MultimodalMockTest {
     assertEquals(
         "/services/embeddings/multimodal-embedding/multimodal-embedding", request.getPath());
     assertEquals(
-        "java-sdk/" + SdkInfo.VERSION + "/embeddings", request.getHeader("x-dashscope-sdk-client"));
+        "java-sdk/" + SdkInfo.VERSION + "/embeddings3",
+        request.getHeader("x-dashscope-sdk-client"));
     JsonNode body = bodyOf(request);
     assertEquals("multimodal-embedding-v1", body.get("model").asText());
     assertEquals("你好", body.get("input").get("contents").get(0).get("text").asText());

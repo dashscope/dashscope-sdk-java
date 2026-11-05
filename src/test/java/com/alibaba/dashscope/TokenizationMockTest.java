@@ -88,7 +88,8 @@ class TokenizationMockTest {
     RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
     assertEquals("/tokenizer", request.getPath());
     assertEquals(
-        "java-sdk/" + SdkInfo.VERSION + "/tokenizers", request.getHeader("x-dashscope-sdk-client"));
+        "java-sdk/" + SdkInfo.VERSION + "/tokenizers3",
+        request.getHeader("x-dashscope-sdk-client"));
     JsonNode body = MAPPER.readTree(request.getBody().readUtf8());
     assertEquals("qwen-turbo", body.get("model").asText());
     assertEquals("You are a helpful assistant.", body.get("input").get("prompt").asText());

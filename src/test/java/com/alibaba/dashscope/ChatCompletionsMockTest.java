@@ -108,11 +108,10 @@ class ChatCompletionsMockTest {
     assertEquals("POST", request.getMethod());
     assertEquals("/services/aigc/text-generation/generation", request.getPath());
     assertEquals("Bearer test-key", request.getHeader("Authorization"));
-    assertTrue(request.getHeader("user-agent").startsWith("dashscope/" + SdkInfo.VERSION));
+    assertTrue(request.getHeader("user-agent").startsWith("dashscope-sdk-java/" + SdkInfo.VERSION));
     assertEquals(
-        "java-sdk/" + SdkInfo.VERSION + "/aigc", request.getHeader("x-dashscope-sdk-client"));
+        "java-sdk/" + SdkInfo.VERSION + "/aigc3", request.getHeader("x-dashscope-sdk-client"));
     assertNotNull(request.getHeader("x-dashscope-sdk-session-id"));
-    assertEquals("3", request.getHeader("x-dashscope-sdk-generation"));
 
     JsonNode body = bodyOf(request);
     assertEquals("qwen-plus", body.get("model").asText());
@@ -341,11 +340,11 @@ class ChatCompletionsMockTest {
 
       RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
       assertEquals("Bearer test-key", request.getHeader("Authorization"));
-      assertTrue(request.getHeader("user-agent").startsWith("dashscope/" + SdkInfo.VERSION));
+      assertTrue(
+          request.getHeader("user-agent").startsWith("dashscope-sdk-java/" + SdkInfo.VERSION));
       assertNotNull(request.getHeader("x-dashscope-sdk-session-id"));
       assertEquals(
-          "java-sdk/" + SdkInfo.VERSION + "/aigc", request.getHeader("x-dashscope-sdk-client"));
-      assertEquals("3", request.getHeader("x-dashscope-sdk-generation"));
+          "java-sdk/" + SdkInfo.VERSION + "/aigc3", request.getHeader("x-dashscope-sdk-client"));
     }
   }
 
@@ -388,13 +387,13 @@ class ChatCompletionsMockTest {
             RequestOptions.builder()
                 .header("Authorization", "Bearer custom-key")
                 .header("User-Agent", "custom-agent/1.0")
-                .header("x-dashscope-sdk-generation", "custom")
+                .header("x-dashscope-sdk-client", "custom")
                 .build());
 
     RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
     assertEquals("Bearer custom-key", request.getHeader("Authorization"));
     assertEquals("custom-agent/1.0", request.getHeader("User-Agent"));
-    assertEquals("custom", request.getHeader("x-dashscope-sdk-generation"));
+    assertEquals("custom", request.getHeader("x-dashscope-sdk-client"));
   }
 
   @Test
