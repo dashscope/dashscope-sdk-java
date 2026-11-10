@@ -8,12 +8,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.alibaba.dashscope.shared.SdkInfo;
 import com.alibaba.dashscope.types.embeddings.EmbeddingCreateParams;
 import com.alibaba.dashscope.types.embeddings.EmbeddingResponse;
+import com.alibaba.dashscope.types.embeddings.SparseEmbedding;
 import com.alibaba.dashscope.types.rerank.RerankCreateParams;
 import com.alibaba.dashscope.types.rerank.RerankResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -114,6 +116,41 @@ class EmbeddingsRerankMockTest {
     assertEquals(1, response.getEmbeddings().size());
     assertEquals(0, response.getEmbeddings().get(0).getIndex());
     assertEquals(Arrays.asList(0.9, 0.8), response.getEmbeddings().get(0).getEmbedding());
+  }
+
+  @Test
+  void embeddingsPreservesSparseEmbedding() throws Exception {
+    server.enqueue(
+        okJson(
+            "{\"output\":{\"embeddings\":[{\"text_index\":0,\"embedding\":[0.1,0.2],"
+                + "\"sparse_embedding\":[{\"index\":1266,\"value\":0.55,\"token\":\"\u4f60\"},"
+                + "{\"index\":34,\"value\":0.31,\"token\":\"\u597d\"}]}]},"
+                + "\"usage\":{\"total_tokens\":4},\"request_id\":\"e3\"}"));
+
+    EmbeddingResponse response =
+        client
+            .embeddings()
+            .create(
+                EmbeddingCreateParams.builder()
+                    .model("text-embedding-v4")
+                    .text("你好")
+                    .parameters(Collections.singletonMap("output_type", "dense&sparse"))
+                    .build());
+
+    assertEquals(1, response.getEmbeddings().size());
+    assertEquals(Arrays.asList(0.1, 0.2), response.getEmbeddings().get(0).getEmbedding());
+    java.util.List<SparseEmbedding> sparse = response.getEmbeddings().get(0).getSparseEmbedding();
+    assertEquals(2, sparse.size());
+    assertEquals(1266, sparse.get(0).getIndex());
+    assertEquals(0.55, sparse.get(0).getValue(), 1e-9);
+    assertEquals("你", sparse.get(0).getToken());
+    assertEquals(34, sparse.get(1).getIndex());
+    assertEquals(0.31, sparse.get(1).getValue(), 1e-9);
+    assertEquals("好", sparse.get(1).getToken());
+
+    RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
+    JsonNode body = MAPPER.readTree(request.getBody().readUtf8());
+    assertEquals("dense&sparse", body.get("parameters").get("output_type").asText());
   }
 
   @Test

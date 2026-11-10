@@ -19,6 +19,11 @@ public class Embedding {
   @JsonProperty("embedding")
   private List<Double> embedding;
 
+  // Present only when the request set output_type to "sparse" or "dense&sparse"; the dense
+  // embedding above is then empty or accompanied by these sparse terms.
+  @JsonProperty("sparse_embedding")
+  private List<SparseEmbedding> sparseEmbedding;
+
   public int getIndex() {
     return index;
   }
@@ -29,5 +34,9 @@ public class Embedding {
 
   public List<Double> getEmbedding() {
     return embedding;
+  }
+
+  public List<SparseEmbedding> getSparseEmbedding() {
+    return sparseEmbedding;
   }
 }
