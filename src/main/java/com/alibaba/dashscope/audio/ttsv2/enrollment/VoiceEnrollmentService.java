@@ -140,6 +140,38 @@ public class VoiceEnrollmentService {
             .targetModel(targetModel)
             .prefix(prefix)
             .url(url)
+            .audio(customParam.getAudio())
+            .apiKey(apikey)
+            .languageHints(customParam.getLanguageHints())
+            .headers(customParam.getHeaders())
+            .resources(customParam.getResources())
+            .maxPromptAudioLength(customParam.getMaxPromptAudioLength())
+            .parameters(customParam.getParameters())
+            .workspace(customParam.getWorkspace())
+            .build();
+    param.validate();
+    DashScopeResult dashScopeResult = syncApi.call(param);
+    lastRequestId = dashScopeResult.getRequestId();
+    return Voice.voiceFromCreateResult(dashScopeResult);
+  }
+
+  /** Create a cloned voice from a base64 audio data URI instead of a URL. */
+  public Voice createVoiceWithAudio(String targetModel, String prefix, String audio)
+      throws NoApiKeyException, InputRequiredException {
+    return createVoiceWithAudio(
+        targetModel, prefix, audio, VoiceEnrollmentParam.builder().model(this.model).build());
+  }
+
+  public Voice createVoiceWithAudio(
+      String targetModel, String prefix, String audio, VoiceEnrollmentParam customParam)
+      throws NoApiKeyException, InputRequiredException {
+    VoiceEnrollmentParam param =
+        VoiceEnrollmentParam.builder()
+            .operationType(VoiceEnrollmentOperationType.CREATE)
+            .model(customParam.getModel().isEmpty() ? this.model : customParam.getModel())
+            .targetModel(targetModel)
+            .prefix(prefix)
+            .audio(audio)
             .apiKey(apikey)
             .languageHints(customParam.getLanguageHints())
             .headers(customParam.getHeaders())
@@ -203,6 +235,32 @@ public class VoiceEnrollmentService {
             .model(this.model)
             .voiceId(voiceId)
             .url(url)
+            .audio(customParam.getAudio())
+            .apiKey(apikey)
+            .headers(customParam.getHeaders())
+            .resources(customParam.getResources())
+            .parameters(customParam.getParameters())
+            .workspace(customParam.getWorkspace())
+            .build();
+    param.validate();
+    DashScopeResult dashScopeResult = syncApi.call(param);
+    lastRequestId = dashScopeResult.getRequestId();
+  }
+
+  /** Update an existing voice with a base64 audio data URI instead of a URL. */
+  public void updateVoiceWithAudio(String voiceId, String audio)
+      throws NoApiKeyException, InputRequiredException {
+    updateVoiceWithAudio(voiceId, audio, VoiceEnrollmentParam.builder().model(this.model).build());
+  }
+
+  public void updateVoiceWithAudio(String voiceId, String audio, VoiceEnrollmentParam customParam)
+      throws NoApiKeyException, InputRequiredException {
+    VoiceEnrollmentParam param =
+        VoiceEnrollmentParam.builder()
+            .operationType(VoiceEnrollmentOperationType.UPDATE)
+            .model(this.model)
+            .voiceId(voiceId)
+            .audio(audio)
             .apiKey(apikey)
             .headers(customParam.getHeaders())
             .resources(customParam.getResources())
