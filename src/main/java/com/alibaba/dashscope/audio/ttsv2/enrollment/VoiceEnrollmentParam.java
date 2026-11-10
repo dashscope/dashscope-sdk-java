@@ -20,6 +20,7 @@ public class VoiceEnrollmentParam extends HalfDuplexServiceParam {
   private String targetModel;
   private VoiceEnrollmentOperationType operationType;
   private String url;
+  private String audio;
   private String voiceId;
   private List<String> languageHints = null;
 
@@ -48,7 +49,12 @@ public class VoiceEnrollmentParam extends HalfDuplexServiceParam {
         input.addProperty(ApiKeywords.ACTION, operationType.getValue());
         input.addProperty("target_model", targetModel);
         input.addProperty("prefix", prefix);
-        input.addProperty("url", url);
+        if (url != null) {
+          input.addProperty("url", url);
+        }
+        if (audio != null) {
+          input.addProperty("audio", audio);
+        }
         if (languageHints != null) {
           input.add("language_hints", JsonUtils.toJsonArray(languageHints));
         }
@@ -80,7 +86,12 @@ public class VoiceEnrollmentParam extends HalfDuplexServiceParam {
       case UPDATE:
         input.addProperty(ApiKeywords.ACTION, operationType.getValue());
         input.addProperty("voice_id", voiceId);
-        input.addProperty("url", url);
+        if (url != null) {
+          input.addProperty("url", url);
+        }
+        if (audio != null) {
+          input.addProperty("audio", audio);
+        }
         break;
       case DELETE:
         input.addProperty(ApiKeywords.ACTION, operationType.getValue());
@@ -104,8 +115,8 @@ public class VoiceEnrollmentParam extends HalfDuplexServiceParam {
     }
     switch (operationType) {
       case CREATE:
-        if (url == null) {
-          throw new InputRequiredException("url is required when Create Voice");
+        if (url == null && audio == null) {
+          throw new InputRequiredException("url or audio is required when Create Voice");
         }
         if (prefix == null) {
           throw new InputRequiredException("prefix is required");
@@ -131,8 +142,8 @@ public class VoiceEnrollmentParam extends HalfDuplexServiceParam {
         if (voiceId == null) {
           throw new InputRequiredException("voice id is required when Update Voice");
         }
-        if (url == null) {
-          throw new InputRequiredException("url is required when Update Voice");
+        if (url == null && audio == null) {
+          throw new InputRequiredException("url or audio is required when Update Voice");
         }
         break;
       case DELETE:
