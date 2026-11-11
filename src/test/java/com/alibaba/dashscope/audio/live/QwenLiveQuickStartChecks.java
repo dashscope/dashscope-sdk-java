@@ -483,7 +483,7 @@ public final class QwenLiveQuickStartChecks {
         command.environment().put("DASHSCOPE_API_KEY", "test-key");
         command
             .environment()
-            .put("DASHSCOPE_WEBSOCKET_OMNI_BASE_URL", server.url("/realtime").toString());
+            .put("DASHSCOPE_WEBSOCKET_QWEN_LIVE_BASE_URL", server.url("/realtime").toString());
         command.redirectErrorStream(true);
         Process process = command.start();
         try {

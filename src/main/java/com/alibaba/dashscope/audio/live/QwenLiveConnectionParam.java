@@ -1,7 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.audio.live;
 
-import static com.alibaba.dashscope.utils.Constants.DASHSCOPE_WEBSOCKET_OMNI_BASE_URL_ENV;
+import static com.alibaba.dashscope.utils.Constants.DASHSCOPE_WEBSOCKET_QWEN_LIVE_BASE_URL_ENV;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -21,7 +21,7 @@ public class QwenLiveConnectionParam {
   public static String baseWebsocketApiUrlTemplate =
       System.getenv()
           .getOrDefault(
-              DASHSCOPE_WEBSOCKET_OMNI_BASE_URL_ENV,
+              DASHSCOPE_WEBSOCKET_QWEN_LIVE_BASE_URL_ENV,
               "wss://{workspaceId}.cn-beijing.maas.aliyuncs.com/api-ws/v1/realtime");
 
   private static final String PLACEHOLDER_LOWER_CAMEL = "{workspaceId}";

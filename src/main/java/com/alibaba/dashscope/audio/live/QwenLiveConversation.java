@@ -54,6 +54,12 @@ public class QwenLiveConversation {
   private volatile String closeReason;
   private boolean closeRequested;
   private boolean socketCancelled;
+  private boolean transportOpen;
+  private boolean localTeardown;
+  private boolean closeDelivered;
+  private boolean closePending;
+  private int requestedCloseCode;
+  private String requestedCloseReason;
 
   public QwenLiveConversation(QwenLiveConnectionParam param, QwenLiveCallback callback) {
     this(param, callback, OkHttpClientFactory.getOkHttpClient(), 60);
@@ -274,8 +280,14 @@ public class QwenLiveConversation {
         return;
       }
       closeRequested = true;
-      wasOpen = isOpen.get();
+      localTeardown = true;
+      wasOpen = transportOpen;
       socket = webSocketClient;
+      if (wasOpen) {
+        closePending = true;
+        requestedCloseCode = code;
+        requestedCloseReason = reason;
+      }
       markClosing();
     }
     if (socket == null || !wasOpen || !socket.close(code, reason)) {
@@ -286,6 +298,7 @@ public class QwenLiveConversation {
   public void cancel() {
     WebSocket socket;
     synchronized (lifecycleLock) {
+      localTeardown = true;
       markClosed();
       socket = webSocketClient;
     }
@@ -297,6 +310,7 @@ public class QwenLiveConversation {
     synchronized (lifecycleLock) {
       if (socketCancelled) return;
       socketCancelled = true;
+      transportOpen = false;
     }
     socket.cancel();
   }
@@ -405,6 +419,7 @@ public class QwenLiveConversation {
         if (!terminal) {
           webSocketClient = socket;
           isOpen.set(true);
+          transportOpen = true;
           CountDownLatch latch = connectLatch.get();
           if (latch != null) latch.countDown();
         }
@@ -450,28 +465,51 @@ public class QwenLiveConversation {
     @Override
     public void onClosing(WebSocket socket, int code, String reason) {
       synchronized (lifecycleLock) {
+        transportOpen = false;
         markClosed();
       }
-      if (!socket.close(code, reason)) cancelSocket(socket);
+      socket.close(code, reason);
     }
 
     @Override
     public void onClosed(WebSocket socket, int code, String reason) {
       synchronized (lifecycleLock) {
+        transportOpen = false;
         markClosed();
       }
-      dispatchCallback(() -> callback.onClose(code, reason));
+      deliverClose(code, reason);
     }
 
     @Override
     public void onFailure(WebSocket socket, Throwable failure, Response response) {
+      boolean suppressError;
+      boolean deliverRequestedClose;
+      int closeCode;
+      String closeReason;
       synchronized (lifecycleLock) {
         if (webSocketClient == null) webSocketClient = socket;
         if (connectFailure == null) connectFailure = failure;
+        suppressError = localTeardown;
+        deliverRequestedClose = closePending;
+        closeCode = requestedCloseCode;
+        closeReason = requestedCloseReason;
+        transportOpen = false;
         markClosed();
       }
       cancelSocket(socket);
-      reportError(failure);
+      if (!suppressError) {
+        reportError(failure);
+      } else if (deliverRequestedClose) {
+        deliverClose(closeCode, closeReason);
+      }
+    }
+
+    private void deliverClose(int code, String reason) {
+      synchronized (lifecycleLock) {
+        if (closeDelivered) return;
+        closeDelivered = true;
+      }
+      dispatchCallback(() -> callback.onClose(code, reason));
     }
   }
 }

@@ -418,7 +418,8 @@ public class TestQwenLiveProtocol {
     assertNotNull(callback.errors.poll(5, TimeUnit.SECONDS));
     assertTrue(conversation.awaitSessionClosed(0));
     conversation.close();
-    assertTrue(factory.socket.cancelCalls.get() > 0);
+    assertTrue(factory.socket.closeCalls.get() > 0);
+    assertEquals(0, factory.socket.cancelCalls.get());
   }
 
   @Test

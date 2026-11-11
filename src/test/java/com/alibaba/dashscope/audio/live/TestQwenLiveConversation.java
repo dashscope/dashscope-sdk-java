@@ -379,6 +379,122 @@ public class TestQwenLiveConversation {
   }
 
   @Test
+  void closeAfterSessionClosedUsesGracefulCloseNotCancel() throws Exception {
+    FakeFactory factory = new FakeFactory();
+    conversation = new QwenLiveConversation(param, callback, factory, 1);
+    conversation.connect();
+    factory.listener.onMessage(
+        factory.socket, "{\"type\":\"session.closed\",\"reason\":\"server_done\"}");
+    assertTrue(conversation.awaitSessionClosed(0));
+    conversation.close();
+    assertEquals(1, factory.socket.closeCalls.get());
+    assertEquals(0, factory.socket.cancelCalls.get());
+    assertTrue(callback.errors.isEmpty());
+  }
+
+  @Test
+  void localCancelSuppressesTransportErrorCallback() throws Exception {
+    FakeFactory factory = new FakeFactory();
+    conversation = new QwenLiveConversation(param, callback, factory, 1);
+    conversation.connect();
+    conversation.cancel();
+    factory.listener.onFailure(factory.socket, new IOException("Socket closed"), null);
+    assertTrue(callback.errors.isEmpty());
+  }
+
+  @Test
+  void remoteFailureWithoutLocalCancelStillReportsError() throws Exception {
+    FakeFactory factory = new FakeFactory();
+    conversation = new QwenLiveConversation(param, callback, factory, 1);
+    conversation.connect();
+    factory.listener.onFailure(factory.socket, new IOException("connection lost"), null);
+    assertEquals(1, callback.errors.size());
+  }
+
+  @Test
+  void onClosingAfterLocalCloseDoesNotCancelWhenEchoCloseIsRejected() throws Exception {
+    FakeFactory factory = new FakeFactory();
+    conversation = new QwenLiveConversation(param, callback, factory, 1);
+    conversation.connect();
+    conversation.close();
+    factory.socket.closeResult = false;
+    factory.listener.onClosing(factory.socket, 1000, "bye");
+    assertEquals(0, factory.socket.cancelCalls.get());
+    factory.listener.onClosed(factory.socket, 1000, "bye");
+    assertEquals("1000:bye", callback.closes.poll(1, TimeUnit.SECONDS));
+    assertTrue(callback.closes.isEmpty());
+    assertTrue(callback.errors.isEmpty());
+  }
+
+  @Test
+  void transportFailureAfterLocalCloseDeliversRequestedOnClose() throws Exception {
+    FakeFactory factory = new FakeFactory();
+    conversation = new QwenLiveConversation(param, callback, factory, 1);
+    conversation.connect();
+    conversation.close(1001, "going away");
+    factory.listener.onFailure(factory.socket, new IOException("Socket closed"), null);
+    assertEquals("1001:going away", callback.closes.poll(1, TimeUnit.SECONDS));
+    assertTrue(callback.closes.isEmpty());
+    assertTrue(callback.errors.isEmpty());
+  }
+
+  @Test
+  void rejectedCloseFallbackStillDeliversOnCloseOnce() throws Exception {
+    FakeFactory factory = new FakeFactory();
+    factory.socket.closeResult = false;
+    conversation = new QwenLiveConversation(param, callback, factory, 1);
+    conversation.connect();
+    conversation.close();
+    assertTrue(factory.socket.cancelCalls.get() > 0);
+    factory.listener.onFailure(factory.socket, new IOException("Socket closed"), null);
+    assertEquals("1000:bye", callback.closes.poll(1, TimeUnit.SECONDS));
+    assertTrue(callback.closes.isEmpty());
+    assertTrue(callback.errors.isEmpty());
+  }
+
+  @Test
+  void onCloseIsDeliveredOnlyOnceWhenClosedThenFailureArrive() throws Exception {
+    FakeFactory factory = new FakeFactory();
+    conversation = new QwenLiveConversation(param, callback, factory, 1);
+    conversation.connect();
+    conversation.close();
+    factory.listener.onClosed(factory.socket, 1000, "bye");
+    factory.listener.onFailure(factory.socket, new IOException("Socket closed"), null);
+    assertEquals("1000:bye", callback.closes.poll(1, TimeUnit.SECONDS));
+    assertNull(callback.closes.poll(200, TimeUnit.MILLISECONDS));
+    assertTrue(callback.errors.isEmpty());
+  }
+
+  @Test
+  void cancelDeliversNeitherOnCloseNorOnError() throws Exception {
+    FakeFactory factory = new FakeFactory();
+    conversation = new QwenLiveConversation(param, callback, factory, 1);
+    conversation.connect();
+    conversation.cancel();
+    factory.listener.onFailure(factory.socket, new IOException("Socket closed"), null);
+    assertNull(callback.closes.poll(200, TimeUnit.MILLISECONDS));
+    assertTrue(callback.errors.isEmpty());
+  }
+
+  @Test
+  void closeBeforeTransportOpenDoesNotDeliverOnClose() throws Exception {
+    FakeFactory factory = new FakeFactory();
+    factory.action = (socket, listener) -> {};
+    conversation = new QwenLiveConversation(param, callback, factory, 1);
+    Future<?> connecting =
+        executor.submit(
+            () -> {
+              conversation.connect();
+              return null;
+            });
+    Thread.sleep(100);
+    conversation.close();
+    factory.listener.onFailure(factory.socket, new IOException("Socket closed"), null);
+    assertThrows(ExecutionException.class, () -> connecting.get(5, TimeUnit.SECONDS));
+    assertNull(callback.closes.poll(200, TimeUnit.MILLISECONDS));
+  }
+
+  @Test
   void invalidCloseArgumentsDoNotCloseConversation() throws Exception {
     FakeFactory factory = new FakeFactory();
     conversation = new QwenLiveConversation(param, callback, factory, 1);
@@ -763,6 +879,7 @@ public class TestQwenLiveConversation {
     final AtomicInteger openCalls = new AtomicInteger();
     final BlockingQueue<JsonObject> events = new LinkedBlockingQueue<>();
     final BlockingQueue<Throwable> errors = new LinkedBlockingQueue<>();
+    final BlockingQueue<String> closes = new LinkedBlockingQueue<>();
 
     @Override
     public void onOpen() {
@@ -776,6 +893,7 @@ public class TestQwenLiveConversation {
 
     @Override
     public void onClose(int code, String reason) {
+      closes.add(code + ":" + reason);
       transportClosed.countDown();
     }
 
