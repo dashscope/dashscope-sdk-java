@@ -5,6 +5,7 @@ import com.alibaba.dashscope.legacy_2x.exception.NoSpecialTokenExists;
 import com.alibaba.dashscope.legacy_2x.exception.UnSupportedSpecialTokenMode;
 import com.alibaba.dashscope.legacy_2x.utils.StringUtils;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -276,11 +277,15 @@ public class QwenTokenizer implements Tokenizer {
 
   @Override
   public String decode(List<Integer> tokens) {
-    StringBuilder sb = new StringBuilder();
+    // Byte-level BPE merges on byte boundaries, so one multi-byte UTF-8 character can span two
+    // adjacent tokens (e.g. 58230 = 20 E5 B0 and 122 = BE together are " \u5C3E"). Concatenate
+    // every token's bytes and decode once; decoding each token on its own turns every partial
+    // sequence into U+FFFD.
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     for (Integer token : tokens) {
-      byte[] bytes = decodeMap[token];
-      sb.append(new String(bytes, StandardCharsets.UTF_8));
+      byte[] tokenBytes = decodeMap[token];
+      bytes.write(tokenBytes, 0, tokenBytes.length);
     }
-    return sb.toString();
+    return new String(bytes.toByteArray(), StandardCharsets.UTF_8);
   }
 }
