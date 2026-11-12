@@ -40,6 +40,8 @@ public final class Constants {
       EnvNames.DASHSCOPE_WEBSOCKET_OMNI_BASE_URL;
   public static final String DASHSCOPE_WEBSOCKET_QWEN_TTS_REALTIME_BASE_URL_ENV =
       EnvNames.DASHSCOPE_WEBSOCKET_QWEN_TTS_REALTIME_BASE_URL;
+  public static final String DASHSCOPE_WEBSOCKET_QWEN_LIVE_BASE_URL_ENV =
+      EnvNames.DASHSCOPE_WEBSOCKET_QWEN_LIVE_BASE_URL;
   // Setting network layer logging, support: [NONE, BASIC, HEADERS, BODY]
   public static final String DASHSCOPE_NETWORK_LOGGING_LEVEL_ENV =
       EnvNames.DASHSCOPE_NETWORK_LOGGING_LEVEL;
