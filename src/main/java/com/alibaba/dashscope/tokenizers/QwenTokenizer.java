@@ -7,7 +7,17 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -33,7 +43,16 @@ public class QwenTokenizer implements Tokenizer {
       "(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\\r\\n\\p{L}\\p{N}]?\\p{L}+|\\p{N}| ?[^\\s\\p{L}\\p{N}]+[\\r\\n]*|\\s*[\\r\\n]+|\\s+(?!\\S)|\\s+";
   private static final int SPECIAL_START_ID = 151643;
   private static final String TOKEN_RANK_SEPARATOR = " ";
-  private static final String vocabularyBpeFile = "qwen.tiktoken";
+  private static final String VOCAB_NAME = "qwen.tiktoken";
+  // The vocab ships in src/main/resources for source checkouts, but is excluded
+  // from distribution jars; installed packages download it on first use.
+  private static final String VOCAB_URL =
+      "https://www.modelscope.cn/models/Qwen/Qwen-7B-Chat/resolve/master/" + VOCAB_NAME;
+  private static final String VOCAB_SHA256 =
+      "b2b1b8dfb5cc5f024bafc373121c6aba3f66f9a5a0269e243470a1de16a33186";
+  private static final String VOCAB_ENV = "DASHSCOPE_QWEN_VOCAB";
+  private static final Path VOCAB_CACHE_DIR =
+      Paths.get(System.getProperty("user.home"), ".cache", "dashscope", "tokenizers");
   private static final Map<EncodeBytesEntity, Integer> mergeableRanks;
   private static final Map<String, Integer> specialTokens;
   private static final byte[][] decodeMap;
@@ -54,17 +73,14 @@ public class QwenTokenizer implements Tokenizer {
   static {
     // ref: https://github.com/openai/tiktoken/blob/main/tiktoken/load.py#L143
     mergeableRanks = new LinkedHashMap<>();
-    ClassLoader classLoader = QwenTokenizer.class.getClassLoader();
-    try {
-      InputStream inputStream = classLoader.getResourceAsStream(vocabularyBpeFile);
-
-      BufferedReader reader =
-          new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+    try (InputStream inputStream = resolveVocab();
+        BufferedReader reader =
+            new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
       String line;
       while ((line = reader.readLine()) != null) {
         // 8J+Vkw== 149934 split
         String[] splits = line.split(TOKEN_RANK_SEPARATOR);
-        assert splits.length == 2 : "Invalid line in " + vocabularyBpeFile + ": " + line;
+        assert splits.length == 2 : "Invalid line in " + VOCAB_NAME + ": " + line;
 
         byte[] token = Base64.getDecoder().decode(splits[0].getBytes(StandardCharsets.UTF_8));
         int rank = Integer.valueOf(splits[1]);
@@ -82,7 +98,105 @@ public class QwenTokenizer implements Tokenizer {
         decodeMap[entry.getValue()] = Arrays.copyOf(b, b.length);
       }
     } catch (IOException e) {
-      throw new RuntimeException("Could not load " + vocabularyBpeFile + " from resources", e);
+      throw new RuntimeException("Could not load " + VOCAB_NAME, e);
+    }
+  }
+
+  /**
+   * Resolves the vocab from, in order: the {@code DASHSCOPE_QWEN_VOCAB} environment variable, the
+   * classpath (source checkouts), a SHA256-verified local cache, or a ModelScope download into
+   * {@code ~/.cache/dashscope/tokenizers}.
+   */
+  static InputStream resolveVocab() throws IOException {
+    String override = System.getenv(VOCAB_ENV);
+    if (override != null && !override.isEmpty()) {
+      return Files.newInputStream(expandHome(override));
+    }
+    InputStream bundled = QwenTokenizer.class.getClassLoader().getResourceAsStream(VOCAB_NAME);
+    if (bundled != null) {
+      return bundled;
+    }
+    Path cached = VOCAB_CACHE_DIR.resolve(VOCAB_NAME);
+    if (Files.isRegularFile(cached) && VOCAB_SHA256.equals(sha256(cached))) {
+      return Files.newInputStream(cached);
+    }
+    downloadVocab(cached);
+    return Files.newInputStream(cached);
+  }
+
+  static Path expandHome(String path) {
+    String home = System.getProperty("user.home");
+    if (path.equals("~")) {
+      return Paths.get(home);
+    }
+    if (path.startsWith("~/")) {
+      return Paths.get(home, path.substring(2));
+    }
+    return Paths.get(path);
+  }
+
+  static String sha256(Path path) throws IOException {
+    MessageDigest digest;
+    try {
+      digest = MessageDigest.getInstance("SHA-256");
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException(e);
+    }
+    try (InputStream in = Files.newInputStream(path)) {
+      byte[] buffer = new byte[1 << 20];
+      int read;
+      while ((read = in.read(buffer)) != -1) {
+        digest.update(buffer, 0, read);
+      }
+    }
+    StringBuilder sb = new StringBuilder();
+    for (byte b : digest.digest()) {
+      sb.append(String.format("%02x", b));
+    }
+    return sb.toString();
+  }
+
+  private static void downloadVocab(Path dest) throws IOException {
+    Files.createDirectories(dest.getParent());
+    Path tmp = Files.createTempFile(dest.getParent(), VOCAB_NAME + ".", ".download");
+    try {
+      HttpURLConnection connection =
+          (HttpURLConnection) URI.create(VOCAB_URL).toURL().openConnection();
+      connection.setConnectTimeout(60_000);
+      connection.setReadTimeout(60_000);
+      try (InputStream in = connection.getInputStream();
+          OutputStream out = Files.newOutputStream(tmp)) {
+        byte[] buffer = new byte[1 << 20];
+        int read;
+        while ((read = in.read(buffer)) != -1) {
+          out.write(buffer, 0, read);
+        }
+      } finally {
+        connection.disconnect();
+      }
+      if (!VOCAB_SHA256.equals(sha256(tmp))) {
+        throw new IOException("SHA256 mismatch for vocab downloaded from " + VOCAB_URL);
+      }
+      try {
+        Files.move(tmp, dest, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+      } catch (AtomicMoveNotSupportedException e) {
+        Files.move(tmp, dest, StandardCopyOption.REPLACE_EXISTING);
+      }
+    } catch (IOException | RuntimeException e) {
+      throw new RuntimeException(
+          "Failed to obtain the Qwen tokenizer vocab ("
+              + VOCAB_NAME
+              + "). Download it manually from "
+              + VOCAB_URL
+              + " and either place it at "
+              + dest
+              + " or point "
+              + VOCAB_ENV
+              + " at the file (required for offline environments). Cause: "
+              + e,
+          e);
+    } finally {
+      Files.deleteIfExists(tmp);
     }
   }
 
