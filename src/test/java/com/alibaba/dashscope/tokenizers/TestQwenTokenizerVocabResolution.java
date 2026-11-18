@@ -20,11 +20,7 @@ public class TestQwenTokenizerVocabResolution {
       "b2b1b8dfb5cc5f024bafc373121c6aba3f66f9a5a0269e243470a1de16a33186";
   private static final Path CACHED_VOCAB =
       Paths.get(
-          System.getProperty("user.home"),
-          ".cache",
-          "dashscope",
-          "tokenizers",
-          "qwen.tiktoken");
+          System.getProperty("user.home"), ".cache", "dashscope", "tokenizers", "qwen.tiktoken");
 
   // The vocab is no longer tracked in git; make sure a verified local cache copy
   // exists (classpath copy or ModelScope download) before the env-override test.
