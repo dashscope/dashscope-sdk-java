@@ -175,7 +175,8 @@
                 <version>3.3.0</version>
                 <configuration>
                     <excludes>
-                        <!-- resolved at runtime by QwenTokenizer, not shipped in distributions -->
+                        <!-- vocab is resolved at runtime by QwenTokenizer; keep any local
+                             offline dev copy out of distribution jars -->
                         <exclude>qwen.tiktoken</exclude>
                     </excludes>
                 </configuration>

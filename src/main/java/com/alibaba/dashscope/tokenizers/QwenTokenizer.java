@@ -44,8 +44,8 @@ public class QwenTokenizer implements Tokenizer {
   private static final int SPECIAL_START_ID = 151643;
   private static final String TOKEN_RANK_SEPARATOR = " ";
   private static final String VOCAB_NAME = "qwen.tiktoken";
-  // The vocab ships in src/main/resources for source checkouts, but is excluded
-  // from distribution jars; installed packages download it on first use.
+  // The vocab is no longer tracked in git; it is downloaded from ModelScope on
+  // first use and cached locally (a manual classpath copy is still honored).
   private static final String VOCAB_URL =
       "https://www.modelscope.cn/models/Qwen/Qwen-7B-Chat/resolve/master/" + VOCAB_NAME;
   private static final String VOCAB_SHA256 =
@@ -104,7 +104,7 @@ public class QwenTokenizer implements Tokenizer {
 
   /**
    * Resolves the vocab from, in order: the {@code DASHSCOPE_QWEN_VOCAB} environment variable, the
-   * classpath (source checkouts), a SHA256-verified local cache, or a ModelScope download into
+   * classpath (optional local copy), a SHA256-verified local cache, or a ModelScope download into
    * {@code ~/.cache/dashscope/tokenizers}.
    */
   static InputStream resolveVocab() throws IOException {
