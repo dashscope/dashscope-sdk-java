@@ -48,6 +48,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-antrun.version>1.8</maven-antrun.version>
         <commons-lang3.version>3.11</commons-lang3.version>
+        <autoPublish>false</autoPublish>
     </properties>
     <dependencies>
         <dependency>
@@ -151,6 +152,7 @@
                 <extensions>true</extensions>
                 <configuration>
                     <publishingServerId>central</publishingServerId>
+                    <autoPublish>${autoPublish}</autoPublish>
                 </configuration>
             </plugin>
             <plugin>
@@ -235,7 +237,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.6</version>
+                <version>3.2.7</version>
+                <configuration>
+                    <gpgArguments>
+                        <arg>--pinentry-mode</arg>
+                        <arg>loopback</arg>
+                    </gpgArguments>
+                </configuration>
                 <executions>
                     <execution>
                         <phase>verify</phase>

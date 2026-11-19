@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: maven-central
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Tag commit must be on main
+        run: |
+          git fetch origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+          server-id: central
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: Version must match tag
+        run: |
+          V=$(mvn -q help:evaluate -Dexpression=project.version -DforceStdout)
+          test "v$V" = "$GITHUB_REF_NAME"
+
+      - name: Unit tests
+        run: mvn -B test
+
+      - name: Deploy to Maven Central
+        run: mvn -B deploy -DskipTests -DautoPublish=${{ vars.AUTO_PUBLISH || 'false' }}
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Create GitHub Release
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes --title "$GITHUB_REF_NAME"
+        env:
+          GH_TOKEN: ${{ github.token }}
