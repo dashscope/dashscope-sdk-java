@@ -35,6 +35,25 @@ jobs:
           V=$(mvn -q help:evaluate -Dexpression=project.version -DforceStdout)
           test "v$V" = "$GITHUB_REF_NAME"
 
+      - name: Pre-download Qwen tokenizer vocab
+        run: |
+          vocab_dir="$HOME/.cache/dashscope/tokenizers"
+          vocab="$vocab_dir/qwen.tiktoken"
+          sha256="b2b1b8dfb5cc5f024bafc373121c6aba3f66f9a5a0269e243470a1de16a33186"
+          url="https://www.modelscope.cn/models/Qwen/Qwen-7B-Chat/resolve/master/qwen.tiktoken"
+          mkdir -p "$vocab_dir"
+          for attempt in 1 2 3; do
+            if curl -fsSL --connect-timeout 30 --max-time 300 --retry 3 --retry-delay 5 \
+                -o "$vocab" "$url" && [ "$(sha256sum "$vocab" | cut -d' ' -f1)" = "$sha256" ]; then
+              echo "Vocab cached at $vocab"
+              exit 0
+            fi
+            echo "Vocab download attempt $attempt failed, retrying..."
+            sleep 10
+          done
+          echo "::error::Failed to download qwen.tiktoken from ModelScope after 3 attempts"
+          exit 1
+
       - name: Unit tests
         run: mvn -B test
 
