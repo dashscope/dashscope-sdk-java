@@ -171,3 +171,7 @@ cython_debug/
 /.idea
 .acli/
 settings.xml
+
+# Qwen tokenizer vocab: fetched from ModelScope at runtime, never commit the
+# 2.4MB file (a local copy may be placed here for offline development/tests).
+src/main/resources/qwen.tiktoken

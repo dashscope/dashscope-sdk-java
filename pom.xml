@@ -54,6 +54,7 @@
         <maven-antrun.version>1.8</maven-antrun.version>
         <commons-lang3.version>3.11</commons-lang3.version>
         <jackson.version>2.22.4</jackson.version>
+        <autoPublish>false</autoPublish>
     </properties>
     <dependencies>
         <dependency>
@@ -180,6 +181,7 @@
                 <extensions>true</extensions>
                 <configuration>
                     <publishingServerId>central</publishingServerId>
+                    <autoPublish>${autoPublish}</autoPublish>
                 </configuration>
             </plugin>
             <plugin>
@@ -194,6 +196,18 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <excludes>
+                        <!-- vocab is resolved at runtime by QwenTokenizer; keep any local
+                             offline dev copy out of distribution jars -->
+                        <exclude>qwen.tiktoken</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -240,6 +254,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
                 <version>3.0.1</version>
+                <configuration>
+                    <excludes>
+                        <exclude>**/qwen.tiktoken</exclude>
+                    </excludes>
+                </configuration>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -266,7 +285,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.6</version>
+                <version>3.2.7</version>
+                <configuration>
+                    <gpgArguments>
+                        <arg>--pinentry-mode</arg>
+                        <arg>loopback</arg>
+                    </gpgArguments>
+                </configuration>
                 <executions>
                     <execution>
                         <phase>verify</phase>
