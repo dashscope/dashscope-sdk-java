@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.legacy_2x.common.GeneralListParam;
 import com.alibaba.dashscope.legacy_2x.common.ListResult;
+import com.alibaba.dashscope.legacy_2x.common.Role;
 import com.alibaba.dashscope.legacy_2x.common.UpdateMetadataParam;
 import com.alibaba.dashscope.legacy_2x.exception.ApiException;
 import com.alibaba.dashscope.legacy_2x.exception.InputRequiredException;
@@ -30,9 +31,9 @@ import java.util.UUID;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
@@ -54,7 +55,7 @@ public class TestMessages {
     }
   }
 
-  @BeforeClass
+  @BeforeAll
   public static void before() throws IOException {
     mockServer = new MockWebServer();
     mockServer.start();
@@ -62,7 +63,7 @@ public class TestMessages {
     Constants.apiKey = "1234";
   }
 
-  @AfterClass
+  @AfterAll
   public static void after() throws IOException {
     mockServer.close();
   }
@@ -104,6 +105,7 @@ public class TestMessages {
     TestUtils.verifyRequest(request, param, TextMessageParam.class, expectPath, "POST");
     assertEquals(message.getId(), "msg_created");
     assertEquals(message.getThreadId(), "thread_create");
+    assertEquals(message.getRole(), Role.USER);
     ContentText text = (ContentText) message.getContent().get(0);
     assertEquals(text.getType(), "text");
     assertEquals(text.getText().getAnnotations(), new ArrayList<>());
@@ -146,6 +148,8 @@ public class TestMessages {
             threadId));
     assertEquals(request.getMethod(), "GET");
     assertTrue(threadList.getData().size() == 2);
+    assertEquals(threadList.getData().get(0).getRole(), Role.ASSISTANT);
+    assertEquals(threadList.getData().get(1).getRole(), Role.USER);
     ContentText text = (ContentText) threadList.getData().get(1).getContent().get(0);
     assertEquals(text.getText().getValue(), "Who are you.");
     param = GeneralListParam.builder().limit(1000l).after("after").before("before").build();
@@ -190,6 +194,7 @@ public class TestMessages {
     assertEquals(request.getMethod(), "GET");
     assertEquals(threadMessage.getId(), "msg_created");
     assertEquals(threadMessage.getThreadId(), "thread_create");
+    assertEquals(threadMessage.getRole(), Role.USER);
     ContentText text = (ContentText) threadMessage.getContent().get(0);
     assertEquals(text.getType(), "text");
     assertEquals(text.getText().getAnnotations(), new ArrayList<>());
