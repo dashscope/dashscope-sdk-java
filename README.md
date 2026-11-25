@@ -14,6 +14,51 @@ To use the sdk in your java systems, please add the maven dependency in your pom
 </dependency>
 ```
 
+## 3.0 (new generation)
+
+Version 3.0 introduces a new client entry point in the same artifact. The 3.0 implementation
+packages live directly under `com.alibaba.dashscope.*`; legacy 2.x APIs other than AgentStudio
+have moved to `com.alibaba.dashscope.legacy_2x.*` and are deprecated for removal in 4.0. This
+is an intentional FQCN, source, and binary compatibility break: existing 2.x imports must be
+updated. Java 8+ is required at runtime (bytecode target 8), and the build baseline is JDK 8
+as well: CI builds and tests on JDK 8. Building from source on JDK 9+ also works — the pom's
+jdk9-plus profile auto-activates and compiles with release 8 API checking. All public top-level
+types under `legacy_2x` carry type-level `@Deprecated`, so javac reports deprecation when they
+are used (`-Xlint:deprecation` shows details). Packages retain only `@deprecated` Javadoc tags:
+combining a package annotation with that tag fails on Java 8, and package deprecation does not
+propagate to types. AgentStudio and `shared` are not deprecated.
+
+```java
+import com.alibaba.dashscope.DashScopeClient;
+import com.alibaba.dashscope.types.completions.ChatCompletion;
+import com.alibaba.dashscope.types.completions.ChatCompletionCreateParams;
+import com.alibaba.dashscope.types.messages.Message;
+import java.util.Collections;
+
+// apiKey resolves from the config chain:
+// builder > -Ddashscope.api.key > DASHSCOPE_API_KEY > ~/.dashscope/config.toml
+try (DashScopeClient client = DashScopeClient.builder().build()) {
+  ChatCompletion result = client.chat().completions().create(
+      ChatCompletionCreateParams.builder()
+          .model("qwen-plus")
+          .messages(Collections.singletonList(Message.user("Hello, how are you?")))
+          .build());
+  System.out.println(result.outputText());
+  System.out.println("request_id: " + result.getRequestId());
+}
+```
+
+- Resource tree: `chat / multimodal / apps / images / videos / embeddings / rerank /
+  tokenization / audio / finetunes / deployments / files / models / tingwu / decision /
+  agentStudio` — see [md/dashscope-3.0-design.md](md/dashscope-3.0-design.md).
+- Migrating from 2.x: [md/dashscope-3.0-migration.md](md/dashscope-3.0-migration.md)
+  (per-class mapping, unchecked-exception model, AgentStudio and tokenizers notes).
+- Runnable samples: [examples/README.md](examples/README.md) (four layers, MockWebServer dry-run
+  via `mvn -f examples/pom.xml clean test`; CI installs the current SDK with
+  `mvn install -DskipTests -Dgpg.skip=true` after root tests, then runs the standalone examples project).
+- Everything below this section documents the deprecated 2.x API (`Generation`, `Conversation`,
+  …). Its snippets use the current `legacy_2x` imports; these APIs will be removed in 4.0.
+
 ## QuickStart
 
 ### Generation
@@ -31,14 +76,14 @@ Here shows the usages of each method, with the examples of `qwen-turbo` model.
 #### Support stream and non-stream mode, accept output from callback
 
 ```java
-import com.alibaba.dashscope.aigc.generation.Generation;
-import com.alibaba.dashscope.aigc.generation.GenerationParam;
-import com.alibaba.dashscope.aigc.generation.GenerationResult;
-import com.alibaba.dashscope.common.Message;
-import com.alibaba.dashscope.common.ResultCallback;
-import com.alibaba.dashscope.common.Role;
-import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.legacy_2x.aigc.generation.Generation;
+import com.alibaba.dashscope.legacy_2x.aigc.generation.GenerationParam;
+import com.alibaba.dashscope.legacy_2x.aigc.generation.GenerationResult;
+import com.alibaba.dashscope.legacy_2x.common.Message;
+import com.alibaba.dashscope.legacy_2x.common.ResultCallback;
+import com.alibaba.dashscope.legacy_2x.common.Role;
+import com.alibaba.dashscope.legacy_2x.exception.ApiException;
+import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
 import java.util.Arrays;
 
 public class Main {
@@ -84,15 +129,15 @@ The Exception instance is an `ApiException` instance. This Exception may contain
 #### Stream only, accept by reactive io
 
 ```java
-import com.alibaba.dashscope.aigc.generation.Generation;
-import com.alibaba.dashscope.aigc.generation.GenerationParam;
-import com.alibaba.dashscope.aigc.generation.GenerationResult;
-import com.alibaba.dashscope.common.Message;
-import com.alibaba.dashscope.common.Role;
-import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.exception.InputRequiredException;
-import com.alibaba.dashscope.exception.NoApiKeyException;
-import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.legacy_2x.aigc.generation.Generation;
+import com.alibaba.dashscope.legacy_2x.aigc.generation.GenerationParam;
+import com.alibaba.dashscope.legacy_2x.aigc.generation.GenerationResult;
+import com.alibaba.dashscope.legacy_2x.common.Message;
+import com.alibaba.dashscope.legacy_2x.common.Role;
+import com.alibaba.dashscope.legacy_2x.exception.ApiException;
+import com.alibaba.dashscope.legacy_2x.exception.InputRequiredException;
+import com.alibaba.dashscope.legacy_2x.exception.NoApiKeyException;
+import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
 import io.reactivex.Flowable;
 import java.util.Arrays;
 
@@ -131,15 +176,15 @@ The `streamCall` method accepts a `GenerationParam`, and returns a `Flowable`, w
 #### Non-stream only
 
 ```java
-import com.alibaba.dashscope.aigc.generation.Generation;
-import com.alibaba.dashscope.aigc.generation.GenerationParam;
-import com.alibaba.dashscope.aigc.generation.GenerationResult;
-import com.alibaba.dashscope.common.Message;
-import com.alibaba.dashscope.common.Role;
-import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.exception.InputRequiredException;
-import com.alibaba.dashscope.exception.NoApiKeyException;
-import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.legacy_2x.aigc.generation.Generation;
+import com.alibaba.dashscope.legacy_2x.aigc.generation.GenerationParam;
+import com.alibaba.dashscope.legacy_2x.aigc.generation.GenerationResult;
+import com.alibaba.dashscope.legacy_2x.common.Message;
+import com.alibaba.dashscope.legacy_2x.common.Role;
+import com.alibaba.dashscope.legacy_2x.exception.ApiException;
+import com.alibaba.dashscope.legacy_2x.exception.InputRequiredException;
+import com.alibaba.dashscope.legacy_2x.exception.NoApiKeyException;
+import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
 import java.util.Arrays;
 
 public class Main {
@@ -179,14 +224,14 @@ The `call` method accepts a `GenerationParam`, and returns a `GenerationResult`,
 The decision model answers a batch of multiple-choice (choice), yes/no (noul) and ordered-scale (score) questions against a given business state, see the [Decision Model API document](https://platform.qianwenai.com/docs/api-reference/decision-model-api).
 
 ```java
-import com.alibaba.dashscope.decision.DecisionModel;
-import com.alibaba.dashscope.decision.DecisionModelParam;
-import com.alibaba.dashscope.decision.DecisionModelResult;
-import com.alibaba.dashscope.decision.DecisionQuestion;
-import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.exception.InputRequiredException;
-import com.alibaba.dashscope.exception.NoApiKeyException;
-import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.legacy_2x.decision.DecisionModel;
+import com.alibaba.dashscope.legacy_2x.decision.DecisionModelParam;
+import com.alibaba.dashscope.legacy_2x.decision.DecisionModelResult;
+import com.alibaba.dashscope.legacy_2x.decision.DecisionQuestion;
+import com.alibaba.dashscope.legacy_2x.exception.ApiException;
+import com.alibaba.dashscope.legacy_2x.exception.InputRequiredException;
+import com.alibaba.dashscope.legacy_2x.exception.NoApiKeyException;
+import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;

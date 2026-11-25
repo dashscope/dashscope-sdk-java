@@ -169,7 +169,7 @@ cython_debug/
 #.idea/
 /dashscope-sdk-java.iml
 /.idea
-.acli/
+/md/
 settings.xml
 
 # Qwen tokenizer vocab: fetched from ModelScope at runtime, never commit the

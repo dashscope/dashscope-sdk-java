@@ -30,6 +30,9 @@ on:
   workflow_dispatch:  # Allow manual trigger
 
 env:
+  # JDK 8 toolchain end to end: javac 8 lacks the --release flag and its JVM rejects
+  # --add-opens, so the pom defaults to source/target 8 and the jdk9-plus profile covers
+  # newer JDKs (release 8 API checking + junit-pioneer test opens).
   JAVA_VERSION: '8'
   JAVA_DISTRIBUTION: 'temurin'
 
@@ -43,6 +46,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # The com.alibaba.dashscope.v3 intermediate packages and the root common leaf were
+      # eliminated by the 3.0 package finalization. A stale pre-migration copy re-added under
+      # them slips through a merge with zero conflict signal (the merge base usually lacks
+      # the path) and breaks the build against classes that no longer exist, so fail fast
+      # before Maven spends minutes drowning the cause in compiler errors.
+      - name: Guard eliminated packages
+        run: |
+          stale=$(find src -type f -name "*.java" 2>/dev/null \
+            | grep -E "^src/(main|test)/java/com/alibaba/dashscope/(v3|common)/" || true)
+          if [ -n "$stale" ]; then
+            echo "::error::Found files under eliminated packages (com.alibaba.dashscope.v3 / root common): the 3.0 layout owns the root packages; drop the stale copy or move the code there."
+            echo "$stale"
+            exit 1
+          fi
+
       - name: Set up JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
@@ -50,36 +68,26 @@ jobs:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           cache: 'maven'
 
-      - name: Pre-download Qwen tokenizer vocab
-        run: |
-          vocab_dir="$HOME/.cache/dashscope/tokenizers"
-          vocab="$vocab_dir/qwen.tiktoken"
-          sha256="b2b1b8dfb5cc5f024bafc373121c6aba3f66f9a5a0269e243470a1de16a33186"
-          url="https://www.modelscope.cn/models/Qwen/Qwen-7B-Chat/resolve/master/qwen.tiktoken"
-          mkdir -p "$vocab_dir"
-          for attempt in 1 2 3; do
-            if curl -fsSL --connect-timeout 30 --max-time 300 --retry 3 --retry-delay 5 \
-                -o "$vocab" "$url" && [ "$(sha256sum "$vocab" | cut -d' ' -f1)" = "$sha256" ]; then
-              echo "Vocab cached at $vocab"
-              exit 0
-            fi
-            echo "Vocab download attempt $attempt failed, retrying..."
-            sleep 10
-          done
-          echo "::error::Failed to download qwen.tiktoken from ModelScope after 3 attempts"
-          exit 1
-
       - name: Run tests
         run: mvn clean test
         env:
           DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+
+      # examples/ is a standalone Maven project, so install this checkout's SDK first.
+      - name: Install current SDK for examples
+        run: mvn install -DskipTests -Dgpg.skip=true
+
+      - name: Run examples dry-run tests
+        run: mvn -f examples/pom.xml clean test
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: target/surefire-reports/
+          path: |
+            target/surefire-reports/
+            examples/target/surefire-reports/
 
   build:
     runs-on: ubuntu-22.04

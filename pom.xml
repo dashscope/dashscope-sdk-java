@@ -40,14 +40,20 @@
     <name>DashScope Java SDK</name>
     <groupId>com.alibaba</groupId>
     <artifactId>dashscope-sdk-java</artifactId>
-    <version>2.23.7</version>
+    <version>3.0.0</version>
 
     <properties>
+        <!-- JDK 8 toolchain: plain javac 8 lacks the release flag, so the default build runs with
+             source/target 8; the jdk9-plus profile flips to release 8 for API checking on
+             newer JDKs (release wins over source/target when both are resolved). -->
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
+        <!-- Empty on JDK 8 (its JVM rejects the add-opens flags); jdk9-plus fills them in. -->
+        <surefireArgLine></surefireArgLine>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-antrun.version>1.8</maven-antrun.version>
         <commons-lang3.version>3.11</commons-lang3.version>
+        <jackson.version>2.22.4</jackson.version>
         <autoPublish>false</autoPublish>
     </properties>
     <dependencies>
@@ -59,7 +65,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.26</version>
+            <version>1.18.42</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -90,6 +96,11 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.8.9</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -144,6 +155,24 @@
     </dependencies>
 
     <build>
+        <!-- J1: dashscope-version.properties is the single version source (Maven filtering);
+             everything else ships unfiltered. -->
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>dashscope-version.properties</exclude>
+                </excludes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>dashscope-version.properties</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.sonatype.central</groupId>
@@ -166,10 +195,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                </configuration>
+                <version>3.13.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -195,12 +221,34 @@
                     </dependency>
                 </dependencies>
                 <configuration>
+                    <!-- junit-pioneer env/sysprop mutation needs the java.base opens on JDK 16+;
+                         a JDK 8 JVM rejects them, so they live in the jdk9-plus profile property. -->
+                    <argLine>${surefireArgLine}</argLine>
                     <properties>
                         <configurationParameters>
                             junit.jupiter.execution.parallel.enabled=false
                         </configurationParameters>
                     </properties>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.4.0</version>
+                <executions>
+                    <execution>
+                        <id>add-legacy-2x-test-sources</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/test/legacy_2x</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -255,4 +303,101 @@
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <!-- JDK 9+ toolchain: release 8 cross-checks the Java 8 API surface when building on a
+             modern JDK, and junit-pioneer's reflective mutation needs the java.base opens on
+             JDK 16+. Both are impossible on JDK 8 (no release flag, unrecognized add-opens
+             options), so the pom defaults to plain source/target 8 with an empty test argLine. -->
+        <profile>
+            <id>jdk9-plus</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.release>8</maven.compiler.release>
+                <surefireArgLine>--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED</surefireArgLine>
+            </properties>
+        </profile>
+        <!-- M1 静默错误清零门禁：ErrorProne 只扫 3.0 新包（2.x 冻结代码豁免），
+             空 catch / 打印堆栈继续 直接编不过。需 JDK 21 工具链，且 jdk.compiler 的
+             exports/opens 已随 .mvn/jvm.config 移除、须经 MAVEN_OPTS 传入：
+             mvn -Perrorprone compile -->
+        <profile>
+            <id>errorprone</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>3.13.0</version>
+                        <configuration>
+                            <release>8</release>
+                            <!-- ErrorProne runs in the Maven JVM and needs the jdk.compiler
+                                 exports/opens via MAVEN_OPTS (formerly .mvn/jvm.config, removed
+                                 so the JDK 8 toolchain can start Maven; forked javac would
+                                 swallow EP's JVM). -->
+                            <compilerArgs>
+                                <arg>-XDcompilePolicy=simple</arg>
+                                <arg>--should-stop=ifError=FLOW</arg>
+                                <!-- javac only honors -Xep flags inside the -Xplugin arg string. -->
+                                <!-- Frozen 2.x and shared AgentStudio packages are excluded wholesale. -->
+                                <arg>-Xplugin:ErrorProne -Xep:EmptyCatch:ERROR -Xep:CatchAndPrintStackTrace:ERROR -Xep:DeadException:ERROR -XepExcludedPaths:.*/com/alibaba/dashscope/(legacy_2x|applications/agentstudio)/.*</arg>
+                            </compilerArgs>
+                            <annotationProcessorPaths>
+                                <path>
+                                    <groupId>com.google.errorprone</groupId>
+                                    <artifactId>error_prone_core</artifactId>
+                                    <version>2.36.0</version>
+                                </path>
+                                <!-- Declaring annotationProcessorPaths replaces the whole processor
+                                     path: lombok must be re-added or its generated symbols vanish. -->
+                                <path>
+                                    <groupId>org.projectlombok</groupId>
+                                    <artifactId>lombok</artifactId>
+                                    <version>1.18.42</version>
+                                </path>
+                            </annotationProcessorPaths>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!-- japicmp API 面基线：对比 2.23.3，记录 3.0 的有意包迁移和 API 差异。
+             旧 2.x FQCN 不再作为二进制兼容门禁。运行：mvn -Pjapicmp verify -->
+        <profile>
+            <id>japicmp</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.siom79.japicmp</groupId>
+                        <artifactId>japicmp-maven-plugin</artifactId>
+                        <version>0.23.0</version>
+                        <executions>
+                            <execution>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>cmp</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <oldVersion>
+                                <dependency>
+                                    <groupId>com.alibaba</groupId>
+                                    <artifactId>dashscope-sdk-java</artifactId>
+                                    <version>2.23.3</version>
+                                </dependency>
+                            </oldVersion>
+                            <parameter>
+                                <onlyModified>false</onlyModified>
+                                <breakBuildOnModifications>false</breakBuildOnModifications>
+                                <!-- 3.0 intentionally moves legacy FQCNs; retain the comparison as a report. -->
+                                <breakBuildOnBinaryIncompatibleModifications>false</breakBuildOnBinaryIncompatibleModifications>
+                            </parameter>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

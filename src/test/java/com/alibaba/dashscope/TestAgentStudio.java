@@ -9,49 +9,50 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.alibaba.dashscope.agentstudio.AgentStudioClient;
-import com.alibaba.dashscope.agentstudio.message.ClientEvents;
-import com.alibaba.dashscope.agentstudio.message.ContentBlock;
-import com.alibaba.dashscope.agentstudio.message.Message;
-import com.alibaba.dashscope.agentstudio.model.Agent;
-import com.alibaba.dashscope.agentstudio.model.AgentStudioDeletionStatus;
-import com.alibaba.dashscope.agentstudio.model.AgentStudioFile;
-import com.alibaba.dashscope.agentstudio.model.AgentVersion;
-import com.alibaba.dashscope.agentstudio.model.Configs;
-import com.alibaba.dashscope.agentstudio.model.Credential;
-import com.alibaba.dashscope.agentstudio.model.Environment;
-import com.alibaba.dashscope.agentstudio.model.Session;
-import com.alibaba.dashscope.agentstudio.model.Skill;
-import com.alibaba.dashscope.agentstudio.model.SkillVersion;
-import com.alibaba.dashscope.agentstudio.model.Vault;
-import com.alibaba.dashscope.agentstudio.pagination.CursorPage;
-import com.alibaba.dashscope.agentstudio.param.AgentCreateParam;
-import com.alibaba.dashscope.agentstudio.param.AgentListParam;
-import com.alibaba.dashscope.agentstudio.param.AgentUpdateParam;
-import com.alibaba.dashscope.agentstudio.param.CredentialCreateParam;
-import com.alibaba.dashscope.agentstudio.param.CredentialListParam;
-import com.alibaba.dashscope.agentstudio.param.CredentialUpdateParam;
-import com.alibaba.dashscope.agentstudio.param.EnvironmentCreateParam;
-import com.alibaba.dashscope.agentstudio.param.EnvironmentListParam;
-import com.alibaba.dashscope.agentstudio.param.FileListParam;
-import com.alibaba.dashscope.agentstudio.param.SessionAgent;
-import com.alibaba.dashscope.agentstudio.param.SessionCreateParam;
-import com.alibaba.dashscope.agentstudio.param.SessionEventListParam;
-import com.alibaba.dashscope.agentstudio.param.SessionListParam;
-import com.alibaba.dashscope.agentstudio.param.SessionUpdateParam;
-import com.alibaba.dashscope.agentstudio.param.SkillCreateParam;
-import com.alibaba.dashscope.agentstudio.param.SkillListParam;
-import com.alibaba.dashscope.agentstudio.param.VaultCreateParam;
-import com.alibaba.dashscope.agentstudio.param.VaultListParam;
-import com.alibaba.dashscope.agentstudio.param.VaultUpdateParam;
-import com.alibaba.dashscope.agentstudio.resource.Agents;
-import com.alibaba.dashscope.agentstudio.resource.Environments;
-import com.alibaba.dashscope.agentstudio.resource.Sessions;
-import com.alibaba.dashscope.agentstudio.resource.Skills;
-import com.alibaba.dashscope.agentstudio.resource.Vaults;
-import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.utils.Constants;
-import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.applications.agentstudio.AgentStudioClient;
+import com.alibaba.dashscope.applications.agentstudio.message.ClientEvents;
+import com.alibaba.dashscope.applications.agentstudio.message.ContentBlock;
+import com.alibaba.dashscope.applications.agentstudio.message.Message;
+import com.alibaba.dashscope.applications.agentstudio.model.Agent;
+import com.alibaba.dashscope.applications.agentstudio.model.AgentStudioDeletionStatus;
+import com.alibaba.dashscope.applications.agentstudio.model.AgentStudioFile;
+import com.alibaba.dashscope.applications.agentstudio.model.AgentVersion;
+import com.alibaba.dashscope.applications.agentstudio.model.Configs;
+import com.alibaba.dashscope.applications.agentstudio.model.Credential;
+import com.alibaba.dashscope.applications.agentstudio.model.Environment;
+import com.alibaba.dashscope.applications.agentstudio.model.Session;
+import com.alibaba.dashscope.applications.agentstudio.model.Skill;
+import com.alibaba.dashscope.applications.agentstudio.model.SkillVersion;
+import com.alibaba.dashscope.applications.agentstudio.model.Vault;
+import com.alibaba.dashscope.applications.agentstudio.pagination.CursorPage;
+import com.alibaba.dashscope.applications.agentstudio.param.AgentCreateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.AgentListParam;
+import com.alibaba.dashscope.applications.agentstudio.param.AgentUpdateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.CredentialCreateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.CredentialListParam;
+import com.alibaba.dashscope.applications.agentstudio.param.CredentialUpdateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.EnvironmentCreateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.EnvironmentListParam;
+import com.alibaba.dashscope.applications.agentstudio.param.FileListParam;
+import com.alibaba.dashscope.applications.agentstudio.param.SessionAgent;
+import com.alibaba.dashscope.applications.agentstudio.param.SessionCreateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.SessionEventListParam;
+import com.alibaba.dashscope.applications.agentstudio.param.SessionListParam;
+import com.alibaba.dashscope.applications.agentstudio.param.SessionUpdateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.SkillCreateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.SkillListParam;
+import com.alibaba.dashscope.applications.agentstudio.param.VaultCreateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.VaultListParam;
+import com.alibaba.dashscope.applications.agentstudio.param.VaultUpdateParam;
+import com.alibaba.dashscope.applications.agentstudio.resource.AgentStudioJson;
+import com.alibaba.dashscope.applications.agentstudio.resource.Agents;
+import com.alibaba.dashscope.applications.agentstudio.resource.Environments;
+import com.alibaba.dashscope.applications.agentstudio.resource.Sessions;
+import com.alibaba.dashscope.applications.agentstudio.resource.Skills;
+import com.alibaba.dashscope.applications.agentstudio.resource.Vaults;
+import com.alibaba.dashscope.legacy_2x.TestUtils;
+import com.alibaba.dashscope.legacy_2x.utils.Constants;
+import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.io.ByteArrayInputStream;
@@ -339,9 +340,9 @@ public class TestAgentStudio {
 
   @Test
   public void testAgentCreateRejectsModelWithoutId() {
-    ApiException e =
+    IllegalArgumentException e =
         assertThrows(
-            ApiException.class,
+            IllegalArgumentException.class,
             () ->
                 new Agents(null, null, null)
                     .create(
@@ -354,9 +355,9 @@ public class TestAgentStudio {
 
   @Test
   public void testAgentUpdateRejectsModelWithoutId() {
-    ApiException e =
+    IllegalArgumentException e =
         assertThrows(
-            ApiException.class,
+            IllegalArgumentException.class,
             () ->
                 new Agents(null, null, null)
                     .update(
@@ -374,7 +375,7 @@ public class TestAgentStudio {
         "{\"object\":\"message\",\"type\":\"thread_status\","
             + "\"id\":\"sevt_1\",\"thread_id\":\"sthr_abc\","
             + "\"metadata\":{\"to_agent_name\":\"worker\"}}";
-    Message ev = JsonUtils.fromJson(json, Message.class);
+    Message ev = AgentStudioJson.GSON.fromJson(json, Message.class);
     assertEquals("sthr_abc", ev.getThreadId());
     assertEquals("thread_status", ev.getType());
     assertEquals("worker", ev.getMetadata().get("to_agent_name"));
@@ -407,7 +408,7 @@ public class TestAgentStudio {
   @Test
   public void testAgentUpdateRequiresVersion() {
     assertThrows(
-        ApiException.class,
+        IllegalArgumentException.class,
         () ->
             new Agents(null, null, null)
                 .update("agent_xyz", AgentUpdateParam.builder().name("no-version").build()));
@@ -416,7 +417,7 @@ public class TestAgentStudio {
   @Test
   public void testAgentUpdateRequiresAgentId() {
     assertThrows(
-        ApiException.class,
+        IllegalArgumentException.class,
         () ->
             new Agents(null, null, null)
                 .update("", AgentUpdateParam.builder().version(1).name("x").build()));
@@ -719,7 +720,8 @@ public class TestAgentStudio {
 
   @Test
   public void testSessionRetrieveRequiresId() {
-    assertThrows(ApiException.class, () -> new Sessions(null, null, null).retrieve(null));
+    assertThrows(
+        IllegalArgumentException.class, () -> new Sessions(null, null, null).retrieve(null));
   }
 
   @Test
@@ -903,7 +905,7 @@ public class TestAgentStudio {
   @Test
   public void testContentBlockText() {
     ContentBlock block =
-        JsonUtils.fromJson(
+        AgentStudioJson.GSON.fromJson(
             "{\"type\":\"text\",\"text\":\"hello world\","
                 + "\"citations\":[{\"url\":\"http://example.com\"}]}",
             ContentBlock.class);
@@ -916,7 +918,7 @@ public class TestAgentStudio {
   @Test
   public void testContentBlockImage() {
     ContentBlock block =
-        JsonUtils.fromJson(
+        AgentStudioJson.GSON.fromJson(
             "{\"type\":\"image\",\"image_url\":\"http://img.png\","
                 + "\"file_id\":\"f1\",\"media_type\":\"image/png\"}",
             ContentBlock.class);
@@ -929,7 +931,7 @@ public class TestAgentStudio {
   @Test
   public void testContentBlockData() {
     ContentBlock block =
-        JsonUtils.fromJson(
+        AgentStudioJson.GSON.fromJson(
             "{\"type\":\"data\",\"data\":{\"key\":\"val\"}," + "\"name\":\"test\"}",
             ContentBlock.class);
     assertTrue(block instanceof ContentBlock.DataContent);
@@ -939,7 +941,7 @@ public class TestAgentStudio {
   @Test
   public void testContentBlockError() {
     ContentBlock block =
-        JsonUtils.fromJson(
+        AgentStudioJson.GSON.fromJson(
             "{\"type\":\"error\",\"error_code\":\"E001\"," + "\"message\":\"something failed\"}",
             ContentBlock.class);
     assertTrue(block instanceof ContentBlock.Error);
@@ -949,7 +951,7 @@ public class TestAgentStudio {
   @Test
   public void testContentBlockRefusal() {
     ContentBlock block =
-        JsonUtils.fromJson(
+        AgentStudioJson.GSON.fromJson(
             "{\"type\":\"refusal\"," + "\"refusal\":\"I cannot do that\"}", ContentBlock.class);
     assertTrue(block instanceof ContentBlock.Refusal);
     assertEquals("I cannot do that", ((ContentBlock.Refusal) block).getRefusal());
@@ -958,7 +960,7 @@ public class TestAgentStudio {
   @Test
   public void testContentBlockUnknownFallsBackToData() {
     ContentBlock block =
-        JsonUtils.fromJson(
+        AgentStudioJson.GSON.fromJson(
             "{\"type\":\"unknown_future_type\",\"data\":{\"x\":1}}", ContentBlock.class);
     assertTrue(block instanceof ContentBlock.DataContent);
   }
@@ -1038,7 +1040,7 @@ public class TestAgentStudio {
 
   @Test
   public void testVaultRetrieveRequiresId() {
-    assertThrows(ApiException.class, () -> new Vaults(null, null, null).retrieve(null));
+    assertThrows(IllegalArgumentException.class, () -> new Vaults(null, null, null).retrieve(null));
   }
 
   // ======================== Credentials ========================
@@ -1133,7 +1135,7 @@ public class TestAgentStudio {
     auth.addProperty("secret_name", "TEST_KEY");
     auth.addProperty("secret_value", "test-val");
     assertThrows(
-        ApiException.class,
+        IllegalArgumentException.class,
         () ->
             new Vaults(null, null, null)
                 .credentials()
@@ -1143,7 +1145,7 @@ public class TestAgentStudio {
   @Test
   public void testCredentialRetrieveRequiresIds() {
     assertThrows(
-        ApiException.class,
+        IllegalArgumentException.class,
         () -> new Vaults(null, null, null).credentials().retrieve("vault_001", null));
   }
 
@@ -1159,8 +1161,8 @@ public class TestAgentStudio {
   @Test
   public void testFileUpload() throws Exception {
     String baseUrl = String.format("http://127.0.0.1:%s/api/v1/agentstudio", mockServer.getPort());
-    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.agentstudio.resource.Files(baseUrl, null, null);
+    com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(baseUrl, null, null);
     try {
       JsonObject rsp = fixtures.get("file_response").getAsJsonObject();
       mockServer.enqueue(TestUtils.createMockResponse(JsonUtils.toJson(rsp), 200));
@@ -1184,8 +1186,8 @@ public class TestAgentStudio {
   @Test
   public void testFileUploadInputStream() throws Exception {
     String baseUrl = String.format("http://127.0.0.1:%s/api/v1/agentstudio", mockServer.getPort());
-    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.agentstudio.resource.Files(baseUrl, null, null);
+    com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(baseUrl, null, null);
     try {
       JsonObject rsp = fixtures.get("file_response").getAsJsonObject();
       mockServer.enqueue(TestUtils.createMockResponse(JsonUtils.toJson(rsp), 200));
@@ -1210,8 +1212,8 @@ public class TestAgentStudio {
   @Test
   public void testFileRetrieve() throws Exception {
     enqueue("file_response");
-    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.agentstudio.resource.Files(null, null, null);
+    com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
     AgentStudioFile file = filesResource.retrieve("file_001");
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("GET", req.getMethod());
@@ -1223,8 +1225,8 @@ public class TestAgentStudio {
   @Test
   public void testFileList() throws Exception {
     enqueue("file_list_response");
-    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.agentstudio.resource.Files(null, null, null);
+    com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
     CursorPage<AgentStudioFile> page =
         filesResource.list(FileListParam.builder().limit(20).build());
     RecordedRequest req = mockServer.takeRequest();
@@ -1238,13 +1240,13 @@ public class TestAgentStudio {
   @Test
   public void testFileDownload() throws Exception {
     String baseUrl = String.format("http://127.0.0.1:%s/api/v1/agentstudio", mockServer.getPort());
-    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.agentstudio.resource.Files(baseUrl, null, null);
+    com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(baseUrl, null, null);
     try {
       byte[] expected = "file content".getBytes(StandardCharsets.UTF_8);
       mockServer.enqueue(
           new MockResponse().setResponseCode(200).setBody(new Buffer().write(expected)));
-      com.alibaba.dashscope.agentstudio.resource.FileContent content =
+      com.alibaba.dashscope.applications.agentstudio.resource.FileContent content =
           filesResource.download("file_001");
       RecordedRequest req = mockServer.takeRequest();
       assertEquals("GET", req.getMethod());
@@ -1265,8 +1267,8 @@ public class TestAgentStudio {
   @Test
   public void testFileDelete() throws Exception {
     enqueue("delete_response");
-    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.agentstudio.resource.Files(null, null, null);
+    com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
     AgentStudioDeletionStatus status = filesResource.delete("file_001");
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("DELETE", req.getMethod());
@@ -1276,31 +1278,32 @@ public class TestAgentStudio {
 
   @Test
   public void testFileUploadNullFilePath() {
-    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.agentstudio.resource.Files(null, null, null);
-    assertThrows(ApiException.class, () -> filesResource.upload(null, null));
+    com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
+    assertThrows(IllegalArgumentException.class, () -> filesResource.upload(null, null));
   }
 
   @Test
   public void testFileUploadNullInputStream() {
-    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.agentstudio.resource.Files(null, null, null);
+    com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
     assertThrows(
-        ApiException.class, () -> filesResource.upload("test.txt", (InputStream) null, null));
+        IllegalArgumentException.class,
+        () -> filesResource.upload("test.txt", (InputStream) null, null));
   }
 
   @Test
   public void testFileRetrieveRequiresId() {
-    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.agentstudio.resource.Files(null, null, null);
-    assertThrows(ApiException.class, () -> filesResource.retrieve(null));
+    com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
+    assertThrows(IllegalArgumentException.class, () -> filesResource.retrieve(null));
   }
 
   @Test
   public void testFileDeleteRequiresId() {
-    com.alibaba.dashscope.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.agentstudio.resource.Files(null, null, null);
-    assertThrows(ApiException.class, () -> filesResource.delete(null));
+    com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
+    assertThrows(IllegalArgumentException.class, () -> filesResource.delete(null));
   }
 
   // ======================== AgentStudioClient ========================
@@ -1350,7 +1353,7 @@ public class TestAgentStudio {
   @Test
   public void testSessionEventSendRequiresSessionId() {
     assertThrows(
-        ApiException.class,
+        IllegalArgumentException.class,
         () ->
             new Sessions(null, null, null)
                 .events()
