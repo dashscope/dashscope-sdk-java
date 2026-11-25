@@ -1,8 +1,11 @@
 package com.alibaba.dashscope.legacy_2x;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.alibaba.dashscope.legacy_2x.aigc.imagesynthesis.ImageSynthesis;
+import com.alibaba.dashscope.legacy_2x.aigc.imagesynthesis.ImageSynthesisOutput;
 import com.alibaba.dashscope.legacy_2x.aigc.imagesynthesis.ImageSynthesisParam;
 import com.alibaba.dashscope.legacy_2x.aigc.imagesynthesis.ImageSynthesisResult;
 import com.alibaba.dashscope.legacy_2x.exception.ApiException;
@@ -10,6 +13,7 @@ import com.alibaba.dashscope.legacy_2x.exception.InputRequiredException;
 import com.alibaba.dashscope.legacy_2x.exception.NoApiKeyException;
 import com.alibaba.dashscope.legacy_2x.utils.Constants;
 import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
+import com.google.gson.JsonParseException;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.MediaType;
@@ -216,5 +220,75 @@ public class TestImageSynthesis {
     // Verify that prompt_extend and watermark are serialized correctly
     assertEquals(true, requestBody.contains("\"prompt_extend\":true"));
     assertEquals(true, requestBody.contains("\"watermark\":false"));
+  }
+
+  @Test
+  public void testFetchSucceededWithNonStringResultFields()
+      throws ApiException, NoApiKeyException, IOException, InterruptedException {
+    // Newer repaint models attach non-string members (object/array/number) to results entries;
+    // fetch() must still surface task_status and the image url instead of throwing
+    // JsonSyntaxException: Expected STRING but was BEGIN_OBJECT at path $.results[0].
+    String responseBody =
+        "{\"request_id\":\"43\",\"output\":{\"task_id\":\"e8\",\"task_status\":\"SUCCEEDED\",\"results\":[{\"url\":\"https://repaint1\",\"extra\":{\"mode\":\"fast\"},\"boxes\":[1,2],\"index\":0}],\"task_metrics\":{\"TOTAL\":1,\"SUCCEEDED\":1,\"FAILED\":0}},\"usage\":{\"image_count\":1}}";
+    server.enqueue(
+        new MockResponse()
+            .setBody(responseBody)
+            .setHeader("content-type", MEDIA_TYPE_APPLICATION_JSON));
+    int port = server.getPort();
+    Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s", port);
+    ImageSynthesis is = new ImageSynthesis();
+    ImageSynthesisResult result = is.fetch("e8", "1234");
+    assertEquals("SUCCEEDED", result.getOutput().getTaskStatus());
+    assertEquals("https://repaint1", result.getOutput().getResults().get(0).get("url"));
+    assertEquals("{\"mode\":\"fast\"}", result.getOutput().getResults().get(0).get("extra"));
+    assertEquals("[1,2]", result.getOutput().getResults().get(0).get("boxes"));
+    assertEquals("0", result.getOutput().getResults().get(0).get("index"));
+    RecordedRequest request = server.takeRequest();
+    assertEquals("GET", request.getMethod());
+    assertEquals("/tasks/e8", request.getPath());
+  }
+
+  @Test
+  public void testResultsCodecEdgeShapes() {
+    // Non-string members round-trip as quoted JSON text; null members and null entries behave
+    // like the stock map adapter (kept on read, null members dropped on write).
+    ImageSynthesisOutput output =
+        JsonUtils.fromJsonObject(
+            JsonUtils.parseString(
+                "{\"task_status\":\"SUCCEEDED\",\"results\":[{\"url\":\"https://x\",\"extra\":{\"mode\":\"fast\"},\"note\":null},null]}"),
+            ImageSynthesisOutput.class);
+    assertEquals("{\"mode\":\"fast\"}", output.getResults().get(0).get("extra"));
+    assertNull(output.getResults().get(0).get("note"));
+    assertNull(output.getResults().get(1));
+    String json = JsonUtils.toJson(output);
+    assertEquals(true, json.contains("\"extra\":\"{\\\"mode\\\":\\\"fast\\\"}\""));
+    assertEquals(false, json.contains("note"));
+    assertEquals(true, json.contains(",null]"));
+    // Empty, null and absent results stay null-safe (PENDING tasks carry no results).
+    assertEquals(
+        0,
+        JsonUtils.fromJsonObject(
+                JsonUtils.parseString("{\"results\":[]}"), ImageSynthesisOutput.class)
+            .getResults()
+            .size());
+    assertNull(
+        JsonUtils.fromJsonObject(
+                JsonUtils.parseString("{\"results\":null}"), ImageSynthesisOutput.class)
+            .getResults());
+    assertNull(
+        JsonUtils.fromJsonObject(
+                JsonUtils.parseString("{\"task_status\":\"PENDING\"}"), ImageSynthesisOutput.class)
+            .getResults());
+    // Contract-violating shapes fail with Gson's JsonParseException family.
+    assertThrows(
+        JsonParseException.class,
+        () ->
+            JsonUtils.fromJsonObject(
+                JsonUtils.parseString("{\"results\":{}}"), ImageSynthesisOutput.class));
+    assertThrows(
+        JsonParseException.class,
+        () ->
+            JsonUtils.fromJsonObject(
+                JsonUtils.parseString("{\"results\":[\"str\"]}"), ImageSynthesisOutput.class));
   }
 }
