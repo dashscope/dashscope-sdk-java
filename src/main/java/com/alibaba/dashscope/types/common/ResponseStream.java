@@ -14,7 +14,8 @@ import java.util.function.Function;
  * Typed streaming response (design §3): blocking pull iterator over SSE frames mapped to {@code T}.
  * Single-use, {@link AutoCloseable} — always close (try-with-resources) so the underlying
  * connection is released. In-stream error frames throw the mapped exception, or — with {@code
- * raiseOnError(false)} — surface as a final error-carrying item.
+ * raiseOnError(false)} — surface as a final error-carrying item: iteration stops at the error frame
+ * and any frames the server sends after it are dropped.
  */
 public final class ResponseStream<T> implements Iterable<T>, AutoCloseable {
   private final SseStream stream;
@@ -55,14 +56,25 @@ public final class ResponseStream<T> implements Iterable<T>, AutoCloseable {
           break;
         }
         JsonNode frame = frames.next();
-        if (raiseOnError && JsonSupport.isErrorFrame(frame)) {
+        if (JsonSupport.isErrorFrame(frame)) {
           Map<String, String> headers = headersOfStream();
-          throw Errors.fromBusinessCode(
-              JsonSupport.errorCode(frame),
-              JsonSupport.errorMessage(frame),
-              JsonSupport.requestId(frame, headers),
-              JsonSupport.toPlainValue(frame),
-              headers);
+          T errorItem = raiseOnError ? null : mapper.apply(frame);
+          if (errorItem == null) {
+            // raiseOnError(true), or a mapper that cannot represent the error as an item
+            // (e.g. raw TTS audio chunks): throwing is the only way to surface it — never
+            // drop the error silently.
+            throw Errors.fromBusinessCode(
+                JsonSupport.errorCode(frame),
+                JsonSupport.errorMessage(frame),
+                JsonSupport.requestId(frame, headers),
+                JsonSupport.toPlainValue(frame),
+                headers);
+          }
+          // raiseOnError(false): the error-carrying item is terminal — frames the server
+          // sends after the error must not be delivered.
+          next = errorItem;
+          done = true;
+          break;
         }
         // A null mapping means the frame carries no item for this resource (e.g. a TTS
         // usage-only SSE frame); skip it.

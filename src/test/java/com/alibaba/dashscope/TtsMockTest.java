@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.errors.ApiTimeoutException;
+import com.alibaba.dashscope.errors.RateLimitException;
 import com.alibaba.dashscope.errors.SdkException;
 import com.alibaba.dashscope.resources.audio.SynthesisSession;
 import com.alibaba.dashscope.types.audio.TtsConnectParams;
@@ -215,6 +216,47 @@ class TtsMockTest {
     assertEquals(2, chunks.get(0).length);
     RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
     assertEquals("/services/aigc/multimodal-generation/generation", request.getPath());
+  }
+
+  @Test
+  void streamErrorFrameRaisesWhenItemCannotCarryError() throws Exception {
+    byte[] a1 = {1, 2};
+    byte[] a2 = {3, 4};
+    try (DashScopeClient lax =
+        DashScopeClient.builder()
+            .apiKey("test-key")
+            .baseUrl(server.url("/").toString())
+            .maxRetries(0)
+            .raiseOnError(false)
+            .build()) {
+      server.enqueue(
+          sse(
+              "data: {\"output\":{\"audio\":\""
+                  + Base64.getEncoder().encodeToString(a1)
+                  + "\"}}\n\n"
+                  + "data: {\"code\":\"Throttling\",\"message\":\"throttled\"}\n\n"
+                  + "data: {\"output\":{\"audio\":\""
+                  + Base64.getEncoder().encodeToString(a2)
+                  + "\"}}\n\n"));
+      List<byte[]> chunks = new ArrayList<>();
+      try (ResponseStream<byte[]> stream =
+          lax.audio().tts().stream(
+              TtsSynthesizeParams.builder().model("qwen3-tts-flash").text("hi").build())) {
+        // byte[] items cannot carry an error envelope: even under raiseOnError(false) the
+        // error must throw (never silently dropped) and stop the stream before later audio.
+        RateLimitException e =
+            assertThrows(
+                RateLimitException.class,
+                () -> {
+                  for (byte[] chunk : stream) {
+                    chunks.add(chunk);
+                  }
+                });
+        assertEquals("Throttling", e.getCode());
+        assertEquals(1, chunks.size());
+        assertEquals(2, chunks.get(0).length);
+      }
+    }
   }
 
   @Test

@@ -462,6 +462,88 @@ class ChatCompletionsMockTest {
   }
 
   @Test
+  void streamingErrorFrameIsTerminalWhenNotRaising() throws Exception {
+    try (DashScopeClient lax =
+        DashScopeClient.builder()
+            .apiKey("test-key")
+            .baseUrl(server.url("/").toString())
+            .maxRetries(0)
+            .raiseOnError(false)
+            .build()) {
+      // The server keeps sending content after the mid-stream error frame; the error item
+      // must be the last one delivered.
+      server.enqueue(
+          new MockResponse()
+              .setResponseCode(200)
+              .setHeader("Content-Type", "text/event-stream")
+              .setBody(
+                  "data: {\"output\":{\"choices\":[{\"message\":{\"content\":\"你\"}}]},"
+                      + "\"request_id\":\"s3\"}\n\n"
+                      + "data: {\"code\":\"Throttling\",\"message\":\"throttled\","
+                      + "\"request_id\":\"s3\"}\n\n"
+                      + "data: {\"output\":{\"choices\":[{\"message\":{\"content\":\"好\"}}]},"
+                      + "\"request_id\":\"s3\"}\n\n"));
+      List<ChatCompletionChunk> chunks = new ArrayList<>();
+      try (ResponseStream<ChatCompletionChunk> stream =
+          lax.chat().completions().createStreaming(params())) {
+        for (ChatCompletionChunk chunk : stream) {
+          chunks.add(chunk);
+        }
+      }
+      assertEquals(2, chunks.size());
+      assertEquals("你", chunks.get(0).delta().getContent());
+      assertFalse(chunks.get(0).isError());
+      assertTrue(chunks.get(1).isError());
+      assertEquals("Throttling", chunks.get(1).getCode());
+      assertEquals("throttled", chunks.get(1).getMessage());
+    }
+  }
+
+  @Test
+  void asyncStreamingErrorFrameIsTerminalWhenNotRaising() throws Exception {
+    try (DashScopeAsyncClient laxAsync =
+        DashScopeAsyncClient.builder()
+            .apiKey("test-key")
+            .baseUrl(server.url("/").toString())
+            .maxRetries(0)
+            .raiseOnError(false)
+            .build()) {
+      server.enqueue(
+          new MockResponse()
+              .setResponseCode(200)
+              .setHeader("Content-Type", "text/event-stream")
+              .setBody(
+                  "data: {\"output\":{\"choices\":[{\"message\":{\"content\":\"你\"}}]},"
+                      + "\"request_id\":\"a3\"}\n\n"
+                      + "data: {\"code\":\"Throttling\",\"message\":\"throttled\","
+                      + "\"request_id\":\"a3\"}\n\n"
+                      + "data: {\"output\":{\"choices\":[{\"message\":{\"content\":\"好\"}}]},"
+                      + "\"request_id\":\"a3\"}\n\n"));
+      List<ChatCompletionChunk> items = new ArrayList<>();
+      CountDownLatch done = new CountDownLatch(1);
+      AtomicReference<Throwable> error = new AtomicReference<>();
+      laxAsync
+          .chat()
+          .completions()
+          .createStreaming(params())
+          .subscribe(
+              items::add,
+              t -> {
+                error.set(t);
+                done.countDown();
+              },
+              done::countDown);
+      assertTrue(done.await(10, TimeUnit.SECONDS));
+      // Compat mode completes normally after the error item; no trailing content, no onError.
+      assertNull(error.get());
+      assertEquals(2, items.size());
+      assertEquals("你", items.get(0).delta().getContent());
+      assertTrue(items.get(1).isError());
+      assertEquals("Throttling", items.get(1).getCode());
+    }
+  }
+
+  @Test
   void streamingInitialHttpFailureAlwaysThrows() {
     server.enqueue(
         new MockResponse()
