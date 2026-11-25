@@ -146,21 +146,26 @@ public final class JobsService {
   /** List jobs; query keys follow the wire names (page_no/page_size/model_name/status/...). */
   public Page<Job> list(Map<String, String> query, RequestOptions options) {
     ResponseEnvelope envelope = transport.executeGet(TASKS_PATH, query, module, options);
-    JsonNode output = envelope.getBody() == null ? null : envelope.getBody().get("output");
+    JsonNode body = envelope.getBody();
+    JsonNode output = body == null ? null : body.get("output");
+    // GET /tasks pages at the top level ({request_id, data, total, page_no, page_size}); fall
+    // back to the body when no output wrapper is present (2.x DashScopeResult.handleDataField),
+    // while still accepting an output-wrapped page.
+    JsonNode source = output != null ? output : body;
     List<Job> items = new ArrayList<>();
     int totalCount = 0;
     int pageNo = 0;
     int pageSize = 0;
-    if (output != null) {
-      JsonNode data = output.get("data");
+    if (source != null) {
+      JsonNode data = source.get("data");
       if (data != null && data.isArray()) {
         for (JsonNode item : data) {
           items.add(Job.fromOutputNode(item));
         }
       }
-      totalCount = intOrZero(output.get("total"));
-      pageNo = intOrZero(output.get("page_no"));
-      pageSize = intOrZero(output.get("page_size"));
+      totalCount = intOrZero(source.get("total"));
+      pageNo = intOrZero(source.get("page_no"));
+      pageSize = intOrZero(source.get("page_size"));
     }
     Page<Job> page = new Page<>(items, totalCount, pageNo, pageSize);
     page.fillEnvelope(

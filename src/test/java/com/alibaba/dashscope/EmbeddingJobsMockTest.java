@@ -7,11 +7,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.resources.jobs.Job;
+import com.alibaba.dashscope.types.common.Page;
 import com.alibaba.dashscope.types.embeddings.BatchEmbeddingCreateParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -153,6 +156,62 @@ class EmbeddingJobsMockTest {
     RecordedRequest second = server.takeRequest(5, TimeUnit.SECONDS);
     assertEquals("/tasks/task-emb-3", first.getPath());
     assertEquals("/tasks/task-emb-3", second.getPath());
+  }
+
+  @Test
+  void listReturnsServerPage() throws Exception {
+    // GET /tasks pages at the top level (no output wrapper); items/total/page_no must survive.
+    server.enqueue(
+        okJson(
+            "{\"request_id\":\"r-list\",\"data\":["
+                + "{\"task_id\":\"task-emb-5\",\"task_status\":\"SUCCEEDED\"},"
+                + "{\"task_id\":\"task-emb-6\",\"task_status\":\"RUNNING\"}],"
+                + "\"total\":6,\"total_page\":3,\"page_no\":2,\"page_size\":2}"));
+
+    Map<String, String> query = new HashMap<>();
+    query.put("page_no", "2");
+    query.put("page_size", "2");
+    Page<Job> page = client.embeddings().jobs().list(query, RequestOptions.NONE);
+
+    assertEquals(2, page.getItems().size());
+    assertEquals(6, page.getTotalCount());
+    assertEquals(2, page.getPageNo());
+    assertEquals(2, page.getPageSize());
+    assertEquals("task-emb-5", page.getItems().get(0).getTaskId());
+    assertTrue(page.getItems().get(0).isSucceeded());
+    assertEquals("r-list", page.getRequestId());
+    RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
+    assertEquals("GET", request.getMethod());
+    assertTrue(request.getPath().startsWith("/tasks?"));
+    assertTrue(request.getPath().contains("page_no=2"));
+  }
+
+  @Test
+  void asyncListReturnsServerPage() throws Exception {
+    server.enqueue(
+        okJson(
+            "{\"request_id\":\"r-list-a\",\"data\":["
+                + "{\"task_id\":\"task-emb-7\",\"task_status\":\"PENDING\"}],"
+                + "\"total\":1,\"page_no\":1,\"page_size\":10}"));
+    try (DashScopeAsyncClient async =
+        DashScopeAsyncClient.builder()
+            .apiKey("test-key")
+            .baseUrl(server.url("/").toString())
+            .maxRetries(0)
+            .build()) {
+      Page<Job> page =
+          async
+              .embeddings()
+              .jobs()
+              .list(Collections.emptyMap(), RequestOptions.NONE)
+              .get(10, TimeUnit.SECONDS);
+      assertEquals(1, page.getItems().size());
+      assertEquals(1, page.getTotalCount());
+      assertEquals(1, page.getPageNo());
+      assertEquals(10, page.getPageSize());
+      assertEquals("task-emb-7", page.getItems().get(0).getTaskId());
+      assertEquals("r-list-a", page.getRequestId());
+    }
   }
 
   @Test

@@ -176,6 +176,31 @@ class JobsMockTest {
   }
 
   @Test
+  void listParsesTopLevelDataPage() throws Exception {
+    // Real GET /tasks wire shape: the page sits at the top level, without an output wrapper
+    // (2.x AsyncTaskListResult / DashScopeResult.handleDataField parity).
+    server.enqueue(
+        new MockResponse()
+            .setHeader("Content-Type", "application/json")
+            .setBody(
+                "{\"request_id\":\"req-top\",\"data\":["
+                    + "{\"task_id\":\"t-1\",\"task_status\":\"SUCCEEDED\"},"
+                    + "{\"task_id\":\"t-2\",\"task_status\":\"RUNNING\"}],"
+                    + "\"total\":7,\"total_page\":4,\"page_no\":2,\"page_size\":2}"));
+    Map<String, String> query = new HashMap<>();
+    query.put("page_no", "2");
+    query.put("page_size", "2");
+    Page<Job> page = jobs.list(query, null);
+    assertEquals(2, page.getItems().size());
+    assertEquals(7, page.getTotalCount());
+    assertEquals(2, page.getPageNo());
+    assertEquals(2, page.getPageSize());
+    assertEquals("t-1", page.getItems().get(0).getTaskId());
+    assertTrue(page.getItems().get(0).isSucceeded());
+    assertEquals("req-top", page.getRequestId());
+  }
+
+  @Test
   void jobIdAliasIsHonored() throws Exception {
     server.enqueue(
         new MockResponse()
