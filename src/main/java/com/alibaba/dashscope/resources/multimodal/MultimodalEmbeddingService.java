@@ -72,8 +72,17 @@ public final class MultimodalEmbeddingService {
     ObjectNode flat = mapper.createObjectNode();
     if (body != null && body.isObject()) {
       JsonNode output = body.get("output");
-      if (output != null && output.isObject() && output.hasNonNull("embeddings")) {
-        flat.set("embeddings", output.get("embeddings"));
+      if (output != null && output.isObject()) {
+        if (output.hasNonNull("embeddings")) {
+          flat.set("embeddings", output.get("embeddings"));
+        } else if (output.hasNonNull("embedding") && output.get("embedding").isArray()) {
+          // multimodal-embedding-one-peace-v1 returns one flat vector under the singular
+          // "embedding"; normalize it into the plural list shape.
+          ObjectNode item = mapper.createObjectNode();
+          item.put("index", 0);
+          item.set("embedding", output.get("embedding"));
+          flat.set("embeddings", mapper.createArrayNode().add(item));
+        }
       }
       if (body.hasNonNull("usage")) {
         flat.set("usage", body.get("usage"));

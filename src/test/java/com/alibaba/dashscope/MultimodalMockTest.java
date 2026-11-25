@@ -518,4 +518,42 @@ class MultimodalMockTest {
     assertEquals("multimodal-embedding-v1", body.get("model").asText());
     assertEquals("你好", body.get("input").get("contents").get(0).get("text").asText());
   }
+
+  @Test
+  void embeddingsCreateAcceptsOnePeaceSingularEmbedding() throws Exception {
+    String onePeaceJson =
+        "{\"output\":{\"embedding\":[0.1,0.2,0.3]},"
+            + "\"usage\":{\"total_usage\":3},\"request_id\":\"op-1\"}";
+    MultimodalEmbeddingCreateParams params =
+        MultimodalEmbeddingCreateParams.builder()
+            .model("multimodal-embedding-one-peace-v1")
+            .contents(Arrays.asList(ContentPart.text("你好")))
+            .build();
+
+    server.enqueue(okJson(onePeaceJson));
+    MultimodalEmbeddingResponse response = client.multimodal().embeddings().create(params);
+
+    assertEquals("op-1", response.getRequestId());
+    assertNotNull(response.getEmbeddings());
+    assertEquals(1, response.getEmbeddings().size());
+    assertEquals(0, response.getEmbeddings().get(0).getIndex());
+    assertEquals(Arrays.asList(0.1, 0.2, 0.3), response.getEmbeddings().get(0).getEmbedding());
+    assertEquals(3, response.getUsage().getExtra().get("total_usage"));
+
+    // Async delegates to the same parse path; lock it too.
+    server.enqueue(okJson(onePeaceJson));
+    try (DashScopeAsyncClient async =
+        DashScopeAsyncClient.builder()
+            .apiKey("test-key")
+            .baseUrl(server.url("/").toString())
+            .maxRetries(0)
+            .build()) {
+      MultimodalEmbeddingResponse asyncResponse =
+          async.multimodal().embeddings().create(params).get(5, TimeUnit.SECONDS);
+      assertNotNull(asyncResponse.getEmbeddings());
+      assertEquals(1, asyncResponse.getEmbeddings().size());
+      assertEquals(
+          Arrays.asList(0.1, 0.2, 0.3), asyncResponse.getEmbeddings().get(0).getEmbedding());
+    }
+  }
 }
