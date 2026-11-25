@@ -215,6 +215,59 @@ class EmbeddingJobsMockTest {
   }
 
   @Test
+  void listReadsStatusAliasForSyncAndAsync() throws Exception {
+    // Real GET /tasks items name the status field "status" (2.x AsyncTaskInfo wire shape),
+    // not "task_status"; both clients must still surface SUCCEEDED.
+    String pageJson =
+        "{\"request_id\":\"r-status\",\"data\":["
+            + "{\"task_id\":\"task-emb-8\",\"status\":\"SUCCEEDED\"}],"
+            + "\"total\":1,\"page_no\":1,\"page_size\":10}";
+    server.enqueue(okJson(pageJson));
+
+    Page<Job> syncPage =
+        client.embeddings().jobs().list(Collections.emptyMap(), RequestOptions.NONE);
+    assertEquals("task-emb-8", syncPage.getItems().get(0).getTaskId());
+    assertEquals(Job.SUCCEEDED, syncPage.getItems().get(0).getTaskStatus());
+    assertTrue(syncPage.getItems().get(0).isSucceeded());
+
+    server.enqueue(okJson(pageJson));
+    try (DashScopeAsyncClient async =
+        DashScopeAsyncClient.builder()
+            .apiKey("test-key")
+            .baseUrl(server.url("/").toString())
+            .maxRetries(0)
+            .build()) {
+      Page<Job> asyncPage =
+          async
+              .embeddings()
+              .jobs()
+              .list(Collections.emptyMap(), RequestOptions.NONE)
+              .get(10, TimeUnit.SECONDS);
+      assertEquals("task-emb-8", asyncPage.getItems().get(0).getTaskId());
+      assertEquals(Job.SUCCEEDED, asyncPage.getItems().get(0).getTaskStatus());
+      assertTrue(asyncPage.getItems().get(0).isSucceeded());
+    }
+  }
+
+  @Test
+  void listPrefersTaskStatusWhenBothPresent() throws Exception {
+    // task_status wins over the status alias; a FAILED-only alias entry stays terminal.
+    server.enqueue(
+        okJson(
+            "{\"request_id\":\"r-both\",\"data\":["
+                + "{\"task_id\":\"task-emb-9\",\"task_status\":\"RUNNING\",\"status\":\"SUCCEEDED\"},"
+                + "{\"task_id\":\"task-emb-10\",\"status\":\"FAILED\"}],"
+                + "\"total\":2,\"page_no\":1,\"page_size\":10}"));
+
+    Page<Job> page = client.embeddings().jobs().list(Collections.emptyMap(), RequestOptions.NONE);
+
+    assertEquals(Job.RUNNING, page.getItems().get(0).getTaskStatus());
+    assertFalse(page.getItems().get(0).isSucceeded());
+    assertEquals(Job.FAILED, page.getItems().get(1).getTaskStatus());
+    assertTrue(page.getItems().get(1).isFinished());
+  }
+
+  @Test
   void asyncCreateCompletes() throws Exception {
     server.enqueue(
         okJson(

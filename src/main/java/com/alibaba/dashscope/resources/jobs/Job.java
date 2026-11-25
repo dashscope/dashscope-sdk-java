@@ -38,7 +38,10 @@ public final class Job extends ResponseBase {
     return job;
   }
 
-  /** Build from a bare output node (a {@code data[]} item of the list endpoint). */
+  /**
+   * Build from a bare output node (a {@code data[]} item of the list endpoint, where the status
+   * field is named {@code status} rather than {@code task_status}).
+   */
   static Job fromOutputNode(JsonNode output) {
     Job job = new Job();
     fillFromOutput(job, output);
@@ -53,6 +56,10 @@ public final class Job extends ResponseBase {
         job.taskId = textOrNull(out.get("job_id"));
       }
       job.taskStatus = textOrNull(out.get("task_status"));
+      if (job.taskStatus == null) {
+        // GET /tasks list items carry "status" instead of "task_status" (2.x AsyncTaskInfo).
+        job.taskStatus = textOrNull(out.get("status"));
+      }
     }
   }
 
