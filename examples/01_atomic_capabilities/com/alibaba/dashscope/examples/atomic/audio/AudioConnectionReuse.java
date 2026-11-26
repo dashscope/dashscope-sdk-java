@@ -78,7 +78,7 @@ public final class AudioConnectionReuse {
       usage();
     }
     if ("tts".equals(kind) && text.trim().isEmpty()) {
-      System.err.println("error: --text 不能为空");
+      System.err.println("error: --text must not be empty");
       System.exit(2);
     }
     // New output directory; never overwrite an existing one (Python mkdir() parity).
@@ -97,7 +97,8 @@ public final class AudioConnectionReuse {
         System.out.println(MAPPER.writeValueAsString(result));
       }
     }
-    System.out.println("完成：1 条连接，" + RUNS + " 个独立任务；" + outputDir.toAbsolutePath());
+    System.out.println(
+        "Completed " + RUNS + " independent tasks on 1 connection: " + outputDir.toAbsolutePath());
   }
 
   private static Map<String, Object> recognizeOne(
@@ -159,7 +160,7 @@ public final class AudioConnectionReuse {
         text = transcript.toString().trim();
       }
       if (text.isEmpty()) {
-        throw new RuntimeException("没有最终转写，请使用包含清晰语音的 WAV");
+        throw new RuntimeException("No final transcript; use a WAV containing clear speech");
       }
       String name = String.format("asr-%02d.txt", index);
       Files.write(
@@ -223,7 +224,7 @@ public final class AudioConnectionReuse {
               session.getFirstPackageDelay(),
               session.getUsage());
       if (size == 0 || size % 2 != 0) {
-        throw new RuntimeException("返回的 PCM 音频为空或不完整（" + size + " 字节）");
+        throw new RuntimeException("Returned PCM audio is empty or incomplete (" + size + " bytes)");
       }
       String name = String.format("tts-%02d.wav", index);
       AudioCommon.writeWav(outputDir.resolve(name), pcm.toByteArray(), 24000);
@@ -244,7 +245,7 @@ public final class AudioConnectionReuse {
     JsonNode header = lastResponse == null ? null : lastResponse.path("header");
     String event = header == null ? null : header.path("event").asText(null);
     if (!"task-finished".equals(event) || !taskId.equals(header.path("task_id").asText(null))) {
-      throw new RuntimeException("任务未收到匹配的 task-finished，停止复用连接");
+      throw new RuntimeException("No matching task-finished received; stop reusing the connection");
     }
     Map<String, Object> result = new LinkedHashMap<>();
     result.put("task_id", taskId);

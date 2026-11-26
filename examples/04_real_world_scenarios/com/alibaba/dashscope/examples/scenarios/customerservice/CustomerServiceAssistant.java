@@ -411,12 +411,15 @@ public final class CustomerServiceAssistant {
       // ConversationMemory carries turn 1 forward.
       List<String> conversation = Arrays.asList("我的订单 SO2024001 到哪了？", "那这个订单现在能退款吗？", "帮我转人工吧。");
       for (String userInput : conversation) {
-        System.out.println("\n用户: " + userInput);
+        System.out.println("\nUser: " + userInput);
         String answer = handleUserTurn(client, memory, userInput);
-        System.out.println("客服: " + answer);
+        System.out.println("Assistant: " + answer);
       }
 
-      System.out.println("\n----- 对话结束，上下文保留 " + memory.messages().size() + " 条消息 -----");
+      System.out.println(
+          "\n----- Conversation ended; context retains "
+              + memory.messages().size()
+              + " messages -----");
     }
   }
 }

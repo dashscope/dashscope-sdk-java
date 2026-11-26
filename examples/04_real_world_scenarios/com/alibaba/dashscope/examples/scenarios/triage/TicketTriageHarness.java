@@ -530,24 +530,24 @@ public final class TicketTriageHarness {
     private static void report(Map<String, String> ticket, TicketVerdict verdict) {
       String content = ticket.get("content");
       String preview = content.length() > 22 ? content.substring(0, 22) : content;
-      System.out.println("\n  工单 " + ticket.get("ticket_id") + ": " + preview + "...");
+      System.out.println("\n  Ticket " + ticket.get("ticket_id") + ": " + preview + "...");
       System.out.println(
-          "    状态="
+          "    state="
               + verdict.state
-              + ", 团队="
+              + ", department="
               + verdict.department
-              + ", 优先级="
+              + ", priority="
               + verdict.priority
-              + ", 值班介入="
+              + ", on-call escalation="
               + verdict.escalate);
       System.out.println(
-          "    置信度="
+          "    confidence="
               + verdict.confidence
               + ", input_tokens="
               + verdict.inputTokens
               + ", request_id="
               + verdict.requestId);
-      System.out.println("    判定依据: " + verdict.reason);
+      System.out.println("    Rationale: " + verdict.reason);
       if (verdict.errorCode != null) {
         System.out.println("    error_code: " + verdict.errorCode);
       }
@@ -576,30 +576,33 @@ public final class TicketTriageHarness {
   /** Run the batch over the five stand-in tickets and print the ledger summary. */
   public static void main(String[] args) {
     Harness harness = buildHarness();
-    String mode = LIVE ? "LIVE 真实网关" : "OFFLINE 脚本化 Mock 后端";
-    System.out.println("模式: " + mode + "，模型: " + DECISION_MODEL);
+    String mode = LIVE ? "LIVE gateway" : "OFFLINE scripted mock backend";
+    System.out.println("Mode: " + mode + ", model: " + DECISION_MODEL);
     System.out.println(
-        "策略阈值: 置信度下限="
+        "Policy thresholds: confidence floor="
             + CONFIDENCE_FLOOR
-            + ", 值班介入 P(yes)>="
+            + ", on-call escalation P(yes)>="
             + ESCALATE_THRESHOLD
-            + ", 严重度 P1/P2 分数线="
+            + ", P1/P2 severity score thresholds="
             + P1_SCORE
             + "/"
             + P2_SCORE);
     if (LIVE) {
-      System.out.println("(LIVE 模式：全部工单走真实决策模型，无故障注入)");
+      System.out.println("(LIVE mode: all tickets use the real decision model; no fault injection)");
     }
     List<TicketVerdict> verdicts = harness.run(TICKETS);
     Map<String, Integer> counts = new LinkedHashMap<>();
     for (TicketVerdict verdict : verdicts) {
       counts.merge(verdict.state, 1, Integer::sum);
     }
-    System.out.println("\n===== 批次汇总 =====");
-    System.out.println("  工单总数: " + verdicts.size() + ", 状态分布: " + counts);
+    System.out.println("\n===== Batch summary =====");
+    System.out.println("  Total tickets: " + verdicts.size() + ", states: " + counts);
     System.out.println(
-        "  自动路由成功 " + harness.triagedOk + " 单，计费 input_tokens 合计 " + harness.totalInputTokens);
-    System.out.println("  说明: 决策模型只按输入 token 计费（不生成文本）；");
-    System.out.println("  转人工/降级的工单不计入自动路由量。");
+        "  Successfully auto-routed "
+            + harness.triagedOk
+            + " tickets; total billable input_tokens: "
+            + harness.totalInputTokens);
+    System.out.println("  Note: the decision model bills input tokens only (no text generation);");
+    System.out.println("  Tickets sent to human review or degraded do not count as auto-routed.");
   }
 }

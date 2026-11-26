@@ -95,11 +95,11 @@ public final class TtsWebsocketConnect {
       usage();
     }
     if (prompt != null && prompt.trim().isEmpty()) {
-      System.err.println("error: --prompt 需要非空提示词");
+      System.err.println("error: --prompt requires a non-empty prompt");
       System.exit(2);
     }
     if (prompt == null && texts.stream().noneMatch(t -> !t.trim().isEmpty())) {
-      System.err.println("error: 文本不能为空");
+      System.err.println("error: text must not be empty");
       System.exit(2);
     }
     if (voice == null) {
@@ -147,7 +147,7 @@ public final class TtsWebsocketConnect {
           session.close();
         }
         if (size == 0 || size % 2 != 0) {
-          throw new RuntimeException("返回的 PCM 音频为空或不完整（" + size + " 字节）");
+          throw new RuntimeException("Returned PCM audio is empty or incomplete (" + size + " bytes)");
         }
         System.err.println(
             "request_id="
@@ -161,11 +161,11 @@ public final class TtsWebsocketConnect {
         receiverPool.shutdown();
       }
       System.out.println(
-          "已保存 "
+          "Saved "
               + output.toAbsolutePath()
-              + "（"
+              + " ("
               + String.format("%.2f", size / 2.0 / sampleRate)
-              + " 秒）");
+              + " seconds)");
       if (!noPlay) {
         AudioCommon.play(output);
       }
@@ -205,7 +205,7 @@ public final class TtsWebsocketConnect {
   private static void checkReceiver(Future<?> receiver) throws Exception {
     if (receiver.isDone()) {
       receiver.get();
-      throw new RuntimeException("文本尚未发送完，合成会话已结束");
+      throw new RuntimeException("Synthesis session ended before all text was sent");
     }
   }
 

@@ -657,7 +657,7 @@ public final class ProductionRagHarness {
     StringBuilder text = new StringBuilder();
     Integer usageTotal = null;
     String requestId = null;
-    System.out.print("客服回答: ");
+    System.out.print("Assistant answer: ");
     System.out.flush();
     try (ResponseStream<ChatCompletionChunk> closeable = stream) {
       for (ChatCompletionChunk chunk : closeable) {
@@ -953,33 +953,39 @@ public final class ProductionRagHarness {
   }
 
   private static void scenarioRetrieval(ProductionRagEngine engine) {
-    System.out.println("\n=== 场景 A：标准检索问答（召回->水位->精排->流式生成）===");
-    System.out.println("用户提问: " + QUERY);
+    System.out.println(
+        "\n=== Scenario A: standard retrieval QA "
+            + "(retrieval -> watermark -> rerank -> streaming generation) ===");
+    System.out.println("User query: " + QUERY);
     report(engine.answer(QUERY));
   }
 
   private static void scenarioRateLimit(ProductionRagEngine engine, MockGateway mock) {
-    System.out.println("\n=== 场景 B：429 限流，harness 指数退避自动吸收（流式不被 SDK 重试）===");
+    System.out.println(
+        "\n=== Scenario B: 429 rate limit absorbed by harness exponential backoff "
+            + "(streams are not retried by the SDK) ===");
     mock.rateLimitNextChat = 1;
     report(engine.answer(QUERY));
-    System.out.println("    注入并被吸收的 429 次数: " + mock.injected429);
+    System.out.println("    Injected and absorbed 429 responses: " + mock.injected429);
   }
 
   private static void scenarioFailover(ProductionRagEngine engine, MockGateway mock) {
-    System.out.println("\n=== 场景 C：主地域推理 503，熔断 + 跨地域灾备切换 ===");
+    System.out.println(
+        "\n=== Scenario C: primary-region inference 503, circuit breaking + cross-region failover ===");
     mock.downRegions.add(REGIONS.get(0));
     for (int i = 1; i <= 3; i++) {
-      System.out.println("  -- 第 " + i + " 次问答 --");
+      System.out.println("  -- QA round " + i + " --");
       RagAnswer result = engine.answer(QUERY);
       System.out.println("    served by: " + result.servedRegion);
     }
   }
 
   private static void scenarioDegrade(ProductionRagEngine engine, MockGateway mock) {
-    System.out.println("\n=== 场景 D：全部地域不可用，优雅降级而非抛栈 ===");
+    System.out.println(
+        "\n=== Scenario D: all regions unavailable, graceful degradation instead of a stack trace ===");
     mock.downRegions.addAll(REGIONS);
     RagAnswer result = engine.answer(QUERY);
-    System.out.println("    降级返回: " + result.answer);
+    System.out.println("    Degraded response: " + result.answer);
     System.out.println("    degraded=" + result.degraded + ", error_code=" + result.errorCode);
   }
 
@@ -989,11 +995,11 @@ public final class ProductionRagHarness {
     ProductionRagEngine engine = built.getKey();
     MockGateway mock = built.getValue();
     try {
-      System.out.println("模式: " + (LIVE ? "LIVE 真实网关" : "OFFLINE 本地 Mock"));
+      System.out.println("Mode: " + (LIVE ? "LIVE gateway" : "OFFLINE local mock"));
       engine.ingest(CORPUS);
       scenarioRetrieval(engine);
       if (mock == null) {
-        System.out.println("\n(LIVE 模式跳过故障注入场景 B/C/D)");
+        System.out.println("\n(LIVE mode skips fault-injection scenarios B/C/D)");
         return;
       }
       scenarioRateLimit(engine, mock);

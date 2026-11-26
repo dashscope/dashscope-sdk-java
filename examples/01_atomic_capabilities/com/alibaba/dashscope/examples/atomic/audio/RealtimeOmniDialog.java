@@ -75,7 +75,7 @@ public final class RealtimeOmniDialog {
       usage();
     }
     if (microphone && (seconds < 0.1 || seconds > 20)) {
-      System.err.println("error: --seconds 应在 0.1～20 之间");
+      System.err.println("error: --seconds must be between 0.1 and 20");
       System.exit(2);
     }
     AudioCommon.PcmAudio audio = null;
@@ -83,7 +83,7 @@ public final class RealtimeOmniDialog {
       audio = AudioCommon.readWav(wav, 16000);
       double duration = audio.pcm.length / 2.0 / 16000;
       if (duration < 0.1 || duration > 20) {
-        System.err.println("error: 本示例的单轮 WAV 输入限制为 0.1～20 秒");
+        System.err.println("error: this example accepts single-turn WAV input of 0.1 to 20 seconds");
         System.exit(2);
       }
     }
@@ -121,7 +121,7 @@ public final class RealtimeOmniDialog {
                   }
                 });
         if (!sessionUpdated.await(30, TimeUnit.SECONDS)) {
-          throw new RuntimeException("30 秒内未收到 session.updated 事件");
+          throw new RuntimeException("No session.updated event received within 30 seconds");
         }
         if (audio != null) {
           sendWav(session, receiver, audio);
@@ -137,11 +137,15 @@ public final class RealtimeOmniDialog {
       }
     }
     if (size == 0 || size % 2 != 0) {
-      throw new RuntimeException("回答音频为空或不完整（" + size + " 字节）");
+      throw new RuntimeException("Response audio is empty or incomplete (" + size + " bytes)");
     }
     AudioCommon.writeWav(output, pcm.toByteArray(), 24000);
     System.out.println(
-        "已保存 " + output.toAbsolutePath() + "（" + String.format("%.2f", size / 48000.0) + " 秒）");
+        "Saved "
+            + output.toAbsolutePath()
+            + " ("
+            + String.format("%.2f", size / 48000.0)
+            + " seconds)");
     if (!noPlay) {
       AudioCommon.play(output);
     }
@@ -174,17 +178,17 @@ public final class RealtimeOmniDialog {
         case "response.audio_transcript.done":
           System.out.println();
           System.out.println(
-              "完整回答： " + event.path("text").asText(event.path("transcript").asText("")));
+              "Full response: " + event.path("text").asText(event.path("transcript").asText("")));
           break;
         case "conversation.item.input_audio_transcription.completed":
           System.out.println();
-          System.out.println("输入转写： " + event.path("transcript").asText(""));
+          System.out.println("Input transcript: " + event.path("transcript").asText(""));
           break;
         case "response.done":
           JsonNode response = event.path("response");
           String status = response.path("status").asText(null);
           if (!"completed".equals(status)) {
-            throw new RuntimeException("回答未正常完成：" + status);
+            throw new RuntimeException("Response did not complete normally: " + status);
           }
           System.out.println();
           System.out.println("response_id: " + response.path("id").asText(null));
@@ -199,7 +203,7 @@ public final class RealtimeOmniDialog {
         return size;
       }
     }
-    throw new RuntimeException("连接已关闭，未收到 response.done");
+    throw new RuntimeException("Connection closed without response.done");
   }
 
   /** Pace a 16 kHz WAV into the input buffer, one 100 ms chunk at a time. */
@@ -216,7 +220,7 @@ public final class RealtimeOmniDialog {
       sent += frame.length;
     }
     if (sent < 3200) {
-      throw new IllegalArgumentException("本轮至少需要 0.1 秒音频");
+      throw new IllegalArgumentException("This turn requires at least 0.1 seconds of audio");
     }
   }
 
@@ -226,7 +230,8 @@ public final class RealtimeOmniDialog {
     TargetDataLine line = AudioCommon.microphone(16000);
     int sent = 0;
     try {
-      System.out.println("正在录音，" + seconds + " 秒后结束；Ctrl+C 提前结束本轮。");
+      System.out.println(
+          "Recording for " + seconds + " seconds; press Ctrl+C to end this turn early.");
       long remaining = Math.round(seconds * 16000);
       while (remaining > 0) {
         checkReceiver(receiver);
@@ -241,7 +246,7 @@ public final class RealtimeOmniDialog {
           offset += n;
         }
         if (offset != frame.length) {
-          throw new RuntimeException("麦克风返回的 PCM 帧不完整");
+          throw new RuntimeException("Microphone returned an incomplete PCM frame");
         }
         session.appendAudio(frame);
         sent += frame.length;
@@ -252,7 +257,7 @@ public final class RealtimeOmniDialog {
       line.close();
     }
     if (sent < 3200) {
-      throw new IllegalArgumentException("本轮至少需要 0.1 秒音频");
+      throw new IllegalArgumentException("This turn requires at least 0.1 seconds of audio");
     }
   }
 
@@ -260,7 +265,7 @@ public final class RealtimeOmniDialog {
   static void checkReceiver(Future<?> receiver) throws Exception {
     if (receiver.isDone()) {
       receiver.get();
-      throw new RuntimeException("输入尚未结束，接收线程已退出");
+      throw new RuntimeException("Receiver thread exited before input ended");
     }
   }
 

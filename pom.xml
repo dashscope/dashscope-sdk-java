@@ -318,9 +318,10 @@
                 <surefireArgLine>--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED</surefireArgLine>
             </properties>
         </profile>
-        <!-- M1 静默错误清零门禁：ErrorProne 只扫 3.0 新包（2.x 冻结代码豁免），
-             空 catch / 打印堆栈继续 直接编不过。需 JDK 21 工具链，且 jdk.compiler 的
-             exports/opens 已随 .mvn/jvm.config 移除、须经 MAVEN_OPTS 传入：
+        <!-- M1 zero-silent-errors gate: ErrorProne scans only the new 3.0 packages (frozen 2.x
+             code is exempt); empty catch blocks or printing a stack trace and continuing fail
+             compilation. Requires a JDK 21 toolchain. The jdk.compiler exports/opens were removed
+             from .mvn/jvm.config and must be supplied through MAVEN_OPTS:
              mvn -Perrorprone compile -->
         <profile>
             <id>errorprone</id>
@@ -362,8 +363,9 @@
                 </plugins>
             </build>
         </profile>
-        <!-- japicmp API 面基线：对比 2.23.3，记录 3.0 的有意包迁移和 API 差异。
-             旧 2.x FQCN 不再作为二进制兼容门禁。运行：mvn -Pjapicmp verify -->
+        <!-- japicmp API baseline: compare against 2.23.3 and record the intentional 3.0 package
+             migration and API differences. Legacy 2.x FQCNs no longer serve as the binary
+             compatibility gate. Run: mvn -Pjapicmp verify -->
         <profile>
             <id>japicmp</id>
             <build>

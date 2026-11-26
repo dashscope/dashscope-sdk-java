@@ -69,11 +69,11 @@ public final class RealtimeTranslation {
       usage();
     }
     if (language.trim().isEmpty()) {
-      System.err.println("error: --language 需要非空目标语种代码");
+      System.err.println("error: --language requires a non-empty target language code");
       System.exit(2);
     }
     if (microphone && (seconds < 0.1 || seconds > 20)) {
-      System.err.println("error: --seconds 应在 0.1～20 之间");
+      System.err.println("error: --seconds must be between 0.1 and 20");
       System.exit(2);
     }
     AudioCommon.PcmAudio audio = null;
@@ -81,7 +81,7 @@ public final class RealtimeTranslation {
       audio = AudioCommon.readWav(wav, 16000);
       double duration = audio.pcm.length / 2.0 / 16000;
       if (duration < 0.1 || duration > 20) {
-        System.err.println("error: 本示例的 WAV 输入限制为 0.1～20 秒");
+        System.err.println("error: this example accepts WAV input of 0.1 to 20 seconds");
         System.exit(2);
       }
     }
@@ -114,7 +114,7 @@ public final class RealtimeTranslation {
                   }
                 });
         if (!sessionUpdated.await(30, TimeUnit.SECONDS)) {
-          throw new RuntimeException("30 秒内未收到 session.updated 事件");
+          throw new RuntimeException("No session.updated event received within 30 seconds");
         }
         if (audio != null) {
           RealtimeOmniDialog.sendWav(session, receiver, audio);
@@ -129,11 +129,15 @@ public final class RealtimeTranslation {
       }
     }
     if (size == 0 || size % 2 != 0) {
-      throw new RuntimeException("翻译音频为空或不完整（" + size + " 字节）");
+      throw new RuntimeException("Translation audio is empty or incomplete (" + size + " bytes)");
     }
     AudioCommon.writeWav(output, pcm.toByteArray(), 24000);
     System.out.println(
-        "已保存 " + output.toAbsolutePath() + "（" + String.format("%.2f", size / 48000.0) + " 秒）");
+        "Saved "
+            + output.toAbsolutePath()
+            + " ("
+            + String.format("%.2f", size / 48000.0)
+            + " seconds)");
     if (!noPlay) {
       AudioCommon.play(output);
     }
@@ -168,17 +172,17 @@ public final class RealtimeTranslation {
         case "response.audio_transcript.done":
           System.out.println();
           System.out.println(
-              "译文： " + event.path("text").asText(event.path("transcript").asText("")));
+              "Translation: " + event.path("text").asText(event.path("transcript").asText("")));
           break;
         case "conversation.item.input_audio_transcription.completed":
           System.out.println();
-          System.out.println("原文： " + event.path("transcript").asText(""));
+          System.out.println("Source: " + event.path("transcript").asText(""));
           break;
         case "response.done":
           JsonNode response = event.path("response");
           String status = response.path("status").asText(null);
           if (status != null && !"completed".equals(status)) {
-            throw new RuntimeException("翻译未正常完成：" + status);
+            throw new RuntimeException("Translation did not complete normally: " + status);
           }
           responses++;
           System.out.println();
@@ -192,12 +196,12 @@ public final class RealtimeTranslation {
         sessionUpdated.countDown();
       } else if (kind.equals("session.finished")) {
         if (responses == 0) {
-          throw new RuntimeException("会话结束，但未收到翻译响应结束事件");
+          throw new RuntimeException("Session ended without a translation response completion event");
         }
         return size;
       }
     }
-    throw new RuntimeException("连接已关闭，未收到 session.finished");
+    throw new RuntimeException("Connection closed without session.finished");
   }
 
   private static void usage() {

@@ -622,7 +622,7 @@ public final class RealtimeMeetingHarness {
 
   private static void report(List<MeetingSession> results) {
     System.out.println("\n======================================================================");
-    System.out.println("会议托管报告 / Meeting Supervisor Report");
+    System.out.println("Meeting Supervisor Report");
     System.out.println("======================================================================");
     for (MeetingSession session : results) {
       String full = session.assembler.text();
@@ -708,7 +708,10 @@ public final class RealtimeMeetingHarness {
   }
 
   private static void runOfflineDemo() {
-    System.out.printf("离线并发实时会议转写演示（%d 路并发上限，每场会议独占一条 websocket）%n%n", MAX_CONCURRENT);
+    System.out.printf(
+        "Offline concurrent real-time meeting transcription (%d concurrent meetings maximum; "
+            + "one websocket per meeting)%n%n",
+        MAX_CONCURRENT);
     Map<String, List<List<JsonNode>>> scripts = offlineScripts();
     MockMeetingGateway gateway = new MockMeetingGateway(scripts);
     List<MeetingSession> meetings = new ArrayList<>();
@@ -721,19 +724,22 @@ public final class RealtimeMeetingHarness {
     long started = System.nanoTime();
     List<MeetingSession> results = supervisor.run(meetings);
     double elapsed = (System.nanoTime() - started) / 1_000_000_000.0;
-    System.out.printf("%n并发跑完 %d 场会议，用时 %.3fs%n", results.size(), elapsed);
+    System.out.printf("%nCompleted %d concurrent meetings in %.3fs%n", results.size(), elapsed);
     report(results);
   }
 
   private static void runLive() throws Exception {
     if (APP_ID.isEmpty() || "your-app-id".equals(APP_ID)) {
       System.out.println(
-          "MEETING_HARNESS_LIVE=1 需要设置 DASHSCOPE_TINGWU_APP_ID （听悟应用 ID）与 DASHSCOPE_API_KEY。");
+          "MEETING_HARNESS_LIVE=1 requires DASHSCOPE_TINGWU_APP_ID (TingWu application ID) "
+              + "and DASHSCOPE_API_KEY.");
       return;
     }
     if (AUDIO_FILE == null || !Files.exists(Paths.get(AUDIO_FILE))) {
       System.out.println(
-          "找不到音频文件：" + AUDIO_FILE + "（可用 DASHSCOPE_DEMO_AUDIO 指定 16kHz 单声道 16-bit WAV）");
+          "Audio file not found: "
+              + AUDIO_FILE
+              + " (set DASHSCOPE_DEMO_AUDIO to a 16 kHz mono 16-bit WAV)");
       return;
     }
     AudioCommon.PcmAudio audio = AudioCommon.readWav(Paths.get(AUDIO_FILE), SAMPLE_RATE);
@@ -741,7 +747,8 @@ public final class RealtimeMeetingHarness {
     for (byte[] chunk : AudioPacer.pcmChunks(audio.pcm, FRAME_BYTES)) {
       frames.add(chunk);
     }
-    System.out.printf("实时会议转写（live）：%d 帧 x %dB，paced%n", frames.size(), FRAME_BYTES);
+    System.out.printf(
+        "Live meeting transcription: %d frames x %dB, paced%n", frames.size(), FRAME_BYTES);
     LiveMeetingGateway gateway = new LiveMeetingGateway(ExampleSupport.requireApiKey());
     try {
       MeetingSession meeting = new MeetingSession("live-room", "Live Room", frames, true);

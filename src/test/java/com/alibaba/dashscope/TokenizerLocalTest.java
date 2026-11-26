@@ -45,10 +45,10 @@ class TokenizerLocalTest {
 
   /**
    * The byte-level BPE merges tokens on byte boundaries, so one UTF-8 character can span two
-   * tokens. Token 58230 holds {@code 20 E5 B0} and token 122 holds {@code BE}: together they are "
-   * \u5C3E" (space + "尾"), but each half on its own is an invalid UTF-8 sequence. Decoding must
-   * join the bytes first and decode once, otherwise {@code decode} yields two U+FFFD instead of
-   * "尾".
+   * tokens. Token 58230 holds {@code 20 E5 B0} and token 122 holds {@code BE}: together they
+   * represent a space followed by U+5C3E, but each half on its own is an invalid UTF-8 sequence.
+   * Decoding must join the bytes first and decode once, otherwise {@code decode} yields two U+FFFD
+   * characters instead of U+5C3E.
    */
   @Test
   void decodeKeepsCharacterSplitAcrossTokenBoundary() {

@@ -181,7 +181,7 @@ class MultiModalDialogUsage {
             if (commandObj.has("name")) {
               String commandStr = commandObj.get("name").getAsString();
               if (commandStr.equals("visual_qa")) {
-                log.info("拍照了！！！！");
+                log.info("Photo captured!");
                 MultiModalRequestParam.UpdateParams updateParams =
                     MultiModalRequestParam.UpdateParams.builder().images(getMockOSSImage()).build();
                 conversation.requestToRespond("prompt", "", updateParams);
