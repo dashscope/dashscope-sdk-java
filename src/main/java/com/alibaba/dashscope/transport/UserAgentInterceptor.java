@@ -1,6 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.transport;
 
+import com.alibaba.dashscope.shared.EnvNames;
 import com.alibaba.dashscope.shared.SdkInfo;
 import com.alibaba.dashscope.shared.SdkSession;
 import java.io.IOException;
@@ -16,7 +17,9 @@ import okhttp3.Response;
  * carries a trailing {@link #MODULE_MARKER} so the 3.0 surface stays separable from 2.x: one
  * artifact ships both the legacy_2x transport and this 3.0 transport and both read the same {@link
  * SdkInfo#VERSION}, so the version segment alone cannot tell them apart. With the marker 3.0 emits
- * {@code aigc3} while 2.x stays {@code aigc}, mirroring the Python SDK's V2_MODULE_MARKER.
+ * {@code aigc3} while 2.x stays {@code aigc}, mirroring the Python SDK's V2_MODULE_MARKER. The two
+ * tracking headers honor the 2.x {@code DASHSCOPE_DISABLE_SDK_HEADERS} opt-out (1/true); User-Agent
+ * itself is not a tracking header and stays.
  */
 public final class UserAgentInterceptor implements Interceptor {
   public static final String HEADER_SDK_CLIENT = "x-dashscope-sdk-client";
@@ -55,12 +58,22 @@ public final class UserAgentInterceptor implements Interceptor {
     if (request.header("User-Agent") == null) {
       tagged.header("User-Agent", userAgent);
     }
-    if (request.header(HEADER_SDK_CLIENT) == null) {
-      tagged.header(HEADER_SDK_CLIENT, sdkClient);
-    }
-    if (request.header(HEADER_SDK_SESSION_ID) == null) {
-      tagged.header(HEADER_SDK_SESSION_ID, SdkSession.ID);
+    if (!sdkHeadersDisabled()) {
+      if (request.header(HEADER_SDK_CLIENT) == null) {
+        tagged.header(HEADER_SDK_CLIENT, sdkClient);
+      }
+      if (request.header(HEADER_SDK_SESSION_ID) == null) {
+        tagged.header(HEADER_SDK_SESSION_ID, SdkSession.ID);
+      }
     }
     return chain.proceed(tagged.build());
+  }
+
+  /**
+   * 2.x-parity telemetry opt-out: DASHSCOPE_DISABLE_SDK_HEADERS=1/true drops the tracking headers.
+   */
+  private static boolean sdkHeadersDisabled() {
+    String disable = System.getenv(EnvNames.DASHSCOPE_DISABLE_SDK_HEADERS);
+    return "1".equals(disable) || "true".equalsIgnoreCase(disable);
   }
 }

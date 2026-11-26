@@ -44,6 +44,7 @@ import org.junitpioneer.jupiter.SetEnvironmentVariable;
 @ClearEnvironmentVariable(key = "DASHSCOPE_BASE_URL")
 @ClearEnvironmentVariable(key = "DASHSCOPE_HTTP_BASE_URL")
 @ClearEnvironmentVariable(key = "DASHSCOPE_REGION")
+@ClearEnvironmentVariable(key = "DASHSCOPE_DISABLE_SDK_HEADERS")
 @SetEnvironmentVariable(key = "DASHSCOPE_CONFIG", value = "/nonexistent/dashscope-config.toml")
 class ChatCompletionsMockTest {
   private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -484,6 +485,42 @@ class ChatCompletionsMockTest {
     assertEquals("Bearer custom-key", request.getHeader("Authorization"));
     assertEquals("custom-agent/1.0", request.getHeader("User-Agent"));
     assertEquals("custom", request.getHeader("x-dashscope-sdk-client"));
+  }
+
+  @Test
+  @SetEnvironmentVariable(key = "DASHSCOPE_DISABLE_SDK_HEADERS", value = "true")
+  void disableSdkHeadersDropsTrackingHeaders() throws Exception {
+    server.enqueue(
+        okJson(
+            "{\"output\":{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"hi\"}}]},"
+                + "\"request_id\":\"opt1\"}"));
+
+    client.chat().completions().create(params());
+
+    RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
+    assertNull(request.getHeader("x-dashscope-sdk-client"));
+    assertNull(request.getHeader("x-dashscope-sdk-session-id"));
+    // User-Agent is not a tracking header: the 2.x opt-out keeps it.
+    assertNotNull(request.getHeader("user-agent"));
+  }
+
+  @Test
+  @SetEnvironmentVariable(key = "DASHSCOPE_DISABLE_SDK_HEADERS", value = "1")
+  void disableSdkHeadersKeepsCallerSetValues() throws Exception {
+    server.enqueue(
+        okJson(
+            "{\"output\":{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"hi\"}}]},"
+                + "\"request_id\":\"opt2\"}"));
+
+    client
+        .chat()
+        .completions()
+        .create(
+            params(), RequestOptions.builder().header("x-dashscope-sdk-client", "custom").build());
+
+    RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
+    assertEquals("custom", request.getHeader("x-dashscope-sdk-client"));
+    assertNull(request.getHeader("x-dashscope-sdk-session-id"));
   }
 
   @Test

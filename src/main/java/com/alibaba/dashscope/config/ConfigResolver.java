@@ -176,6 +176,8 @@ public final class ConfigResolver {
 
     String apiKey = ApiKeyResolver.resolve(options.getApiKey(), file);
 
+    String networkLoggingLevel = resolveNetworkLoggingLevel();
+
     return new ResolvedConfig(
         apiKey,
         stripTrailingSlash(baseUrl),
@@ -190,7 +192,17 @@ public final class ConfigResolver {
         maxRequestsPerHost,
         maxIdleConnections,
         Duration.ofSeconds(keepAliveSeconds),
-        wsPingInterval);
+        wsPingInterval,
+        networkLoggingLevel);
+  }
+
+  /** 2.x-parity network log knob: NONE/BASIC/HEADERS/BODY; invalid values fall back to NONE. */
+  private static String resolveNetworkLoggingLevel() {
+    String raw = System.getenv(EnvNames.DASHSCOPE_NETWORK_LOGGING_LEVEL);
+    if ("BASIC".equals(raw) || "HEADERS".equals(raw) || "BODY".equals(raw)) {
+      return raw;
+    }
+    return "NONE";
   }
 
   private static void warnLegacyOnce(AtomicBoolean flag, String url) {

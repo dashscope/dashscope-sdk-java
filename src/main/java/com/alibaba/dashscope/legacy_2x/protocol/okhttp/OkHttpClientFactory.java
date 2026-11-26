@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.ConnectionPool;
 import okhttp3.Dispatcher;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClient.Builder;
 import okhttp3.Protocol;
@@ -36,9 +37,7 @@ public class OkHttpClientFactory {
         connectionConfigurations = ConnectionConfigurations.builder().build();
       }
 
-      ClientOptions defaultOptions = ClientOptions.builder().build();
-      HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-      logging.setLevel(Level.valueOf(defaultOptions.getNetworkLoggingLevel()));
+      Interceptor logging = networkLoggingInterceptor();
       int connectionPoolSize = connectionConfigurations.getConnectionPoolSize();
       log.debug("[connectionPool Config] connectionPoolSize: {}", connectionPoolSize);
       Dispatcher dispatcher = new Dispatcher();
@@ -68,6 +67,40 @@ public class OkHttpClientFactory {
       }
       return clientBuilder.build();
     }
+  }
+
+  /**
+   * Network logging driven by DASHSCOPE_NETWORK_LOGGING_LEVEL (default NONE). Credential headers
+   * are redacted so HEADERS/BODY debugging never prints the API key. Package-private for tests.
+   */
+  static Interceptor networkLoggingInterceptor() {
+    ClientOptions defaultOptions = ClientOptions.builder().build();
+    Level level = Level.valueOf(defaultOptions.getNetworkLoggingLevel());
+    HttpLoggingInterceptor full = redactingLogging(level);
+    if (level != Level.BODY) {
+      return full;
+    }
+    // BODY buffers the whole response before releasing it, which would stall SSE streams until
+    // they end; log those at HEADERS instead. Caller headers may override Accept, so also match
+    // the SDK's own X-DashScope-SSE marker.
+    HttpLoggingInterceptor headersOnly = redactingLogging(Level.HEADERS);
+    return chain ->
+        ("text/event-stream".equalsIgnoreCase(chain.request().header("Accept"))
+                    || "enable".equalsIgnoreCase(chain.request().header("X-DashScope-SSE"))
+                ? headersOnly
+                : full)
+            .intercept(chain);
+  }
+
+  private static HttpLoggingInterceptor redactingLogging(Level level) {
+    HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+    logging.setLevel(level);
+    logging.redactHeader("Authorization");
+    logging.redactHeader("X-DashScope-EncryptionKey");
+    logging.redactHeader("Cookie");
+    logging.redactHeader("Set-Cookie");
+    logging.redactHeader("Proxy-Authorization");
+    return logging;
   }
 
   public static OkHttpClient getOkHttpClient() {

@@ -20,6 +20,7 @@ public final class ResolvedConfig {
   private final int maxIdleConnections;
   private final Duration keepAlive;
   private final Duration wsPingInterval;
+  private final String networkLoggingLevel;
 
   ResolvedConfig(
       String apiKey,
@@ -35,7 +36,8 @@ public final class ResolvedConfig {
       int maxRequestsPerHost,
       int maxIdleConnections,
       Duration keepAlive,
-      Duration wsPingInterval) {
+      Duration wsPingInterval,
+      String networkLoggingLevel) {
     this.apiKey = apiKey;
     this.baseUrl = baseUrl;
     this.wsBaseUrl = wsBaseUrl;
@@ -50,6 +52,7 @@ public final class ResolvedConfig {
     this.maxIdleConnections = maxIdleConnections;
     this.keepAlive = keepAlive;
     this.wsPingInterval = wsPingInterval;
+    this.networkLoggingLevel = networkLoggingLevel;
   }
 
   /** Resolved API key; may be null (failure surfaces at request time as SdkException). */
@@ -119,5 +122,13 @@ public final class ResolvedConfig {
    */
   public Duration getWsPingInterval() {
     return wsPingInterval;
+  }
+
+  /**
+   * Network logging level (2.x parity): one of NONE / BASIC / HEADERS / BODY, resolved from
+   * DASHSCOPE_NETWORK_LOGGING_LEVEL; invalid values fall back to NONE.
+   */
+  public String getNetworkLoggingLevel() {
+    return networkLoggingLevel;
   }
 }
