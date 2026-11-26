@@ -40,8 +40,8 @@ import org.junit.jupiter.api.TestFactory;
  * {@code TokenizationLocalCount} runs offline against a synthetic {@code qwen.tiktoken} vocab
  * injected via {@code DASHSCOPE_QWEN_VOCAB}, so the dry-run never downloads from ModelScope.
  *
- * <p>{@code examples/} is a standalone Maven project (the root pom declares no {@code <module>}
- * for it); the CI test job installs the current SDK first, then runs this suite via {@code mvn -f
+ * <p>{@code examples/} is a standalone Maven project (the root pom declares no {@code <module>} for
+ * it); the CI test job installs the current SDK first, then runs this suite via {@code mvn -f
  * examples/pom.xml clean test}. Run the same command locally after changing any example.
  */
 class ExamplesDryRunTest {
@@ -69,9 +69,9 @@ class ExamplesDryRunTest {
   }
 
   /**
-   * Minimal stand-in for the real ~151k-entry qwen.tiktoken: ranks 0-255 are the single bytes
-   * (so any UTF-8 text encodes byte-wise), the rest are unique 3-byte filler tokens. The entry
-   * count must reach 151643 because QwenTokenizer sizes its decode map to cover the hardcoded
+   * Minimal stand-in for the real ~151k-entry qwen.tiktoken: ranks 0-255 are the single bytes (so
+   * any UTF-8 text encodes byte-wise), the rest are unique 3-byte filler tokens. The entry count
+   * must reach 151643 because QwenTokenizer sizes its decode map to cover the hardcoded
    * special-token ids 151643-151850.
    */
   private static byte[] syntheticVocab() {
@@ -84,11 +84,7 @@ class ExamplesDryRunTest {
         int value = rank - 256;
         token = new byte[] {(byte) (value >>> 16), (byte) (value >>> 8), (byte) value};
       }
-      vocab
-          .append(Base64.getEncoder().encodeToString(token))
-          .append(' ')
-          .append(rank)
-          .append('\n');
+      vocab.append(Base64.getEncoder().encodeToString(token)).append(' ').append(rank).append('\n');
     }
     return vocab.toString().getBytes(StandardCharsets.UTF_8);
   }

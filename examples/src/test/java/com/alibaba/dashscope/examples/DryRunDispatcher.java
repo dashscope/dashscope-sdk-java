@@ -239,8 +239,7 @@ public final class DryRunDispatcher extends Dispatcher {
         Base64.getDecoder()
             .decode(
                 new String(
-                    rsa.doFinal(
-                        Base64.getDecoder().decode(keyHeader.get("encrypt_key").asText())),
+                    rsa.doFinal(Base64.getDecoder().decode(keyHeader.get("encrypt_key").asText())),
                     StandardCharsets.UTF_8));
     SecretKey aesKey = new SecretKeySpec(aesBytes, "AES");
     byte[] iv = Base64.getDecoder().decode(keyHeader.get("iv").asText());

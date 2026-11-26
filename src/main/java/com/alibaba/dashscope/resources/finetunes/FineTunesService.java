@@ -213,9 +213,9 @@ public final class FineTunesService {
   }
 
   /**
-   * A single poll bounded by the remaining budget. A budget-bounded poll that times out is
-   * reported as a wait timeout carrying the job id (the transport-level message has no job
-   * context); a caller-configured shorter per-call timeout propagates unchanged.
+   * A single poll bounded by the remaining budget. A budget-bounded poll that times out is reported
+   * as a wait timeout carrying the job id (the transport-level message has no job context); a
+   * caller-configured shorter per-call timeout propagates unchanged.
    */
   private FineTune poll(
       String jobId, RequestOptions options, long timeoutNanos, long start, Duration budget) {
