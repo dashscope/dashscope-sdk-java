@@ -41,7 +41,20 @@ public final class SseStream implements AutoCloseable, Iterable<JsonNode> {
 
   /** Response headers of the opening HTTP exchange (request id lookup etc.). */
   public okhttp3.Headers responseHeaders() {
-    return response.headers();
+    // Transparent gzip strips Content-Encoding/Content-Length from response.headers(); prefer
+    // the raw network exchange so callers see the API's original response headers.
+    Response network = response.networkResponse();
+    return network != null ? network.headers() : response.headers();
+  }
+
+  /** Snapshot of {@link #responseHeaders()} as a plain map (response envelope filling etc.). */
+  public Map<String, String> headersMap() {
+    Map<String, String> headers = new LinkedHashMap<>();
+    okhttp3.Headers source = responseHeaders();
+    for (String name : source.names()) {
+      headers.put(name, source.get(name));
+    }
+    return headers;
   }
 
   @Override
@@ -83,11 +96,11 @@ public final class SseStream implements AutoCloseable, Iterable<JsonNode> {
       String payload = nextData;
       nextData = null;
       pendingLoaded = false;
-      JsonNode frame = JsonSupport.readTree(payload, headers());
+      JsonNode frame = JsonSupport.readTree(payload, headersMap());
       try {
         return EncryptionUtils.decryptOutput(frame, encryptionConfig);
       } catch (RuntimeException e) {
-        Map<String, String> headers = headers();
+        Map<String, String> headers = headersMap();
         throw Errors.fromCatalogEntry(
             PublicErrorCode.INTERNAL_ERROR,
             "failed to decrypt SSE output: " + e.getMessage(),
@@ -96,14 +109,6 @@ public final class SseStream implements AutoCloseable, Iterable<JsonNode> {
             headers,
             e);
       }
-    }
-
-    private Map<String, String> headers() {
-      Map<String, String> headers = new LinkedHashMap<>();
-      for (String name : response.headers().names()) {
-        headers.put(name, response.header(name));
-      }
-      return headers;
     }
 
     private void loadNext() {

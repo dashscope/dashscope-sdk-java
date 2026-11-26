@@ -32,6 +32,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import okio.Buffer;
+import okio.GzipSink;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -83,6 +85,15 @@ class ChatCompletionsMockTest {
         .setResponseCode(200)
         .setHeader("Content-Type", "application/json")
         .setBody(json);
+  }
+
+  private static Buffer gzipped(String text) throws IOException {
+    Buffer body = new Buffer();
+    try (GzipSink gzip = new GzipSink(body)) {
+      Buffer plain = new Buffer().writeUtf8(text);
+      gzip.write(plain, plain.size());
+    }
+    return body;
   }
 
   @Test
@@ -164,6 +175,85 @@ class ChatCompletionsMockTest {
       ChatCompletion result = async.chat().completions().create(params()).get(5, TimeUnit.SECONDS);
       assertEquals("async", result.outputText());
       assertEquals(1, executions.get());
+    }
+  }
+
+  @Test
+  void gzipResponseKeepsContentEncodingHeader() throws Exception {
+    // OkHttp transparently decompresses gzip and strips Content-Encoding/Content-Length from
+    // the application-layer response; the public headers must still mirror the wire response.
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(200)
+            .setHeader("Content-Type", "application/json")
+            .setHeader("Content-Encoding", "gzip")
+            .setBody(
+                gzipped(
+                    "{\"output\":{\"choices\":[{\"message\":{\"role\":\"assistant\","
+                        + "\"content\":\"你好\"}}]},\"request_id\":\"gz1\"}")));
+
+    ChatCompletion result = client.chat().completions().create(params());
+
+    assertEquals("你好", result.outputText());
+    assertEquals("gzip", result.getHeaders().get("Content-Encoding"));
+    assertNotNull(result.getHeaders().get("Content-Length"));
+
+    RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
+    assertEquals("gzip", request.getHeader("Accept-Encoding"));
+  }
+
+  @Test
+  void asyncGzipResponseKeepsContentEncodingHeader() throws Exception {
+    try (DashScopeAsyncClient async =
+        DashScopeAsyncClient.builder()
+            .apiKey("test-key")
+            .baseUrl(server.url("/").toString())
+            .maxRetries(0)
+            .build()) {
+      server.enqueue(
+          new MockResponse()
+              .setResponseCode(200)
+              .setHeader("Content-Type", "application/json")
+              .setHeader("Content-Encoding", "gzip")
+              .setBody(
+                  gzipped(
+                      "{\"output\":{\"choices\":[{\"message\":{\"role\":\"assistant\","
+                          + "\"content\":\"async\"}}]},\"request_id\":\"gz2\"}")));
+
+      ChatCompletion result = async.chat().completions().create(params()).get(5, TimeUnit.SECONDS);
+
+      assertEquals("async", result.outputText());
+      assertEquals("gzip", result.getHeaders().get("Content-Encoding"));
+    }
+  }
+
+  @Test
+  void gzipStreamingDecodesAndErrorHeadersKeepContentEncoding() throws Exception {
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(200)
+            .setHeader("Content-Type", "text/event-stream")
+            .setHeader("Content-Encoding", "gzip")
+            .setBody(
+                gzipped(
+                    "data: {\"output\":{\"choices\":[{\"message\":{\"content\":\"你\"}}]},"
+                        + "\"request_id\":\"gz3\"}\n\n"
+                        + "data: {\"code\":\"Throttling\",\"message\":\"throttled\","
+                        + "\"request_id\":\"gz3\"}\n\n")));
+
+    try (ResponseStream<ChatCompletionChunk> stream =
+        client.chat().completions().createStreaming(params())) {
+      List<String> contents = new ArrayList<>();
+      RateLimitException e =
+          assertThrows(
+              RateLimitException.class,
+              () -> {
+                for (ChatCompletionChunk chunk : stream) {
+                  contents.add(chunk.delta().getContent());
+                }
+              });
+      assertEquals(Arrays.asList("你"), contents);
+      assertEquals("gzip", e.getHeaders().get("Content-Encoding"));
     }
   }
 
@@ -431,6 +521,79 @@ class ChatCompletionsMockTest {
     JsonNode body = bodyOf(request);
     assertTrue(body.get("parameters").get("incremental_output").asBoolean());
     assertEquals("message", body.get("parameters").get("result_format").asText());
+  }
+
+  @Test
+  void streamingChunksCarryStreamResponseHeaders() throws Exception {
+    // Frames deliberately omit request_id: the envelope must fall back to the stream headers.
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(200)
+            .setHeader("Content-Type", "text/event-stream")
+            .setHeader("X-Request-Id", "hdr-s1")
+            .setBody(
+                "data: {\"output\":{\"choices\":[{\"message\":{\"content\":\"你\"}}]}}\n\n"
+                    + "data: {\"output\":{\"choices\":[{\"message\":{\"content\":\"好\"},"
+                    + "\"finish_reason\":\"stop\"}]}}\n\n"));
+
+    List<ChatCompletionChunk> chunks = new ArrayList<>();
+    try (ResponseStream<ChatCompletionChunk> stream =
+        client.chat().completions().createStreaming(params())) {
+      for (ChatCompletionChunk chunk : stream) {
+        chunks.add(chunk);
+      }
+    }
+
+    assertEquals(2, chunks.size());
+    for (ChatCompletionChunk chunk : chunks) {
+      assertEquals("text/event-stream", chunk.getHeaders().get("Content-Type"));
+      assertEquals("hdr-s1", chunk.getHeaders().get("X-Request-Id"));
+      assertEquals("hdr-s1", chunk.getRequestId());
+      assertEquals(200, chunk.getStatusCode());
+    }
+  }
+
+  @Test
+  void asyncStreamingChunksCarryStreamResponseHeaders() throws Exception {
+    try (DashScopeAsyncClient async =
+        DashScopeAsyncClient.builder()
+            .apiKey("test-key")
+            .baseUrl(server.url("/").toString())
+            .maxRetries(0)
+            .build()) {
+      server.enqueue(
+          new MockResponse()
+              .setResponseCode(200)
+              .setHeader("Content-Type", "text/event-stream")
+              .setHeader("X-Request-Id", "hdr-a1")
+              .setBody(
+                  "data: {\"output\":{\"choices\":[{\"message\":{\"content\":\"你\"}}]}}\n\n"
+                      + "data:"
+                      + " {\"output\":{\"choices\":[{\"message\":{\"content\":\"好\"}}]}}\n\n"));
+
+      List<ChatCompletionChunk> items = new ArrayList<>();
+      CountDownLatch done = new CountDownLatch(1);
+      AtomicReference<Throwable> error = new AtomicReference<>();
+      async
+          .chat()
+          .completions()
+          .createStreaming(params())
+          .subscribe(
+              items::add,
+              t -> {
+                error.set(t);
+                done.countDown();
+              },
+              done::countDown);
+      assertTrue(done.await(10, TimeUnit.SECONDS));
+      assertNull(error.get());
+      assertEquals(2, items.size());
+      for (ChatCompletionChunk chunk : items) {
+        assertEquals("text/event-stream", chunk.getHeaders().get("Content-Type"));
+        assertEquals("hdr-a1", chunk.getHeaders().get("X-Request-Id"));
+        assertEquals("hdr-a1", chunk.getRequestId());
+      }
+    }
   }
 
   @Test

@@ -251,6 +251,39 @@ class AppsMockTest {
   }
 
   @Test
+  void streamingFramesCarryStreamResponseHeaders() throws Exception {
+    // Frames deliberately omit request_id: the envelope must fall back to the stream headers.
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(200)
+            .setHeader("Content-Type", "text/event-stream")
+            .setHeader("X-Request-Id", "hdr-app1")
+            .setBody(
+                "data: {\"output\":{\"text\":\"你\",\"session_id\":\"s1\"}}\n\n"
+                    + "data: {\"output\":{\"text\":\"你好\",\"finish_reason\":\"stop\"}}\n\n"));
+
+    List<AppCompletion> frames = new ArrayList<>();
+    try (ResponseStream<AppCompletion> stream =
+        client
+            .apps()
+            .completions()
+            .createStreaming(
+                AppCompletionCreateParams.builder().appId("app-1").prompt("q").build())) {
+      for (AppCompletion frame : stream) {
+        frames.add(frame);
+      }
+    }
+
+    assertEquals(2, frames.size());
+    for (AppCompletion frame : frames) {
+      assertEquals("text/event-stream", frame.getHeaders().get("Content-Type"));
+      assertEquals("hdr-app1", frame.getHeaders().get("X-Request-Id"));
+      assertEquals("hdr-app1", frame.getRequestId());
+      assertEquals(200, frame.getStatusCode());
+    }
+  }
+
+  @Test
   void streamingInStreamErrorFrameThrows() {
     server.enqueue(
         new MockResponse()

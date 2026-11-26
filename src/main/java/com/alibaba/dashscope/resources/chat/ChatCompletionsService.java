@@ -10,6 +10,7 @@ import com.alibaba.dashscope.types.common.ResponseStream;
 import com.alibaba.dashscope.types.completions.ChatCompletion;
 import com.alibaba.dashscope.types.completions.ChatCompletionChunk;
 import com.alibaba.dashscope.types.completions.ChatCompletionCreateParams;
+import java.util.Map;
 
 /** {@code chat.completions} resource: {@code create} / {@code createStreaming}. */
 public final class ChatCompletionsService {
@@ -57,16 +58,19 @@ public final class ChatCompletionsService {
             ChatCompletionsSupport.buildBody(params, true),
             ChatCompletionsSupport.MODULE,
             options);
+    // Every chunk on the stream carries the opening HTTP exchange's headers (request id
+    // fallback, tracing); snapshot once so all frames share the same map.
+    Map<String, String> streamHeaders = sse.headersMap();
     return new ResponseStream<>(
         sse,
         frame -> {
           ChatCompletionChunk chunk = ChatCompletionsSupport.mapChunk(frame);
           chunk.fillEnvelope(
-              JsonSupport.requestId(frame, null),
+              JsonSupport.requestId(frame, streamHeaders),
               200,
               JsonSupport.errorCode(frame),
               JsonSupport.errorMessage(frame),
-              java.util.Collections.emptyMap());
+              streamHeaders);
           return chunk;
         },
         transport.config().isRaiseOnError());

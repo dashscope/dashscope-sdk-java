@@ -6,7 +6,6 @@ import com.alibaba.dashscope.transport.JsonSupport;
 import com.alibaba.dashscope.transport.sse.SseStream;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -57,7 +56,7 @@ public final class ResponseStream<T> implements Iterable<T>, AutoCloseable {
         }
         JsonNode frame = frames.next();
         if (JsonSupport.isErrorFrame(frame)) {
-          Map<String, String> headers = headersOfStream();
+          Map<String, String> headers = stream.headersMap();
           T errorItem = raiseOnError ? null : mapper.apply(frame);
           if (errorItem == null) {
             // raiseOnError(true), or a mapper that cannot represent the error as an item
@@ -92,13 +91,5 @@ public final class ResponseStream<T> implements Iterable<T>, AutoCloseable {
       next = null;
       return out;
     }
-  }
-
-  private Map<String, String> headersOfStream() {
-    Map<String, String> out = new LinkedHashMap<>();
-    for (String name : stream.responseHeaders().names()) {
-      out.put(name, stream.responseHeaders().get(name));
-    }
-    return out;
   }
 }

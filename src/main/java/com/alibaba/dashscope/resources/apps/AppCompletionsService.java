@@ -9,7 +9,7 @@ import com.alibaba.dashscope.transport.sse.SseStream;
 import com.alibaba.dashscope.types.apps.AppCompletion;
 import com.alibaba.dashscope.types.apps.AppCompletionCreateParams;
 import com.alibaba.dashscope.types.common.ResponseStream;
-import java.util.Collections;
+import java.util.Map;
 
 /** {@code apps.completions} resource: {@code create} / {@code createStreaming}. */
 public final class AppCompletionsService {
@@ -69,16 +69,19 @@ public final class AppCompletionsService {
             AppCompletionsSupport.buildBody(params),
             AppCompletionsSupport.MODULE,
             options);
+    // Every frame on the stream carries the opening HTTP exchange's headers (request id
+    // fallback, tracing); snapshot once so all frames share the same map.
+    Map<String, String> streamHeaders = sse.headersMap();
     return new ResponseStream<>(
         sse,
         frame -> {
           AppCompletion completion = AppCompletionsSupport.mapCompletion(frame);
           completion.fillEnvelope(
-              JsonSupport.requestId(frame, null),
+              JsonSupport.requestId(frame, streamHeaders),
               200,
               JsonSupport.errorCode(frame),
               JsonSupport.errorMessage(frame),
-              Collections.emptyMap());
+              streamHeaders);
           return completion;
         },
         transport.config().isRaiseOnError());

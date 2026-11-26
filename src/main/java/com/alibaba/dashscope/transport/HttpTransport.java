@@ -547,7 +547,16 @@ public final class HttpTransport implements AutoCloseable {
   }
 
   private static Map<String, String> headersOf(Response response) {
+    // OkHttp's transparent gzip decompression strips Content-Encoding/Content-Length from the
+    // application-layer headers; seed from the raw network exchange so the public headers keep
+    // what the API actually sent, then overlay any application-layer edits on top.
     Map<String, String> out = new LinkedHashMap<>();
+    Response network = response.networkResponse();
+    if (network != null) {
+      for (String name : network.headers().names()) {
+        out.put(name, network.header(name));
+      }
+    }
     for (String name : response.headers().names()) {
       out.put(name, response.header(name));
     }

@@ -82,7 +82,7 @@ public final class MultimodalChatService {
             withOssResolve(opts, pre.ossResolve));
     MultimodalChatSupport.IncrementalMerger merger =
         merge ? new MultimodalChatSupport.IncrementalMerger() : null;
-    Map<String, String> streamHeaders = streamHeaders(sse);
+    Map<String, String> streamHeaders = sse.headersMap();
     return new ResponseStream<>(
         sse,
         frame -> {
@@ -103,14 +103,6 @@ public final class MultimodalChatService {
           return chunk;
         },
         transport.config().isRaiseOnError());
-  }
-
-  private static Map<String, String> streamHeaders(SseStream sse) {
-    Map<String, String> headers = new LinkedHashMap<>();
-    for (String name : sse.responseHeaders().names()) {
-      headers.put(name, sse.responseHeaders().get(name));
-    }
-    return headers;
   }
 
   private static MultimodalChatCreateParams withMessages(
