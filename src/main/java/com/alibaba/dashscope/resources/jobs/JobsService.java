@@ -105,10 +105,16 @@ public final class JobsService {
    * no task context); a caller-configured shorter per-call timeout propagates unchanged.
    */
   private Job poll(String taskId, RequestOptions options, long timeoutNanos, long start) {
+    long remainingNanos = timeoutNanos - (System.nanoTime() - start);
+    RequestOptions bounded = boundedOptions(options, remainingNanos);
+    RequestOptions opts = options == null ? RequestOptions.NONE : options;
+    Duration configured =
+        opts.getTimeout() != null ? opts.getTimeout() : transport.config().getTimeout();
+    boolean boundedByWaitTimeout = configured.compareTo(bounded.getTimeout()) > 0;
     try {
-      return fetch(taskId, boundedOptions(options, timeoutNanos - (System.nanoTime() - start)));
+      return fetch(taskId, bounded);
     } catch (ApiTimeoutException e) {
-      if (timeoutNanos - (System.nanoTime() - start) <= 0) {
+      if (boundedByWaitTimeout || timeoutNanos - (System.nanoTime() - start) <= 0) {
         throw waitTimeout(taskId, System.nanoTime() - start, e);
       }
       throw e;
