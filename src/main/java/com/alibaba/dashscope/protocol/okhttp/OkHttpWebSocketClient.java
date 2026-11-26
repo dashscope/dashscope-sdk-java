@@ -224,7 +224,11 @@ public class OkHttpWebSocketClient extends WebSocketListener
                                 module),
                             this);
                   } catch (Throwable ex) {
-                    this.connectionEmitter.onError(ex);
+                    // Cancellation may have already completed this attempt. Report late errors
+                    // only to this emitter, never to RxJava's global error handler.
+                    if (!isClosed.get()) {
+                      emitter.tryOnError(ex);
+                    }
                   }
                 },
                 BackpressureStrategy.BUFFER);

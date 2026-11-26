@@ -14,6 +14,7 @@ import com.alibaba.dashscope.protocol.StreamingMode;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.plugins.RxJavaPlugins;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -82,6 +83,50 @@ public class TestOkHttpWebSocketClientCloseRace {
     try {
       client.executeStreamRequest(request(src));
       assertEquals(0, finishSends.get(), "finish-task must not be sent after cancel");
+      assertTrue(
+          undeliverable.isEmpty(), "expected no undeliverable errors, got: " + undeliverable);
+    } finally {
+      RxJavaPlugins.setErrorHandler(null);
+    }
+  }
+
+  @Test
+  public void finishTaskReconnectFailureDoesNotLeakWhenCancelledInFlight() {
+    List<Throwable> undeliverable = new CopyOnWriteArrayList<>();
+    AtomicInteger reconnectAttempts = new AtomicInteger();
+    OkHttpWebSocketClient client =
+        new OkHttpWebSocketClient(new OkHttpClient(), false) {
+          @Override
+          protected void sendTextWithRetry(
+              String apiKey,
+              boolean isSecurityCheck,
+              String message,
+              String workspace,
+              Map<String, String> customHeaders,
+              String baseWebSocketUrl,
+              String module) {
+            if (!message.contains("finish-task")) {
+              return;
+            }
+            Map<String, String> headers =
+                new HashMap<String, String>() {
+                  @Override
+                  public String get(Object key) {
+                    // Request construction runs after the connection emitter is installed.
+                    // Cancel here to complete the emitter, then simulate a late auth failure.
+                    reconnectAttempts.incrementAndGet();
+                    cancel();
+                    throw new RuntimeException(new NoApiKeyException());
+                  }
+                };
+            super.sendTextWithRetry(
+                apiKey, isSecurityCheck, message, workspace, headers, baseWebSocketUrl, module);
+          }
+        };
+    RxJavaPlugins.setErrorHandler(undeliverable::add);
+    try {
+      client.executeStreamRequest(request(Flowable.empty()));
+      assertEquals(1, reconnectAttempts.get(), "finish-task must enter real request construction");
       assertTrue(
           undeliverable.isEmpty(), "expected no undeliverable errors, got: " + undeliverable);
     } finally {
