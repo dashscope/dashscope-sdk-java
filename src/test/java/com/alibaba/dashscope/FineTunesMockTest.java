@@ -319,6 +319,29 @@ class FineTunesMockTest {
   }
 
   @Test
+  void shorterPerCallTimeoutPropagatesWithoutJobContext() {
+    server.enqueue(
+        okJson("{\"output\":{\"job_id\":\"ft-slow\",\"status\":\"RUNNING\"}}")
+            .setBodyDelay(5, TimeUnit.SECONDS));
+
+    // The caller-configured per-call timeout (150ms) is shorter than the wait budget (30s), so
+    // the poll is not budget-bounded: the raw transport timeout must propagate unchanged,
+    // without the wait-timeout job context.
+    ApiTimeoutException e =
+        assertThrows(
+            ApiTimeoutException.class,
+            () ->
+                client
+                    .fineTunes()
+                    .wait(
+                        "ft-slow",
+                        Duration.ofSeconds(30),
+                        RequestOptions.builder().timeout(Duration.ofMillis(150)).build()));
+    assertFalse(e.getMessage().contains("waiting for fine-tune job"), e.getMessage());
+    assertTrue(e.getMessage().contains("request:"), e.getMessage());
+  }
+
+  @Test
   void waitRaisesOnFailedJob() throws Exception {
     server.enqueue(
         okJson(

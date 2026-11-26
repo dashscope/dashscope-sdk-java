@@ -5,11 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -35,10 +37,12 @@ import org.junit.jupiter.api.TestFactory;
  *
  * <p>Skipped: {@code AsrMicrophoneRecognize} (needs microphone hardware) and {@code
  * AsrJobsTranscribe} (enforces https:// download URLs, which a plain-http mock cannot serve).
+ * {@code TokenizationLocalCount} runs offline against a synthetic {@code qwen.tiktoken} vocab
+ * injected via {@code DASHSCOPE_QWEN_VOCAB}, so the dry-run never downloads from ModelScope.
  *
- * <p>The design-§8 "in CI" half is not wired yet: {@code examples/} is a standalone Maven project
- * (the root pom declares no {@code <module>} for it), so this suite only runs on demand via {@code
- * mvn -f examples/pom.xml test}. Run it locally after changing any example.
+ * <p>{@code examples/} is a standalone Maven project (the root pom declares no {@code <module>}
+ * for it); the CI test job installs the current SDK first, then runs this suite via {@code mvn -f
+ * examples/pom.xml clean test}. Run the same command locally after changing any example.
  */
 class ExamplesDryRunTest {
   private static final String PKG = "com.alibaba.dashscope.examples.";
@@ -47,6 +51,7 @@ class ExamplesDryRunTest {
   private static MockWebServer server;
   private static Path sandbox;
   private static String speechWav;
+  private static String qwenVocab;
 
   @BeforeAll
   static void setUp() throws IOException {
@@ -59,6 +64,33 @@ class ExamplesDryRunTest {
     Path wav = sandbox.resolve("speech.wav");
     Files.write(wav, MockWs.wavFileBytes(16000));
     speechWav = wav.toString();
+    qwenVocab = sandbox.resolve("qwen.tiktoken").toString();
+    Files.write(sandbox.resolve("qwen.tiktoken"), syntheticVocab());
+  }
+
+  /**
+   * Minimal stand-in for the real ~151k-entry qwen.tiktoken: ranks 0-255 are the single bytes
+   * (so any UTF-8 text encodes byte-wise), the rest are unique 3-byte filler tokens. The entry
+   * count must reach 151643 because QwenTokenizer sizes its decode map to cover the hardcoded
+   * special-token ids 151643-151850.
+   */
+  private static byte[] syntheticVocab() {
+    StringBuilder vocab = new StringBuilder();
+    for (int rank = 0; rank < 151643; rank++) {
+      byte[] token;
+      if (rank < 256) {
+        token = new byte[] {(byte) rank};
+      } else {
+        int value = rank - 256;
+        token = new byte[] {(byte) (value >>> 16), (byte) (value >>> 8), (byte) value};
+      }
+      vocab
+          .append(Base64.getEncoder().encodeToString(token))
+          .append(' ')
+          .append(rank)
+          .append('\n');
+    }
+    return vocab.toString().getBytes(StandardCharsets.UTF_8);
   }
 
   @AfterAll
@@ -71,7 +103,13 @@ class ExamplesDryRunTest {
     List<DynamicTest> tests = new ArrayList<>();
     // 01 atomic: text/multimodal/vector domains.
     add(tests, "ChatCompletionsCreate", PKG + "atomic.chat.ChatCompletionsCreate");
+    add(tests, "ChatCompletionsCreateAsync", PKG + "atomic.chat.ChatCompletionsCreateAsync");
+    add(
+        tests,
+        "ChatCompletionsCreateEncrypted",
+        PKG + "atomic.chat.ChatCompletionsCreateEncrypted");
     add(tests, "TokenizationCount", PKG + "atomic.chat.TokenizationCount");
+    add(tests, "TokenizationLocalCount", PKG + "atomic.chat.TokenizationLocalCount");
     add(tests, "MultimodalChatCreate", PKG + "atomic.multimodal.MultimodalChatCreate");
     add(tests, "EmbeddingsCreate", PKG + "atomic.embeddings.EmbeddingsCreate");
     add(tests, "RerankCreate", PKG + "atomic.rerank.RerankCreate");
@@ -80,6 +118,7 @@ class ExamplesDryRunTest {
     add(tests, "FilesManage", PKG + "atomic.files.FilesManage");
     add(tests, "ModelsList", PKG + "atomic.models.ModelsList");
     add(tests, "FineTunesCreate", PKG + "atomic.finetunes.FineTunesCreate");
+    add(tests, "DeploymentsManage", PKG + "atomic.deployments.DeploymentsManage");
     add(tests, "AppsCompletionsCreate", PKG + "atomic.apps.AppsCompletionsCreate");
     add(tests, "DecisionCreate", PKG + "atomic.decision.DecisionCreate");
     // 01 atomic: audio.
@@ -230,6 +269,8 @@ class ExamplesDryRunTest {
     env.put("DASHSCOPE_APP_ID", "app-dry");
     env.put("DASHSCOPE_AGENT_ID", "agent-dry");
     env.put("DASHSCOPE_AGENTSTUDIO_URL", server.url("/api/v1/agentstudio/").toString());
+    // Offline tokenizer vocab for TokenizationLocalCount; ignored by every other example.
+    env.put("DASHSCOPE_QWEN_VOCAB", qwenVocab);
 
     Process process = builder.start();
     StringBuilder captured = new StringBuilder();

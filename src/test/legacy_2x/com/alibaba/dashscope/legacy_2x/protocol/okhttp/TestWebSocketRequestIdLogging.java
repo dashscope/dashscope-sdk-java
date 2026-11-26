@@ -14,12 +14,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.WebSocket;
+import okio.ByteString;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -148,6 +152,59 @@ public class TestWebSocketRequestIdLogging {
       String output = capture.output();
       assertTrue(output.contains("requestId=audio-task"));
       assertFalse(output.contains("requestId=handshake-id"));
+    }
+  }
+
+  @Test
+  public void testCancelledSendTextLogsRequestId() throws Exception {
+    OkHttpWebSocketClient client = newClient();
+    try (SdkLogCapture capture = new SdkLogCapture(OkHttpWebSocketClient.class)) {
+      client.cancel();
+      client.sendTextWithRetry("key", false, "{}", null, null, "ws://localhost", "audio");
+      assertTrue(
+          capture
+              .output()
+              .contains("sendTextWithRetry skipped: connection already closed. requestId=unknown"));
+    }
+  }
+
+  @Test
+  public void testNullClientSendWarnsLogRequestId() throws Exception {
+    OkHttpWebSocketClient client = newClient();
+    Field isOpen = OkHttpWebSocketClient.class.getDeclaredField("isOpen");
+    isOpen.setAccessible(true);
+    ((AtomicBoolean) isOpen.get(client)).set(true);
+    try (SdkLogCapture capture = new SdkLogCapture(OkHttpWebSocketClient.class)) {
+      client.sendTextWithRetry("key", false, "{}", null, null, "ws://localhost", "audio");
+      client.sendBinaryWithRetry(
+          "key", false, ByteString.EMPTY, null, null, "ws://localhost", "audio");
+      String output = capture.output();
+      assertTrue(
+          output.contains("webSocketClient is null, cannot send message. requestId=unknown"));
+      assertTrue(
+          output.contains(
+              "webSocketClient is null, cannot send binary message. requestId=unknown"));
+    }
+  }
+
+  @Test
+  public void testCancelledEstablishLogsRequestId() throws Exception {
+    OkHttpWebSocketClient client = newClient();
+    try (SdkLogCapture capture = new SdkLogCapture(OkHttpWebSocketClient.class)) {
+      client.cancel();
+      Method establish =
+          OkHttpWebSocketClient.class.getDeclaredMethod(
+              "establishWebSocketClient",
+              String.class,
+              boolean.class,
+              String.class,
+              Map.class,
+              String.class,
+              String.class);
+      establish.setAccessible(true);
+      establish.invoke(client, "key", false, null, null, "ws://localhost", "audio");
+      assertTrue(
+          capture.output().contains("Connection cancelled, stop reconnecting. requestId=unknown"));
     }
   }
 }

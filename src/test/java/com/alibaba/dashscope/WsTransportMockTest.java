@@ -420,6 +420,26 @@ class WsTransportMockTest {
   }
 
   @Test
+  void peerInitiatedCloseIsAnsweredAndTearsDownConnection() throws Exception {
+    ServerSocket serverSocket = enqueueUpgrade();
+    WsConnection conn =
+        new WsConnection(transport, transport.config().getWsBaseUrl(), "audio", null);
+    serverSocket.awaitOpen();
+    TaskChannel handle = conn.attach("task-a");
+    // Regression: okhttp never answers a peer close frame on its own and close() is a no-op
+    // once closed is set, so the demux reader must reply itself; without the reply the socket
+    // lingers in CLOSE_WAIT until the server force-closes TCP.
+    serverSocket.socket.get().close(1000, "server bye");
+    assertTrue(
+        serverSocket.closed.await(10, TimeUnit.SECONDS), "client never answered the close frame");
+    TaskEvent event = handle.recv(RECV_TIMEOUT);
+    assertNotNull(event);
+    assertEquals(TaskEvent.Kind.CLOSED, event.getKind());
+    assertThrows(SdkException.class, () -> conn.attach("task-b"));
+    conn.close(); // must remain a safe no-op after a peer-initiated close
+  }
+
+  @Test
   void taskHandleCloseWakesBlockedReceiverImmediately() throws Exception {
     ServerSocket serverSocket = enqueueUpgrade();
     try (WsConnection conn =

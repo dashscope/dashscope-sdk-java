@@ -228,6 +228,13 @@ public final class WsConnection implements AutoCloseable {
       }
       if (item.closeCode != null) {
         closed.set(true);
+        // Answer the peer's close to complete the RFC 6455 handshake: okhttp never replies on
+        // its own, and close() is a no-op once closed is set, so without this the socket lingers
+        // in CLOSE_WAIT until the server force-closes TCP. okhttp only accepts 1000/3000-4999,
+        // so reply with 1000 instead of echoing the peer's code (e.g. 1001 would throw).
+        if (!socket.close(1000, "bye")) {
+          socket.cancel();
+        }
         broadcast(TaskEvent.closed(item.closeCode, item.closeReason));
         markAllDetached();
         tasks.clear();

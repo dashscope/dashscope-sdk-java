@@ -34,7 +34,7 @@ import com.alibaba.dashscope.types.messages.Message;
 import java.util.Collections;
 
 // apiKey 走配置链：Builder 显式参数 > -Ddashscope.api.key > DASHSCOPE_API_KEY 环境变量
-// > ~/.dashscope/config.toml
+// > ~/.dashscope/config.toml > 1.x 密钥文件（DASHSCOPE_API_KEY_FILE_PATH 或 ~/.dashscope/api_key）
 try (DashScopeClient client = DashScopeClient.builder().build()) {
   ChatCompletion result = client.chat().completions().create(
       ChatCompletionCreateParams.builder()
@@ -47,10 +47,12 @@ try (DashScopeClient client = DashScopeClient.builder().build()) {
 ```
 
 - 资源树：`chat / multimodal / apps / images / videos / embeddings / rerank / tokenization /
-  audio / finetunes / deployments / files / models / tingwu / decision / agentStudio`，
-  见 [md/dashscope-3.0-design.md](md/dashscope-3.0-design.md)。
-- 2.x 迁移：[md/dashscope-3.0-migration.md](md/dashscope-3.0-migration.md)
-  （逐类对照表、unchecked 异常心智、AgentStudio 与 tokenizers 专章）。
+  audio / fineTunes / deployments / files / models / tingwu / decision / agentStudio`，
+  设计细节见内部文档 `md/dashscope-3.0-design.md`（未随本仓库分发）。
+- 异步客户端：`DashScopeAsyncClient.builder()` 提供同一资源树，返回
+  `CompletableFuture`（流式为 RxJava `Flowable`）。
+- 2.x 迁移：内部文档 `md/dashscope-3.0-migration.md`（未随本仓库分发；
+  逐类对照表、unchecked 异常心智、AgentStudio 与 tokenizers 专章）。
 - 可运行示例：[examples/README.md](examples/README.md)（四层结构，MockWebServer 干跑，命令
   `mvn -f examples/pom.xml clean test`；CI 在根测试之后先以 `mvn install -DskipTests -Dgpg.skip=true` 安装
   当前 SDK，再运行独立示例工程）。
@@ -81,6 +83,8 @@ import com.alibaba.dashscope.legacy_2x.common.Message;
 import com.alibaba.dashscope.legacy_2x.common.ResultCallback;
 import com.alibaba.dashscope.legacy_2x.common.Role;
 import com.alibaba.dashscope.legacy_2x.exception.ApiException;
+import com.alibaba.dashscope.legacy_2x.exception.InputRequiredException;
+import com.alibaba.dashscope.legacy_2x.exception.NoApiKeyException;
 import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
 import java.util.Arrays;
 
@@ -114,7 +118,11 @@ public class Main {
         }
       }
 
-      generation.call(param, new ReactCallback());
+      try {
+        generation.call(param, new ReactCallback());
+      } catch (ApiException | NoApiKeyException | InputRequiredException e) {
+        System.err.println("An error occurred: " + e.getMessage());
+      }
     }
 }
 ```
@@ -219,7 +227,7 @@ public class Main {
 
 ### 决策模型
 
-决策模型（Decision Model）针对给定的业务状态，批量回答多选一（choice）、是否判断（noul）、有序量表（score）三类问题，详见[决策模型 API 文档](https://platform.qianwenai.com/docs/api-reference/decision-model-api)。
+决策模型（Decision Model）针对给定的业务状态，批量回答多选一（choice）、是否判断（noul）、有序量表（score）三类问题，详见[决策模型 API 文档](https://docs.bailian.console.aliyun.com/zh/model-studio/decision-model-api)。
 
 ```java
 import com.alibaba.dashscope.legacy_2x.decision.DecisionModel;

@@ -1,10 +1,19 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.examples;
 
+import com.alibaba.dashscope.transport.EncryptionUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import okhttp3.HttpUrl;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -25,9 +34,17 @@ public final class DryRunDispatcher extends Dispatcher {
   private static final int TTS_SAMPLE_RATE = 24000;
 
   private final MockWebServer server;
+  private final KeyPair encryptionKeyPair;
 
   public DryRunDispatcher(MockWebServer server) {
     this.server = server;
+    try {
+      KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+      generator.initialize(2048);
+      this.encryptionKeyPair = generator.generateKeyPair();
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   @Override
@@ -70,8 +87,21 @@ public final class DryRunDispatcher extends Dispatcher {
     if (path.startsWith("/oss")) {
       return new MockResponse().setResponseCode(200);
     }
+    // J7 encryption channel: serve the RSA public key the SDK wraps its per-request AES key with.
+    if (path.equals("/public-keys/latest")) {
+      String publicKey =
+          Base64.getEncoder().encodeToString(encryptionKeyPair.getPublic().getEncoded());
+      return json(
+          200,
+          "{\"request_id\":\"key-dry\",\"data\":{\"public_key\":\""
+              + publicKey
+              + "\",\"public_key_id\":\"key-dry\"}}");
+    }
     switch (path) {
       case "/services/aigc/text-generation/generation":
+        if (request.getHeader("X-DashScope-EncryptionKey") != null) {
+          return encryptedChat(request, body);
+        }
         return isSse(request) ? sse(chatDeltaFrames()) : json(200, CHAT_JSON);
       case "/services/aigc/multimodal-generation/generation":
         return multimodal(request, body);
@@ -179,8 +209,50 @@ public final class DryRunDispatcher extends Dispatcher {
           "{\"output\":{\"job_id\":\"ft-dry\",\"status\":\"SUCCEEDED\",\"finetuned_output\":\"m\","
               + "\"create_time\":\"2026-10-01\"},\"request_id\":\"r2\"}");
     }
+    if (path.startsWith("/deployments")) {
+      if (path.equals("/deployments") || path.startsWith("/deployments?")) {
+        return json(
+            200,
+            "{\"output\":{\"deployments\":[{\"deployed_model\":\"dep-dry\","
+                + "\"status\":\"RUNNING\",\"capacity\":1}],"
+                + "\"page_no\":1,\"page_size\":10,\"total\":1},\"request_id\":\"r-dep1\"}");
+      }
+      return json(
+          200,
+          "{\"output\":{\"deployed_model\":\"dep-dry\",\"status\":\"RUNNING\",\"capacity\":1,"
+              + "\"ready_capacity\":1},\"request_id\":\"r-dep2\"}");
+    }
     return json(
         404, "{\"code\":\"NotFound\",\"message\":\"dry-run has no route for " + path + "\"}");
+  }
+
+  /**
+   * J7 encrypted chat roundtrip: unwrap the AES key with the mock RSA private key, verify the
+   * encrypted {@code input} decrypts, then AES-encrypt the canned {@code output} back (same wire
+   * shape as the SDK's EncryptionMockTest).
+   */
+  private MockResponse encryptedChat(RecordedRequest request, String body) throws Exception {
+    JsonNode keyHeader = MAPPER.readTree(request.getHeader("X-DashScope-EncryptionKey"));
+    Cipher rsa = Cipher.getInstance("RSA");
+    rsa.init(Cipher.DECRYPT_MODE, encryptionKeyPair.getPrivate());
+    byte[] aesBytes =
+        Base64.getDecoder()
+            .decode(
+                new String(
+                    rsa.doFinal(
+                        Base64.getDecoder().decode(keyHeader.get("encrypt_key").asText())),
+                    StandardCharsets.UTF_8));
+    SecretKey aesKey = new SecretKeySpec(aesBytes, "AES");
+    byte[] iv = Base64.getDecoder().decode(keyHeader.get("iv").asText());
+    JsonNode requestBody = MAPPER.readTree(body);
+    // Roundtrip check: the encrypted input must decrypt back to the chat request JSON.
+    EncryptionUtils.aesDecrypt(requestBody.get("input").asText(), aesKey, iv);
+    String output =
+        "{\"choices\":[{\"finish_reason\":\"stop\",\"message\":{\"role\":\"assistant\","
+            + "\"content\":\"你好\"}}]}";
+    String encryptedOutput = EncryptionUtils.aesEncrypt(output, aesKey, iv);
+    return json(200, "{\"request_id\":\"enc-1\",\"output\":\"" + encryptedOutput + "\"}")
+        .setHeader("X-DashScope-OutputEncrypted", "true");
   }
 
   private MockResponse multimodal(RecordedRequest request, String body) throws Exception {

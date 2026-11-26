@@ -202,7 +202,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
     while (true) {
       // Bail out immediately if cancel() has been called
       if (isClosed.get()) {
-        log.debug("Connection cancelled, stop reconnecting.");
+        log.debug("Connection cancelled, stop reconnecting. requestId={}", getRequestIdOrUnknown());
         return;
       }
       try {
@@ -236,7 +236,7 @@ public class OkHttpWebSocketClient extends WebSocketListener
         attempts += 1;
         errorMessage = ex.getMessage() != null ? ex.getMessage() : ex.toString();
         if (errorMessage.contains(Constants.NO_API_KEY_ERROR)) {
-          log.error(errorMessage);
+          log.error("{}, requestId={}", errorMessage, getRequestIdOrUnknown());
           throw ex;
         }
         log.error("{}, requestId={}", errorMessage, getRequestIdOrUnknown());
@@ -258,7 +258,9 @@ public class OkHttpWebSocketClient extends WebSocketListener
         }
         // Check again before sleeping
         if (isClosed.get()) {
-          log.debug("Connection cancelled during retry, stop reconnecting.");
+          log.debug(
+              "Connection cancelled during retry, stop reconnecting. requestId={}",
+              getRequestIdOrUnknown());
           return;
         }
         if (!sleepBeforeRetry(attempts)) {
@@ -634,7 +636,9 @@ public class OkHttpWebSocketClient extends WebSocketListener
       String module) {
     // Guard: skip if already cancelled
     if (isClosed.get()) {
-      log.debug("sendTextWithRetry skipped: connection already closed.");
+      log.debug(
+          "sendTextWithRetry skipped: connection already closed. requestId={}",
+          getRequestIdOrUnknown());
       return;
     }
     // simple retry with fixed delay, no strategy
@@ -649,7 +653,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
     if (passTaskStarted.get()) {
       // when pass througn task started, no need to retry.
       if (webSocketClient == null) {
-        log.warn("webSocketClient is null, cannot send message.");
+        log.warn(
+            "webSocketClient is null, cannot send message. requestId={}", getRequestIdOrUnknown());
         return;
       }
       log.info("Sending message: {}, requestId={}", message, getRequestIdOrUnknown());
@@ -666,7 +671,8 @@ public class OkHttpWebSocketClient extends WebSocketListener
         return;
       }
       if (webSocketClient == null) {
-        log.warn("webSocketClient is null, cannot send message.");
+        log.warn(
+            "webSocketClient is null, cannot send message. requestId={}", getRequestIdOrUnknown());
         return;
       }
       log.debug("Sending message: {}, requestId={}", message, getRequestIdOrUnknown());
@@ -713,7 +719,9 @@ public class OkHttpWebSocketClient extends WebSocketListener
         return;
       }
       if (webSocketClient == null) {
-        log.warn("webSocketClient is null, cannot send binary message.");
+        log.warn(
+            "webSocketClient is null, cannot send binary message. requestId={}",
+            getRequestIdOrUnknown());
         return;
       }
       Boolean isOk = webSocketClient.send(message);

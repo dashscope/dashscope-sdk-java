@@ -8,7 +8,7 @@
 02_advanced_engineering/   # 工程化：重试熔断、缓存、本地 mock 调试
 03_agent_recipes/          # Agent 配方：function calling、RAG、AgentStudio
 04_real_world_scenarios/   # 场景 harness：客服、生产 RAG、会议纪要、工单分诊
-legacy_2x/                 # 2.x 旧样例 64 个，整体封存（不编译），见 legacy_2x/README.md
+legacy_2x/                 # 2.x 旧样例 66 个，整体封存（不编译），见 legacy_2x/README.md
 ```
 
 活动四层示例使用 `com.alibaba.dashscope` 根包 3.0 API。`legacy_2x/` 保留历史旧 FQCN；
@@ -55,20 +55,25 @@ mvn -f examples/pom.xml clean test
 >
 > 格式门禁独立保留：`lint.sh` 与 `linter.yml` 的过滤器 `./*/src/.*java` 会命中
 > `examples/src/test/java/` 下的 3 个文件（`ExamplesDryRunTest`、`DryRunDispatcher`、`MockWs`），
-> 它们必须符合 google-java-format（100 列上限）；其余 102 个文件（38 个四层活动示例 + 64 个
-> 封存的 `legacy_2x/`，后者不参与编译）不在该门禁范围内。
+> 它们必须符合 google-java-format（100 列上限）；其余 108 个文件（四层活动示例 42 个文件，含
+> 40 个可运行示例与 2 个公共支撑类 `ExampleSupport`/`AudioCommon`，另加 66 个封存的
+> `legacy_2x/`，后者不参与编译）不在该门禁范围内。
 
 `ExamplesDryRunTest` 用 MockWebServer 扮演全部 HTTP/SSE/WebSocket 端点，把每个示例的
 `main` 在子 JVM 里真实跑通（apiKey/baseUrl/wsBaseUrl 经 `-D` 指向 mock），断言退出码为 0。
 两个例外需要真实环境，不在干跑内：`AsrMicrophoneRecognize`（麦克风硬件）、
-`AsrJobsTranscribe`（强制 https:// 结果下载地址）。
+`AsrJobsTranscribe`（强制 https:// 结果下载地址）。`TokenizationLocalCount` 离线运行，干跑用
+合成词表经 `DASHSCOPE_QWEN_VOCAB` 注入，不触发 ModelScope 下载。
 
 ## 01 原子能力 · 文本 / 多模态 / 向量
 
 | 能力 | 类（`com.alibaba.dashscope.examples.atomic.` 前缀从略） | API 路径 | 运行命令（`$RUN<类>` 后追加） |
 |---|---|---|---|
 | 对话补全（同步+SSE） | `chat.ChatCompletionsCreate` | `client.chat().completions().create / createStreaming` | 无参数 |
+| 对话补全（异步 Future/Flowable） | `chat.ChatCompletionsCreateAsync` | `asyncClient.chat().completions().create / createStreaming` | 无参数 |
+| 对话补全（加密通道 J7） | `chat.ChatCompletionsCreateEncrypted` | `create(params, RequestOptions.enableEncryption(true))` | 无参数 |
 | 分词计数 | `chat.TokenizationCount` | `client.tokenization().count` | 无参数 |
+| 本地分词（离线 BPE） | `chat.TokenizationLocalCount` | `TokenizerFactory.qwen()`（无需 apiKey） | 无参数 |
 | 多模态对话（图文） | `multimodal.MultimodalChatCreate` | `client.multimodal().chat().create / createStreaming` | 无参数 |
 | 文本向量 | `embeddings.EmbeddingsCreate` | `client.embeddings().create` | 无参数 |
 | 重排序 | `rerank.RerankCreate` | `client.rerank().create` | 无参数 |
@@ -77,6 +82,7 @@ mvn -f examples/pom.xml clean test
 | 文件管理 | `files.FilesManage` | `client.files().upload/list/get/delete` | 无参数 |
 | 模型列表 | `models.ModelsList` | `client.models().list/get` | 无参数 |
 | 微调任务 | `finetunes.FineTunesCreate` | `client.fineTunes().list/get` | 无参数 |
+| 模型部署 | `deployments.DeploymentsManage` | `client.deployments().list/get` | 无参数 |
 | 应用调用（App） | `apps.AppsCompletionsCreate` | `client.apps().completions().create / createStreaming` | 无参数（`DASHSCOPE_APP_ID`） |
 | 决策模型 | `decision.DecisionCreate` | `client.decision().create` | 无参数 |
 
@@ -131,4 +137,4 @@ AgentStudio 为两代共用业务包，位于 `com.alibaba.dashscope.application
 ## 生产化路径
 
 示例保持最小可运行；生产化请参考 02 层的熔断/缓存/mock 三件套与 04 层的三个 harness，
-错误码心智见 `../md/dashscope-3.0-migration.md`，2.x 旧样例见 `legacy_2x/README.md`。
+错误码心智见内部文档 `../md/dashscope-3.0-migration.md`（未随本仓库分发），2.x 旧样例见 `legacy_2x/README.md`。

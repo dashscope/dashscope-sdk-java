@@ -213,16 +213,24 @@ public final class FineTunesService {
   }
 
   /**
-   * A single poll bounded by the remaining budget. A poll that times out after the budget is
-   * exhausted is reported as a wait timeout carrying the job id (the transport-level message has no
-   * job context); a caller-configured shorter per-call timeout propagates unchanged.
+   * A single poll bounded by the remaining budget. A budget-bounded poll that times out is
+   * reported as a wait timeout carrying the job id (the transport-level message has no job
+   * context); a caller-configured shorter per-call timeout propagates unchanged.
    */
   private FineTune poll(
       String jobId, RequestOptions options, long timeoutNanos, long start, Duration budget) {
+    long remainingNanos = timeoutNanos - (System.nanoTime() - start);
+    RequestOptions opts = options == null ? RequestOptions.NONE : options;
+    Duration configured =
+        opts.getTimeout() != null ? opts.getTimeout() : transport.config().getTimeout();
+    // OkHttp truncates Duration timeouts to whole milliseconds, so a budget-bounded call can
+    // fire a hair before the budget clock reads exhausted; classify by which timeout was
+    // applied, not by re-reading the clock in the catch.
+    boolean budgetBounded = Duration.ofNanos(remainingNanos).compareTo(configured) < 0;
     try {
-      return get(jobId, boundedOptions(options, timeoutNanos - (System.nanoTime() - start)));
+      return get(jobId, boundedOptions(opts, remainingNanos));
     } catch (ApiTimeoutException e) {
-      if (timeoutNanos - (System.nanoTime() - start) <= 0) {
+      if (budgetBounded || timeoutNanos - (System.nanoTime() - start) <= 0) {
         throw waitTimeout(jobId, budget, e);
       }
       throw e;

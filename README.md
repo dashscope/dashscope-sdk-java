@@ -35,8 +35,9 @@ import com.alibaba.dashscope.types.completions.ChatCompletionCreateParams;
 import com.alibaba.dashscope.types.messages.Message;
 import java.util.Collections;
 
-// apiKey resolves from the config chain:
-// builder > -Ddashscope.api.key > DASHSCOPE_API_KEY > ~/.dashscope/config.toml
+// apiKey resolves from the config chain: builder > -Ddashscope.api.key >
+// DASHSCOPE_API_KEY > ~/.dashscope/config.toml > 1.x key file
+// (DASHSCOPE_API_KEY_FILE_PATH or ~/.dashscope/api_key)
 try (DashScopeClient client = DashScopeClient.builder().build()) {
   ChatCompletion result = client.chat().completions().create(
       ChatCompletionCreateParams.builder()
@@ -49,10 +50,13 @@ try (DashScopeClient client = DashScopeClient.builder().build()) {
 ```
 
 - Resource tree: `chat / multimodal / apps / images / videos / embeddings / rerank /
-  tokenization / audio / finetunes / deployments / files / models / tingwu / decision /
-  agentStudio` — see [md/dashscope-3.0-design.md](md/dashscope-3.0-design.md).
-- Migrating from 2.x: [md/dashscope-3.0-migration.md](md/dashscope-3.0-migration.md)
-  (per-class mapping, unchecked-exception model, AgentStudio and tokenizers notes).
+  tokenization / audio / fineTunes / deployments / files / models / tingwu / decision /
+  agentStudio` — design details live in the internal doc `md/dashscope-3.0-design.md`
+  (not shipped in this repository).
+- Async variant: `DashScopeAsyncClient.builder()` mirrors the same resource tree, returning
+  `CompletableFuture` (streaming surfaces as RxJava `Flowable`).
+- Migrating from 2.x: internal doc `md/dashscope-3.0-migration.md` (not shipped in this
+  repository; per-class mapping, unchecked-exception model, AgentStudio and tokenizers notes).
 - Runnable samples: [examples/README.md](examples/README.md) (four layers, MockWebServer dry-run
   via `mvn -f examples/pom.xml clean test`; CI installs the current SDK with
   `mvn install -DskipTests -Dgpg.skip=true` after root tests, then runs the standalone examples project).
@@ -83,6 +87,8 @@ import com.alibaba.dashscope.legacy_2x.common.Message;
 import com.alibaba.dashscope.legacy_2x.common.ResultCallback;
 import com.alibaba.dashscope.legacy_2x.common.Role;
 import com.alibaba.dashscope.legacy_2x.exception.ApiException;
+import com.alibaba.dashscope.legacy_2x.exception.InputRequiredException;
+import com.alibaba.dashscope.legacy_2x.exception.NoApiKeyException;
 import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
 import java.util.Arrays;
 
@@ -116,7 +122,11 @@ public class Main {
         }
       }
 
-      generation.call(param, new ReactCallback());
+      try {
+        generation.call(param, new ReactCallback());
+      } catch (ApiException | NoApiKeyException | InputRequiredException e) {
+        System.err.println("An error occurred: " + e.getMessage());
+      }
     }
 }
 ```
@@ -221,7 +231,7 @@ The `call` method accepts a `GenerationParam`, and returns a `GenerationResult`,
 
 ### Decision Model
 
-The decision model answers a batch of multiple-choice (choice), yes/no (noul) and ordered-scale (score) questions against a given business state, see the [Decision Model API document](https://platform.qianwenai.com/docs/api-reference/decision-model-api).
+The decision model answers a batch of multiple-choice (choice), yes/no (noul) and ordered-scale (score) questions against a given business state, see the [Decision Model API document](https://docs.bailian.console.aliyun.com/zh/model-studio/decision-model-api).
 
 ```java
 import com.alibaba.dashscope.legacy_2x.decision.DecisionModel;

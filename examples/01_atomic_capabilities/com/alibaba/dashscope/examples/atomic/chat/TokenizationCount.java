@@ -12,8 +12,7 @@ import java.util.Arrays;
  * Server-side token counting over a plain prompt and over a chat message list. Translation of the
  * Python blueprint example 01_atomic_capabilities/text_generation/tokenization.py.
  *
- * <p>For the local BPE tokenizer (no network) see {@code
- * com.alibaba.dashscope.tokenization.TokenizerFactory}.
+ * <p>For the local BPE tokenizer (no network) see {@link TokenizationLocalCount}.
  */
 public final class TokenizationCount {
 
