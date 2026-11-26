@@ -36,7 +36,7 @@ public class TestHttpProxySettingWithCode {
   public void before() throws IOException {
     System.out.println("Starting server!");
     this.mockServer = new MockWebServer();
-    this.mockServer.start(38888);
+    this.mockServer.start();
     Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s/api/v1/", mockServer.getPort());
     Constants.apiKey = "1234";
   }
@@ -97,7 +97,7 @@ public class TestHttpProxySettingWithCode {
             .readTimeout(Duration.ofSeconds(20)) // set read timeout, default 300s
             .writeTimeout(Duration.ofSeconds(20)) // set read timeout, default 60s
             .proxyHost("127.0.0.1")
-            .proxyPort(38888)
+            .proxyPort(mockServer.getPort())
             .build();
     GeneralApi<HalfDuplexParamBase> api = new GeneralApi<>(connectionOptions);
     TimeoutTestParam param =
