@@ -234,6 +234,12 @@ public class OkHttpWebSocketClient extends WebSocketListener
       } catch (Throwable ex) {
         attempts += 1;
         errorMessage = ex.getMessage() != null ? ex.getMessage() : ex.toString();
+        if (isClosed.get()) {
+          log.debug(
+              "Connection cancelled during reconnect; skip error. requestId={}",
+              getRequestIdOrUnknown());
+          return;
+        }
         log.error("{}, requestId={}", errorMessage, getRequestIdOrUnknown());
         if (errorMessage.contains(Constants.NO_API_KEY_ERROR)) {
           throw ex;
@@ -970,11 +976,18 @@ public class OkHttpWebSocketClient extends WebSocketListener
                         req.getModule());
                   }
                 } catch (Throwable ex) {
-                  log.error(
-                      StringUtils.format(
-                          "sendStreamData exception: %s, requestId=%s",
-                          ex.getMessage(), getRequestIdOrUnknown()));
-                  emitResponseError(ex);
+                  if (isClosed.get()) {
+                    log.debug(
+                        "sendStreamData aborted after close: {}, requestId={}",
+                        ex.getMessage(),
+                        getRequestIdOrUnknown());
+                  } else {
+                    log.error(
+                        StringUtils.format(
+                            "sendStreamData exception: %s, requestId=%s",
+                            ex.getMessage(), getRequestIdOrUnknown()));
+                    emitResponseError(ex);
+                  }
                 }
               },
               err -> {
@@ -985,18 +998,39 @@ public class OkHttpWebSocketClient extends WebSocketListener
               },
               new Action() {
                 @Override
-                public void run() throws Exception {
-                  log.debug(
-                      StringUtils.format(
-                          "Stream data send completed! requestId=%s", getRequestIdOrUnknown()));
-                  sendTextWithRetry(
-                      req.getApiKey(),
-                      req.isSecurityCheck(),
-                      JsonUtils.toJson(req.getFinishedTaskMessage(taskId)),
-                      req.getWorkspace(),
-                      req.getHeaders(),
-                      req.getBaseWebSocketUrl(),
-                      req.getModule());
+                public void run() {
+                  if (isClosed.get()) {
+                    log.debug(
+                        "Stream completed after close; skip finish-task. requestId={}",
+                        getRequestIdOrUnknown());
+                    return;
+                  }
+                  try {
+                    log.debug(
+                        StringUtils.format(
+                            "Stream data send completed! requestId=%s", getRequestIdOrUnknown()));
+                    sendTextWithRetry(
+                        req.getApiKey(),
+                        req.isSecurityCheck(),
+                        JsonUtils.toJson(req.getFinishedTaskMessage(taskId)),
+                        req.getWorkspace(),
+                        req.getHeaders(),
+                        req.getBaseWebSocketUrl(),
+                        req.getModule());
+                  } catch (Throwable ex) {
+                    if (isClosed.get()) {
+                      log.debug(
+                          "finish-task send aborted after close: {}, requestId={}",
+                          ex.getMessage(),
+                          getRequestIdOrUnknown());
+                    } else {
+                      log.error(
+                          StringUtils.format(
+                              "sendStreamData exception: %s, requestId=%s",
+                              ex.getMessage(), getRequestIdOrUnknown()));
+                      emitResponseError(ex);
+                    }
+                  }
                 }
               });
       // Publish the disposable, then check if cancel() raced ahead.
