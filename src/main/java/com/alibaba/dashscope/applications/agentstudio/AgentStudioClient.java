@@ -1,6 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.applications.agentstudio;
 
+import com.alibaba.dashscope.applications.agentstudio.protocol.ConnectionOptions;
 import com.alibaba.dashscope.applications.agentstudio.resource.Agents;
 import com.alibaba.dashscope.applications.agentstudio.resource.DeploymentRuns;
 import com.alibaba.dashscope.applications.agentstudio.resource.Deployments;
@@ -13,7 +14,6 @@ import com.alibaba.dashscope.applications.agentstudio.resource.Skills;
 import com.alibaba.dashscope.applications.agentstudio.resource.Usage;
 import com.alibaba.dashscope.applications.agentstudio.resource.Vaults;
 import com.alibaba.dashscope.applications.agentstudio.resource.WebhookEndpoints;
-import com.alibaba.dashscope.legacy_2x.protocol.ConnectionOptions;
 import java.io.Closeable;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;

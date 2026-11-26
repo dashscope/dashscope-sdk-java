@@ -17,7 +17,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
-/** Keeps the frozen 2.x implementation independent from 3.0 implementation/business packages. */
+/**
+ * Enforces the dependency boundary between the frozen 2.x implementation and the 3.0 code in both
+ * directions: legacy code may only reference legacy/neutral-shared packages, and no non-legacy
+ * production source may reference {@code legacy_2x} (so the legacy subtree can be removed
+ * independently in 4.0).
+ */
 class LegacyDependencyBoundaryTest {
 
   /**
@@ -29,6 +34,15 @@ class LegacyDependencyBoundaryTest {
    */
   private static final Pattern FORBIDDEN =
       Pattern.compile("com\\.alibaba\\.dashscope\\.(?!legacy_2x($|\\.)|shared($|\\.))");
+
+  /**
+   * Matches a reference to the {@code legacy_2x} package from non-legacy production code. The
+   * trailing negative lookahead avoids flagging a hypothetical {@code legacy_2xExtra} package while
+   * still catching imports, package declarations, and inline FQCNs such as {@code new
+   * com.alibaba.dashscope.legacy_2x.Foo()}.
+   */
+  private static final Pattern LEGACY_REFERENCE =
+      Pattern.compile("com\\.alibaba\\.dashscope\\.legacy_2x(?![A-Za-z0-9_])");
 
   @Test
   void legacyMayOnlyReferenceLegacyOrNeutralSharedPackages() throws IOException {
@@ -52,6 +66,34 @@ class LegacyDependencyBoundaryTest {
               });
     }
     assertTrue(violations.isEmpty(), "legacy reverse dependencies: " + violations);
+  }
+
+  @Test
+  void nonLegacyProductionMustNotReferenceLegacy() throws IOException {
+    Path root = Paths.get("src/main/java");
+    String legacySegment = File.separator + "legacy_2x" + File.separator;
+    List<String> violations = new ArrayList<>();
+    try (Stream<Path> files = Files.walk(root)) {
+      files
+          .filter(path -> path.toString().endsWith(".java"))
+          .filter(path -> !path.toString().contains(legacySegment))
+          .forEach(
+              path -> {
+                try {
+                  for (String line : Files.readAllLines(path, StandardCharsets.UTF_8)) {
+                    String trimmed = line.trim();
+                    if (!isComment(trimmed) && LEGACY_REFERENCE.matcher(trimmed).find()) {
+                      violations.add(root.relativize(path) + ": " + trimmed);
+                    }
+                  }
+                } catch (IOException e) {
+                  throw new RuntimeException(e);
+                }
+              });
+    }
+    assertTrue(
+        violations.isEmpty(),
+        "non-legacy production references legacy_2x (must be decoupled): " + violations);
   }
 
   @Test

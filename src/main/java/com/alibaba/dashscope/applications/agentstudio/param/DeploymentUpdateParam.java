@@ -1,8 +1,8 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.applications.agentstudio.param;
 
-import com.alibaba.dashscope.legacy_2x.base.FlattenHalfDuplexParamBase;
-import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
+import com.alibaba.dashscope.applications.agentstudio.base.FlattenHalfDuplexParamBase;
+import com.alibaba.dashscope.applications.agentstudio.utils.JsonUtils;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;

@@ -1,7 +1,7 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.applications.agentstudio.pagination;
 
-import com.alibaba.dashscope.legacy_2x.common.FlattenResultBase;
+import com.alibaba.dashscope.applications.agentstudio.common.FlattenResultBase;
 import com.google.gson.annotations.SerializedName;
 import java.util.Iterator;
 import java.util.List;

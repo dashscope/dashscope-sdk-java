@@ -2,14 +2,14 @@
 package com.alibaba.dashscope.applications.agentstudio.resource;
 
 import com.alibaba.dashscope.applications.agentstudio.AgentStudioConstants;
+import com.alibaba.dashscope.applications.agentstudio.api.GeneralApi;
+import com.alibaba.dashscope.applications.agentstudio.base.HalfDuplexParamBase;
+import com.alibaba.dashscope.applications.agentstudio.common.FlattenResultBase;
+import com.alibaba.dashscope.applications.agentstudio.common.GeneralGetParam;
 import com.alibaba.dashscope.applications.agentstudio.param.SecurityListAgentLogsParam;
-import com.alibaba.dashscope.legacy_2x.api.GeneralApi;
-import com.alibaba.dashscope.legacy_2x.base.HalfDuplexParamBase;
-import com.alibaba.dashscope.legacy_2x.common.FlattenResultBase;
-import com.alibaba.dashscope.legacy_2x.common.GeneralGetParam;
-import com.alibaba.dashscope.legacy_2x.protocol.ConnectionOptions;
-import com.alibaba.dashscope.legacy_2x.protocol.GeneralServiceOption;
-import com.alibaba.dashscope.legacy_2x.protocol.HttpMethod;
+import com.alibaba.dashscope.applications.agentstudio.protocol.ConnectionOptions;
+import com.alibaba.dashscope.applications.agentstudio.protocol.GeneralServiceOption;
+import com.alibaba.dashscope.applications.agentstudio.protocol.HttpMethod;
 import com.google.gson.annotations.SerializedName;
 import java.util.HashMap;
 import java.util.List;

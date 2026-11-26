@@ -1,15 +1,15 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.applications.agentstudio.resource;
 
+import com.alibaba.dashscope.applications.agentstudio.common.Status;
+import com.alibaba.dashscope.applications.agentstudio.exception.ApiException;
+import com.alibaba.dashscope.applications.agentstudio.exception.NoApiKeyException;
 import com.alibaba.dashscope.errors.ApiConnectionException;
 import com.alibaba.dashscope.errors.ApiTimeoutException;
 import com.alibaba.dashscope.errors.DashScopeException;
 import com.alibaba.dashscope.errors.Errors;
 import com.alibaba.dashscope.errors.SdkErrorCode;
 import com.alibaba.dashscope.errors.SdkException;
-import com.alibaba.dashscope.legacy_2x.common.Status;
-import com.alibaba.dashscope.legacy_2x.exception.ApiException;
-import com.alibaba.dashscope.legacy_2x.exception.NoApiKeyException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 

@@ -2,18 +2,18 @@
 package com.alibaba.dashscope.applications.agentstudio.resource;
 
 import com.alibaba.dashscope.applications.agentstudio.AgentStudioConstants;
+import com.alibaba.dashscope.applications.agentstudio.api.GeneralApi;
+import com.alibaba.dashscope.applications.agentstudio.base.HalfDuplexParamBase;
+import com.alibaba.dashscope.applications.agentstudio.common.GeneralGetParam;
 import com.alibaba.dashscope.applications.agentstudio.message.Message;
 import com.alibaba.dashscope.applications.agentstudio.model.Session;
 import com.alibaba.dashscope.applications.agentstudio.pagination.CursorPage;
 import com.alibaba.dashscope.applications.agentstudio.param.SessionEventListParam;
 import com.alibaba.dashscope.applications.agentstudio.param.SessionThreadListParam;
-import com.alibaba.dashscope.legacy_2x.api.GeneralApi;
-import com.alibaba.dashscope.legacy_2x.base.HalfDuplexParamBase;
-import com.alibaba.dashscope.legacy_2x.common.GeneralGetParam;
-import com.alibaba.dashscope.legacy_2x.protocol.ConnectionOptions;
-import com.alibaba.dashscope.legacy_2x.protocol.GeneralServiceOption;
-import com.alibaba.dashscope.legacy_2x.protocol.HttpMethod;
-import com.alibaba.dashscope.legacy_2x.utils.StringUtils;
+import com.alibaba.dashscope.applications.agentstudio.protocol.ConnectionOptions;
+import com.alibaba.dashscope.applications.agentstudio.protocol.GeneralServiceOption;
+import com.alibaba.dashscope.applications.agentstudio.protocol.HttpMethod;
+import com.alibaba.dashscope.applications.agentstudio.utils.StringUtils;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.HashMap;

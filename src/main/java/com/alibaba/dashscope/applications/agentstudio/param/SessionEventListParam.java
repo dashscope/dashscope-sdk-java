@@ -2,7 +2,7 @@
 package com.alibaba.dashscope.applications.agentstudio.param;
 
 import com.alibaba.dashscope.applications.agentstudio.AgentStudioConstants;
-import com.alibaba.dashscope.legacy_2x.base.FlattenHalfDuplexParamBase;
+import com.alibaba.dashscope.applications.agentstudio.base.FlattenHalfDuplexParamBase;
 import com.google.gson.JsonObject;
 import java.util.List;
 import lombok.Builder.Default;

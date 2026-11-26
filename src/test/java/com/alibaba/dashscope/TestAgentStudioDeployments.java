@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.applications.agentstudio.AgentStudioClient;
+import com.alibaba.dashscope.applications.agentstudio.TestUtils;
 import com.alibaba.dashscope.applications.agentstudio.message.ClientEvents;
 import com.alibaba.dashscope.applications.agentstudio.model.Deployment;
 import com.alibaba.dashscope.applications.agentstudio.model.DeploymentRun;
@@ -18,8 +19,7 @@ import com.alibaba.dashscope.applications.agentstudio.param.DeploymentSchedulePa
 import com.alibaba.dashscope.applications.agentstudio.param.DeploymentUpdateParam;
 import com.alibaba.dashscope.applications.agentstudio.resource.DeploymentRuns;
 import com.alibaba.dashscope.applications.agentstudio.resource.Deployments;
-import com.alibaba.dashscope.legacy_2x.TestUtils;
-import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
+import com.alibaba.dashscope.applications.agentstudio.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

@@ -1,11 +1,12 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.applications.agentstudio;
 
-import com.alibaba.dashscope.legacy_2x.base.HalfDuplexParamBase;
-import com.alibaba.dashscope.legacy_2x.protocol.GeneralServiceOption;
-import com.alibaba.dashscope.legacy_2x.protocol.HttpMethod;
-import com.alibaba.dashscope.legacy_2x.protocol.Protocol;
-import com.alibaba.dashscope.legacy_2x.protocol.StreamingMode;
+import com.alibaba.dashscope.applications.agentstudio.base.HalfDuplexParamBase;
+import com.alibaba.dashscope.applications.agentstudio.protocol.GeneralServiceOption;
+import com.alibaba.dashscope.applications.agentstudio.protocol.HttpMethod;
+import com.alibaba.dashscope.applications.agentstudio.protocol.Protocol;
+import com.alibaba.dashscope.applications.agentstudio.protocol.StreamingMode;
+import com.alibaba.dashscope.shared.EnvNames;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
@@ -19,6 +20,9 @@ public final class AgentStudioConstants {
   public static final String ENV_BASE_URL_ALT = "AGENTSTUDIO_URL";
   public static final String ENV_WORKSPACE = "DASHSCOPE_WORKSPACE";
   public static final String ENV_REGION = "DASHSCOPE_API_REGION";
+
+  /** SDK module marker appended to {@code x-dashscope-sdk-client} on all AgentStudio paths. */
+  public static final String SDK_MODULE = "agentstudio3";
 
   private AgentStudioConstants() {}
 
@@ -118,9 +122,22 @@ public final class AgentStudioConstants {
   }
 
   /**
+   * Default HTTP base URL used when a service option carries no explicit base URL. Reads the
+   * neutral {@code DASHSCOPE_HTTP_BASE_URL} environment variable and falls back to the public
+   * DashScope endpoint for the configured API version. AgentStudio owns this resolution; mutable
+   * legacy global state no longer applies.
+   */
+  public static String defaultHttpBaseUrl() {
+    String apiVersion = System.getenv().getOrDefault(EnvNames.DASHSCOPE_API_VERSION, "v1");
+    return System.getenv()
+        .getOrDefault(
+            EnvNames.DASHSCOPE_HTTP_BASE_URL, "https://dashscope.aliyuncs.com/api/" + apiVersion);
+  }
+
+  /**
    * Build a {@link GeneralServiceOption} for an agentstudio endpoint. When {@code baseUrl} is
-   * non-null it overrides the global default; otherwise the request falls back to {@code
-   * Constants.baseHttpApiUrl} via {@code GeneralApi}.
+   * non-null it overrides the default; otherwise the request falls back to {@link
+   * #defaultHttpBaseUrl()} via {@code GeneralApi}.
    */
   public static GeneralServiceOption newServiceOption(
       HttpMethod method, String path, String baseUrl) {
@@ -130,7 +147,7 @@ public final class AgentStudioConstants {
             .httpMethod(method)
             .streamingMode(StreamingMode.OUT)
             .path(path)
-            .module("agentstudio")
+            .module(SDK_MODULE)
             .build();
     if (baseUrl != null) {
       opt.setBaseHttpUrl(baseUrl);
@@ -139,9 +156,9 @@ public final class AgentStudioConstants {
   }
 
   /**
-   * Stamp the client's instance apiKey onto a param if the caller didn't set one. The global
-   * fallback chain in {@link com.alibaba.dashscope.legacy_2x.utils.ApiKey#getApiKey} still applies
-   * when {@code apiKey} is null.
+   * Stamp the client's instance apiKey onto a param if the caller didn't set one. The fallback
+   * chain in {@link com.alibaba.dashscope.applications.agentstudio.utils.ApiKey#getApiKey} still
+   * applies when {@code apiKey} is null.
    */
   public static <P extends HalfDuplexParamBase> P withApiKey(String apiKey, P param) {
     if (apiKey != null && param.getApiKey() == null) {

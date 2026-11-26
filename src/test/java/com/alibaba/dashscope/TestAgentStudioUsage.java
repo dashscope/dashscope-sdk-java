@@ -7,12 +7,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.applications.agentstudio.AgentStudioClient;
+import com.alibaba.dashscope.applications.agentstudio.exception.InputRequiredException;
 import com.alibaba.dashscope.applications.agentstudio.param.UsageQueryParam;
 import com.alibaba.dashscope.applications.agentstudio.resource.Usage;
+import com.alibaba.dashscope.applications.agentstudio.utils.JsonUtils;
 import com.alibaba.dashscope.errors.ApiStatusException;
 import com.alibaba.dashscope.errors.SdkException;
-import com.alibaba.dashscope.legacy_2x.exception.InputRequiredException;
-import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import java.util.concurrent.TimeUnit;
 import okhttp3.mockwebserver.MockResponse;

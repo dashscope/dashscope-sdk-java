@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.applications.agentstudio.AgentStudioClient;
+import com.alibaba.dashscope.applications.agentstudio.TestUtils;
 import com.alibaba.dashscope.applications.agentstudio.message.ClientEvents;
 import com.alibaba.dashscope.applications.agentstudio.message.ContentBlock;
 import com.alibaba.dashscope.applications.agentstudio.message.Message;
@@ -50,9 +51,7 @@ import com.alibaba.dashscope.applications.agentstudio.resource.Environments;
 import com.alibaba.dashscope.applications.agentstudio.resource.Sessions;
 import com.alibaba.dashscope.applications.agentstudio.resource.Skills;
 import com.alibaba.dashscope.applications.agentstudio.resource.Vaults;
-import com.alibaba.dashscope.legacy_2x.TestUtils;
-import com.alibaba.dashscope.legacy_2x.utils.Constants;
-import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
+import com.alibaba.dashscope.applications.agentstudio.utils.JsonUtils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.io.ByteArrayInputStream;
@@ -79,13 +78,14 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 public class TestAgentStudio {
   private static MockWebServer mockServer;
   private static JsonObject fixtures;
+  private static String mockBaseUrl;
+  private static final String MOCK_API_KEY = "test-key";
 
   @BeforeAll
   public static void before() throws IOException {
     mockServer = new MockWebServer();
     mockServer.start();
-    Constants.baseHttpApiUrl = String.format("http://127.0.0.1:%s/api/v1/", mockServer.getPort());
-    Constants.apiKey = "test-key";
+    mockBaseUrl = String.format("http://127.0.0.1:%s/api/v1/", mockServer.getPort());
     byte[] content = Files.readAllBytes(Paths.get("./src/test/resources/agentstudio.json"));
     fixtures = JsonUtils.parse(new String(content, StandardCharsets.UTF_8));
   }
@@ -106,7 +106,7 @@ public class TestAgentStudio {
   public void testAgentCreate() throws Exception {
     enqueue("agent_response");
     Agent agent =
-        new Agents(null, null, null)
+        new Agents(mockBaseUrl, null, MOCK_API_KEY)
             .create(AgentCreateParam.builder().name("test-agent").model("qwen-max").build());
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("POST", req.getMethod());
@@ -344,7 +344,7 @@ public class TestAgentStudio {
         assertThrows(
             IllegalArgumentException.class,
             () ->
-                new Agents(null, null, null)
+                new Agents(mockBaseUrl, null, MOCK_API_KEY)
                     .create(
                         AgentCreateParam.builder()
                             .name("a")
@@ -359,7 +359,7 @@ public class TestAgentStudio {
         assertThrows(
             IllegalArgumentException.class,
             () ->
-                new Agents(null, null, null)
+                new Agents(mockBaseUrl, null, MOCK_API_KEY)
                     .update(
                         "agent_xyz",
                         AgentUpdateParam.builder()
@@ -384,7 +384,7 @@ public class TestAgentStudio {
   @Test
   public void testAgentRetrieve() throws Exception {
     enqueue("agent_response");
-    Agent agent = new Agents(null, null, null).retrieve("agent_xyz");
+    Agent agent = new Agents(mockBaseUrl, null, MOCK_API_KEY).retrieve("agent_xyz");
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("GET", req.getMethod());
     assertTrue(req.getPath().contains("/agents/agent_xyz"));
@@ -396,7 +396,7 @@ public class TestAgentStudio {
   public void testAgentUpdate() throws Exception {
     enqueue("agent_response");
     Agent agent =
-        new Agents(null, null, null)
+        new Agents(mockBaseUrl, null, MOCK_API_KEY)
             .update(
                 "agent_xyz", AgentUpdateParam.builder().version(2).name("updated-agent").build());
     RecordedRequest req = mockServer.takeRequest();
@@ -410,7 +410,7 @@ public class TestAgentStudio {
     assertThrows(
         IllegalArgumentException.class,
         () ->
-            new Agents(null, null, null)
+            new Agents(mockBaseUrl, null, MOCK_API_KEY)
                 .update("agent_xyz", AgentUpdateParam.builder().name("no-version").build()));
   }
 
@@ -419,7 +419,7 @@ public class TestAgentStudio {
     assertThrows(
         IllegalArgumentException.class,
         () ->
-            new Agents(null, null, null)
+            new Agents(mockBaseUrl, null, MOCK_API_KEY)
                 .update("", AgentUpdateParam.builder().version(1).name("x").build()));
   }
 
@@ -441,7 +441,8 @@ public class TestAgentStudio {
   public void testAgentList() throws Exception {
     enqueue("agent_list_response");
     CursorPage<Agent> page =
-        new Agents(null, null, null).list(AgentListParam.builder().limit(20).build());
+        new Agents(mockBaseUrl, null, MOCK_API_KEY)
+            .list(AgentListParam.builder().limit(20).build());
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("GET", req.getMethod());
     assertTrue(req.getPath().contains("limit=20"));
@@ -461,7 +462,8 @@ public class TestAgentStudio {
   public void testAgentListVersions() throws Exception {
     enqueue("agent_version_response");
     CursorPage<AgentVersion> page =
-        new Agents(null, null, null).listVersions("agent_xyz", AgentListParam.builder().build());
+        new Agents(mockBaseUrl, null, MOCK_API_KEY)
+            .listVersions("agent_xyz", AgentListParam.builder().build());
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("GET", req.getMethod());
     assertTrue(req.getPath().contains("/agents/agent_xyz/versions"));
@@ -474,7 +476,7 @@ public class TestAgentStudio {
   @Test
   public void testAgentModelDeserialization() throws Exception {
     enqueue("agent_response");
-    Agent agent = new Agents(null, null, null).retrieve("agent_xyz");
+    Agent agent = new Agents(mockBaseUrl, null, MOCK_API_KEY).retrieve("agent_xyz");
     mockServer.takeRequest();
     assertEquals("agent", agent.getType());
     assertEquals("test-agent", agent.getName());
@@ -493,7 +495,7 @@ public class TestAgentStudio {
   public void testSessionCreate() throws Exception {
     enqueue("session_response");
     Session session =
-        new Sessions(null, null, null)
+        new Sessions(mockBaseUrl, null, MOCK_API_KEY)
             .create(
                 SessionCreateParam.builder()
                     .agent(SessionAgent.ofString("agent_xyz"))
@@ -516,7 +518,7 @@ public class TestAgentStudio {
   public void testSessionCreateWithVaultIds() throws Exception {
     // vault_ids is forwarded in the request body; omitted -> not emitted.
     enqueue("session_response");
-    new Sessions(null, null, null)
+    new Sessions(mockBaseUrl, null, MOCK_API_KEY)
         .create(
             SessionCreateParam.builder()
                 .agent(SessionAgent.ofString("agent_xyz"))
@@ -533,7 +535,7 @@ public class TestAgentStudio {
 
     // Omitted vault_ids must not produce a null vault_ids in the body.
     enqueue("session_response");
-    new Sessions(null, null, null)
+    new Sessions(mockBaseUrl, null, MOCK_API_KEY)
         .create(SessionCreateParam.builder().agent(SessionAgent.ofString("agent_xyz")).build());
     JsonObject body2 = JsonUtils.parse(mockServer.takeRequest().getBody().readUtf8());
     assertFalse(body2.has("vault_ids"));
@@ -562,7 +564,7 @@ public class TestAgentStudio {
     mcpConfig.put("mcp_server_name", "weather");
     mcpConfig.put("headers", headers);
 
-    new Sessions(null, null, null)
+    new Sessions(mockBaseUrl, null, MOCK_API_KEY)
         .create(
             SessionCreateParam.builder()
                 .agent(SessionAgent.ofOverride(agent))
@@ -602,7 +604,7 @@ public class TestAgentStudio {
     agentPatch.put("tools", null);
     agentPatch.put("skills", Collections.emptyList());
 
-    new Sessions(null, null, null)
+    new Sessions(mockBaseUrl, null, MOCK_API_KEY)
         .update(
             "sess_abc123",
             SessionUpdateParam.builder()
@@ -659,7 +661,7 @@ public class TestAgentStudio {
   @Test
   public void testSessionRetrieve() throws Exception {
     enqueue("session_response");
-    Session session = new Sessions(null, null, null).retrieve("sess_abc123");
+    Session session = new Sessions(mockBaseUrl, null, MOCK_API_KEY).retrieve("sess_abc123");
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("GET", req.getMethod());
     assertTrue(req.getPath().contains("/sessions/sess_abc123"));
@@ -670,7 +672,7 @@ public class TestAgentStudio {
   public void testSessionUpdate() throws Exception {
     enqueue("session_response");
     Session session =
-        new Sessions(null, null, null)
+        new Sessions(mockBaseUrl, null, MOCK_API_KEY)
             .update("sess_abc123", SessionUpdateParam.builder().title("Updated").build());
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("POST", req.getMethod());
@@ -681,7 +683,7 @@ public class TestAgentStudio {
   public void testSessionList() throws Exception {
     enqueue("session_list_response");
     CursorPage<Session> page =
-        new Sessions(null, null, null)
+        new Sessions(mockBaseUrl, null, MOCK_API_KEY)
             .list(
                 SessionListParam.builder()
                     .limit(10)
@@ -702,7 +704,8 @@ public class TestAgentStudio {
   @Test
   public void testSessionDelete() throws Exception {
     enqueue("delete_response");
-    AgentStudioDeletionStatus status = new Sessions(null, null, null).delete("sess_abc123");
+    AgentStudioDeletionStatus status =
+        new Sessions(mockBaseUrl, null, MOCK_API_KEY).delete("sess_abc123");
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("DELETE", req.getMethod());
     assertEquals("sess_abc123", status.getId());
@@ -712,7 +715,7 @@ public class TestAgentStudio {
   @Test
   public void testSessionArchive() throws Exception {
     enqueue("session_response");
-    Session session = new Sessions(null, null, null).archive("sess_abc123");
+    Session session = new Sessions(mockBaseUrl, null, MOCK_API_KEY).archive("sess_abc123");
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("POST", req.getMethod());
     assertTrue(req.getPath().contains("/sessions/sess_abc123/archive"));
@@ -721,7 +724,8 @@ public class TestAgentStudio {
   @Test
   public void testSessionRetrieveRequiresId() {
     assertThrows(
-        IllegalArgumentException.class, () -> new Sessions(null, null, null).retrieve(null));
+        IllegalArgumentException.class,
+        () -> new Sessions(mockBaseUrl, null, MOCK_API_KEY).retrieve(null));
   }
 
   @Test
@@ -766,7 +770,7 @@ public class TestAgentStudio {
   public void testSessionEventList() throws Exception {
     enqueue("event_list_response");
     CursorPage<Message> page =
-        new Sessions(null, null, null)
+        new Sessions(mockBaseUrl, null, MOCK_API_KEY)
             .events()
             .list("sess_abc123", SessionEventListParam.builder().limit(10).build());
     RecordedRequest req = mockServer.takeRequest();
@@ -789,7 +793,7 @@ public class TestAgentStudio {
   public void testEnvironmentCreate() throws Exception {
     enqueue("environment_response");
     Environment env =
-        new Environments(null, null, null)
+        new Environments(mockBaseUrl, null, MOCK_API_KEY)
             .create(
                 EnvironmentCreateParam.builder()
                     .name("Test Environment")
@@ -805,7 +809,7 @@ public class TestAgentStudio {
   @Test
   public void testEnvironmentRetrieve() throws Exception {
     enqueue("environment_response");
-    Environment env = new Environments(null, null, null).retrieve("env_001");
+    Environment env = new Environments(mockBaseUrl, null, MOCK_API_KEY).retrieve("env_001");
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("GET", req.getMethod());
     assertTrue(req.getPath().contains("/environments/env_001"));
@@ -816,7 +820,8 @@ public class TestAgentStudio {
   public void testEnvironmentList() throws Exception {
     enqueue("environment_list_response");
     CursorPage<Environment> page =
-        new Environments(null, null, null).list(EnvironmentListParam.builder().limit(20).build());
+        new Environments(mockBaseUrl, null, MOCK_API_KEY)
+            .list(EnvironmentListParam.builder().limit(20).build());
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("GET", req.getMethod());
     assertEquals(2, page.getData().size());
@@ -826,7 +831,8 @@ public class TestAgentStudio {
   @Test
   public void testEnvironmentDelete() throws Exception {
     enqueue("delete_response");
-    AgentStudioDeletionStatus status = new Environments(null, null, null).delete("env_001");
+    AgentStudioDeletionStatus status =
+        new Environments(mockBaseUrl, null, MOCK_API_KEY).delete("env_001");
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("DELETE", req.getMethod());
     assertTrue(req.getPath().contains("/environments/env_001"));
@@ -839,7 +845,7 @@ public class TestAgentStudio {
   public void testSkillCreate() throws Exception {
     enqueue("skill_response");
     Skill skill =
-        new Skills(null, null, null, null)
+        new Skills(mockBaseUrl, null, MOCK_API_KEY, null)
             .create(SkillCreateParam.builder().fileId("file_001").build());
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("POST", req.getMethod());
@@ -851,7 +857,7 @@ public class TestAgentStudio {
   @Test
   public void testSkillRetrieve() throws Exception {
     enqueue("skill_response");
-    Skill skill = new Skills(null, null, null, null).retrieve("skill_001");
+    Skill skill = new Skills(mockBaseUrl, null, MOCK_API_KEY, null).retrieve("skill_001");
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("GET", req.getMethod());
     assertTrue(req.getPath().contains("/skills/skill_001"));
@@ -862,7 +868,7 @@ public class TestAgentStudio {
   public void testSkillList() throws Exception {
     enqueue("skill_list_response");
     CursorPage<Skill> page =
-        new Skills(null, null, null, null).list(SkillListParam.builder().build());
+        new Skills(mockBaseUrl, null, MOCK_API_KEY, null).list(SkillListParam.builder().build());
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("GET", req.getMethod());
     assertEquals(1, page.getData().size());
@@ -871,7 +877,8 @@ public class TestAgentStudio {
   @Test
   public void testSkillDelete() throws Exception {
     enqueue("delete_response");
-    AgentStudioDeletionStatus status = new Skills(null, null, null, null).delete("skill_001");
+    AgentStudioDeletionStatus status =
+        new Skills(mockBaseUrl, null, MOCK_API_KEY, null).delete("skill_001");
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("DELETE", req.getMethod());
     assertTrue(status.isDeleted());
@@ -881,7 +888,7 @@ public class TestAgentStudio {
   public void testSkillVersionCreate() throws Exception {
     enqueue("skill_version_response");
     SkillVersion sv =
-        new Skills(null, null, null, null)
+        new Skills(mockBaseUrl, null, MOCK_API_KEY, null)
             .createVersion("skill_001", SkillCreateParam.builder().fileId("file_002").build());
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("POST", req.getMethod());
@@ -893,7 +900,7 @@ public class TestAgentStudio {
   public void testSkillVersionList() throws Exception {
     enqueue("skill_list_response");
     CursorPage<SkillVersion> page =
-        new Skills(null, null, null, null)
+        new Skills(mockBaseUrl, null, MOCK_API_KEY, null)
             .listVersions("skill_001", SkillListParam.builder().build());
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("GET", req.getMethod());
@@ -971,7 +978,7 @@ public class TestAgentStudio {
   public void testVaultCreate() throws Exception {
     enqueue("vault_response");
     Vault vault =
-        new Vaults(null, null, null)
+        new Vaults(mockBaseUrl, null, MOCK_API_KEY)
             .create(VaultCreateParam.builder().displayName("Test Vault").build());
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("POST", req.getMethod());
@@ -984,7 +991,7 @@ public class TestAgentStudio {
   @Test
   public void testVaultRetrieve() throws Exception {
     enqueue("vault_response");
-    Vault vault = new Vaults(null, null, null).retrieve("vault_001");
+    Vault vault = new Vaults(mockBaseUrl, null, MOCK_API_KEY).retrieve("vault_001");
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("GET", req.getMethod());
     assertTrue(req.getPath().contains("/vaults/vault_001"));
@@ -997,7 +1004,7 @@ public class TestAgentStudio {
   public void testVaultUpdate() throws Exception {
     enqueue("vault_response");
     Vault vault =
-        new Vaults(null, null, null)
+        new Vaults(mockBaseUrl, null, MOCK_API_KEY)
             .update("vault_001", VaultUpdateParam.builder().displayName("Updated Vault").build());
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("POST", req.getMethod());
@@ -1009,7 +1016,8 @@ public class TestAgentStudio {
   public void testVaultList() throws Exception {
     enqueue("vault_list_response");
     CursorPage<Vault> page =
-        new Vaults(null, null, null).list(VaultListParam.builder().limit(20).build());
+        new Vaults(mockBaseUrl, null, MOCK_API_KEY)
+            .list(VaultListParam.builder().limit(20).build());
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("GET", req.getMethod());
     assertTrue(req.getPath().contains("limit=20"));
@@ -1022,7 +1030,8 @@ public class TestAgentStudio {
   @Test
   public void testVaultDelete() throws Exception {
     enqueue("delete_response");
-    AgentStudioDeletionStatus status = new Vaults(null, null, null).delete("vault_001");
+    AgentStudioDeletionStatus status =
+        new Vaults(mockBaseUrl, null, MOCK_API_KEY).delete("vault_001");
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("DELETE", req.getMethod());
     assertTrue(req.getPath().contains("/vaults/vault_001"));
@@ -1032,7 +1041,7 @@ public class TestAgentStudio {
   @Test
   public void testVaultArchive() throws Exception {
     enqueue("vault_response");
-    Vault vault = new Vaults(null, null, null).archive("vault_001");
+    Vault vault = new Vaults(mockBaseUrl, null, MOCK_API_KEY).archive("vault_001");
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("POST", req.getMethod());
     assertTrue(req.getPath().contains("/vaults/vault_001/archive"));
@@ -1040,7 +1049,9 @@ public class TestAgentStudio {
 
   @Test
   public void testVaultRetrieveRequiresId() {
-    assertThrows(IllegalArgumentException.class, () -> new Vaults(null, null, null).retrieve(null));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> new Vaults(mockBaseUrl, null, MOCK_API_KEY).retrieve(null));
   }
 
   // ======================== Credentials ========================
@@ -1053,7 +1064,7 @@ public class TestAgentStudio {
     auth.addProperty("secret_name", "DASHSCOPE_API_KEY");
     auth.addProperty("secret_value", "sk-test");
     Credential cred =
-        new Vaults(null, null, null)
+        new Vaults(mockBaseUrl, null, MOCK_API_KEY)
             .credentials()
             .create(
                 "vault_001",
@@ -1069,7 +1080,8 @@ public class TestAgentStudio {
   @Test
   public void testCredentialRetrieve() throws Exception {
     enqueue("credential_response");
-    Credential cred = new Vaults(null, null, null).credentials().retrieve("vault_001", "cred_001");
+    Credential cred =
+        new Vaults(mockBaseUrl, null, MOCK_API_KEY).credentials().retrieve("vault_001", "cred_001");
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("GET", req.getMethod());
     assertTrue(req.getPath().contains("/vaults/vault_001/credentials/cred_001"));
@@ -1082,7 +1094,7 @@ public class TestAgentStudio {
   public void testCredentialUpdate() throws Exception {
     enqueue("credential_response");
     Credential cred =
-        new Vaults(null, null, null)
+        new Vaults(mockBaseUrl, null, MOCK_API_KEY)
             .credentials()
             .update(
                 "vault_001",
@@ -1097,7 +1109,7 @@ public class TestAgentStudio {
   public void testCredentialList() throws Exception {
     enqueue("credential_list_response");
     CursorPage<Credential> page =
-        new Vaults(null, null, null)
+        new Vaults(mockBaseUrl, null, MOCK_API_KEY)
             .credentials()
             .list("vault_001", CredentialListParam.builder().build());
     RecordedRequest req = mockServer.takeRequest();
@@ -1112,7 +1124,7 @@ public class TestAgentStudio {
   public void testCredentialDelete() throws Exception {
     enqueue("delete_response");
     AgentStudioDeletionStatus status =
-        new Vaults(null, null, null).credentials().delete("vault_001", "cred_001");
+        new Vaults(mockBaseUrl, null, MOCK_API_KEY).credentials().delete("vault_001", "cred_001");
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("DELETE", req.getMethod());
     assertTrue(req.getPath().contains("/vaults/vault_001/credentials/cred_001"));
@@ -1122,7 +1134,8 @@ public class TestAgentStudio {
   @Test
   public void testCredentialArchive() throws Exception {
     enqueue("credential_response");
-    Credential cred = new Vaults(null, null, null).credentials().archive("vault_001", "cred_001");
+    Credential cred =
+        new Vaults(mockBaseUrl, null, MOCK_API_KEY).credentials().archive("vault_001", "cred_001");
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("POST", req.getMethod());
     assertTrue(req.getPath().contains("/vaults/vault_001/credentials/cred_001/archive"));
@@ -1137,7 +1150,7 @@ public class TestAgentStudio {
     assertThrows(
         IllegalArgumentException.class,
         () ->
-            new Vaults(null, null, null)
+            new Vaults(mockBaseUrl, null, MOCK_API_KEY)
                 .credentials()
                 .create(null, CredentialCreateParam.builder().auth(auth).build()));
   }
@@ -1146,7 +1159,8 @@ public class TestAgentStudio {
   public void testCredentialRetrieveRequiresIds() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> new Vaults(null, null, null).credentials().retrieve("vault_001", null));
+        () ->
+            new Vaults(mockBaseUrl, null, MOCK_API_KEY).credentials().retrieve("vault_001", null));
   }
 
   @Test
@@ -1162,7 +1176,8 @@ public class TestAgentStudio {
   public void testFileUpload() throws Exception {
     String baseUrl = String.format("http://127.0.0.1:%s/api/v1/agentstudio", mockServer.getPort());
     com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.applications.agentstudio.resource.Files(baseUrl, null, null);
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(
+            baseUrl, null, MOCK_API_KEY);
     try {
       JsonObject rsp = fixtures.get("file_response").getAsJsonObject();
       mockServer.enqueue(TestUtils.createMockResponse(JsonUtils.toJson(rsp), 200));
@@ -1187,7 +1202,8 @@ public class TestAgentStudio {
   public void testFileUploadInputStream() throws Exception {
     String baseUrl = String.format("http://127.0.0.1:%s/api/v1/agentstudio", mockServer.getPort());
     com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.applications.agentstudio.resource.Files(baseUrl, null, null);
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(
+            baseUrl, null, MOCK_API_KEY);
     try {
       JsonObject rsp = fixtures.get("file_response").getAsJsonObject();
       mockServer.enqueue(TestUtils.createMockResponse(JsonUtils.toJson(rsp), 200));
@@ -1213,7 +1229,8 @@ public class TestAgentStudio {
   public void testFileRetrieve() throws Exception {
     enqueue("file_response");
     com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(
+            mockBaseUrl, null, MOCK_API_KEY);
     AgentStudioFile file = filesResource.retrieve("file_001");
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("GET", req.getMethod());
@@ -1226,7 +1243,8 @@ public class TestAgentStudio {
   public void testFileList() throws Exception {
     enqueue("file_list_response");
     com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(
+            mockBaseUrl, null, MOCK_API_KEY);
     CursorPage<AgentStudioFile> page =
         filesResource.list(FileListParam.builder().limit(20).build());
     RecordedRequest req = mockServer.takeRequest();
@@ -1241,7 +1259,8 @@ public class TestAgentStudio {
   public void testFileDownload() throws Exception {
     String baseUrl = String.format("http://127.0.0.1:%s/api/v1/agentstudio", mockServer.getPort());
     com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.applications.agentstudio.resource.Files(baseUrl, null, null);
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(
+            baseUrl, null, MOCK_API_KEY);
     try {
       byte[] expected = "file content".getBytes(StandardCharsets.UTF_8);
       mockServer.enqueue(
@@ -1268,7 +1287,8 @@ public class TestAgentStudio {
   public void testFileDelete() throws Exception {
     enqueue("delete_response");
     com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(
+            mockBaseUrl, null, MOCK_API_KEY);
     AgentStudioDeletionStatus status = filesResource.delete("file_001");
     RecordedRequest req = mockServer.takeRequest();
     assertEquals("DELETE", req.getMethod());
@@ -1279,14 +1299,16 @@ public class TestAgentStudio {
   @Test
   public void testFileUploadNullFilePath() {
     com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(
+            mockBaseUrl, null, MOCK_API_KEY);
     assertThrows(IllegalArgumentException.class, () -> filesResource.upload(null, null));
   }
 
   @Test
   public void testFileUploadNullInputStream() {
     com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(
+            mockBaseUrl, null, MOCK_API_KEY);
     assertThrows(
         IllegalArgumentException.class,
         () -> filesResource.upload("test.txt", (InputStream) null, null));
@@ -1295,14 +1317,16 @@ public class TestAgentStudio {
   @Test
   public void testFileRetrieveRequiresId() {
     com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(
+            mockBaseUrl, null, MOCK_API_KEY);
     assertThrows(IllegalArgumentException.class, () -> filesResource.retrieve(null));
   }
 
   @Test
   public void testFileDeleteRequiresId() {
     com.alibaba.dashscope.applications.agentstudio.resource.Files filesResource =
-        new com.alibaba.dashscope.applications.agentstudio.resource.Files(null, null, null);
+        new com.alibaba.dashscope.applications.agentstudio.resource.Files(
+            mockBaseUrl, null, MOCK_API_KEY);
     assertThrows(IllegalArgumentException.class, () -> filesResource.delete(null));
   }
 
@@ -1341,7 +1365,7 @@ public class TestAgentStudio {
     enqueue("session_event_send_response");
     JsonObject event = ClientEvents.userMessage("hello");
     JsonObject result =
-        new Sessions(null, null, null)
+        new Sessions(mockBaseUrl, null, MOCK_API_KEY)
             .events()
             .send("sess_abc123", Collections.singletonList(event));
     RecordedRequest req = mockServer.takeRequest();
@@ -1355,7 +1379,7 @@ public class TestAgentStudio {
     assertThrows(
         IllegalArgumentException.class,
         () ->
-            new Sessions(null, null, null)
+            new Sessions(mockBaseUrl, null, MOCK_API_KEY)
                 .events()
                 .send(null, Collections.singletonList(new JsonObject())));
   }
@@ -1364,7 +1388,10 @@ public class TestAgentStudio {
   public void testSessionEventSendRequiresEvents() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> new Sessions(null, null, null).events().send("sess_abc123", Collections.emptyList()));
+        () ->
+            new Sessions(mockBaseUrl, null, MOCK_API_KEY)
+                .events()
+                .send("sess_abc123", Collections.emptyList()));
   }
 
   // ======================== URL Encoding ========================

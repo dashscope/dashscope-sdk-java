@@ -2,19 +2,20 @@
 package com.alibaba.dashscope.applications.agentstudio.resource;
 
 import com.alibaba.dashscope.applications.agentstudio.AgentStudioConstants;
+import com.alibaba.dashscope.applications.agentstudio.api.GeneralApi;
+import com.alibaba.dashscope.applications.agentstudio.base.HalfDuplexParamBase;
+import com.alibaba.dashscope.applications.agentstudio.common.GeneralGetParam;
 import com.alibaba.dashscope.applications.agentstudio.model.AgentStudioDeletionStatus;
 import com.alibaba.dashscope.applications.agentstudio.model.AgentStudioFile;
 import com.alibaba.dashscope.applications.agentstudio.pagination.CursorPage;
 import com.alibaba.dashscope.applications.agentstudio.param.FileListParam;
+import com.alibaba.dashscope.applications.agentstudio.protocol.ConnectionOptions;
+import com.alibaba.dashscope.applications.agentstudio.protocol.DashScopeHeaders;
+import com.alibaba.dashscope.applications.agentstudio.protocol.GeneralServiceOption;
+import com.alibaba.dashscope.applications.agentstudio.protocol.HttpMethod;
+import com.alibaba.dashscope.applications.agentstudio.utils.ApiKey;
+import com.alibaba.dashscope.applications.agentstudio.utils.StringUtils;
 import com.alibaba.dashscope.errors.Errors;
-import com.alibaba.dashscope.legacy_2x.api.GeneralApi;
-import com.alibaba.dashscope.legacy_2x.base.HalfDuplexParamBase;
-import com.alibaba.dashscope.legacy_2x.common.GeneralGetParam;
-import com.alibaba.dashscope.legacy_2x.protocol.ConnectionOptions;
-import com.alibaba.dashscope.legacy_2x.protocol.GeneralServiceOption;
-import com.alibaba.dashscope.legacy_2x.protocol.HttpMethod;
-import com.alibaba.dashscope.legacy_2x.utils.ApiKey;
-import com.alibaba.dashscope.legacy_2x.utils.StringUtils;
 import com.alibaba.dashscope.transport.JsonSupport;
 import com.google.gson.reflect.TypeToken;
 import java.io.Closeable;
@@ -104,8 +105,13 @@ public final class Files implements Closeable {
     }
     String resolvedBase = resolveUploadBaseUrl();
     String url = resolvedBase + StringUtils.format("/files/%s/content", fileId);
-    Request request =
-        new Request.Builder().url(url).header("Authorization", "Bearer " + key).get().build();
+    Request.Builder requestBuilder =
+        new Request.Builder().url(url).header("Authorization", "Bearer " + key);
+    for (Map.Entry<String, String> entry :
+        DashScopeHeaders.sdkTrackingHeaders(AgentStudioConstants.SDK_MODULE).entrySet()) {
+      requestBuilder.header(entry.getKey(), entry.getValue());
+    }
+    Request request = requestBuilder.get().build();
 
     CompletableFuture<FileContent> future = new CompletableFuture<>();
     uploadClient
@@ -265,12 +271,13 @@ public final class Files implements Closeable {
             .build();
     String resolvedBase = resolveUploadBaseUrl();
     String url = resolvedBase + "/files";
-    Request request =
-        new Request.Builder()
-            .url(url)
-            .header("Authorization", "Bearer " + key)
-            .post(multipart)
-            .build();
+    Request.Builder requestBuilder =
+        new Request.Builder().url(url).header("Authorization", "Bearer " + key);
+    for (Map.Entry<String, String> entry :
+        DashScopeHeaders.sdkTrackingHeaders(AgentStudioConstants.SDK_MODULE).entrySet()) {
+      requestBuilder.header(entry.getKey(), entry.getValue());
+    }
+    Request request = requestBuilder.post(multipart).build();
 
     CompletableFuture<AgentStudioFile> future = new CompletableFuture<>();
     uploadClient

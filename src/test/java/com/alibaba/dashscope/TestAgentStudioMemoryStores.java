@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.alibaba.dashscope.applications.agentstudio.AgentStudioClient;
+import com.alibaba.dashscope.applications.agentstudio.TestUtils;
 import com.alibaba.dashscope.applications.agentstudio.model.AgentStudioDeletionStatus;
 import com.alibaba.dashscope.applications.agentstudio.model.Memory;
 import com.alibaba.dashscope.applications.agentstudio.model.MemoryStore;
@@ -20,9 +21,8 @@ import com.alibaba.dashscope.applications.agentstudio.param.MemoryStoreListParam
 import com.alibaba.dashscope.applications.agentstudio.param.MemoryStoreUpdateParam;
 import com.alibaba.dashscope.applications.agentstudio.param.MemoryUpdateParam;
 import com.alibaba.dashscope.applications.agentstudio.param.MemoryVersionListParam;
+import com.alibaba.dashscope.applications.agentstudio.utils.JsonUtils;
 import com.alibaba.dashscope.errors.ApiStatusException;
-import com.alibaba.dashscope.legacy_2x.TestUtils;
-import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

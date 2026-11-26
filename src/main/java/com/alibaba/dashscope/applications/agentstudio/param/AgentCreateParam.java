@@ -1,13 +1,13 @@
 // Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope.applications.agentstudio.param;
 
+import com.alibaba.dashscope.applications.agentstudio.base.FlattenHalfDuplexParamBase;
 import com.alibaba.dashscope.applications.agentstudio.model.Configs.McpServerConfig;
 import com.alibaba.dashscope.applications.agentstudio.model.Configs.ModelConfig;
 import com.alibaba.dashscope.applications.agentstudio.model.Configs.MultiAgentConfig;
 import com.alibaba.dashscope.applications.agentstudio.model.Configs.SkillConfig;
 import com.alibaba.dashscope.applications.agentstudio.model.Configs.ToolConfig;
-import com.alibaba.dashscope.legacy_2x.base.FlattenHalfDuplexParamBase;
-import com.alibaba.dashscope.legacy_2x.utils.JsonUtils;
+import com.alibaba.dashscope.applications.agentstudio.utils.JsonUtils;
 import com.google.gson.JsonObject;
 import java.util.List;
 import java.util.Map;
