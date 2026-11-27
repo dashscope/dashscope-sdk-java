@@ -228,6 +228,7 @@ class ExamplesDryRunTest {
         tests,
         "AgentStudioDeploymentsManage",
         PKG + "recipes.agentstudio.AgentStudioDeploymentsManage");
+    add(tests, "AgentStudioMemoryStores", PKG + "recipes.agentstudio.AgentStudioMemoryStores");
     // 04 real-world scenarios (default offline harness modes).
     add(
         tests,

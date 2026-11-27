@@ -106,7 +106,8 @@ try (DashScopeAsyncClient client = DashScopeAsyncClient.builder().build()) {
 ## 配置
 
 下表所列配置项都走配置链：**Builder 显式参数 > JVM 系统属性 > 环境变量 >
-`~/.dashscope/config.toml` > 默认值**。API Key 还会额外回退到 1.x 密钥文件
+`~/.dashscope/config.toml` > 默认值**（`wsBaseUrl` 没有 config-file 键；`raiseOnError`、
+`httpClient`、`executor` 仅支持 Builder 注入）。API Key 还会额外回退到 1.x 密钥文件
 （`DASHSCOPE_API_KEY_FILE_PATH` 或 `~/.dashscope/api_key`），因此只需导出
 `DASHSCOPE_API_KEY`，`DashScopeClient.builder().build()` 即可直接使用。
 
@@ -201,7 +202,7 @@ HTTP 报文日志（仅环境变量）：将 `DASHSCOPE_NETWORK_LOGGING_LEVEL` �
 
 - HTTP 状态码错误：`BadRequestException`（400）、`AuthenticationException`（401）、
   `PermissionDeniedException`（403）、`NotFoundException`（404）、`RequestTooLargeException`（413）、
-  `RateLimitException`（429）、`InternalServerException`（5xx）、`ServiceUnavailableException`、
+  `RateLimitException`（429）、`InternalServerException`（500）、`ServiceUnavailableException`、
   `GatewayTimeoutException`，以及通用的 `ApiStatusException`。
 - 传输层错误：`ApiConnectionException`、`ApiTimeoutException`。
 - 业务错误码（如内容审核）：`ContentFilterException` 及其他由 `Errors` 映射的

@@ -65,7 +65,7 @@ mvn -f examples/pom.xml clean test
 > Formatting checks remain separate: the `./*/src/.*java` filters in `lint.sh` and `linter.yml`
 > match the three files under `examples/src/test/java/` (`ExamplesDryRunTest`,
 > `DryRunDispatcher`, and `MockWs`), which must comply with google-java-format (100-column limit).
-> The other 108 files (42 active four-layer files: 40 runnable examples plus the two shared support
+> The other 109 files (43 active four-layer files: 41 runnable examples plus the two shared support
 > classes `ExampleSupport`/`AudioCommon`, and 66 archived `legacy_2x/` examples) are outside this
 > formatting gate; the archived examples are not compiled.
 
@@ -131,6 +131,7 @@ through `DASHSCOPE_QWEN_VOCAB` and does not download from ModelScope.
 | RAG expert system | `rag.RagExpertSystem` | Embeddings + rerank + chat pipeline |
 | AgentStudio quick start | `agentstudio.AgentStudioQuickStart` | `client.agentStudio()`: environments/agents/sessions/events.stream(SSE)/archive |
 | AgentStudio scheduled deployments | `agentstudio.AgentStudioDeploymentsManage` | `deployments().create/run/listRuns` (`DASHSCOPE_AGENT_ID`) |
+| AgentStudio memory stores | `agentstudio.AgentStudioMemoryStores` | `memoryStores()`: store/memory lifecycle, versions, redact |
 
 AgentStudio is a business package shared by both generations and resides under
 `com.alibaba.dashscope.applications.agentstudio`. The `applications` package is only a grouping;

@@ -111,7 +111,8 @@ try (DashScopeAsyncClient client = DashScopeAsyncClient.builder().build()) {
 ## Configuration
 
 Every setting in the table below resolves through a config chain: **builder > JVM system
-property > environment variable > `~/.dashscope/config.toml` > default**. The API key
+property > environment variable > `~/.dashscope/config.toml` > default** (`wsBaseUrl` has no
+config-file key; `raiseOnError`, `httpClient` and `executor` are builder-only). The API key
 additionally falls back to the 1.x key file (`DASHSCOPE_API_KEY_FILE_PATH` or
 `~/.dashscope/api_key`), so `DashScopeClient.builder().build()` works with just
 `DASHSCOPE_API_KEY` exported.
@@ -208,7 +209,7 @@ Each exception carries `code`, `statusCode`, `requestId`, `body`, and response `
 
 - HTTP-status errors: `BadRequestException` (400), `AuthenticationException` (401),
   `PermissionDeniedException` (403), `NotFoundException` (404), `RequestTooLargeException` (413),
-  `RateLimitException` (429), `InternalServerException` (5xx), `ServiceUnavailableException`,
+  `RateLimitException` (429), `InternalServerException` (500), `ServiceUnavailableException`,
   `GatewayTimeoutException`, and the generic `ApiStatusException`.
 - Transport errors: `ApiConnectionException`, `ApiTimeoutException`.
 - Business error codes (e.g. content filtering): `ContentFilterException` and other

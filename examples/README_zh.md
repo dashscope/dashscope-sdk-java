@@ -57,8 +57,8 @@ mvn -f examples/pom.xml clean test
 >
 > 格式门禁独立保留：`lint.sh` 与 `linter.yml` 的过滤器 `./*/src/.*java` 会命中
 > `examples/src/test/java/` 下的 3 个文件（`ExamplesDryRunTest`、`DryRunDispatcher`、`MockWs`），
-> 它们必须符合 google-java-format（100 列上限）；其余 108 个文件（四层活动示例 42 个文件，含
-> 40 个可运行示例与 2 个公共支撑类 `ExampleSupport`/`AudioCommon`，另加 66 个封存的
+> 它们必须符合 google-java-format（100 列上限）；其余 109 个文件（四层活动示例 43 个文件，含
+> 41 个可运行示例与 2 个公共支撑类 `ExampleSupport`/`AudioCommon`，另加 66 个封存的
 > `legacy_2x/`，后者不参与编译）不在该门禁范围内。
 
 `ExamplesDryRunTest` 用 MockWebServer 扮演全部 HTTP/SSE/WebSocket 端点，把每个示例的
@@ -122,6 +122,7 @@ mvn -f examples/pom.xml clean test
 | RAG 专家系统 | `rag.RagExpertSystem` | embeddings + rerank + chat 串联 |
 | AgentStudio 快速开始 | `agentstudio.AgentStudioQuickStart` | `client.agentStudio()`：environments/agents/sessions/events.stream(SSE)/archive |
 | AgentStudio 定时部署 | `agentstudio.AgentStudioDeploymentsManage` | `deployments().create/run/listRuns`（`DASHSCOPE_AGENT_ID`） |
+| AgentStudio 记忆库 | `agentstudio.AgentStudioMemoryStores` | `memoryStores()`：store/memory 全流程、版本、redact |
 
 AgentStudio 为两代共用业务包，位于 `com.alibaba.dashscope.applications.agentstudio`；
 `applications` 仅作包分组，入口仍为 `client.agentStudio()`。3.0 的 `baseUrl` 不作用于它，

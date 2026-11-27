@@ -347,6 +347,85 @@ public final class DryRunDispatcher extends Dispatcher {
           "{\"data\":[{\"id\":\"run-dry\",\"status\":\"SUCCEEDED\",\"trigger_source\":\"manual\"}],"
               + "\"next_page\":null,\"requestId\":\"r-d3\"}");
     }
+    if (resource.equals("memory_stores") && "POST".equals(method)) {
+      return json(
+          200,
+          "{\"id\":\"memstore-dry\",\"type\":\"memory_store\",\"name\":\"demo-preferences\","
+              + "\"request_id\":\"r-m1\"}");
+    }
+    if (resource.matches("memory_stores/[^/]+/memories") && "POST".equals(method)) {
+      return json(
+          200,
+          "{\"id\":\"mem-dry\",\"type\":\"memory\",\"memory_store_id\":\"memstore-dry\","
+              + "\"path\":\"/formatting_standards.md\",\"content_sha256\":\"sha-dry-1\","
+              + "\"content_size_bytes\":31,\"request_id\":\"r-m2\"}");
+    }
+    if (resource.matches("memory_stores/[^/]+/memories/[^/]+") && "POST".equals(method)) {
+      return json(
+          200,
+          "{\"id\":\"mem-dry\",\"type\":\"memory\",\"memory_store_id\":\"memstore-dry\","
+              + "\"path\":\"/formatting_standards.md\",\"content_sha256\":\"sha-dry-2\","
+              + "\"content_size_bytes\":47,\"request_id\":\"r-m4\"}");
+    }
+    if (resource.matches("memory_stores/[^/]+/memories/[^/]+") && "GET".equals(method)) {
+      return json(
+          200,
+          "{\"id\":\"mem-dry\",\"type\":\"memory\",\"memory_store_id\":\"memstore-dry\","
+              + "\"path\":\"/formatting_standards.md\","
+              + "\"content\":\"All reports use GAAP formatting.\",\"content_sha256\":\"sha-dry-1\","
+              + "\"content_size_bytes\":31,\"request_id\":\"r-m9\"}");
+    }
+    if (resource.matches("memory_stores/[^/]+/memories/[^/]+") && "DELETE".equals(method)) {
+      return json(200, "{\"id\":\"mem-dry\",\"type\":\"memory_deleted\",\"request_id\":\"r-m10\"}");
+    }
+    if (resource.matches("memory_stores/[^/]+/memories.*") && "GET".equals(method)) {
+      return json(
+          200,
+          "{\"data\":[{\"id\":\"mem-dry\",\"type\":\"memory\","
+              + "\"path\":\"/formatting_standards.md\","
+              + "\"content\":\"All reports use GAAP formatting.\",\"content_sha256\":\"sha-dry-1\","
+              + "\"content_size_bytes\":31}],\"next_page\":null,\"prefixes\":[],"
+              + "\"request_id\":\"r-m3\"}");
+    }
+    if (resource.matches("memory_stores/[^/]+/memory_versions/[^/]+/redact")
+        && "POST".equals(method)) {
+      return json(
+          200,
+          "{\"id\":\"memver-dry\",\"type\":\"memory_version\",\"operation\":\"modified\","
+              + "\"redacted_at\":\"2026-01-01T00:00:00Z\",\"request_id\":\"r-m6\"}");
+    }
+    if (resource.matches("memory_stores/[^/]+/memory_versions/[^/]+") && "GET".equals(method)) {
+      return json(
+          200,
+          "{\"id\":\"memver-dry\",\"type\":\"memory_version\","
+              + "\"memory_store_id\":\"memstore-dry\",\"memory_id\":\"mem-dry\","
+              + "\"operation\":\"modified\",\"path\":\"/formatting_standards.md\","
+              + "\"request_id\":\"r-m11\"}");
+    }
+    if (resource.matches("memory_stores/[^/]+/memory_versions.*") && "GET".equals(method)) {
+      return json(
+          200,
+          "{\"data\":[{\"id\":\"memver-dry\",\"type\":\"memory_version\","
+              + "\"operation\":\"modified\",\"path\":\"/formatting_standards.md\"}],"
+              + "\"next_page\":null,\"request_id\":\"r-m5\"}");
+    }
+    if (resource.matches("memory_stores/[^/]+") && "DELETE".equals(method)) {
+      return json(
+          200,
+          "{\"id\":\"memstore-dry\",\"type\":\"memory_store_deleted\",\"request_id\":\"r-m8\"}");
+    }
+    if (resource.matches("memory_stores/[^/]+") && "GET".equals(method)) {
+      return json(
+          200,
+          "{\"id\":\"memstore-dry\",\"type\":\"memory_store\",\"name\":\"demo-preferences\","
+              + "\"request_id\":\"r-m12\"}");
+    }
+    if (resource.matches("memory_stores.*") && "GET".equals(method)) {
+      return json(
+          200,
+          "{\"data\":[{\"id\":\"memstore-dry\",\"type\":\"memory_store\","
+              + "\"name\":\"demo-preferences\"}],\"next_page\":null,\"request_id\":\"r-m7\"}");
+    }
     return json(
         404, "{\"code\":\"NotFound\",\"message\":\"dry-run agentstudio: " + resource + "\"}");
   }
