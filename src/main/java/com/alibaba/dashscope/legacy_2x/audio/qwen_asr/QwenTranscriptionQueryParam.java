@@ -1,0 +1,29 @@
+package com.alibaba.dashscope.legacy_2x.audio.qwen_asr;
+
+import java.util.Map;
+import lombok.Data;
+import lombok.experimental.SuperBuilder;
+
+@Data
+@SuperBuilder
+@Deprecated
+public class QwenTranscriptionQueryParam {
+  private String taskId;
+
+  private String apiKey;
+
+  private Map<String, String> headers;
+
+  public Map<String, String> getCustomHeaders() {
+    return headers;
+  }
+
+  public static QwenTranscriptionQueryParam FromTranscriptionParam(
+      QwenTranscriptionParam param, String taskId) {
+    return QwenTranscriptionQueryParam.builder()
+        .apiKey(param.getApiKey())
+        .taskId(taskId)
+        .headers(param.getHeaders())
+        .build();
+  }
+}

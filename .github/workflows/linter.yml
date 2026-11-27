@@ -30,15 +30,15 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - name: Set up JDK 8
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '8'
+          java-version: '17'
           distribution: 'temurin'
       - name: Check code formatting
         run: |
           # Check if any files need formatting
-          if ! java -jar .dev_tools/google-java-format-1.7-all-deps.jar \
+          if ! java -jar .dev_tools/google-java-format-1.16.0-all-deps.jar \
             --dry-run --set-exit-if-changed \
             $(find . -type f -name "*.java" | grep "./*/src/.*java"); then
             echo "❌ Code formatting issues found!"

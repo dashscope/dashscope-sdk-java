@@ -1,0 +1,15 @@
+package com.alibaba.dashscope.legacy_2x.common;
+
+import com.google.gson.annotations.SerializedName;
+import lombok.Data;
+import lombok.experimental.SuperBuilder;
+
+@Data
+@SuperBuilder
+@Deprecated
+public class DocURL {
+  private String url;
+
+  @SerializedName("file_parsing_strategy")
+  private String fileParsingStrategy;
+}

@@ -1,13 +1,18 @@
+// Copyright (c) Alibaba, Inc. and its affiliates.
 package com.alibaba.dashscope;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.alibaba.dashscope.agentstudio.AgentStudioClient;
-import com.alibaba.dashscope.agentstudio.param.UsageQueryParam;
-import com.alibaba.dashscope.agentstudio.resource.Usage;
-import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.exception.InputRequiredException;
-import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.applications.agentstudio.AgentStudioClient;
+import com.alibaba.dashscope.applications.agentstudio.exception.InputRequiredException;
+import com.alibaba.dashscope.applications.agentstudio.param.UsageQueryParam;
+import com.alibaba.dashscope.applications.agentstudio.resource.Usage;
+import com.alibaba.dashscope.applications.agentstudio.utils.JsonUtils;
+import com.alibaba.dashscope.errors.ApiStatusException;
+import com.alibaba.dashscope.errors.SdkException;
 import com.google.gson.JsonObject;
 import java.util.concurrent.TimeUnit;
 import okhttp3.mockwebserver.MockResponse;
@@ -108,8 +113,8 @@ public class TestAgentStudioUsage {
         Usage.Result result = client.usage().summaryAsync(param).get(5, TimeUnit.SECONDS);
         assertEquals(9007199254740993L, result.getData().get("value").getAsLong());
         assertEquals(0.4, result.getData().get("ratio").getAsDouble());
-        assertThrows(ApiException.class, () -> client.usage().trend(param));
-        ApiException missing = assertThrows(ApiException.class, () -> client.usage().summary(null));
+        assertThrows(ApiStatusException.class, () -> client.usage().trend(param));
+        SdkException missing = assertThrows(SdkException.class, () -> client.usage().summary(null));
         assertTrue(missing.getCause() instanceof InputRequiredException);
       }
     }

@@ -7,21 +7,22 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.alibaba.dashscope.agentstudio.AgentStudioClient;
-import com.alibaba.dashscope.agentstudio.model.AgentStudioDeletionStatus;
-import com.alibaba.dashscope.agentstudio.model.Memory;
-import com.alibaba.dashscope.agentstudio.model.MemoryStore;
-import com.alibaba.dashscope.agentstudio.model.MemoryVersion;
-import com.alibaba.dashscope.agentstudio.pagination.CursorPage;
-import com.alibaba.dashscope.agentstudio.param.MemoryCreateParam;
-import com.alibaba.dashscope.agentstudio.param.MemoryListParam;
-import com.alibaba.dashscope.agentstudio.param.MemoryStoreCreateParam;
-import com.alibaba.dashscope.agentstudio.param.MemoryStoreListParam;
-import com.alibaba.dashscope.agentstudio.param.MemoryStoreUpdateParam;
-import com.alibaba.dashscope.agentstudio.param.MemoryUpdateParam;
-import com.alibaba.dashscope.agentstudio.param.MemoryVersionListParam;
-import com.alibaba.dashscope.exception.ApiException;
-import com.alibaba.dashscope.utils.JsonUtils;
+import com.alibaba.dashscope.applications.agentstudio.AgentStudioClient;
+import com.alibaba.dashscope.applications.agentstudio.TestUtils;
+import com.alibaba.dashscope.applications.agentstudio.model.AgentStudioDeletionStatus;
+import com.alibaba.dashscope.applications.agentstudio.model.Memory;
+import com.alibaba.dashscope.applications.agentstudio.model.MemoryStore;
+import com.alibaba.dashscope.applications.agentstudio.model.MemoryVersion;
+import com.alibaba.dashscope.applications.agentstudio.pagination.CursorPage;
+import com.alibaba.dashscope.applications.agentstudio.param.MemoryCreateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.MemoryListParam;
+import com.alibaba.dashscope.applications.agentstudio.param.MemoryStoreCreateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.MemoryStoreListParam;
+import com.alibaba.dashscope.applications.agentstudio.param.MemoryStoreUpdateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.MemoryUpdateParam;
+import com.alibaba.dashscope.applications.agentstudio.param.MemoryVersionListParam;
+import com.alibaba.dashscope.applications.agentstudio.utils.JsonUtils;
+import com.alibaba.dashscope.errors.ApiStatusException;
 import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -282,9 +283,9 @@ public class TestAgentStudioMemoryStores {
         "{\"type\":\"error\",\"error\":{\"code\":\"memory_path_conflict_error\","
             + "\"message\":\"Memory path already exists.\"},\"request_id\":\"req-e1\"}";
     mockServer.enqueue(TestUtils.createMockResponse(body, 409));
-    ApiException ex =
+    ApiStatusException ex =
         assertThrows(
-            ApiException.class,
+            ApiStatusException.class,
             () ->
                 client
                     .memoryStores()
@@ -295,8 +296,8 @@ public class TestAgentStudioMemoryStores {
                             .path("/e2e/notes.md")
                             .content("duplicate")
                             .build()));
-    assertEquals(409, ex.getStatus().getStatusCode());
-    assertEquals("memory_path_conflict_error", ex.getStatus().getCode());
+    assertEquals(409, ex.getStatusCode());
+    assertEquals("memory_path_conflict_error", ex.getCode());
     // Drain the recorded request: a test that never takeRequest()s leaves
     // the shared server's request queue off by one and misaligns every
     // later test's assertions.
